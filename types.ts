@@ -13,25 +13,6 @@ export enum BorderStyle {
   DASHED = 'DASHED'
 }
 
-export enum SubscriptionTier {
-  FREE = 'FREE',
-  PRO = 'PRO',
-  BUSINESS = 'BUSINESS'
-}
-
-export type UserRole = 'USER' | 'ADMIN';
-
-export interface UserAccount {
-  id: string;
-  email?: string;
-  whatsapp?: string;
-  role: UserRole;
-  tier: SubscriptionTier;
-  expiryDate: string | null;
-  status: 'ACTIVE' | 'DEACTIVATED';
-  joinedDate: string;
-}
-
 export interface StampTemplate {
   id: string;
   name: string;
@@ -50,7 +31,6 @@ export interface StampTemplate {
   showDateLine?: boolean;
   showStars?: boolean;
   logoUrl?: string;
-  isPremium?: boolean;
 }
 
 export interface StampConfig {
@@ -77,26 +57,14 @@ export interface StampConfig {
   distressLevel: number;
   isVintage: boolean;
   logoUrl: string | null;
-  signatureUrl: string | null;
-  includeCertificate: boolean;
 }
 
-export interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  category: 'Legal' | 'Business' | 'Tutorial' | 'Kenya Trends' | 'Official';
-  location?: string;
-  date: string;
-  image: string;
-}
+export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
 
-export interface BusinessTemplate {
+export interface BulkDocument {
   id: string;
   name: string;
-  type: 'Invoice' | 'Letterhead' | 'Contract';
-  description: string;
-  downloadUrl: string;
+  type: string;
+  size: number;
+  previewUrl?: string;
 }
