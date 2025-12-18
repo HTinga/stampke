@@ -1,4 +1,3 @@
-
 export enum StampShape {
   ROUND = 'ROUND',
   OVAL = 'OVAL',
@@ -59,12 +58,13 @@ export interface StampConfig {
   logoUrl: string | null;
 }
 
-export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'custom';
 
 export interface BulkDocument {
   id: string;
   name: string;
   type: string;
   size: number;
+  pages: number;
   previewUrl?: string;
 }

@@ -113,9 +113,9 @@ const RESOURCES = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'editor' | 'templates' | 'convert' | 'bulk' | 'help' | 'terms' | 'privacy' | 'blogs' | 'resources' | 'account'>('home');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentType, setPaymentType] = useState<'single' | 'bulk'>('single');
+  const [bulkCost, setBulkCost] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -166,7 +166,6 @@ const App: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     setActiveTab('convert');
-    setIsProcessing(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
@@ -174,7 +173,7 @@ const App: React.FC = () => {
       if (analysis) {
         setStampConfig(prev => ({
           ...prev,
-          shape: analysis.shape === 'OVAL' ? StampShape.OVAL : analysis.shape === 'ROUND' ? StampShape.ROUND : StampShape.RECTANGLE,
+          shape: analysis.shape === 'OVAL' ? StampShape.OVAL : analysis.shape === 'ROUND' ? StampShape.ROUND : analysis.shape === 'RECTANGLE',
           primaryText: analysis.primaryText || prev.primaryText,
           secondaryText: analysis.secondaryText || '',
           centerText: analysis.centerText || '',
@@ -182,13 +181,13 @@ const App: React.FC = () => {
         }));
         setActiveTab('editor');
       }
-      setIsProcessing(false);
     };
     reader.readAsDataURL(file);
   };
 
-  const triggerPayment = (type: 'single' | 'bulk') => {
+  const triggerPayment = (type: 'single' | 'bulk', cost?: number) => {
     setPaymentType(type);
+    if (cost) setBulkCost(cost);
     setShowPayment(true);
   };
 
@@ -379,9 +378,7 @@ const App: React.FC = () => {
 
         {/* Bulk tab */}
         {activeTab === 'bulk' && (
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
-            <BulkStamper config={stampConfig} onStartBulk={() => triggerPayment('bulk')} />
-          </div>
+          <BulkStamper config={stampConfig} onStartBulk={(cost) => triggerPayment('bulk', cost)} />
         )}
 
         {/* Editor tab */}
@@ -414,7 +411,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* AI Convert tab */}
+        {/* AI Scan tab */}
         {activeTab === 'convert' && (
           <div className="max-w-4xl mx-auto py-24 px-4 animate-in fade-in duration-500 text-center">
             <div className="bg-blue-600 text-white w-24 h-24 rounded-[36px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-blue-200">
@@ -483,7 +480,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Detailed Legal Tabs */}
+        {/* Legal and Support Tabs */}
         {activeTab === 'terms' && (
           <div className="max-w-4xl mx-auto py-24 px-4">
             <h2 className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">Terms of Service</h2>
@@ -516,28 +513,41 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Support Tabs */}
-        {['help', 'account'].includes(activeTab) && (
+        {['help'].includes(activeTab) && (
           <div className="max-w-4xl mx-auto py-24 px-4">
             <h2 className="text-5xl font-black text-slate-900 mb-12 tracking-tighter capitalize">{activeTab}</h2>
             <div className="prose prose-slate prose-lg max-w-none text-slate-600 bg-white border border-slate-100 p-12 rounded-[48px] shadow-sm">
-               {activeTab === 'account' && isLoggedIn ? (
-                 <div className="space-y-8">
-                   <div className="flex items-center gap-6 mb-8">
-                     <div className="bg-slate-900 text-white p-8 rounded-[36px]"><User size={64} /></div>
-                     <div>
-                       <p className="text-4xl font-black text-slate-900">{user?.name}</p>
-                       <p className="text-slate-500 font-bold uppercase tracking-widest">{user?.email}</p>
-                     </div>
-                   </div>
-                   <button onClick={() => { setIsLoggedIn(false); setActiveTab('home'); }} className="bg-red-50 text-red-600 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-red-100 transition-all flex items-center gap-2">
-                     <LogOut size={24} /> Sign Out Session
-                   </button>
-                 </div>
-               ) : (
-                 <p>Standard legal and support documentation for FreeStamps KE. All rights reserved.</p>
-               )}
+               <p>Standard legal and support documentation for FreeStamps KE. All rights reserved.</p>
             </div>
+          </div>
+        )}
+
+        {/* Account dashboard */}
+        {activeTab === 'account' && isLoggedIn && (
+          <div className="max-w-4xl mx-auto py-24 px-4">
+             <h2 className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">Client Dashboard</h2>
+             <div className="bg-white border border-slate-100 p-12 rounded-[56px] shadow-sm">
+                <div className="flex items-center gap-6 mb-12">
+                   <div className="bg-slate-900 text-white p-10 rounded-[36px] shadow-xl"><User size={64} /></div>
+                   <div>
+                     <p className="text-4xl font-black text-slate-900">{user?.name}</p>
+                     <p className="text-slate-500 font-bold uppercase tracking-widest">{user?.email}</p>
+                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                   <div className="bg-slate-50 p-10 rounded-[40px]">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Membership</p>
+                      <p className="text-2xl font-black text-slate-900">Enterprise Trial</p>
+                   </div>
+                   <div className="bg-slate-50 p-10 rounded-[40px]">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Credits</p>
+                      <p className="text-2xl font-black text-slate-900">0 Pages</p>
+                   </div>
+                </div>
+                <button onClick={() => { setIsLoggedIn(false); setActiveTab('home'); }} className="mt-12 bg-red-50 text-red-600 px-10 py-5 rounded-3xl font-black text-lg hover:bg-red-100 transition-all flex items-center gap-2">
+                   <LogOut size={24} /> End Session
+                </button>
+             </div>
           </div>
         )}
       </main>
@@ -568,22 +578,22 @@ const App: React.FC = () => {
               <div className="bg-blue-50 text-blue-600 p-6 rounded-[32px]"><Zap size={40} /></div>
               <button onClick={() => setShowPayment(false)} className="p-3 hover:bg-slate-100 rounded-full text-slate-400 transition-all"><X size={24} /></button>
             </div>
-            <h3 className="text-4xl font-black text-slate-900 mb-6 tracking-tighter">Confirm Processing</h3>
+            <h3 className="text-4xl font-black text-slate-900 mb-6 tracking-tighter">Confirm Transaction</h3>
             <div className="bg-slate-50 p-8 rounded-[36px] mb-10 flex items-center justify-between border border-slate-100">
               <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{paymentType === 'bulk' ? 'Bulk Bundle' : 'Standard License'}</p>
-                <p className="text-2xl font-black text-slate-900">{paymentType === 'bulk' ? 'Bulk Document Run' : 'Vector SVG Export'}</p>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{paymentType === 'bulk' ? 'Bulk Processing Fee' : 'Single Download'}</p>
+                <p className="text-2xl font-black text-slate-900">{paymentType === 'bulk' ? 'Verified Batch' : 'High-Res SVG'}</p>
               </div>
-              <p className="text-4xl font-black text-blue-600 tracking-tighter">KES {paymentType === 'bulk' ? '1,500' : '650'}</p>
+              <p className="text-4xl font-black text-blue-600 tracking-tighter">KES {(paymentType === 'bulk' ? bulkCost : 650).toLocaleString()}</p>
             </div>
             <div className="space-y-4">
-              <button onClick={paymentType === 'bulk' ? () => alert("Initiating Bulk Run...") : handleDownload} className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black text-xl hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200 active:scale-95">Complete Payment & Start</button>
+              <button onClick={paymentType === 'bulk' ? () => { alert("Payment Verified. Batch unlocked."); handleDownload(); } : handleDownload} className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200 active:scale-95">Verify M-PESA & Download</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Comprehensive Footer Section */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 pt-32 pb-20 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-20">
@@ -653,6 +663,10 @@ const App: React.FC = () => {
         .animate-marquee:hover {
           animation-play-state: paused;
         }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
       `}} />
     </div>
   );
