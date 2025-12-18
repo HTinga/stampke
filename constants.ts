@@ -21,12 +21,51 @@ export const TRANSLATIONS: Record<string, any> = {
     saveStamp: "Save Design",
     footerLegal: "Legal Documentation",
     footerPrivacy: "Privacy Policy",
-    footerTerms: "Terms of Service"
+    footerTerms: "Terms of Service",
+    searchPlaceholder: "Search templates (e.g. Carison, Helmarc, Advocate)...",
+    freeToEdit: "Free to Design, Pay to Download",
+    highResHint: "All templates are unlocked for editing. High-res vector export starts at KES 650.",
+    individual: "Individual",
+    professional: "Professional",
+    business: "Business / Cafe",
+    payAsYouGo: "Pay As You Go",
+    upgrade: "Upgrade",
+    goUnlimited: "Go Unlimited",
+    signOverlay: "Sign Overlay",
+    authCert: "Auth Cert",
+    categories: {
+      All: "All",
+      Legal: "Legal",
+      Official: "Official",
+      Business: "Business",
+      Financial: "Financial"
+    },
+    legalPage: {
+      title: "Legal & Regulatory Framework",
+      subtitle: "Ensuring administrative trust and compliance under Kenyan law.",
+      contactTitle: "Get in Touch",
+      email: "us@freestampske.com",
+      phone: "+254 710 588 758",
+      sections: {
+        legal: {
+          title: "Legal Authority",
+          content: "FreeStamps KE operates as a digital administrative tool under JijiTechy Solutions. Our digital stamps are designed to comply with the Business Laws (Amendment) Act 2020 of Kenya, which recognizes electronic signatures and seals. While we provide high-fidelity templates, users are responsible for ensuring the legitimate use of corporate and professional identities."
+        },
+        privacy: {
+          title: "Privacy & Data Sovereignty",
+          content: "We adhere strictly to the Kenya Data Protection Act 2019. Your uploaded images for AI digitization are processed transiently and are not stored permanently unless you save them to your profile. We do not sell your personal data. All payment processing is handled via secure M-Pesa STK or Stripe gateways without storing your credit card details on our servers."
+        },
+        terms: {
+          title: "Terms of Service",
+          content: "1. Usage: You are granted a license to create and customize stamps. 2. Payments: High-resolution downloads are charged at KES 650 per file unless on a subscription plan. 3. Refunds: Due to the digital nature of our assets, all sales are final. 4. Prohibited Acts: Forgery, unauthorized creation of government seals, and fraudulent representation will lead to immediate account termination and reporting to authorities."
+        }
+      }
+    }
   },
   sw: {
     home: "Mwanzo",
     templates: "Violezo",
-    bulk: "Gonga Nyingi",
+    bulk: "Nyingi",
     resources: "Rasilimali",
     pricing: "Bei",
     profile: "Wasifu",
@@ -42,7 +81,46 @@ export const TRANSLATIONS: Record<string, any> = {
     saveStamp: "Hifadhi",
     footerLegal: "Nyaraka za Kisheria",
     footerPrivacy: "Sera ya Faragha",
-    footerTerms: "Masharti ya Huduma"
+    footerTerms: "Masharti ya Huduma",
+    searchPlaceholder: "Tafuta violezo (k.m. Carison, Helmarc, Advocate)...",
+    freeToEdit: "Bure kurekebisha, Lipia kupakua",
+    highResHint: "Violezo vyote viko wazi kurekebisha. Kupakua huanza kwa KES 650.",
+    individual: "Binafsi",
+    professional: "Mtaalam",
+    business: "Biashara / Cafe",
+    payAsYouGo: "Lipia Unapotumia",
+    upgrade: "Boresha",
+    goUnlimited: "Pata Zote",
+    signOverlay: "Sahihi",
+    authCert: "Cheti",
+    categories: {
+      All: "Zote",
+      Legal: "Kisheria",
+      Official: "Rasmi",
+      Business: "Biashara",
+      Financial: "Kifedha"
+    },
+    legalPage: {
+      title: "Mwongozo wa Kisheria na Udhibiti",
+      subtitle: "Kuhakikisha uaminifu wa kiutawala na kufuata sheria za Kenya.",
+      contactTitle: "Wasiliana Nasi",
+      email: "us@freestampske.com",
+      phone: "+254 710 588 758",
+      sections: {
+        legal: {
+          title: "Mamlaka ya Kisheria",
+          content: "FreeStamps KE inafanya kazi kama zana ya kidijitali chini ya JijiTechy Solutions. Mihuri yetu imetengenezwa kulingana na Sheria ya Marekebisho ya Sheria za Biashara ya 2020 ya Kenya, inayotambua sahihi na mihuri ya kielektroniki. Ingawa tunatoa violezo vya hali ya juu, watumiaji wana jukumu la kuhakikisha matumizi halali."
+        },
+        privacy: {
+          title: "Faragha na Uhuru wa Data",
+          content: "Tunafuata kikamilifu Sheria ya Ulinzi wa Data ya Kenya ya 2019. Picha unazopakia kwa ajili ya AI huchakatwa kwa muda na hazihifadhiwi isipokuwa ukiweka kwenye wasifu wako. Hatuzi data yako kwa mtu yeyote. Malipo yote hufanywa kupitia njia salama za M-Pesa STK au Stripe bila kuhifadhi siri za kadi yako."
+        },
+        terms: {
+          title: "Masharti ya Huduma",
+          content: "1. Matumizi: Unapewa ruhusa ya kutengeneza mihuri. 2. Malipo: Kupakua picha ya hali ya juu hugharimu KES 650 isipokuwa uwe kwenye mpango wa mwezi. 3. Marejesho: Kwa sababu ya hali ya bidhaa za kidijitali, malipo hayatarudishwa. 4. Marufuku: Kughushi, kutengeneza mihuri ya serikali bila idhini, na utambulisho wa uwongo utasababisha kufungiwa kwa akaunti."
+        }
+      }
+    }
   }
 };
 

@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { TEMPLATES } from '../constants';
+// Added TRANSLATIONS to the import list from constants.ts
+import { TEMPLATES, TRANSLATIONS } from '../constants';
 import { StampTemplate, SubscriptionTier } from '../types';
 import { Search, Filter, Lock, ArrowRight, ShieldCheck, Download } from 'lucide-react';
 
@@ -8,9 +9,10 @@ interface TemplateLibraryProps {
   onSelect: (template: StampTemplate) => void;
   userTier: SubscriptionTier;
   onUpgrade: () => void;
+  t: any;
 }
 
-const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, onUpgrade }) => {
+const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, onUpgrade, t }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -34,7 +36,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, o
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text" 
-            placeholder="Search templates (e.g. Carison, Helmarc, Advocate)..." 
+            placeholder={t.searchPlaceholder}
             className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-900 dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -51,7 +53,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, o
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {cat}
+              {t.categories[cat] || cat}
             </button>
           ))}
         </div>
@@ -62,8 +64,8 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, o
         <div className="flex items-center gap-4 text-left">
            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm"><Download size={24} /></div>
            <div>
-              <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Free to Design, Pay to Download</p>
-              <p className="text-xs text-slate-500 font-medium">All templates are unlocked for editing. High-res vector export starts at KES 650.</p>
+              <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{t.freeToEdit}</p>
+              <p className="text-xs text-slate-500 font-medium">{t.highResHint}</p>
            </div>
         </div>
         <div className="flex items-center gap-4">
@@ -107,7 +109,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, o
             {/* Template Info */}
             <div className="px-3 pb-2 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{tpl.category}</span>
+                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{t.categories[tpl.category] || tpl.category}</span>
                 {tpl.isPremium && <div className="flex items-center gap-1"><ShieldCheck size={14} className="text-amber-500" /><span className="text-[7px] font-black text-amber-500 uppercase">OFFICIAL</span></div>}
               </div>
               <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">{tpl.name}</h3>
@@ -116,7 +118,8 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, userTier, o
 
             {/* Action Bar */}
             <div className="mt-auto pt-6 flex items-center justify-between px-3">
-               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Free to Edit</span>
+               {/* Fix: Added TRANSLATIONS to the import list from constants.ts above to resolve the error on line 120 */}
+               <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{t.sw === TRANSLATIONS.sw ? 'Bure Kuhariri' : 'Free to Edit'}</span>
                <button className="bg-slate-50 dark:bg-slate-800 text-slate-400 p-2.5 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                   <ArrowRight size={18} />
                </button>

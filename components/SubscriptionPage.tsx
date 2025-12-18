@@ -4,58 +4,59 @@ import { Check, Zap, Building2, Store, User, ArrowRight, ShieldCheck, PenTool, L
 
 interface SubscriptionPageProps {
   onSelectPlan: (planId: string) => void;
+  t: any;
 }
 
-const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSelectPlan }) => {
+const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSelectPlan, t }) => {
   const tiers = [
     {
       id: 'FREE',
-      name: 'Individual',
+      name: t.individual,
       price: 'KES 650',
-      period: '/file',
+      period: t.sw === 'Bei' ? '/faili' : '/file',
       icon: <User className="text-slate-400" />,
-      description: 'Perfect for one-off official documents.',
+      description: t.sw === 'Bei' ? 'Kwa ajili ya nyaraka moja tu.' : 'Perfect for one-off official documents.',
       features: [
-        'Pay per high-res download',
-        'Standard AI Conversion',
+        t.sw === 'Bei' ? 'Lipia unapotumia' : 'Pay per high-res download',
+        t.sw === 'Bei' ? 'AI ya hali ya juu' : 'Standard AI Conversion',
         '25+ Authentic Templates',
-        'Basic Customization'
+        t.sw === 'Bei' ? 'Kurekebisha kwa msingi' : 'Basic Customization'
       ],
-      cta: 'Pay As You Go',
+      cta: t.payAsYouGo,
       popular: false
     },
     {
       id: 'PRO',
-      name: 'Professional',
+      name: t.professional,
       price: 'KES 2,499',
-      period: '/mo',
+      period: t.sw === 'Bei' ? '/mwezi' : '/mo',
       icon: <Zap className="text-blue-600" />,
-      description: 'Unlock signatures & certificates.',
+      description: t.sw === 'Bei' ? 'Pata sahihi na vyeti.' : 'Unlock signatures & certificates.',
       features: [
         '25 Downloads per month',
-        'Digital Signature Overlay',
-        'Authenticity Certificates',
+        t.sw === 'Bei' ? 'Sahihi ya kidijitali' : 'Digital Signature Overlay',
+        t.sw === 'Bei' ? 'Vyeti vya ukweli' : 'Authenticity Certificates',
         'Cloud Storage for Seals',
         'Priority Export Rendering'
       ],
-      cta: 'Upgrade to Pro',
+      cta: t.upgrade,
       popular: true
     },
     {
       id: 'BUSINESS',
-      name: 'Business / Cafe',
+      name: t.business,
       price: 'KES 5,999',
-      period: '/mo',
+      period: t.sw === 'Bei' ? '/mwezi' : '/mo',
       icon: <Store className="text-emerald-600" />,
-      description: 'The ultimate tool for high volume.',
+      description: t.sw === 'Bei' ? 'Chombo bora kwa kazi nyingi.' : 'The ultimate tool for high volume.',
       features: [
         'Unlimited Downloads',
-        'Bulk Stamping Engine',
+        t.sw === 'Bei' ? 'Mashine ya mihuri mingi' : 'Bulk Stamping Engine',
         'Up to 5 Terminal Logins',
         'Whitelabel Export',
         'Dedicated Support Line'
       ],
-      cta: 'Go Unlimited',
+      cta: t.goUnlimited,
       popular: false
     }
   ];
@@ -66,7 +67,9 @@ const SubscriptionPage: React.FC<SubscriptionPageProps> = ({ onSelectPlan }) => 
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 border border-blue-100">
           Scaling Your Administrative Workflow
         </div>
-        <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-6 tracking-tighter">Choose Your <span className="text-blue-600">Plan.</span></h2>
+        <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-6 tracking-tighter">
+          {t.sw === 'Bei' ? 'Chagua ' : 'Choose Your '}<span className="text-blue-600">{t.sw === 'Bei' ? 'Mpango.' : 'Plan.'}</span>
+        </h2>
         <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
           Unlock high-fidelity administrative tools tailored for the Kenyan market.
         </p>

@@ -16,10 +16,11 @@ import DemoSection from './components/DemoSection';
 import ProfilePage from './components/ProfilePage';
 import AdminPage from './components/AdminPage';
 import PaymentModal from './components/PaymentModal';
+import LegalPage from './components/LegalPage';
 import { analyzeStampImage } from './services/geminiService';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'editor' | 'templates' | 'convert' | 'auth' | 'pricing' | 'blogs' | 'bulk' | 'profile' | 'admin'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'editor' | 'templates' | 'convert' | 'auth' | 'pricing' | 'blogs' | 'bulk' | 'profile' | 'admin' | 'legal'>('home');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -69,7 +70,6 @@ const App: React.FC = () => {
   };
 
   const handleDownloadInitiate = () => {
-    // Only pay on download as requested
     if (!user || user.tier === SubscriptionTier.FREE) {
       setShowPayment(true);
     } else {
@@ -82,7 +82,7 @@ const App: React.FC = () => {
     const serializer = new XMLSerializer();
     let source = serializer.serializeToString(svgRef.current);
     if (!source.match(/^<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/)) {
-      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      source = source.replace(/^<svg/, '<svg xmlns="http://www\.w3\.org\/2000\/svg"');
     }
     source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
     const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
@@ -169,13 +169,13 @@ const App: React.FC = () => {
            <div className="flex-1 flex flex-col gap-6 text-3xl font-black tracking-tight dark:text-white">
              {['home', 'templates', 'bulk', 'blogs', 'profile'].map(tab => (
                <button key={tab} onClick={() => { setActiveTab(tab as any); setIsMobileMenuOpen(false); }} className={`text-left capitalize ${activeTab === tab ? 'text-blue-600' : 'text-slate-300'}`}>
-                 {tab === 'blogs' ? t.resources : tab === 'profile' ? t.profile : t[tab as keyof typeof t] || tab}
+                 {t[tab] || tab}
                </button>
              ))}
            </div>
            <div className="pt-8 border-t dark:border-slate-800 flex justify-around">
              <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} className="flex items-center gap-2 font-bold text-slate-500 uppercase text-[10px] tracking-widest"><Moon size={16}/> {theme}</button>
-             <button onClick={() => setLang(lang === 'en' ? 'sw' : 'en')} className="flex items-center gap-2 font-bold text-slate-500 uppercase text-[10px] tracking-widest"><Globe size={16}/> {lang}</button>
+             <button onClick={() => setLang(lang === 'en' ? 'sw' : 'en')} className="flex items-center gap-2 font-bold text-slate-500 uppercase text-[10px] tracking-widest"><Globe size={16}/> {lang.toUpperCase()}</button>
            </div>
         </div>
       )}
@@ -187,13 +187,13 @@ const App: React.FC = () => {
                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
                  <div className="flex-1">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-[9px] font-black uppercase tracking-widest mb-6 border border-blue-100 dark:border-blue-800">
-                      <Sparkles size={12} fill="currentColor" /> Authorized Kenyan Engine
+                      <Sparkles size={12} fill="currentColor" /> {lang === 'sw' ? 'Injini ya Kurekebisha Mihuri' : 'Authorized Kenyan Engine'}
                     </div>
                     <h2 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-6 leading-none tracking-tight">
-                      {t.slogan} <span className="text-blue-600">Instant.</span>
+                      {t.slogan} <span className="text-blue-600">{lang === 'sw' ? 'Papohapo.' : 'Instant.'}</span>
                     </h2>
                     <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                      High-fidelity official digital stamps for Advocates, Schools, and Businesses. Authenticity guaranteed.
+                      {lang === 'sw' ? 'Mihuri ya kidijitali ya ubora wa juu kwa Mawakili, Shule, na Biashara. Uhakika wa kisheria.' : 'High-fidelity official digital stamps for Advocates, Schools, and Businesses. Authenticity guaranteed.'}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
                       <button onClick={() => setActiveTab('templates')} className="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl active:scale-95 flex items-center justify-center gap-2">
@@ -221,13 +221,12 @@ const App: React.FC = () => {
 
         {activeTab === 'templates' && (
           <div className="max-w-7xl mx-auto px-4 py-16 animate-in">
-             <TemplateLibrary onSelect={handleTemplateSelect} userTier={user?.tier || SubscriptionTier.FREE} onUpgrade={() => setActiveTab('pricing')} />
+             <TemplateLibrary t={t} onSelect={handleTemplateSelect} userTier={user?.tier || SubscriptionTier.FREE} onUpgrade={() => setActiveTab('pricing')} />
           </div>
         )}
 
         {activeTab === 'editor' && (
           <div className="flex flex-col lg:grid lg:grid-cols-12 min-h-[calc(100vh-80px)]">
-            {/* Live Preview - Sticky on Mobile */}
             <div className="lg:col-span-7 bg-slate-50/50 dark:bg-slate-900/50 p-4 lg:p-12 flex items-center justify-center sticky top-16 lg:static z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md lg:backdrop-blur-none border-b lg:border-none border-slate-100 dark:border-slate-800">
                <div className="w-full max-w-lg">
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-[40px] shadow-xl border border-slate-100 dark:border-slate-700 group transition-all">
@@ -244,13 +243,13 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            {/* Controls */}
             <div className="lg:col-span-5 p-4 lg:p-12 overflow-y-auto custom-scrollbar bg-slate-50/20 dark:bg-slate-950">
                <div className="flex items-center gap-3 mb-8">
                  <button onClick={() => setActiveTab('templates')} className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg dark:text-white"><ChevronLeft size={18} /></button>
                  <h2 className="text-xl font-black text-slate-900 dark:text-white">{t.editStamp}</h2>
                </div>
                <EditorControls 
+                 t={t}
                  config={stampConfig} 
                  onChange={(u) => setStampConfig(prev => ({ ...prev, ...u }))} 
                  userTier={user?.tier || SubscriptionTier.FREE}
@@ -263,9 +262,10 @@ const App: React.FC = () => {
         {activeTab === 'profile' && user && <ProfilePage user={user} onLogout={() => { setUser(null); setActiveTab('home'); }} />}
         {activeTab === 'admin' && user?.role === 'ADMIN' && <AdminPage />}
         {activeTab === 'blogs' && <BlogPage />}
-        {activeTab === 'pricing' && <SubscriptionPage onSelectPlan={() => setShowPayment(true)} />}
+        {activeTab === 'pricing' && <SubscriptionPage t={t} onSelectPlan={() => setShowPayment(true)} />}
         {activeTab === 'auth' && <AuthPage onSuccess={(u) => { setUser(u); setActiveTab('home'); }} onNavigateToPricing={() => setActiveTab('pricing')} />}
         {activeTab === 'bulk' && <BulkStamping />}
+        {activeTab === 'legal' && <LegalPage t={t} onBack={() => setActiveTab('home')} />}
       </main>
 
       {showPayment && (
@@ -283,12 +283,12 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 md:col-span-1 space-y-6">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
                 <div className="bg-blue-600 text-white p-1.5 rounded-xl"><Plus size={20} /></div>
                 <h3 className="text-xl font-black dark:text-white tracking-tighter">FreeStamps <span className="text-blue-600">KE</span></h3>
               </div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
-                The premier administrative engine for digital rubber stamps and official seals in Kenya. Trusted by advocates and enterprises nationwide.
+                {lang === 'sw' ? 'Injini kuu ya kiutawala kwa mihuri ya kidijitali nchini Kenya. Inatumiwa na mawakili na makampuni kote nchini.' : 'The premier administrative engine for digital rubber stamps and official seals in Kenya. Trusted by advocates and enterprises nationwide.'}
               </p>
               <div className="flex gap-4">
                 <button className="p-2 bg-white dark:bg-slate-800 rounded-lg text-slate-400 hover:text-blue-600 transition-all shadow-sm"><Facebook size={18} /></button>
@@ -299,33 +299,32 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Platform</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">{lang === 'sw' ? 'JUKWAA' : 'Platform'}</h4>
               <ul className="space-y-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                <li><button onClick={() => setActiveTab('templates')} className="hover:text-blue-600">Templates</button></li>
-                <li><button onClick={() => setActiveTab('bulk')} className="hover:text-blue-600">Bulk Generator</button></li>
-                <li><button onClick={() => setActiveTab('pricing')} className="hover:text-blue-600">Pricing</button></li>
-                <li><button onClick={() => setActiveTab('blogs')} className="hover:text-blue-600">Resources</button></li>
+                <li><button onClick={() => setActiveTab('templates')} className="hover:text-blue-600">{t.templates}</button></li>
+                <li><button onClick={() => setActiveTab('bulk')} className="hover:text-blue-600">{t.bulk}</button></li>
+                <li><button onClick={() => setActiveTab('pricing')} className="hover:text-blue-600">{t.pricing}</button></li>
+                <li><button onClick={() => setActiveTab('blogs')} className="hover:text-blue-600">{t.resources}</button></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Support</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">{lang === 'sw' ? 'MSAADA' : 'Support'}</h4>
               <ul className="space-y-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 <li><a href="#" className="hover:text-blue-600">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-600">Contact Us</a></li>
-                <li><a href="#" className="hover:text-blue-600">API Documentation</a></li>
+                <li><a href={`mailto:${t.legalPage.email}`} className="hover:text-blue-600">Contact Us</a></li>
                 <li><a href="#" className="hover:text-blue-600">Verify Seal</a></li>
               </ul>
             </div>
 
             <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Compliance</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">{lang === 'sw' ? 'UTII' : 'Compliance'}</h4>
               <ul className="space-y-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                <li><a href="#" className="hover:text-blue-600">{t.footerLegal}</a></li>
-                <li><a href="#" className="hover:text-blue-600">{t.footerPrivacy}</a></li>
-                <li><a href="#" className="hover:text-blue-600">{t.footerTerms}</a></li>
+                <li><button onClick={() => setActiveTab('legal')} className="hover:text-blue-600">{t.footerLegal}</button></li>
+                <li><button onClick={() => setActiveTab('legal')} className="hover:text-blue-600">{t.footerPrivacy}</button></li>
+                <li><button onClick={() => setActiveTab('legal')} className="hover:text-blue-600">{t.footerTerms}</button></li>
                 {user?.role === 'ADMIN' && (
-                  <li><button onClick={() => setActiveTab('admin')} className="text-amber-500 hover:underline">Secret Admin Terminal</button></li>
+                  <li><button onClick={() => setActiveTab('admin')} className="text-amber-500 hover:underline">{t.admin}</button></li>
                 )}
               </ul>
             </div>
