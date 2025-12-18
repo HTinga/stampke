@@ -202,7 +202,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans selection:bg-blue-100">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50">
+      <header className="bg-white backdrop-blur-xl border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('home')}>
             <div className="bg-blue-600 text-white p-2.5 rounded-2xl shadow-xl shadow-blue-200 group-hover:scale-110 transition-transform">
@@ -211,13 +211,13 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-black text-slate-900 tracking-tighter">FreeStamps <span className="text-blue-600">KE</span></h1>
           </div>
 
-          <nav className="hidden xl:flex items-center gap-8 text-[12px] font-black text-slate-500 uppercase tracking-widest">
-            <button onClick={() => setActiveTab('home')} className={`hover:text-blue-600 transition-colors ${activeTab === 'home' ? 'text-blue-600' : ''}`}>Home</button>
-            <button onClick={() => setActiveTab('templates')} className={`hover:text-blue-600 transition-colors ${activeTab === 'templates' ? 'text-blue-600' : ''}`}>Templates Library</button>
-            <button onClick={() => setActiveTab('bulk')} className={`hover:text-blue-600 transition-colors ${activeTab === 'bulk' ? 'text-blue-600' : ''}`}>Bulk Engine</button>
-            <button onClick={() => setActiveTab('convert')} className={`hover:text-blue-600 transition-colors ${activeTab === 'convert' ? 'text-blue-600' : ''}`}>AI Scan</button>
-            <button onClick={() => setActiveTab('blogs')} className={`hover:text-blue-600 transition-colors ${activeTab === 'blogs' ? 'text-blue-600' : ''}`}>Blogs</button>
-            <button onClick={() => setActiveTab('resources')} className={`hover:text-blue-600 transition-colors ${activeTab === 'resources' ? 'text-blue-600' : ''}`}>Resources</button>
+          <nav className="hidden xl:flex items-center gap-8 text-[12px] font-black text-slate-800 uppercase tracking-widest">
+            <button onClick={() => setActiveTab('home')} className={`hover:text-blue-600 transition-colors ${activeTab === 'home' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>Home</button>
+            <button onClick={() => setActiveTab('templates')} className={`hover:text-blue-600 transition-colors ${activeTab === 'templates' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>Templates Library</button>
+            <button onClick={() => setActiveTab('bulk')} className={`hover:text-blue-600 transition-colors ${activeTab === 'bulk' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>Bulk Engine</button>
+            <button onClick={() => setActiveTab('convert')} className={`hover:text-blue-600 transition-colors ${activeTab === 'convert' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>AI Scan</button>
+            <button onClick={() => setActiveTab('blogs')} className={`hover:text-blue-600 transition-colors ${activeTab === 'blogs' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>Blogs</button>
+            <button onClick={() => setActiveTab('resources')} className={`hover:text-blue-600 transition-colors ${activeTab === 'resources' ? 'text-blue-600 underline decoration-2 underline-offset-4' : ''}`}>Resources</button>
             
             {isLoggedIn ? (
               <button onClick={() => setActiveTab('account')} className="bg-slate-900 text-white px-5 py-3 rounded-2xl flex items-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
@@ -230,11 +230,30 @@ const App: React.FC = () => {
             )}
           </nav>
 
-          <button className="xl:hidden text-slate-600" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          <button className="xl:hidden text-slate-900 p-2 hover:bg-slate-50 rounded-xl transition-all" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </header>
+
+      {/* Mobile Navigation Menu */}
+      {isMobileMenuOpen && (
+        <div className="xl:hidden fixed inset-0 top-20 bg-white z-[60] animate-in fade-in slide-in-from-top-4 duration-300">
+          <nav className="p-8 flex flex-col gap-6 text-lg font-black text-slate-800 uppercase tracking-widest text-center">
+            <button onClick={() => { setActiveTab('home'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'home' ? 'text-blue-600' : ''}`}>Home</button>
+            <button onClick={() => { setActiveTab('templates'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'templates' ? 'text-blue-600' : ''}`}>Templates Library</button>
+            <button onClick={() => { setActiveTab('bulk'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'bulk' ? 'text-blue-600' : ''}`}>Bulk Engine</button>
+            <button onClick={() => { setActiveTab('convert'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'convert' ? 'text-blue-600' : ''}`}>AI Scan</button>
+            <button onClick={() => { setActiveTab('blogs'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'blogs' ? 'text-blue-600' : ''}`}>Blogs</button>
+            <button onClick={() => { setActiveTab('resources'); setIsMobileMenuOpen(false); }} className={`py-4 border-b border-slate-50 ${activeTab === 'resources' ? 'text-blue-600' : ''}`}>Resources</button>
+            {isLoggedIn ? (
+              <button onClick={() => { setActiveTab('account'); setIsMobileMenuOpen(false); }} className="mt-4 bg-slate-900 text-white py-5 rounded-3xl">Dashboard</button>
+            ) : (
+              <button onClick={() => { setShowAuthModal(true); setIsMobileMenuOpen(false); }} className="mt-4 bg-blue-600 text-white py-5 rounded-3xl shadow-xl shadow-blue-100">Client Login</button>
+            )}
+          </nav>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-x-hidden">
@@ -349,7 +368,7 @@ const App: React.FC = () => {
           </>
         )}
 
-        {/* Templates, Bulk, Editor, AI tabs remain unchanged as per request */}
+        {/* Templates tab */}
         {activeTab === 'templates' && (
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 animate-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Authentic Templates</h2>
@@ -358,12 +377,14 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* Bulk tab */}
         {activeTab === 'bulk' && (
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
             <BulkStamper config={stampConfig} onStartBulk={() => triggerPayment('bulk')} />
           </div>
         )}
 
+        {/* Editor tab */}
         {activeTab === 'editor' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8 min-h-[calc(100vh-64px)]">
             <div className="lg:col-span-5 border-r border-slate-100 bg-slate-50/30 p-4 md:p-8 order-2 lg:order-1">
@@ -393,6 +414,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* AI Convert tab */}
         {activeTab === 'convert' && (
           <div className="max-w-4xl mx-auto py-24 px-4 animate-in fade-in duration-500 text-center">
             <div className="bg-blue-600 text-white w-24 h-24 rounded-[36px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-blue-200">
@@ -417,6 +439,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* Blogs tab */}
         {activeTab === 'blogs' && (
           <div className="max-w-5xl mx-auto py-24 px-4">
             <h2 className="text-5xl font-black text-slate-900 mb-12 tracking-tighter">Expert Insights</h2>
@@ -439,6 +462,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* Resources tab */}
         {activeTab === 'resources' && (
           <div className="max-w-5xl mx-auto py-24 px-4">
             <h2 className="text-5xl font-black text-slate-900 mb-12 tracking-tighter text-center">Professional Downloads</h2>
@@ -518,7 +542,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Auth Modal & Payment Modal remain unchanged */}
+      {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-[48px] shadow-2xl max-w-md w-full p-12 relative">
@@ -536,6 +560,7 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Payment Modal */}
       {showPayment && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-[48px] shadow-2xl max-w-lg w-full p-12">

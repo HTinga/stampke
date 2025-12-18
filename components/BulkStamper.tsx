@@ -182,9 +182,9 @@ const BulkStamper: React.FC<BulkStamperProps> = ({ config, onStartBulk }) => {
       <div className="lg:col-span-4 space-y-8">
         <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm space-y-8">
           <header>
-            <div className="flex p-1.5 bg-slate-50 rounded-[28px] mb-8">
-              <button onClick={() => setMode('stamp')} className={`flex-1 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all ${mode === 'stamp' ? 'bg-white shadow-xl text-blue-600' : 'text-slate-400'}`}>Bulk Stamp</button>
-              <button onClick={() => setMode('sign')} className={`flex-1 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all ${mode === 'sign' ? 'bg-white shadow-xl text-blue-600' : 'text-slate-400'}`}>Bulk Sign</button>
+            <div className="flex p-1.5 bg-slate-200 rounded-[28px] mb-8">
+              <button onClick={() => setMode('stamp')} className={`flex-1 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all ${mode === 'stamp' ? 'bg-white shadow-xl text-blue-600' : 'text-slate-500'}`}>Bulk Stamp</button>
+              <button onClick={() => setMode('sign')} className={`flex-1 py-4 rounded-[22px] font-black text-xs uppercase tracking-widest transition-all ${mode === 'sign' ? 'bg-white shadow-xl text-blue-600' : 'text-slate-500'}`}>Bulk Sign</button>
             </div>
             <h3 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-3">
               <Settings2 size={28} className="text-blue-600" /> {mode === 'stamp' ? 'Stamp Specs' : 'Workflow'}
