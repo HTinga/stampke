@@ -13,6 +13,12 @@ export enum BorderStyle {
   DASHED = 'DASHED'
 }
 
+export enum SubscriptionTier {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  BUSINESS = 'BUSINESS'
+}
+
 export interface StampTemplate {
   id: string;
   name: string;
@@ -31,6 +37,7 @@ export interface StampTemplate {
   showDateLine?: boolean;
   showStars?: boolean;
   logoUrl?: string;
+  isPremium?: boolean;
 }
 
 export interface StampConfig {
@@ -67,7 +74,6 @@ export interface BlogPost {
   slug: string;
   excerpt: string;
   content: string;
-  // Added 'Official' to fix errors in constants.ts
   category: 'Legal' | 'Business' | 'Tutorial' | 'Kenya Trends' | 'Official';
   location?: string;
   date: string;

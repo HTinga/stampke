@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { BLOG_POSTS, BUSINESS_TEMPLATES } from '../constants';
 import { BlogPost } from '../types';
-import { Calendar, MapPin, Download, ArrowRight, FileText, ChevronLeft, Share2 } from 'lucide-react';
+import { Calendar, MapPin, Download, ArrowRight, FileText, ChevronLeft, Share2, BookOpen, Layers } from 'lucide-react';
 
 const BlogPage: React.FC = () => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
@@ -10,35 +10,51 @@ const BlogPage: React.FC = () => {
   if (selectedPost) {
     return (
       <div className="bg-white min-h-screen animate-in fade-in duration-500">
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto px-4 py-12 lg:py-24">
           <button 
             onClick={() => setSelectedPost(null)}
-            className="mb-10 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-colors"
+            className="mb-12 flex items-center gap-3 text-slate-500 font-black uppercase text-xs tracking-widest hover:text-blue-600 transition-colors"
           >
-            <ChevronLeft size={20} /> Back to Resources
+            <ChevronLeft size={16} /> Return to Resources
           </button>
           
-          <img src={selectedPost.image} alt={selectedPost.title} className="w-full h-96 object-cover rounded-[48px] mb-12 shadow-2xl" />
+          <img 
+            src={selectedPost.image} 
+            alt={selectedPost.title} 
+            className="w-full h-[350px] lg:h-[550px] object-cover rounded-[64px] mb-16 shadow-2xl border-4 border-white" 
+          />
           
-          <div className="flex items-center gap-6 text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest">
-            <span className="flex items-center gap-1.5"><Calendar size={14} /> {selectedPost.date}</span>
-            <span className="flex items-center gap-1.5 text-blue-600"><MapPin size={14} /> {selectedPost.location}</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] mb-8 tracking-tighter">
-            {selectedPost.title}
-          </h1>
-          
-          <div className="prose prose-slate max-w-none">
-            <p className="text-xl text-slate-600 font-medium leading-relaxed mb-8">
-              {selectedPost.content}
-            </p>
-            <div className="bg-slate-50 p-8 rounded-[32px] border border-slate-100 mt-12">
-               <h3 className="text-2xl font-black mb-4">Official Stamp Services in {selectedPost.location}</h3>
-               <p className="font-medium text-slate-500 leading-relaxed mb-6">
-                 We provide local support for businesses and legal practitioners in {selectedPost.location} looking for high-quality digital seals and rubber stamps. Our platform is optimized for the specific administrative standards of Kenyan counties.
-               </p>
-               <button className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-blue-700 shadow-xl transition-all">Create {selectedPost.location} Seal Now</button>
+          <div className="space-y-8">
+            <div className="flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <span className="flex items-center gap-2 bg-slate-100 px-4 py-1.5 rounded-full"><Calendar size={14} /> {selectedPost.date}</span>
+              <span className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full"><MapPin size={14} /> {selectedPost.location}, Kenya</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-7xl font-black text-slate-900 leading-[0.95] tracking-tighter">
+              {selectedPost.title}
+            </h1>
+            
+            <div className="prose prose-slate max-w-none">
+              <div className="whitespace-pre-wrap text-xl text-slate-600 font-medium leading-[1.7] space-y-10 first-letter:text-8xl first-letter:font-black first-letter:text-blue-600 first-letter:mr-4 first-letter:float-left first-letter:mt-2">
+                {selectedPost.content}
+              </div>
+              
+              {/* Contextual CTA inside the blog */}
+              <div className="mt-20 p-12 bg-slate-900 rounded-[64px] text-white flex flex-col md:flex-row items-center gap-12 overflow-hidden relative">
+                 <div className="flex-1 space-y-6 relative z-10">
+                    <h3 className="text-3xl font-black tracking-tight leading-tight">Authentic {selectedPost.location} Stamps?</h3>
+                    <p className="text-slate-400 font-medium leading-relaxed">
+                       Our administrative engine is optimized for high-court and school board standards. Join 10,000+ businesses using our digital assets.
+                    </p>
+                    <button className="bg-blue-600 text-white px-10 py-5 rounded-[28px] font-black hover:bg-blue-500 transition-all shadow-2xl shadow-blue-900/40 active:scale-95">
+                       Create Stamp for {selectedPost.location}
+                    </button>
+                 </div>
+                 <div className="w-64 h-64 bg-white/5 rounded-full flex items-center justify-center shrink-0 border border-white/10">
+                    <BookOpen size={80} className="text-blue-500 opacity-20" />
+                 </div>
+                 <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -48,69 +64,81 @@ const BlogPage: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen pb-20 animate-in fade-in duration-500">
-      <section className="bg-slate-50 py-24 px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter mb-6 leading-none">The Official <span className="text-blue-600">KE Registry.</span></h1>
+      <section className="bg-slate-50 py-24 lg:py-32 px-4 text-center relative overflow-hidden">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8 border border-blue-200">
+             Official KE Administrative Registry
+          </div>
+          <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter mb-8 leading-[0.9]">Insights on <br/><span className="text-blue-600">Administrative Trust.</span></h1>
           <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            20+ Expert guides on Kenyan administrative stamping, business templates, and legal requirements for all 47 counties.
+            Legal guides, high-court standards, and business stamp templates for the Silicon Savannah.
           </p>
         </div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] opacity-[0.05]"></div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 grid lg:grid-cols-12 gap-16 mt-16">
-        <div className="lg:col-span-8 space-y-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 grid lg:grid-cols-12 gap-16 mt-16 lg:-mt-16 relative z-20">
+        {/* Blog Feed */}
+        <div className="lg:col-span-8 space-y-16">
           {BLOG_POSTS.map(post => (
-            <article key={post.id} className="group cursor-pointer" onClick={() => setSelectedPost(post)}>
-              <div className="aspect-[16/9] md:aspect-video w-full rounded-[40px] overflow-hidden bg-slate-100 mb-8 relative shadow-lg">
-                <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute top-6 left-6 bg-blue-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  {post.category}
-                </div>
+            <article 
+              key={post.id} 
+              className="group cursor-pointer bg-white rounded-[64px] p-6 lg:p-10 border border-slate-100 hover:border-blue-500 shadow-2xl shadow-slate-200/40 transition-all flex flex-col md:flex-row gap-8 lg:gap-14"
+              onClick={() => setSelectedPost(post)}
+            >
+              <div className="w-full md:w-80 h-72 md:h-auto rounded-[48px] overflow-hidden bg-slate-100 shrink-0">
+                <img src={post.image} alt={post.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <span className="flex items-center gap-1.5"><Calendar size={14} /> {post.date}</span>
-                  {post.location && <span className="flex items-center gap-1.5 text-blue-600"><MapPin size={14} /> {post.location}</span>}
+              <div className="flex-1 flex flex-col justify-center space-y-5">
+                <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full">{post.category}</span>
+                  <span className="bg-slate-50 px-4 py-1.5 rounded-full">{post.date}</span>
                 </div>
-                <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors leading-tight">{post.title}</h2>
-                <p className="text-lg text-slate-500 leading-relaxed font-medium line-clamp-2">{post.excerpt}</p>
-                <button className="inline-flex items-center gap-2 text-blue-600 font-black uppercase text-xs tracking-widest group-hover:gap-4 transition-all">
-                  Read Full Guide <ArrowRight size={16} />
-                </button>
+                <h2 className="text-3xl lg:text-4xl font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors tracking-tight">{post.title}</h2>
+                <p className="text-lg text-slate-500 leading-relaxed font-medium line-clamp-3">{post.excerpt}</p>
+                <div className="pt-4">
+                  <span className="inline-flex items-center gap-3 text-slate-900 font-black uppercase text-[10px] tracking-[0.3em] group-hover:gap-6 transition-all">
+                    Read Analysis <ArrowRight size={18} className="text-blue-600" />
+                  </span>
+                </div>
               </div>
             </article>
           ))}
         </div>
 
-        <aside className="lg:col-span-4 space-y-12 h-fit lg:sticky lg:top-28">
-          <div className="bg-slate-900 rounded-[40px] p-8 text-white shadow-2xl">
-            <h3 className="text-2xl font-black mb-6 tracking-tight">Digital Templates</h3>
-            <p className="text-slate-400 text-sm mb-8 font-medium">Free downloadable resources for Kenyan enterprises. Perfectly sized for our digital stamps.</p>
-            <div className="space-y-4">
+        {/* Sidebar */}
+        <aside className="lg:col-span-4 space-y-12 h-fit lg:sticky lg:top-32">
+          {/* Templates Box */}
+          <div className="bg-slate-900 rounded-[64px] p-10 md:p-12 text-white shadow-2xl relative overflow-hidden">
+            <div className="bg-white/10 w-16 h-16 rounded-[24px] flex items-center justify-center mb-10"><FileText size={32} /></div>
+            <h3 className="text-3xl font-black mb-6 tracking-tight">Legal Assets</h3>
+            <p className="text-slate-400 text-sm mb-12 font-medium leading-relaxed">Download official letterheads and invoice formats standardized for Kenyan trade.</p>
+            <div className="space-y-6 relative z-10">
               {BUSINESS_TEMPLATES.map(tpl => (
-                <div key={tpl.id} className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors group">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase text-blue-400 tracking-widest">{tpl.type}</span>
-                    <Download size={14} className="text-slate-500 group-hover:text-white" />
+                <div key={tpl.id} className="p-6 bg-white/5 rounded-[32px] border border-white/10 hover:bg-white/15 transition-all flex items-center justify-between group">
+                  <div>
+                    <span className="text-[9px] font-black uppercase text-blue-400 tracking-widest block mb-1">{tpl.type}</span>
+                    <h4 className="font-bold text-white group-hover:text-blue-400 transition-colors">{tpl.name}</h4>
                   </div>
-                  <h4 className="font-bold text-white mb-1">{tpl.name}</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">{tpl.description}</p>
+                  <Download size={22} className="text-slate-600 group-hover:text-white transition-colors" />
                 </div>
               ))}
             </div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
           </div>
 
-          <div className="bg-blue-50 rounded-[40px] p-8 border border-blue-100 shadow-sm">
-             <div className="bg-blue-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-200">
-                <FileText size={24} />
+          {/* Ad/Promo */}
+          <div className="bg-blue-600 rounded-[64px] p-12 text-white relative overflow-hidden shadow-2xl shadow-blue-200">
+             <div className="relative z-10">
+               <h3 className="text-3xl font-black mb-5 tracking-tight leading-none">Bulk Stamping <br/>Engine</h3>
+               <p className="text-blue-100 text-sm mb-10 font-medium leading-relaxed">
+                 Are you a Cyber Cafe owner? Scale your administrative services. Automate 1000s of report cards instantly.
+               </p>
+               <button className="w-full bg-white text-blue-600 py-6 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-blue-50 transition-all shadow-xl active:scale-95">
+                  Access Bulk Tool <Layers size={18} />
+               </button>
              </div>
-             <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight leading-none">Bulk Stamping <br/>Request</h3>
-             <p className="text-slate-600 text-sm mb-6 leading-relaxed font-medium">
-               Need thousands of seals for reporting or bulk certificates? We offer enterprise-grade automated stamping services.
-             </p>
-             <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg">
-                Talk to Sales <Share2 size={16} />
-             </button>
+             <div className="absolute top-0 right-0 w-48 h-48 bg-white/15 rounded-full blur-3xl translate-x-10 translate-y-[-10px]"></div>
           </div>
         </aside>
       </div>
