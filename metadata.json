@@ -1,0 +1,7 @@
+{
+  "name": "FreeStamps KE",
+  "description": "Professional rubber stamp and seal builder. Create, customize, and download high-quality SVG/PNG stamps for your business. Powered by JijiTechy.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
