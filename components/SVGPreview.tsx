@@ -27,17 +27,15 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     showStars,
     distressLevel,
     isVintage,
-    logoUrl
+    logoUrl,
+    signatureUrl,
+    includeCertificate
   } = config;
 
-  // Coordinate system: 600x600 with safe margins
   const SIZE = 600;
   const viewBox = `0 0 ${SIZE} ${SIZE}`;
   const cx = SIZE / 2;
   const cy = SIZE / 2;
-  
-  // Adjusted radius to ensure OVALs with 1.3x width don't hit the 600px edge
-  // max width for oval will be 1.3 * 180 * 2 = 468px (plenty of room in 600px)
   const baseR = 180; 
   const r = shape === StampShape.OVAL ? baseR : baseR + 20;
 
@@ -47,7 +45,6 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   };
 
   const finalColors = getFinalColors();
-
   const getStrokeDashArray = () => {
     if (borderStyle === BorderStyle.DOTTED) return '3, 6';
     if (borderStyle === BorderStyle.DASHED) return '12, 6';
@@ -115,7 +112,6 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     if (shape === StampShape.ROUND || shape === StampShape.OVAL) {
       const rx = shape === StampShape.ROUND ? r - (fontSize * 0.7) : (r * 1.35) - (fontSize * 0.7);
       const ry = shape === StampShape.ROUND ? r - (fontSize * 0.7) : (r * 0.9) - (fontSize * 0.7);
-      
       const irx = rx - (fontSize * 1.1);
       const iry = ry - (fontSize * 1.1);
 
@@ -129,28 +125,20 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </defs>
           
           <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize}px` }}>
-            <textPath xlinkHref="#pathTop" startOffset="50%" textAnchor="middle">
-              {primaryText}
-            </textPath>
+            <textPath xlinkHref="#pathTop" startOffset="50%" textAnchor="middle">{primaryText}</textPath>
           </text>
           <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.7}px` }}>
-            <textPath xlinkHref="#pathBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">
-              {secondaryText}
-            </textPath>
+            <textPath xlinkHref="#pathBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">{secondaryText}</textPath>
           </text>
           
           {innerTopText && (
             <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px`, fontWeight: 'normal' }}>
-              <textPath xlinkHref="#pathInnerTop" startOffset="50%" textAnchor="middle">
-                {innerTopText}
-              </textPath>
+              <textPath xlinkHref="#pathInnerTop" startOffset="50%" textAnchor="middle">{innerTopText}</textPath>
             </text>
           )}
           {innerBottomText && (
             <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px`, fontWeight: 'normal' }}>
-              <textPath xlinkHref="#pathInnerBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">
-                {innerBottomText}
-              </textPath>
+              <textPath xlinkHref="#pathInnerBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">{innerBottomText}</textPath>
             </text>
           )}
 
@@ -163,14 +151,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           
           <g transform={`translate(${cx}, ${cy})`}>
             {logoUrl && (
-              <image 
-                href={logoUrl} 
-                x={-fontSize * 2} 
-                y={-fontSize * 4.5} 
-                width={fontSize * 4} 
-                height={fontSize * 4} 
-                style={{ opacity: 0.9, filter: `grayscale(1) contrast(10)` }} 
-              />
+              <image href={logoUrl} x={-fontSize * 2} y={-fontSize * 4.5} width={fontSize * 4} height={fontSize * 4} style={{ opacity: 0.9, filter: `grayscale(1) contrast(10)` }} />
             )}
             <g transform={`translate(0, ${logoUrl ? fontSize * 0.5 : 0})`}>
               {showDateLine && (
@@ -191,6 +172,9 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
                   SIGN: .................................
                 </text>
               )}
+              {signatureUrl && (
+                <image href={signatureUrl} x={-fontSize * 2.5} y={fontSize * 0.5} width={fontSize * 5} height={fontSize * 3} style={{ opacity: 0.8, filter: 'contrast(1.5) brightness(0.8)' }} />
+              )}
             </g>
           </g>
         </g>
@@ -200,47 +184,28 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     const rh = 300;
     return (
       <g>
-        <text x={cx} y={cy - rh/2 + 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.9}px` }}>
-          {primaryText}
-        </text>
-        
+        <text x={cx} y={cy - rh/2 + 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.9}px` }}>{primaryText}</text>
         <g transform={`translate(${cx}, ${cy})`}>
-          {logoUrl && (
-            <image 
-              href={logoUrl} 
-              x={-fontSize * 1.5} 
-              y={-fontSize * 4.8} 
-              width={fontSize * 3} 
-              height={fontSize * 3} 
-              style={{ filter: `grayscale(1) contrast(10)` }} 
-            />
-          )}
-          <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.6}px` }}>
-            {centerText}
-          </text>
+          {logoUrl && <image href={logoUrl} x={-fontSize * 1.5} y={-fontSize * 4.8} width={fontSize * 3} height={fontSize * 3} style={{ filter: `grayscale(1) contrast(10)` }} />}
+          <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.6}px` }}>{centerText}</text>
+          {signatureUrl && <image href={signatureUrl} x={-fontSize * 3} y={-fontSize * 1.5} width={fontSize * 6} height={fontSize * 4} style={{ opacity: 0.8 }} />}
         </g>
-
         {(centerSubText || showDateLine) && (
-          <text x={cx} y={cy + fontSize * 1.4} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.1}px` }}>
-            {centerSubText || 'DATE: ........................'}
-          </text>
+          <text x={cx} y={cy + fontSize * 1.4} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.1}px` }}>{centerSubText || 'DATE: ........................'}</text>
         )}
-
-        {showSignatureLine && (
-          <text x={cx} y={cy + rh/2 - 60} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px` }}>
-            SIGN: .............................................
-          </text>
-        )}
-
-        <text x={cx} y={cy + rh/2 - 30} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px`, fontWeight: 'normal' }}>
-          {secondaryText}
-        </text>
+        {showSignatureLine && <text x={cx} y={cy + rh/2 - 60} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px` }}>SIGN: .............................................</text>}
+        <text x={cx} y={cy + rh/2 - 30} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px`, fontWeight: 'normal' }}>{secondaryText}</text>
       </g>
     );
   };
 
   return (
     <div className={`relative flex items-center justify-center p-4 bg-white border border-dashed border-slate-200 rounded-[32px] overflow-hidden ${className}`}>
+        {includeCertificate && (
+           <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-emerald-100 z-20">
+             Authenticity Certificate Attached
+           </div>
+        )}
         <svg
           ref={ref}
           viewBox={viewBox}
@@ -255,7 +220,6 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               <feGaussianBlur stdDeviation={distressLevel * 0.8} />
             </filter>
           </defs>
-          
           {renderShape()}
           {renderText()}
         </svg>

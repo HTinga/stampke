@@ -57,4 +57,27 @@ export interface StampConfig {
   distressLevel: number;
   isVintage: boolean;
   logoUrl: string | null;
+  signatureUrl: string | null;
+  includeCertificate: boolean;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  // Added 'Official' to fix errors in constants.ts
+  category: 'Legal' | 'Business' | 'Tutorial' | 'Kenya Trends' | 'Official';
+  location?: string;
+  date: string;
+  image: string;
+}
+
+export interface BusinessTemplate {
+  id: string;
+  name: string;
+  type: 'Invoice' | 'Letterhead' | 'Contract';
+  description: string;
+  downloadUrl: string;
 }
