@@ -19,6 +19,19 @@ export enum SubscriptionTier {
   BUSINESS = 'BUSINESS'
 }
 
+export type UserRole = 'USER' | 'ADMIN';
+
+export interface UserAccount {
+  id: string;
+  email?: string;
+  whatsapp?: string;
+  role: UserRole;
+  tier: SubscriptionTier;
+  expiryDate: string | null;
+  status: 'ACTIVE' | 'DEACTIVATED';
+  joinedDate: string;
+}
+
 export interface StampTemplate {
   id: string;
   name: string;

@@ -17,10 +17,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     centerText,
     centerSubText,
     fontSize,
+    letterSpacing,
     borderColor,
     secondaryColor,
     borderWidth,
     borderStyle,
+    rotation,
     fontFamily,
     showSignatureLine,
     showDateLine,
@@ -81,7 +83,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         );
       case StampShape.RECTANGLE:
         const rw = 500;
-        const rh = 300;
+        const rh = 350;
         return (
           <>
             <rect x={cx - rw/2} y={cy - rh/2} width={rw} height={rh} rx={4} {...commonProps} />
@@ -105,7 +107,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
       fontFamily, 
       fontWeight: 'bold', 
       textTransform: 'uppercase' as const,
-      letterSpacing: '0.8px',
+      letterSpacing: `${letterSpacing}px`,
       filter: distressLevel > 0 ? "url(#distressFilter)" : "none"
     };
 
@@ -132,12 +134,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </text>
           
           {innerTopText && (
-            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px`, fontWeight: 'normal' }}>
+            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.45}px`, fontWeight: 'normal' }}>
               <textPath xlinkHref="#pathInnerTop" startOffset="50%" textAnchor="middle">{innerTopText}</textPath>
             </text>
           )}
           {innerBottomText && (
-            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px`, fontWeight: 'normal' }}>
+            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.45}px`, fontWeight: 'normal' }}>
               <textPath xlinkHref="#pathInnerBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">{innerBottomText}</textPath>
             </text>
           )}
@@ -155,20 +157,20 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             )}
             <g transform={`translate(0, ${logoUrl ? fontSize * 0.5 : 0})`}>
               {showDateLine && (
-                <text x={0} y={-fontSize * 0.8} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.7}px` }}>
+                <text x={0} y={-fontSize * 1.0} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.7}px` }}>
                   {centerSubText || 'DATE: .................'}
                 </text>
               )}
-              <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.2}px` }}>
+              <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.4}px` }}>
                 {centerText}
               </text>
               {!showDateLine && centerSubText && (
-                <text x={0} y={fontSize * 1.1} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.75}px`, fontWeight: 'normal' }}>
+                <text x={0} y={fontSize * 1.3} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px`, fontWeight: 'normal' }}>
                   {centerSubText}
                 </text>
               )}
               {showSignatureLine && (
-                <text x={0} y={fontSize * 2.5} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px` }}>
+                <text x={0} y={fontSize * 2.8} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px` }}>
                   SIGN: .................................
                 </text>
               )}
@@ -181,31 +183,49 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
       );
     }
 
-    const rh = 300;
+    // Rectangle text rendering with multi-line support
+    const rh = 350;
     return (
       <g>
-        <text x={cx} y={cy - rh/2 + 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.9}px` }}>{primaryText}</text>
-        <g transform={`translate(${cx}, ${cy})`}>
-          {logoUrl && <image href={logoUrl} x={-fontSize * 1.5} y={-fontSize * 4.8} width={fontSize * 3} height={fontSize * 3} style={{ filter: `grayscale(1) contrast(10)` }} />}
-          <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.6}px` }}>{centerText}</text>
-          {signatureUrl && <image href={signatureUrl} x={-fontSize * 3} y={-fontSize * 1.5} width={fontSize * 6} height={fontSize * 4} style={{ opacity: 0.8 }} />}
-        </g>
-        {(centerSubText || showDateLine) && (
-          <text x={cx} y={cy + fontSize * 1.4} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.1}px` }}>{centerSubText || 'DATE: ........................'}</text>
+        {primaryText && (
+          <text x={cx} y={cy - rh/2 + 55} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.8}px` }}>
+            {primaryText}
+          </text>
         )}
-        {showSignatureLine && <text x={cx} y={cy + rh/2 - 60} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px` }}>SIGN: .............................................</text>}
-        <text x={cx} y={cy + rh/2 - 30} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px`, fontWeight: 'normal' }}>{secondaryText}</text>
+        
+        <g transform={`translate(${cx}, ${cy - 10})`}>
+          {logoUrl && <image href={logoUrl} x={-fontSize * 1.5} y={-fontSize * 5} width={fontSize * 3} height={fontSize * 3} style={{ filter: `grayscale(1) contrast(10)` }} />}
+          
+          <text x={0} y={-fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.8}px`, letterSpacing: '4px' }}>
+            {centerText}
+          </text>
+          
+          {centerSubText && (
+            <text x={0} y={fontSize * 1.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.0}px` }}>
+              {centerSubText}
+            </text>
+          )}
+
+          {signatureUrl && (
+            <image href={signatureUrl} x={-fontSize * 3} y={-fontSize * 2} width={fontSize * 6} height={fontSize * 4} style={{ opacity: 0.8 }} />
+          )}
+        </g>
+
+        {showSignatureLine && (
+           <text x={cx} y={cy + rh/2 - 75} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px`, fontWeight: 'normal' }}>
+             SIGN: .............................................
+           </text>
+        )}
+
+        <text x={cx} y={cy + rh/2 - 35} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px`, fontWeight: 'normal' }}>
+          {secondaryText}
+        </text>
       </g>
     );
   };
 
   return (
     <div className={`relative flex items-center justify-center p-4 bg-white border border-dashed border-slate-200 rounded-[32px] overflow-hidden ${className}`}>
-        {includeCertificate && (
-           <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-emerald-100 z-20">
-             Authenticity Certificate Attached
-           </div>
-        )}
         <svg
           ref={ref}
           viewBox={viewBox}
@@ -220,10 +240,11 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               <feGaussianBlur stdDeviation={distressLevel * 0.8} />
             </filter>
           </defs>
-          {renderShape()}
-          {renderText()}
+          <g transform={`rotate(${rotation}, ${cx}, ${cy})`}>
+            {renderShape()}
+            {renderText()}
+          </g>
         </svg>
-        <div className={`absolute inset-0 pointer-events-none mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] transition-opacity ${isVintage ? 'opacity-30' : 'opacity-10'}`}></div>
     </div>
   );
 });
