@@ -67,4 +67,54 @@ export interface BulkDocument {
   size: number;
   pages: number;
   previewUrl?: string;
+  pagePreviews?: string[];
+}
+
+// Digital Signature Types
+export type FieldType = 'signature' | 'stamp' | 'date' | 'text' | 'initials';
+
+export interface SignField {
+  id: string;
+  type: FieldType;
+  x: number; // percentage
+  y: number; // percentage
+  page: number;
+  signerId: string;
+  value?: string;
+  isCompleted?: boolean;
+}
+
+export interface SignerInfo {
+  id: string;
+  name: string;
+  email: string;
+  role: 'signer' | 'approver' | 'viewer';
+  order: number;
+  status: 'pending' | 'viewed' | 'signed' | 'declined';
+  lastActivity?: string;
+  ip?: string;
+}
+
+export interface Envelope {
+  id: string;
+  title: string;
+  status: 'draft' | 'sent' | 'completed' | 'voided';
+  createdAt: string;
+  updatedAt: string;
+  documents: BulkDocument[];
+  signers: SignerInfo[];
+  fields: SignField[];
+  auditLog: AuditEntry[];
+  requiresPayment?: boolean;
+  paymentAmount?: number;
+  paymentStatus?: 'unpaid' | 'paid';
+}
+
+export interface AuditEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  user: string;
+  ip: string;
+  details: string;
 }
