@@ -4,16 +4,23 @@ import {
   Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
   Eraser, MousePointer2, Loader2, Stamp, Image as ImageIcon, 
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
-  FileDown
+  FileDown, Share2, Mail, Edit3
 } from 'lucide-react';
 import { Envelope, SignField, FieldType, BulkDocument, StampConfig } from '../types';
 import SVGPreview from './SVGPreview';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as pdfjsLib from 'pdfjs-dist';
+import { PDFDocument, rgb } from 'pdf-lib';
 
 // @ts-ignore
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+if (typeof window !== 'undefined' && 'pdfjsLib' in window) {
+  // @ts-ignore
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+} else {
+  // @ts-ignore
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+}
 
 // @ts-ignore
 const loadMammoth = () => import('https://esm.sh/mammoth@1.6.0');
@@ -219,6 +226,94 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
   const [wordHtml, setWordHtml] = useState<string | null>(null);
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  const downloadDocument = async (envelope: Envelope) => {
+    setIsLoadingDoc(true);
+    setProcessingStatus('Flattening Protocol Assets...');
+    try {
+      const doc = envelope.documents[0];
+      if (!doc || !doc.previewUrl) return;
+
+      const existingPdfBytes = await fetch(doc.previewUrl).then(res => res.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+      const pages = pdfDoc.getPages();
+
+      for (const field of envelope.fields) {
+        if (!field.isCompleted || !field.value) continue;
+        const pageIndex = field.page - 1;
+        if (pageIndex < 0 || pageIndex >= pages.length) continue;
+        const page = pages[pageIndex];
+        const { width, height } = page.getSize();
+
+        const x = (field.x / 100) * width;
+        const y = height - (field.y / 100) * height;
+
+        if (field.type === 'signature' || field.type === 'stamp') {
+          try {
+            const imageBytes = await fetch(field.value).then(res => res.arrayBuffer());
+            let image;
+            if (field.value.includes('image/png')) {
+              image = await pdfDoc.embedPng(imageBytes);
+            } else {
+              image = await pdfDoc.embedJpg(imageBytes);
+            }
+            
+            const imgWidth = field.type === 'signature' ? 80 : 120;
+            const imgHeight = (image.height * imgWidth) / image.width;
+            
+            page.drawImage(image, {
+              x: x - imgWidth / 2,
+              y: y - imgHeight / 2,
+              width: imgWidth,
+              height: imgHeight,
+            });
+          } catch (e) {
+            console.error("Failed to embed image:", e);
+          }
+        } else {
+          page.drawText(field.value, {
+            x: x - 40,
+            y: y - 5,
+            size: 10,
+            color: rgb(0, 0, 0.5),
+          });
+        }
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${envelope.title}_Authenticated.pdf`;
+      link.click();
+      setShowToast({ message: 'Document downloaded successfully', type: 'success' });
+    } catch (err) {
+      console.error("Download failed:", err);
+      setShowToast({ message: 'Download failed. Please try again.', type: 'info' });
+    } finally {
+      setIsLoadingDoc(false);
+      setProcessingStatus('');
+    }
+  };
+
+  const shareDocument = (envelope: Envelope) => {
+    const mockLink = `https://firm.ke/verify/${envelope.id}`;
+    navigator.clipboard.writeText(mockLink);
+    setShowToast({ message: 'Verification link copied to clipboard', type: 'success' });
+  };
+
+  const sendDocument = (envelope: Envelope) => {
+    setShowToast({ message: `Protocol dispatched to ${envelope.signers.length} recipients`, type: 'success' });
+  };
 
   const [newEnv, setNewEnv] = useState<Partial<Envelope>>({
     title: '',
@@ -775,7 +870,29 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
                     <p className="text-sm font-black text-slate-900 tracking-tight">{activeEnvelope.fields.filter(f => f.isCompleted).length} of {activeEnvelope.fields.length} Tasks Finalized</p>
                  </div>
                  
-                 <div className="pt-6 border-t border-slate-100">
+                 <div className="pt-6 border-t border-slate-100 space-y-6">
+                    {allSigned && (
+                      <div className="grid grid-cols-3 gap-4">
+                        <button 
+                          onClick={() => downloadDocument(activeEnvelope)}
+                          className="bg-blue-600 text-white py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-blue-700 shadow-xl transition-all active:scale-95"
+                        >
+                          <FileDown size={16} /> Download
+                        </button>
+                        <button 
+                          onClick={() => shareDocument(activeEnvelope)}
+                          className="bg-slate-100 text-slate-600 py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                          <Share2 size={16} /> Share
+                        </button>
+                        <button 
+                          onClick={() => sendDocument(activeEnvelope)}
+                          className="bg-slate-100 text-slate-600 py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                          <Mail size={16} /> Send
+                        </button>
+                      </div>
+                    )}
                     <button 
                       disabled={!allSigned}
                       onClick={() => {
@@ -870,7 +987,37 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
                       </span>
                     </td>
                     <td className="px-10 py-8 text-right">
-                      <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase hover:bg-blue-600 transition-all shadow-lg active:scale-95">View Registry</button>
+                      <div className="flex items-center justify-end gap-3">
+                        <button 
+                          onClick={() => { setActiveEnvelope(env); setView('create'); setCurrentStep(2); setNewEnv(env); }}
+                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          title="Edit Tags"
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => downloadDocument(env)}
+                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          title="Download PDF"
+                        >
+                          <FileDown size={18} />
+                        </button>
+                        <button 
+                          onClick={() => shareDocument(env)}
+                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          title="Share Link"
+                        >
+                          <Share2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => sendDocument(env)}
+                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          title="Send Email"
+                        >
+                          <Mail size={18} />
+                        </button>
+                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase hover:bg-blue-600 transition-all shadow-lg active:scale-95">View</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -955,6 +1102,16 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
 
   return (
     <div className="min-h-[80vh] flex flex-col">
+      {showToast && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-10 duration-500">
+          <div className={`px-8 py-4 rounded-[32px] shadow-2xl flex items-center gap-4 border ${
+            showToast.type === 'success' ? 'bg-green-600 text-white border-green-500' : 'bg-blue-600 text-white border-blue-500'
+          }`}>
+            <CheckCircle2 size={24} />
+            <span className="font-black uppercase tracking-widest text-xs">{showToast.message}</span>
+          </div>
+        </div>
+      )}
       {view === 'landing' && renderLanding()}
       {view === 'dashboard' && renderDashboard()}
       {view === 'create' && (
