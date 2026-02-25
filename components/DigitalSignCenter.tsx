@@ -227,6 +227,7 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
+  const pdfDataCache = useRef<Record<string, Uint8Array>>({});
 
   useEffect(() => {
     if (showToast) {
@@ -237,28 +238,68 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
 
   const downloadDocument = async (envelope: Envelope) => {
     setIsLoadingDoc(true);
-    setProcessingStatus('Flattening Protocol Assets...');
+    setProcessingStatus('Finalizing Authenticated Protocol...');
     try {
       const doc = envelope.documents[0];
-      if (!doc || !doc.previewUrl) return;
+      if (!doc) {
+        throw new Error("No document found in protocol");
+      }
 
-      const existingPdfBytes = await fetch(doc.previewUrl).then(res => res.arrayBuffer());
-      const pdfDoc = await PDFDocument.load(existingPdfBytes);
+      let existingPdfBytes: ArrayBuffer | Uint8Array;
+      
+      // Try cache first
+      if (pdfDataCache.current[doc.id]) {
+        existingPdfBytes = pdfDataCache.current[doc.id];
+      } else if (doc.previewUrl) {
+        // Fallback to fetch if not in cache (e.g. after some state updates)
+        const response = await fetch(doc.previewUrl);
+        if (!response.ok) throw new Error("Failed to fetch original document");
+        existingPdfBytes = await response.arrayBuffer();
+      } else {
+        throw new Error("Document source not found");
+      }
+      
+      // Validate PDF Header
+      const headerCheck = new Uint8Array(existingPdfBytes.slice(0, 5));
+      const header = Array.from(headerCheck).map(b => String.fromCharCode(b)).join('');
+      if (!header.startsWith('%PDF-')) {
+        console.error("Invalid PDF Header:", header);
+        throw new Error("The source file is not a valid PDF document (missing %PDF- header)");
+      }
+      
+      // Load the PDF
+      const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
       const pages = pdfDoc.getPages();
 
       for (const field of envelope.fields) {
         if (!field.isCompleted || !field.value) continue;
+        
         const pageIndex = field.page - 1;
         if (pageIndex < 0 || pageIndex >= pages.length) continue;
+        
         const page = pages[pageIndex];
         const { width, height } = page.getSize();
 
+        // Convert percentages to PDF coordinates (bottom-left origin)
         const x = (field.x / 100) * width;
         const y = height - (field.y / 100) * height;
 
         if (field.type === 'signature' || field.type === 'stamp') {
           try {
-            const imageBytes = await fetch(field.value).then(res => res.arrayBuffer());
+            let imageBytes: ArrayBuffer;
+            if (field.value.startsWith('data:')) {
+              const base64Data = field.value.split(',')[1];
+              const binaryString = window.atob(base64Data);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              imageBytes = bytes.buffer;
+            } else {
+              const imgRes = await fetch(field.value);
+              imageBytes = await imgRes.arrayBuffer();
+            }
+
             let image;
             if (field.value.includes('image/png')) {
               image = await pdfDoc.embedPng(imageBytes);
@@ -266,39 +307,45 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
               image = await pdfDoc.embedJpg(imageBytes);
             }
             
-            const imgWidth = field.type === 'signature' ? 80 : 120;
-            const imgHeight = (image.height * imgWidth) / image.width;
+            // Adjust size - signatures are usually smaller than stamps
+            const targetWidth = field.type === 'signature' ? 100 : 150;
+            const targetHeight = (image.height * targetWidth) / image.width;
             
             page.drawImage(image, {
-              x: x - imgWidth / 2,
-              y: y - imgHeight / 2,
-              width: imgWidth,
-              height: imgHeight,
+              x: x - targetWidth / 2,
+              y: y - targetHeight / 2,
+              width: targetWidth,
+              height: targetHeight,
             });
-          } catch (e) {
-            console.error("Failed to embed image:", e);
+          } catch (imgErr) {
+            console.error("Image embedding failed for field:", field.id, imgErr);
           }
         } else {
+          // For text and date fields
           page.drawText(field.value, {
-            x: x - 40,
+            x: x - 30,
             y: y - 5,
-            size: 10,
-            color: rgb(0, 0, 0.5),
+            size: 12,
+            color: rgb(0, 0, 0),
           });
         }
       }
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      const downloadUrl = URL.createObjectURL(blob);
+      
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `${envelope.title}_Authenticated.pdf`;
+      link.href = downloadUrl;
+      link.download = `${envelope.title}_Signed.pdf`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      
       setShowToast({ message: 'Document downloaded successfully', type: 'success' });
     } catch (err) {
       console.error("Download failed:", err);
-      setShowToast({ message: 'Download failed. Please try again.', type: 'info' });
+      setShowToast({ message: `Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'info' });
     } finally {
       setIsLoadingDoc(false);
       setProcessingStatus('');
@@ -409,7 +456,8 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
       return {
         url: URL.createObjectURL(new Blob([pdfData], { type: 'application/pdf' })),
         previews: pagePreviews,
-        pages: pdf.numPages
+        pages: pdf.numPages,
+        pdfData: pdfData
       };
     } catch (err) {
       console.error("Conversion failed:", err);
@@ -428,8 +476,13 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
     const result = await convertDocToPdf(file);
     if (!result) return;
 
+    const docId = Math.random().toString(36).substr(2, 9);
+    if (result.pdfData) {
+      pdfDataCache.current[docId] = result.pdfData;
+    }
+
     const docs: BulkDocument[] = [{
-      id: Math.random().toString(36).substr(2, 9),
+      id: docId,
       name: file.name,
       pages: result.pages,
       type: 'application/pdf',
@@ -619,141 +672,169 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
             </div>
          </div>
 
-         {/* Document Canvas - Maximized Focus */}
-         <div className="flex-1 bg-slate-800 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-12">
-            {isLoadingDoc && (
-              <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-xl">
-                <div className="relative">
-                  <Loader2 size={80} className="text-blue-500 animate-spin mb-8" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <FileCode size={32} className="text-blue-200 animate-pulse" />
-                  </div>
-                </div>
-                <p className="text-white font-black uppercase tracking-[0.3em] text-xl mb-2">Universal Protocol Processing</p>
-                <p className="text-blue-400 font-bold uppercase tracking-widest text-xs animate-pulse">{processingStatus}</p>
-              </div>
-            )}
-            
-            {activeDoc?.pagePreviews?.map((preview, idx) => (
-              <div 
-                key={idx}
-                onClick={(e) => handlePageClick(e, idx + 1)}
-                onPointerMove={handlePointerMove}
-                className="pdf-page-container w-full max-w-5xl bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-white/5"
-              >
-                 {/* High-Resolution Document Rendering */}
-                 <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-white">
-                    <img src={preview} className="w-full h-full object-contain" alt={`Page ${idx + 1}`} />
-                 </div>
-
-                 {/* Interaction Tag Layer */}
-                 <div className="absolute inset-0 z-10 w-full h-full bg-transparent">
-                    {newEnv.fields?.filter(f => f.page === idx + 1).map(field => {
-                      const signer = newEnv.signers?.find(s => s.id === field.signerId);
-                      return (
-                        <div 
-                          key={field.id}
-                          id={field.id}
-                          onPointerDown={(e) => {
-                            e.stopPropagation();
-                            setIsMoving(field.id);
-                          }}
-                          onPointerUp={handlePointerUp}
-                          className={`absolute -translate-x-1/2 -translate-y-1/2 p-3 rounded-2xl border-2 border-dashed shadow-2xl flex flex-col items-center justify-center group cursor-move transition-transform active:scale-110 ${
-                            field.signerId === selectedSignerId ? 'border-blue-500 bg-blue-500/5' : 'border-slate-300 bg-slate-300/5 opacity-50'
-                          }`}
-                          style={{ left: `${field.x}%`, top: `${field.y}%`, pointerEvents: 'auto', minWidth: '120px', touchAction: 'none' }}
-                        >
-                          {field.isCompleted ? (
-                            <div className="flex flex-col items-center gap-1">
-                               {field.type === 'signature' ? (
-                                 <img src={field.value} className="max-h-16 mix-blend-multiply" alt="Sig" />
-                               ) : field.type === 'stamp' ? (
-                                 <div className="scale-[0.2] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
-                               ) : (
-                                 <span className="font-bold text-blue-800 text-sm">{field.value}</span>
-                               )}
-                            </div>
-                          ) : (
-                            <>
-                              <div className={`p-2 rounded-xl mb-1.5 ${field.signerId === selectedSignerId ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'}`}>
-                                {field.type === 'signature' && <PenTool size={18} />}
-                                {field.type === 'stamp' && <Stamp size={18} />}
-                                {field.type === 'date' && <Calendar size={18} />}
-                                {field.type === 'text' && <Type size={18} />}
-                              </div>
-                              <div className="text-center">
-                                <span className={`text-[11px] font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-slate-600'}`}>{signer?.name || 'Signer'}</span>
-                                <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest text-slate-500">{field.type} Area</span>
-                              </div>
-                            </>
-                          )}
-                          
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setNewEnv(prev => ({ ...prev, fields: prev.fields?.filter(f => f.id !== field.id) }));
-                            }}
-                            className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                 </div>
-              </div>
-            ))}
-
-            {/* Preparation Tool Dock */}
-            <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[120] transition-all duration-500 ease-in-out w-[95%] max-w-3xl ${isAuthDockOpen ? 'translate-y-0' : 'translate-y-[calc(100%-60px)]'}`}>
-               <div className="bg-white/95 backdrop-blur-3xl border border-slate-200 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] rounded-[48px] px-10 pt-4 pb-12 flex flex-col items-center gap-8">
-                  <button onClick={() => setIsAuthDockOpen(!isAuthDockOpen)} className="w-20 h-2 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors"></button>
-                  
-                  <div className="flex items-center justify-between w-full gap-6">
-                     <div className="flex-1 flex items-center justify-around gap-4">
-                        {[
-                          { type: 'signature', label: 'Signature', icon: <PenTool size={24}/>, color: 'text-blue-600' },
-                          { type: 'stamp', label: 'Rubber Stamp', icon: <Stamp size={24}/>, color: 'text-orange-600' },
-                          { type: 'date', label: 'Date Tag', icon: <Calendar size={24}/>, color: 'text-green-600' },
-                          { type: 'text', label: 'Custom Text', icon: <Type size={24}/>, color: 'text-purple-600' }
-                        ].map(tag => (
-                          <div 
-                            key={tag.type}
-                            onClick={() => {
-                              if ((tag.type === 'signature' || tag.type === 'stamp') && selectedSignerId === 's-1') {
-                                setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
-                              } else {
-                                setDraggedFieldType(tag.type as FieldType);
-                              }
-                            }}
-                            className={`flex flex-col items-center gap-3 cursor-pointer transition-all ${draggedFieldType === tag.type ? 'scale-110' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
-                          >
-                             <div className={`bg-slate-50 p-6 rounded-[36px] border-2 transition-all ${draggedFieldType === tag.type ? 'border-blue-600 bg-white ring-[12px] ring-blue-50 shadow-inner' : 'border-transparent shadow-sm'} ${tag.color}`}>
-                                {tag.icon}
-                             </div>
-                             <span className="font-black text-[10px] uppercase tracking-widest text-slate-500">{tag.label}</span>
-                          </div>
-                        ))}
-                     </div>
-
-                     <div className="w-px h-24 bg-slate-200 mx-4 hidden md:block"></div>
-
-                     <button 
-                        disabled={newEnv.fields?.length === 0}
-                        onClick={() => setCurrentStep(3)} 
-                        className="bg-slate-900 text-white px-12 py-7 rounded-[32px] font-black text-lg hover:bg-blue-600 transition-all shadow-2xl disabled:opacity-20 flex items-center gap-4 active:scale-95"
-                      >
-                        Deploy <ChevronRight size={24} className="hidden lg:block" />
-                      </button>
-                  </div>
-                  {draggedFieldType && (
-                    <div className="flex items-center gap-3 text-blue-600 animate-pulse bg-blue-50 px-6 py-2 rounded-full border border-blue-100">
-                      <MousePointer2 size={18} />
-                      <p className="text-xs font-black uppercase tracking-widest">Select spot on document to place {draggedFieldType}</p>
+         {/* Main Workspace */}
+         <div className="flex-1 flex overflow-hidden relative">
+            {/* Preparation Tool Dock - Vertical Left */}
+            <div className="w-24 md:w-32 bg-white border-r border-slate-200 flex flex-col items-center py-10 z-[120] shadow-2xl shrink-0">
+               <div className="flex flex-col items-center gap-10 w-full overflow-y-auto custom-scrollbar px-2">
+                  {[
+                    { type: 'signature', label: 'Sign', icon: <PenTool size={24}/>, color: 'text-blue-600' },
+                    { type: 'stamp', label: 'Stamp', icon: <Stamp size={24}/>, color: 'text-orange-600' },
+                    { type: 'date', label: 'Date', icon: <Calendar size={24}/>, color: 'text-green-600' },
+                    { type: 'text', label: 'Text', icon: <Type size={24}/>, color: 'text-purple-600' }
+                  ].map(tag => (
+                    <div 
+                      key={tag.type}
+                      onClick={() => {
+                        if ((tag.type === 'signature' || tag.type === 'stamp') && selectedSignerId === 's-1') {
+                          setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
+                        } else {
+                          setDraggedFieldType(tag.type as FieldType);
+                        }
+                      }}
+                      className={`flex flex-col items-center gap-2 cursor-pointer transition-all w-full ${draggedFieldType === tag.type ? 'scale-110' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
+                    >
+                       <div className={`p-5 rounded-3xl border-2 transition-all flex items-center justify-center ${draggedFieldType === tag.type ? 'border-blue-600 bg-white ring-8 ring-blue-50 shadow-inner' : 'bg-slate-50 border-transparent shadow-sm'} ${tag.color}`}>
+                          {tag.icon}
+                       </div>
+                       <span className="font-black text-[9px] uppercase tracking-widest text-slate-500 text-center">{tag.label}</span>
                     </div>
-                  )}
+                  ))}
+
+                  <div className="w-12 h-px bg-slate-100 my-4"></div>
+
+                  <button 
+                    disabled={newEnv.fields?.length === 0}
+                    onClick={() => setCurrentStep(3)} 
+                    className="bg-slate-900 text-white p-5 rounded-3xl font-black text-xs hover:bg-blue-600 transition-all shadow-xl disabled:opacity-20 flex flex-col items-center gap-2 active:scale-95 mt-auto"
+                  >
+                    <ChevronRight size={24} />
+                    <span>DONE</span>
+                  </button>
                </div>
+            </div>
+
+            {/* Document Canvas - Maximized Focus */}
+            <div className="flex-1 bg-slate-800 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-12">
+               {isLoadingDoc && (
+                 <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-xl">
+                   <div className="relative">
+                     <Loader2 size={80} className="text-blue-500 animate-spin mb-8" />
+                     <div className="absolute inset-0 flex items-center justify-center">
+                       <FileCode size={32} className="text-blue-200 animate-pulse" />
+                     </div>
+                   </div>
+                   <p className="text-white font-black uppercase tracking-[0.3em] text-xl mb-2">Universal Protocol Processing</p>
+                   <p className="text-blue-400 font-bold uppercase tracking-widest text-xs animate-pulse">{processingStatus}</p>
+                 </div>
+               )}
+               
+               {activeDoc?.pagePreviews?.map((preview, idx) => (
+                 <div 
+                   key={idx}
+                   onClick={(e) => handlePageClick(e, idx + 1)}
+                   onPointerMove={handlePointerMove}
+                   className="pdf-page-container w-full max-w-5xl bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-white/5"
+                 >
+                    {/* High-Resolution Document Rendering */}
+                    <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-white">
+                       <img src={preview} className="w-full h-full object-contain" alt={`Page ${idx + 1}`} />
+                    </div>
+
+                    {/* Interaction Tag Layer */}
+                    <div className="absolute inset-0 z-10 w-full h-full bg-transparent">
+                       {newEnv.fields?.filter(f => f.page === idx + 1).map(field => {
+                         const signer = newEnv.signers?.find(s => s.id === field.signerId);
+                         return (
+                           <div 
+                             key={field.id}
+                             id={field.id}
+                             onPointerDown={(e) => {
+                               e.stopPropagation();
+                               setIsMoving(field.id);
+                             }}
+                             onPointerUp={handlePointerUp}
+                             className={`absolute -translate-x-1/2 -translate-y-1/2 p-3 rounded-2xl flex flex-col items-center justify-center group cursor-move transition-transform active:scale-110 ${
+                               field.isCompleted 
+                                 ? 'border-none shadow-none' 
+                                 : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-blue-500' : 'border-slate-300 opacity-50'}`
+                             }`}
+                             style={{ left: `${field.x}%`, top: `${field.y}%`, pointerEvents: 'auto', minWidth: '120px', touchAction: 'none' }}
+                           >
+                             {field.isCompleted ? (
+                               <div className="flex flex-col items-center gap-1">
+                                  {field.type === 'signature' ? (
+                                    <img src={field.value} className="max-h-16 mix-blend-multiply" alt="Sig" />
+                                  ) : field.type === 'stamp' ? (
+                                    <div className="scale-[0.2] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
+                                  ) : (
+                                    <span className="font-bold text-blue-800 text-sm">{field.value}</span>
+                                  )}
+                               </div>
+                             ) : (
+                               <>
+                                 <div className={`p-2 rounded-xl mb-1.5 ${field.signerId === selectedSignerId ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'}`}>
+                                   {field.type === 'signature' && <PenTool size={18} />}
+                                   {field.type === 'stamp' && <Stamp size={18} />}
+                                   {field.type === 'date' && <Calendar size={18} />}
+                                   {field.type === 'text' && <Type size={18} />}
+                                 </div>
+                                 <div className="text-center">
+                                   <span className={`text-[11px] font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-slate-600'}`}>{signer?.name || 'Signer'}</span>
+                                   <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest text-slate-500">{field.type} Area</span>
+                                 </div>
+                               </>
+                             )}
+                             
+                             <button 
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setNewEnv(prev => ({ ...prev, fields: prev.fields?.filter(f => f.id !== field.id) }));
+                               }}
+                               className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                             >
+                               <X size={12} />
+                             </button>
+                           </div>
+                         );
+                       })}
+                    </div>
+                 </div>
+               ))}
+               
+               {draggedFieldType && (
+                 <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[130] flex items-center gap-3 text-blue-600 animate-pulse bg-white/90 backdrop-blur-md px-8 py-4 rounded-full border border-blue-100 shadow-2xl">
+                   <MousePointer2 size={20} />
+                   <p className="text-sm font-black uppercase tracking-widest">Click on document to place {draggedFieldType}</p>
+                   <button onClick={() => setDraggedFieldType(null)} className="ml-4 p-2 hover:bg-slate-100 rounded-full transition-all"><X size={18}/></button>
+                 </div>
+               )}
+
+               {newEnv.fields && newEnv.fields.length > 0 && (
+                 <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">
+                    <button 
+                      onClick={() => downloadDocument(newEnv as Envelope)}
+                      className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all group relative"
+                    >
+                      <FileDown size={28} />
+                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Signed PDF</span>
+                    </button>
+                    <button 
+                      onClick={() => shareDocument(newEnv as Envelope)}
+                      className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
+                    >
+                      <Share2 size={28} />
+                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Copy Share Link</span>
+                    </button>
+                    <button 
+                      onClick={() => setCurrentStep(1)}
+                      className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
+                    >
+                      <Edit3 size={28} />
+                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Recipients</span>
+                    </button>
+                 </div>
+               )}
             </div>
          </div>
 
@@ -845,7 +926,7 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
                            ) : field.type === 'stamp' ? (
                              <div className="scale-[0.3] md:scale-[0.5] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
                            ) : (
-                             <span className="font-bold text-slate-900 text-xl bg-white/40 backdrop-blur-sm px-6 py-3 rounded-2xl border border-slate-200">{field.value}</span>
+                             <span className="font-bold text-slate-900 text-xl px-6 py-3">{field.value}</span>
                            )
                          ) : (
                            <div className="bg-blue-600/95 text-white px-8 py-6 rounded-[32px] border-2 border-white border-dashed shadow-2xl flex flex-col items-center gap-3 hover:bg-blue-700 transition-all animate-pulse">
@@ -935,6 +1016,35 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
             />
           </div>
         )}
+
+        {/* Floating Action Menu for Signer View */}
+        <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">
+           <button 
+             onClick={() => downloadDocument(activeEnvelope)}
+             className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all group relative"
+           >
+             <FileDown size={28} />
+             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Protocol</span>
+           </button>
+           <button 
+             onClick={() => shareDocument(activeEnvelope)}
+             className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
+           >
+             <Share2 size={28} />
+             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Share Link</span>
+           </button>
+           <button 
+             onClick={() => {
+               setNewEnv(activeEnvelope);
+               setCurrentStep(2);
+               setView('create');
+             }}
+             className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
+           >
+             <Edit3 size={28} />
+             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Tags</span>
+           </button>
+        </div>
       </div>
     );
   };

@@ -239,7 +239,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   };
 
   return (
-    <div className={`relative flex items-center justify-center p-4 bg-white border border-dashed border-gray-300 rounded-lg overflow-hidden ${className}`}>
+    <div className={`relative flex items-center justify-center p-4 rounded-lg overflow-hidden ${className}`}>
         <svg
           ref={ref}
           viewBox={viewBox}
