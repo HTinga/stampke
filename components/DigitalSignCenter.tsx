@@ -4,7 +4,7 @@ import {
   Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
   Eraser, MousePointer2, Loader2, Stamp, Image as ImageIcon, 
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
-  FileDown, Share2, Mail, Edit3
+  FileDown, Share2, Mail, Edit3, Check
 } from 'lucide-react';
 import { Envelope, SignField, FieldType, BulkDocument, StampConfig } from '../types';
 import SVGPreview from './SVGPreview';
@@ -27,6 +27,10 @@ const loadMammoth = () => import('https://esm.sh/mammoth@1.6.0');
 
 interface DigitalSignCenterProps {
   stampConfig: StampConfig;
+  onOpenStudio?: (fieldId?: string) => void;
+  pendingStampFieldId?: string | null;
+  onClearPendingField?: () => void;
+  isActive?: boolean;
 }
 
 const SIGNATURE_FONTS = [
@@ -216,7 +220,7 @@ const SignaturePad: React.FC<{
   );
 };
 
-export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProps) {
+export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingStampFieldId, onClearPendingField, isActive }: DigitalSignCenterProps) {
   const [view, setView] = useState<'landing' | 'dashboard' | 'create' | 'signer-view'>('landing');
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [activeEnvelope, setActiveEnvelope] = useState<Envelope | null>(null);
@@ -228,6 +232,60 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
   const pdfDataCache = useRef<Record<string, Uint8Array>>({});
+  const [localStampConfig, setLocalStampConfig] = useState<StampConfig>(stampConfig);
+  const [isEditingStamp, setIsEditingStamp] = useState(false);
+  const [isResizing, setIsResizing] = useState<string | null>(null);
+
+  // Sync local config with prop when it changes (e.g. from Studio)
+  useEffect(() => {
+    setLocalStampConfig(stampConfig);
+    
+    // If we have a pending field and we just returned from Studio, apply it
+    if (isActive && pendingStampFieldId && onClearPendingField) {
+      const applyPendingStamp = async () => {
+        // Wait a bit for the SVG to render
+        setTimeout(async () => {
+          const pngData = await captureStampAsPng();
+          if (pngData) {
+            handleSignatureCaptured(pngData, pendingStampFieldId);
+            onClearPendingField();
+            setShowToast({ message: 'Professional Seal Applied Successfully', type: 'success' });
+          }
+        }, 500);
+      };
+      applyPendingStamp();
+    }
+  }, [stampConfig, pendingStampFieldId, isActive]);
+
+  const captureStampAsPng = async (): Promise<string | null> => {
+    const svg = document.querySelector('#stamp-preview-container svg');
+    if (!svg) return null;
+
+    return new Promise((resolve) => {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      // Set dimensions to ensure high quality
+      canvas.width = 800;
+      canvas.height = 800;
+
+      img.onload = () => {
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Use white background for the stamp if needed, but usually transparent is better for PDFs
+          // However, some PDF viewers handle transparency poorly. Let's keep it transparent for now.
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    });
+  };
 
   useEffect(() => {
     if (showToast) {
@@ -245,93 +303,103 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
         throw new Error("No document found in protocol");
       }
 
-      let existingPdfBytes: ArrayBuffer | Uint8Array;
+      let sourceBytes: ArrayBuffer | Uint8Array;
       
       // Try cache first
       if (pdfDataCache.current[doc.id]) {
-        existingPdfBytes = pdfDataCache.current[doc.id];
+        sourceBytes = pdfDataCache.current[doc.id];
       } else if (doc.previewUrl) {
-        // Fallback to fetch if not in cache (e.g. after some state updates)
         const response = await fetch(doc.previewUrl);
         if (!response.ok) throw new Error("Failed to fetch original document");
-        existingPdfBytes = await response.arrayBuffer();
+        sourceBytes = await response.arrayBuffer();
       } else {
         throw new Error("Document source not found");
       }
+
+      const existingPdfBytes = sourceBytes instanceof Uint8Array 
+        ? sourceBytes.slice() 
+        : new Uint8Array(sourceBytes).slice();
       
-      // Validate PDF Header
-      const headerCheck = new Uint8Array(existingPdfBytes.slice(0, 5));
-      const header = Array.from(headerCheck).map(b => String.fromCharCode(b)).join('');
-      if (!header.startsWith('%PDF-')) {
-        console.error("Invalid PDF Header:", header);
-        throw new Error("The source file is not a valid PDF document (missing %PDF- header)");
-      }
-      
-      // Load the PDF
       const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
       const pages = pdfDoc.getPages();
+      
+      // Create a new PDF forced to A4 size
+      const newPdfDoc = await PDFDocument.create();
+      const A4_WIDTH = 595.28;
+      const A4_HEIGHT = 841.89;
 
-      for (const field of envelope.fields) {
-        if (!field.isCompleted || !field.value) continue;
+      for (let i = 0; i < pages.length; i++) {
+        const [embeddedPage] = await newPdfDoc.embedPdf(pdfDoc, [i]);
+        const newPage = newPdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
         
-        const pageIndex = field.page - 1;
-        if (pageIndex < 0 || pageIndex >= pages.length) continue;
+        // Calculate scaling to fit A4
+        const scale = Math.min(A4_WIDTH / embeddedPage.width, A4_HEIGHT / embeddedPage.height);
+        const xOffset = (A4_WIDTH - embeddedPage.width * scale) / 2;
+        const yOffset = (A4_HEIGHT - embeddedPage.height * scale) / 2;
         
-        const page = pages[pageIndex];
-        const { width, height } = page.getSize();
+        newPage.drawPage(embeddedPage, {
+          x: xOffset,
+          y: yOffset,
+          width: embeddedPage.width * scale,
+          height: embeddedPage.height * scale,
+        });
 
-        // Convert percentages to PDF coordinates (bottom-left origin)
-        const x = (field.x / 100) * width;
-        const y = height - (field.y / 100) * height;
+        // Draw fields for this page
+        for (const field of envelope.fields) {
+          if (!field.isCompleted || !field.value || field.page !== i + 1) continue;
+          
+          // Field coordinates are relative to the original page size
+          // We need to map them to the scaled page on A4
+          const fieldX = xOffset + (field.x / 100) * (embeddedPage.width * scale);
+          const fieldY = yOffset + (1 - field.y / 100) * (embeddedPage.height * scale);
 
-        if (field.type === 'signature' || field.type === 'stamp') {
-          try {
-            let imageBytes: ArrayBuffer;
-            if (field.value.startsWith('data:')) {
-              const base64Data = field.value.split(',')[1];
-              const binaryString = window.atob(base64Data);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
+          if (field.type === 'signature' || field.type === 'stamp') {
+            try {
+              let imageBytes: ArrayBuffer;
+              if (field.value.startsWith('data:')) {
+                const base64Data = field.value.split(',')[1];
+                const binaryString = window.atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let j = 0; j < binaryString.length; j++) {
+                  bytes[j] = binaryString.charCodeAt(j);
+                }
+                imageBytes = bytes.buffer;
+              } else {
+                const imgRes = await fetch(field.value);
+                imageBytes = await imgRes.arrayBuffer();
               }
-              imageBytes = bytes.buffer;
-            } else {
-              const imgRes = await fetch(field.value);
-              imageBytes = await imgRes.arrayBuffer();
-            }
 
-            let image;
-            if (field.value.includes('image/png')) {
-              image = await pdfDoc.embedPng(imageBytes);
-            } else {
-              image = await pdfDoc.embedJpg(imageBytes);
+              let image;
+              if (field.value.includes('image/png') || field.value.startsWith('data:image/png')) {
+                image = await newPdfDoc.embedPng(imageBytes);
+              } else {
+                image = await newPdfDoc.embedJpg(imageBytes);
+              }
+              
+              const targetWidth = field.width ? (field.width / 100) * (embeddedPage.width * scale) : (field.type === 'signature' ? 100 : 120);
+              const targetHeight = field.height ? (field.height / 100) * (embeddedPage.height * scale) : (image.height * targetWidth) / image.width;
+              
+              newPage.drawImage(image, {
+                x: fieldX - targetWidth / 2,
+                y: fieldY - targetHeight / 2,
+                width: targetWidth,
+                height: targetHeight,
+              });
+            } catch (imgErr) {
+              console.error("Image embedding failed for field:", field.id, imgErr);
             }
-            
-            // Adjust size - signatures are usually smaller than stamps
-            const targetWidth = field.type === 'signature' ? 100 : 150;
-            const targetHeight = (image.height * targetWidth) / image.width;
-            
-            page.drawImage(image, {
-              x: x - targetWidth / 2,
-              y: y - targetHeight / 2,
-              width: targetWidth,
-              height: targetHeight,
+          } else {
+            newPage.drawText(field.value, {
+              x: fieldX - 30,
+              y: fieldY - 5,
+              size: 12,
+              color: rgb(0, 0, 0),
             });
-          } catch (imgErr) {
-            console.error("Image embedding failed for field:", field.id, imgErr);
           }
-        } else {
-          // For text and date fields
-          page.drawText(field.value, {
-            x: x - 30,
-            y: y - 5,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
         }
       }
 
-      const pdfBytes = await pdfDoc.save();
+      const pdfBytes = await newPdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const downloadUrl = URL.createObjectURL(blob);
       
@@ -434,7 +502,8 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
 
       // Now render pages to images for tagging
       setProcessingStatus('Rendering Document Pages...');
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+      // Use a slice to prevent detachment of the original buffer if pdfjs transfers it to a worker
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
       const pdf = await loadingTask.promise;
       const pagePreviews: string[] = [];
 
@@ -508,29 +577,48 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isMoving) return;
-    const fieldElement = document.getElementById(isMoving);
-    if (!fieldElement) return;
-    const pageElement = fieldElement.closest('.pdf-page-container');
-    if (!pageElement) return;
+    if (isMoving) {
+      const fieldElement = document.getElementById(isMoving);
+      if (!fieldElement) return;
+      const pageElement = fieldElement.closest('.pdf-page-container');
+      if (!pageElement) return;
 
-    const rect = pageElement.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const rect = pageElement.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const constrainedX = Math.max(0, Math.min(100, x));
-    const constrainedY = Math.max(0, Math.min(100, y));
+      const constrainedX = Math.max(0, Math.min(100, x));
+      const constrainedY = Math.max(0, Math.min(100, y));
 
-    setNewEnv(prev => ({
-      ...prev,
-      fields: prev.fields?.map(f => f.id === isMoving ? { ...f, x: constrainedX, y: constrainedY } : f)
-    }));
+      setNewEnv(prev => ({
+        ...prev,
+        fields: prev.fields?.map(f => f.id === isMoving ? { ...f, x: constrainedX, y: constrainedY } : f)
+      }));
+    } else if (isResizing) {
+      const fieldElement = document.getElementById(isResizing);
+      if (!fieldElement) return;
+      const pageElement = fieldElement.closest('.pdf-page-container');
+      if (!pageElement) return;
+      const field = newEnv.fields?.find(f => f.id === isResizing);
+      if (!field) return;
+
+      const rect = pageElement.getBoundingClientRect();
+      const currentX = ((e.clientX - rect.left) / rect.width) * 100;
+      const currentY = ((e.clientY - rect.top) / rect.height) * 100;
+
+      const newWidth = Math.max(5, (currentX - field.x) * 2);
+      const newHeight = Math.max(5, (currentY - field.y) * 2);
+
+      setNewEnv(prev => ({
+        ...prev,
+        fields: prev.fields?.map(f => f.id === isResizing ? { ...f, width: newWidth, height: newHeight } : f)
+      }));
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (isMoving) {
-      setIsMoving(null);
-    }
+    setIsMoving(null);
+    setIsResizing(null);
   };
 
   const handlePageClick = (e: React.MouseEvent, pageNum: number) => {
@@ -545,6 +633,8 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
       type: draggedFieldType,
       x,
       y,
+      width: draggedFieldType === 'stamp' ? 15 : 10,
+      height: draggedFieldType === 'stamp' ? 10 : 5,
       page: pageNum,
       signerId: selectedSignerId,
       value: capturedValue || undefined,
@@ -588,22 +678,24 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
     setCurrentStep(1);
   };
 
-  const handleSignatureCaptured = (url: string) => {
-    if (showSignPad?.isDesignerPlacement) {
-      if (showSignPad.fieldId) {
+  const handleSignatureCaptured = (url: string, specificFieldId?: string) => {
+    const targetFieldId = specificFieldId || showSignPad?.fieldId;
+
+    if (showSignPad?.isDesignerPlacement || specificFieldId) {
+      if (targetFieldId) {
         // Legacy path for existing fields
         setNewEnv(prev => ({
           ...prev,
-          fields: prev.fields?.map(f => f.id === showSignPad.fieldId ? { ...f, value: url, isCompleted: true } : f)
+          fields: prev.fields?.map(f => f.id === targetFieldId ? { ...f, value: url, isCompleted: true } : f)
         }));
       } else {
         // New immediate capture path
         setCapturedValue(url);
-        setDraggedFieldType(showSignPad.type || 'signature');
+        setDraggedFieldType(showSignPad?.type || 'signature');
       }
     } else if (activeEnvelope) {
       // Signer view mode
-      const updatedFields = activeEnvelope.fields.map(f => f.id === showSignPad?.fieldId ? { ...f, isCompleted: true, value: url } : f);
+      const updatedFields = activeEnvelope.fields.map(f => f.id === targetFieldId ? { ...f, isCompleted: true, value: url } : f);
       const updatedEnvelope = { 
         ...activeEnvelope, 
         fields: updatedFields,
@@ -759,14 +851,24 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
                                  ? 'border-none shadow-none' 
                                  : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-blue-500' : 'border-slate-300 opacity-50'}`
                              }`}
-                             style={{ left: `${field.x}%`, top: `${field.y}%`, pointerEvents: 'auto', minWidth: '120px', touchAction: 'none' }}
+                             style={{ 
+                               left: `${field.x}%`, 
+                               top: `${field.y}%`, 
+                               width: field.width ? `${field.width}%` : 'auto',
+                               height: field.height ? `${field.height}%` : 'auto',
+                               pointerEvents: 'auto', 
+                               minWidth: '120px', 
+                               touchAction: 'none' 
+                             }}
                            >
                              {field.isCompleted ? (
-                               <div className="flex flex-col items-center gap-1">
+                               <div className="flex flex-col items-center gap-1 w-full h-full justify-center">
                                   {field.type === 'signature' ? (
-                                    <img src={field.value} className="max-h-16 mix-blend-multiply" alt="Sig" />
+                                    <img src={field.value} className="max-w-full max-h-full object-contain mix-blend-multiply" alt="Sig" />
                                   ) : field.type === 'stamp' ? (
-                                    <div className="scale-[0.2] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
+                                    <div className="w-full h-full flex items-center justify-center mix-blend-multiply">
+                                      <div className="scale-[0.5] origin-center"><SVGPreview config={localStampConfig} /></div>
+                                    </div>
                                   ) : (
                                     <span className="font-bold text-blue-800 text-sm">{field.value}</span>
                                   )}
@@ -784,6 +886,19 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
                                    <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest text-slate-500">{field.type} Area</span>
                                  </div>
                                </>
+                             )}
+                             
+                             {!field.isCompleted && (
+                               <div 
+                                 onPointerDown={(e) => {
+                                   e.stopPropagation();
+                                   setIsResizing(field.id);
+                                   (e.target as HTMLElement).setPointerCapture(e.pointerId);
+                                 }}
+                                 className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize bg-blue-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                               >
+                                 <Maximize2 size={10} />
+                               </div>
                              )}
                              
                              <button 
@@ -842,36 +957,82 @@ export default function DigitalSignCenter({ stampConfig }: DigitalSignCenterProp
          {showSignPad && (
            <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-6">
               {(showSignPad.type === 'stamp' || (showSignPad.fieldId && newEnv.fields?.find(f => f.id === showSignPad.fieldId)?.type === 'stamp')) ? (
-                <div className="bg-white p-10 rounded-[48px] shadow-2xl max-w-xl w-full animate-in zoom-in text-center">
-                   <h4 className="text-3xl font-black text-slate-900 mb-6">Apply Professional Seal</h4>
-                   <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100 mb-8 scale-[1.2]">
-                      <SVGPreview config={stampConfig} />
-                   </div>
-                   <div className="grid grid-cols-2 gap-4">
-                      <button onClick={() => setShowSignPad(null)} className="py-5 rounded-2xl font-black text-slate-400 bg-slate-100">Discard</button>
-                      <button 
-                        onClick={() => {
-                          const svg = document.querySelector('svg');
-                          if (svg) {
-                            const svgData = new XMLSerializer().serializeToString(svg);
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            const img = new Image();
-                            img.onload = () => {
-                              canvas.width = img.width;
-                              canvas.height = img.height;
-                              ctx?.drawImage(img, 0, 0);
-                              handleSignatureCaptured(canvas.toDataURL('image/png'));
-                            };
-                            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-                          }
-                        }} 
-                        className="py-5 rounded-2xl font-black text-white bg-blue-600 shadow-xl"
-                      >
-                        Use Current Seal
-                      </button>
-                   </div>
-                </div>
+                 <div className="bg-white p-12 rounded-[64px] shadow-2xl max-w-5xl w-full animate-in zoom-in overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                      {/* Left Side: Preview */}
+                      <div className="bg-slate-50 p-12 rounded-[48px] border border-slate-100 flex items-center justify-center shadow-inner min-h-[400px]" id="stamp-preview-container">
+                         <div className="scale-[1.5] origin-center">
+                           <SVGPreview config={localStampConfig} />
+                         </div>
+                      </div>
+
+                      {/* Right Side: Controls */}
+                      <div className="flex flex-col justify-center space-y-8">
+                        <div>
+                          <h4 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4">Apply Seal</h4>
+                          <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Professional Authentication Protocol</p>
+                        </div>
+
+                        {isEditingStamp ? (
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">Primary Text</label>
+                              <input 
+                                type="text" 
+                                value={localStampConfig.primaryText} 
+                                onChange={e => setLocalStampConfig(prev => ({ ...prev, primaryText: e.target.value }))}
+                                className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">Center Text</label>
+                              <input 
+                                type="text" 
+                                value={localStampConfig.centerText} 
+                                onChange={e => setLocalStampConfig(prev => ({ ...prev, centerText: e.target.value }))}
+                                className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                              />
+                            </div>
+                            <button 
+                              onClick={() => setIsEditingStamp(false)}
+                              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl hover:bg-blue-600 transition-all"
+                            >
+                              Done Customizing
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-4">
+                            <button 
+                              onClick={async () => {
+                                const pngData = await captureStampAsPng();
+                                if (pngData) {
+                                  handleSignatureCaptured(pngData);
+                                }
+                              }} 
+                              className="w-full py-6 rounded-3xl font-black text-white bg-blue-600 shadow-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 text-lg"
+                            >
+                              <Check size={24} /> Use This Seal
+                            </button>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <button 
+                                onClick={() => onOpenStudio ? onOpenStudio(showSignPad?.fieldId) : setIsEditingStamp(true)}
+                                className="py-5 rounded-3xl font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all flex items-center justify-center gap-2"
+                              >
+                                <Edit3 size={18} /> {onOpenStudio ? 'Open Studio' : 'Customize'}
+                              </button>
+                              <button 
+                                onClick={() => setShowSignPad(null)}
+                                className="py-5 rounded-3xl font-black text-slate-400 bg-slate-100 hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                              >
+                                <X size={18} /> Discard
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                 </div>
               ) : (
                 <SignaturePad 
                   onCancel={() => setShowSignPad(null)}

@@ -78,6 +78,8 @@ export interface SignField {
   type: FieldType;
   x: number; // percentage
   y: number; // percentage
+  width?: number; // percentage of page width
+  height?: number; // percentage of page height
   page: number;
   signerId: string;
   value?: string;

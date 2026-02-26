@@ -41,7 +41,9 @@ import {
   MessageSquare,
   Twitter,
   Linkedin,
-  Github
+  Github,
+  FileText,
+  Check
 } from 'lucide-react';
 import { StampConfig, StampTemplate, StampShape } from './types';
 import { DEFAULT_CONFIG, TEMPLATES } from './constants';
@@ -123,8 +125,11 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
+  const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
 
   const handleTemplateSelect = (template: StampTemplate) => {
     setStampConfig({
@@ -325,11 +330,21 @@ const App: React.FC = () => {
           </>
         )}
 
-        {activeTab === 'esign' && (
+        <div className={activeTab === 'esign' ? 'block' : 'hidden'}>
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
-            <DigitalSignCenter stampConfig={stampConfig} />
+            <DigitalSignCenter 
+              stampConfig={stampConfig} 
+              onOpenStudio={(fieldId) => {
+                setOpenedFromSignCenter(true);
+                setPendingStampFieldId(fieldId || null);
+                setActiveTab('editor');
+              }}
+              pendingStampFieldId={pendingStampFieldId}
+              onClearPendingField={() => setPendingStampFieldId(null)}
+              isActive={activeTab === 'esign'}
+            />
           </div>
-        )}
+        </div>
 
         {activeTab === 'templates' && (
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 animate-in slide-in-from-bottom-4 duration-500">
@@ -347,8 +362,20 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-8 min-h-[calc(100vh-64px)]">
             <div className="lg:col-span-5 border-r border-slate-100 bg-slate-50/30 p-4 md:p-8 order-2 lg:order-1">
               <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => setActiveTab('templates')} className="p-2 hover:bg-white rounded-xl shadow-sm border border-slate-100 transition-all"><ChevronLeft size={20} /></button>
+                <button onClick={() => {
+                  if (openedFromSignCenter) {
+                    setActiveTab('esign');
+                    setOpenedFromSignCenter(false);
+                  } else {
+                    setActiveTab('templates');
+                  }
+                }} className="p-2 hover:bg-white rounded-xl shadow-sm border border-slate-100 transition-all"><ChevronLeft size={20} /></button>
                 <h2 className="text-2xl font-black tracking-tight text-slate-900">Custom Builder</h2>
+                {openedFromSignCenter && (
+                  <div className="ml-auto bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    Linked to Sign Center
+                  </div>
+                )}
               </div>
               <EditorControls config={stampConfig} onChange={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))} />
             </div>
@@ -360,12 +387,26 @@ const App: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                  <button onClick={() => triggerPayment('single')} className="flex-1 bg-blue-600 text-white py-5 px-10 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95">
-                    <Download size={24} /> Download SVG
-                  </button>
-                  <button onClick={() => setActiveTab('bulk')} className="flex-1 bg-slate-900 text-white py-5 px-10 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95">
-                    <Copy size={24} className="text-blue-400" /> Use for Bulk Run
-                  </button>
+                  {openedFromSignCenter ? (
+                    <button 
+                      onClick={() => {
+                        setActiveTab('esign');
+                        setOpenedFromSignCenter(false);
+                      }} 
+                      className="w-full bg-blue-600 text-white py-6 px-10 rounded-2xl font-black text-xl flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all active:scale-95"
+                    >
+                      <Check size={28} /> Done Editing
+                    </button>
+                  ) : (
+                    <>
+                      <button onClick={() => triggerPayment('single')} className="flex-1 bg-blue-600 text-white py-5 px-10 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95">
+                        <Download size={24} /> Download SVG
+                      </button>
+                      <button onClick={() => setActiveTab('bulk')} className="flex-1 bg-slate-900 text-white py-5 px-10 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95">
+                        <Copy size={24} className="text-blue-400" /> Use for Bulk Run
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
