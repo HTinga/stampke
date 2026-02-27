@@ -33,7 +33,7 @@ interface PDFFile {
 
 interface EditElement {
   id: string;
-  type: 'text' | 'image';
+  type: 'text' | 'image' | 'whiteout';
   page: number;
   x: number;
   y: number;
@@ -42,6 +42,8 @@ interface EditElement {
   color?: string;
   width?: number;
   height?: number;
+  isBold?: boolean;
+  isItalic?: boolean;
 }
 
 export default function PDFTools() {
@@ -291,7 +293,10 @@ export default function PDFTools() {
       const bytes = await f.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(bytes);
       const pages = pdfDoc.getPages();
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const standardFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+      const boldItalicFont = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique);
 
       for (const el of editElements) {
         const page = pages[el.page];
@@ -303,12 +308,25 @@ export default function PDFTools() {
           const g = parseInt(hex.slice(3, 5), 16) / 255;
           const b = parseInt(hex.slice(5, 7), 16) / 255;
 
+          let selectedFont = standardFont;
+          if (el.isBold && el.isItalic) selectedFont = boldItalicFont;
+          else if (el.isBold) selectedFont = boldFont;
+          else if (el.isItalic) selectedFont = italicFont;
+
           page.drawText(el.content, {
             x: (el.x / 100) * width,
             y: height - (el.y / 100) * height,
             size: el.fontSize || 12,
-            font,
+            font: selectedFont,
             color: rgb(r, g, b),
+          });
+        } else if (el.type === 'whiteout') {
+          page.drawRectangle({
+            x: (el.x / 100) * width,
+            y: height - (el.y / 100) * height - (el.height || 20),
+            width: el.width || 100,
+            height: el.height || 20,
+            color: rgb(1, 1, 1),
           });
         }
       }
@@ -434,7 +452,24 @@ export default function PDFTools() {
       y,
       content: 'Type something...',
       fontSize: 14,
-      color: '#000000'
+      color: '#000000',
+      isBold: false,
+      isItalic: false
+    };
+    setEditElements([...editElements, newEl]);
+    setSelectedElementId(newEl.id);
+  };
+
+  const addWhiteoutElement = (x = 50, y = 50) => {
+    const newEl: EditElement = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'whiteout',
+      page: currentPage,
+      x,
+      y,
+      content: '',
+      width: 100,
+      height: 20
     };
     setEditElements([...editElements, newEl]);
     setSelectedElementId(newEl.id);
@@ -618,8 +653,11 @@ export default function PDFTools() {
                            >
                              <Type size={18} /> Add Text
                            </button>
-                           <button className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all opacity-50 cursor-not-allowed">
-                             <ImageIcon size={18} /> Add Image
+                           <button 
+                             onClick={() => addWhiteoutElement()}
+                             className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+                           >
+                             <Scissors size={18} /> Whiteout / Erase
                            </button>
                         </div>
 
@@ -668,6 +706,46 @@ export default function PDFTools() {
                                    {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map(s => <option key={s} value={s}>{s}px</option>)}
                                  </select>
                                </div>
+                               {editElements.find(el => el.id === selectedElementId)?.type === 'text' && (
+                                 <>
+                                   <div className="w-px h-6 bg-slate-100"></div>
+                                   <button 
+                                     onClick={() => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, isBold: !el.isBold } : el))}
+                                     className={`p-2 rounded-lg font-black text-xs ${editElements.find(el => el.id === selectedElementId)?.isBold ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600'}`}
+                                   >
+                                     B
+                                   </button>
+                                   <button 
+                                     onClick={() => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, isItalic: !el.isItalic } : el))}
+                                     className={`p-2 rounded-lg font-black text-xs italic ${editElements.find(el => el.id === selectedElementId)?.isItalic ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600'}`}
+                                   >
+                                     I
+                                   </button>
+                                 </>
+                               )}
+                               {editElements.find(el => el.id === selectedElementId)?.type === 'whiteout' && (
+                                 <>
+                                   <div className="w-px h-6 bg-slate-100"></div>
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">W</span>
+                                     <input 
+                                       type="number" 
+                                       value={editElements.find(el => el.id === selectedElementId)?.width || 100}
+                                       onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, width: parseInt(e.target.value) } : el))}
+                                       className="w-12 bg-slate-50 border-none rounded-lg px-2 py-1 text-xs font-bold outline-none"
+                                     />
+                                   </div>
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">H</span>
+                                     <input 
+                                       type="number" 
+                                       value={editElements.find(el => el.id === selectedElementId)?.height || 20}
+                                       onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, height: parseInt(e.target.value) } : el))}
+                                       className="w-12 bg-slate-50 border-none rounded-lg px-2 py-1 text-xs font-bold outline-none"
+                                     />
+                                   </div>
+                                 </>
+                               )}
                                <div className="w-px h-6 bg-slate-100"></div>
                                <div className="flex items-center gap-2">
                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Color</span>
@@ -731,19 +809,26 @@ export default function PDFTools() {
                                    onClick={(e) => { e.stopPropagation(); setSelectedElementId(el.id); }}
                                  >
                                     <div className="bg-transparent border-none outline-none min-w-[50px]">
-                                       <input 
-                                         type="text" 
-                                         autoFocus={selectedElementId === el.id}
-                                         value={el.content}
-                                         onChange={(e) => {
-                                           setEditElements(prev => prev.map(item => item.id === el.id ? { ...item, content: e.target.value } : item));
-                                         }}
-                                         className="bg-transparent border-none outline-none w-full font-bold text-slate-900 placeholder-slate-300"
-                                         style={{ 
-                                           fontSize: `${el.fontSize}px`,
-                                           color: el.color || '#000000'
-                                         }}
-                                       />
+                                       {el.type === 'text' ? (
+                                         <input 
+                                           type="text" 
+                                           autoFocus={selectedElementId === el.id}
+                                           value={el.content}
+                                           onChange={(e) => {
+                                             setEditElements(prev => prev.map(item => item.id === el.id ? { ...item, content: e.target.value } : item));
+                                           }}
+                                           className={`bg-transparent border-none outline-none w-full text-slate-900 placeholder-slate-300 ${el.isBold ? 'font-black' : 'font-bold'} ${el.isItalic ? 'italic' : ''}`}
+                                           style={{ 
+                                             fontSize: `${el.fontSize}px`,
+                                             color: el.color || '#000000'
+                                           }}
+                                         />
+                                       ) : (
+                                         <div 
+                                           className="bg-white border border-slate-200 shadow-sm"
+                                           style={{ width: `${el.width}px`, height: `${el.height}px` }}
+                                         />
+                                       )}
                                     </div>
                                  </motion.div>
                                ))}

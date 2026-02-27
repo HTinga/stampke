@@ -28,7 +28,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
 
-type DocType = 'invoice' | 'letterhead' | 'contract' | 'none';
+type DocType = 'invoice' | 'letterhead' | 'contract' | 'accounting' | 'minutes' | 'none';
 
 interface GeneratedDoc {
   id: string;
@@ -56,7 +56,14 @@ export default function DocumentGenerator() {
     senderName: 'Kenya Business Solutions',
     senderAddress: 'Nairobi, Kenya',
     senderPhone: '+254 700 000 000',
-    senderEmail: 'info@business.ke'
+    senderEmail: 'info@business.ke',
+    contractTitle: 'Service Agreement',
+    contractTerms: '1. Scope of Work...\n2. Payment Terms...\n3. Termination...',
+    minutesMeetingTitle: 'Weekly Strategy Sync',
+    minutesAttendees: 'John, Jane, Bob',
+    minutesActionItems: '1. Fix PDF Editor\n2. Update Booking System',
+    accountingPeriod: 'February 2026',
+    accountingEntries: [{ date: new Date().toISOString().split('T')[0], desc: 'Office Supplies', category: 'Expense', amount: 5000 }]
   });
 
   useEffect(() => {
@@ -160,6 +167,93 @@ export default function DocumentGenerator() {
     });
   };
 
+  const generateAccountingPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text('ACCOUNTING LOG', 105, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text(`Period: ${formData.accountingPeriod}`, 20, 35);
+    doc.text(`Generated: ${formData.date}`, 150, 35);
+    
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, 45, 170, 10, 'F');
+    doc.text('Date', 25, 52);
+    doc.text('Description', 60, 52);
+    doc.text('Category', 120, 52);
+    doc.text('Amount (KES)', 160, 52);
+    
+    let y = 65;
+    formData.accountingEntries.forEach(entry => {
+      doc.text(entry.date, 25, y);
+      doc.text(entry.desc, 60, y);
+      doc.text(entry.category, 120, y);
+      doc.text(entry.amount.toFixed(2), 160, y);
+      y += 10;
+    });
+    
+    doc.save(`accounting_${formData.accountingPeriod.replace(' ', '_')}.pdf`);
+    saveToHistory({
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'accounting',
+      title: `Log: ${formData.accountingPeriod}`,
+      recipient: 'Internal',
+      date: formData.date,
+      status: 'Sent'
+    });
+  };
+
+  const generateMinutesPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(22);
+    doc.text('MEETING MINUTES', 20, 30);
+    doc.setFontSize(14);
+    doc.text(formData.minutesMeetingTitle, 20, 45);
+    doc.setFontSize(10);
+    doc.text(`Date: ${formData.date}`, 20, 55);
+    doc.text(`Attendees: ${formData.minutesAttendees}`, 20, 62);
+    
+    doc.setFontSize(12);
+    doc.text('Action Items:', 20, 80);
+    doc.setFontSize(10);
+    const splitItems = doc.splitTextToSize(formData.minutesActionItems, 170);
+    doc.text(splitItems, 20, 90);
+    
+    doc.save(`minutes_${formData.date}.pdf`);
+    saveToHistory({
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'minutes',
+      title: formData.minutesMeetingTitle,
+      recipient: 'Internal',
+      date: formData.date,
+      status: 'Sent'
+    });
+  };
+
+  const generateContractPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text(formData.contractTitle, 105, 30, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text('BETWEEN:', 20, 50);
+    doc.text(formData.senderName, 20, 60);
+    doc.text('AND:', 20, 75);
+    doc.text(formData.clientName, 20, 85);
+    
+    doc.setFontSize(10);
+    const splitTerms = doc.splitTextToSize(formData.contractTerms, 170);
+    doc.text(splitTerms, 20, 105);
+    
+    doc.save(`contract_${formData.clientName.replace(' ', '_')}.pdf`);
+    saveToHistory({
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'contract',
+      title: formData.contractTitle,
+      recipient: formData.clientName,
+      date: formData.date,
+      status: 'Sent'
+    });
+  };
+
   const generateLetterheadPDF = () => {
     const doc = new jsPDF();
     
@@ -220,7 +314,20 @@ export default function DocumentGenerator() {
     { id: 'invoice', name: 'Professional Invoice', icon: Receipt, color: 'bg-blue-600', desc: 'Generate high-precision invoices with tax calculations.' },
     { id: 'letterhead', name: 'Official Letterhead', icon: Mail, color: 'bg-indigo-500', desc: 'Create branded corporate letters and formal notices.' },
     { id: 'contract', name: 'Legal Contract', icon: FileText, color: 'bg-emerald-500', desc: 'Standardized agreements for services and employment.' },
+    { id: 'accounting', name: 'Accounting Log', icon: TrendingUp, color: 'bg-rose-500', desc: 'Track firm expenses, revenue, and petty cash logs.' },
+    { id: 'minutes', name: 'Meeting Minutes', icon: FileCode, color: 'bg-amber-500', desc: 'Document firm meetings, attendees, and action items.' },
   ];
+
+  const getGenerateFunction = () => {
+    switch(activeType) {
+      case 'invoice': return generateInvoicePDF;
+      case 'letterhead': return generateLetterheadPDF;
+      case 'contract': return generateContractPDF;
+      case 'accounting': return generateAccountingPDF;
+      case 'minutes': return generateMinutesPDF;
+      default: return () => {};
+    }
+  };
 
   return (
     <div className="py-12 px-4 md:px-8">
@@ -255,7 +362,7 @@ export default function DocumentGenerator() {
         {activeType === 'none' ? (
           <div className="space-y-20">
             {/* Templates Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {templates.map((t, idx) => (
                 <motion.div
                   key={t.id}
@@ -263,15 +370,15 @@ export default function DocumentGenerator() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.1 }}
                   onClick={() => setActiveType(t.id as DocType)}
-                  className="group bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all cursor-pointer relative overflow-hidden"
+                  className="group bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all cursor-pointer relative overflow-hidden"
                 >
-                  <div className={`${t.color} w-20 h-20 rounded-3xl flex items-center justify-center text-white mb-10 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <t.icon size={40} />
+                  <div className={`${t.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <t.icon size={32} />
                   </div>
-                  <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">{t.name}</h3>
-                  <p className="text-slate-500 font-medium text-lg leading-relaxed">{t.desc}</p>
-                  <div className="mt-10 flex items-center text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                    Create Now <ChevronRight size={16} className="ml-1" />
+                  <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">{t.name}</h3>
+                  <p className="text-slate-500 font-medium text-sm leading-relaxed">{t.desc}</p>
+                  <div className="mt-8 flex items-center text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    Create <ChevronRight size={16} className="ml-1" />
                   </div>
                   <div className={`absolute -right-12 -bottom-12 w-48 h-48 ${t.color} opacity-[0.03] rounded-full group-hover:scale-150 transition-transform duration-700`}></div>
                 </motion.div>
@@ -373,7 +480,7 @@ export default function DocumentGenerator() {
               </div>
               <div className="flex items-center gap-4">
                 <button 
-                  onClick={activeType === 'invoice' ? generateInvoicePDF : generateLetterheadPDF}
+                  onClick={getGenerateFunction()}
                   className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95"
                 >
                   <Download size={18} /> Generate PDF
@@ -499,32 +606,174 @@ export default function DocumentGenerator() {
                 )}
 
                 {activeType === 'letterhead' && (
-                   <div className="space-y-8">
-                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <FileText size={14} /> Letter Content
-                      </h4>
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject Line</label>
-                          <input 
-                            type="text" 
-                            value={formData.letterSubject}
-                            onChange={e => setFormData({...formData, letterSubject: e.target.value})}
-                            placeholder="RE: Service Agreement"
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Body</label>
-                          <textarea 
-                            value={formData.letterContent}
-                            onChange={e => setFormData({...formData, letterContent: e.target.value})}
-                            placeholder="Write your letter here..."
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold h-64"
-                          />
-                        </div>
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <FileText size={14} /> Letter Content
+                    </h4>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject Line</label>
+                        <input 
+                          type="text" 
+                          value={formData.letterSubject}
+                          onChange={e => setFormData({...formData, letterSubject: e.target.value})}
+                          placeholder="RE: Service Agreement"
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                        />
                       </div>
-                   </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Body</label>
+                        <textarea 
+                          value={formData.letterContent}
+                          onChange={e => setFormData({...formData, letterContent: e.target.value})}
+                          placeholder="Write your letter here..."
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold h-64"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeType === 'accounting' && (
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                      <span className="flex items-center gap-2"><Layout size={14} /> Log Entries</span>
+                      <button 
+                        onClick={() => setFormData({...formData, accountingEntries: [...formData.accountingEntries, { date: new Date().toISOString().split('T')[0], desc: '', category: 'Expense', amount: 0 }]})}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      >
+                        <Plus size={14} /> Add Entry
+                      </button>
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Period</label>
+                        <input 
+                          type="text" 
+                          value={formData.accountingPeriod}
+                          onChange={e => setFormData({...formData, accountingPeriod: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                        />
+                      </div>
+                      {formData.accountingEntries.map((entry, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-4 items-end bg-slate-50 p-4 rounded-2xl">
+                          <div className="col-span-4 space-y-2">
+                            <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Description</label>
+                            <input 
+                              type="text" 
+                              value={entry.desc}
+                              onChange={e => {
+                                const newEntries = [...formData.accountingEntries];
+                                newEntries[idx].desc = e.target.value;
+                                setFormData({...formData, accountingEntries: newEntries});
+                              }}
+                              className="w-full bg-white border border-slate-100 rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                            />
+                          </div>
+                          <div className="col-span-3 space-y-2">
+                            <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Category</label>
+                            <select 
+                              value={entry.category}
+                              onChange={e => {
+                                const newEntries = [...formData.accountingEntries];
+                                newEntries[idx].category = e.target.value;
+                                setFormData({...formData, accountingEntries: newEntries});
+                              }}
+                              className="w-full bg-white border border-slate-100 rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                            >
+                              <option>Expense</option>
+                              <option>Revenue</option>
+                              <option>Petty Cash</option>
+                            </select>
+                          </div>
+                          <div className="col-span-4 space-y-2">
+                            <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Amount</label>
+                            <input 
+                              type="number" 
+                              value={entry.amount}
+                              onChange={e => {
+                                const newEntries = [...formData.accountingEntries];
+                                newEntries[idx].amount = parseFloat(e.target.value) || 0;
+                                setFormData({...formData, accountingEntries: newEntries});
+                              }}
+                              className="w-full bg-white border border-slate-100 rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                            />
+                          </div>
+                          <div className="col-span-1 pb-1">
+                            <button 
+                              onClick={() => setFormData({...formData, accountingEntries: formData.accountingEntries.filter((_, i) => i !== idx)})}
+                              className="text-slate-300 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeType === 'minutes' && (
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <FileCode size={14} /> Meeting Details
+                    </h4>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meeting Title</label>
+                        <input 
+                          type="text" 
+                          value={formData.minutesMeetingTitle}
+                          onChange={e => setFormData({...formData, minutesMeetingTitle: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attendees</label>
+                        <input 
+                          type="text" 
+                          value={formData.minutesAttendees}
+                          onChange={e => setFormData({...formData, minutesAttendees: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Action Items</label>
+                        <textarea 
+                          value={formData.minutesActionItems}
+                          onChange={e => setFormData({...formData, minutesActionItems: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold h-48"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeType === 'contract' && (
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <FileText size={14} /> Contract Terms
+                    </h4>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contract Title</label>
+                        <input 
+                          type="text" 
+                          value={formData.contractTitle}
+                          onChange={e => setFormData({...formData, contractTitle: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Terms & Conditions</label>
+                        <textarea 
+                          value={formData.contractTerms}
+                          onChange={e => setFormData({...formData, contractTerms: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold h-96"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -569,6 +818,39 @@ export default function DocumentGenerator() {
                            <span className="text-[10px] font-black uppercase tracking-widest">Total Amount</span>
                            <span className="text-lg font-black text-slate-900">KES {calculateTotal().toFixed(2)}</span>
                         </div>
+                      </div>
+                    ) : activeType === 'accounting' ? (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-12 border-b border-slate-100 pb-2">
+                          <span className="col-span-4 text-[7px] font-black text-slate-300 uppercase tracking-widest">Date</span>
+                          <span className="col-span-5 text-[7px] font-black text-slate-300 uppercase tracking-widest">Desc</span>
+                          <span className="col-span-3 text-[7px] font-black text-slate-300 uppercase tracking-widest text-right">Amount</span>
+                        </div>
+                        {formData.accountingEntries.map((entry, i) => (
+                          <div key={i} className="grid grid-cols-12 text-[9px] py-1 border-b border-slate-50">
+                            <span className="col-span-4 text-slate-500">{entry.date}</span>
+                            <span className="col-span-5 font-bold text-slate-700 truncate">{entry.desc}</span>
+                            <span className="col-span-3 font-black text-slate-900 text-right">KES {entry.amount.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : activeType === 'minutes' ? (
+                      <div className="space-y-4">
+                        <h6 className="font-black text-slate-900 text-sm">{formData.minutesMeetingTitle}</h6>
+                        <p className="text-[8px] font-bold text-slate-400">Attendees: {formData.minutesAttendees}</p>
+                        <div className="mt-4">
+                           <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-2">Action Items</p>
+                           <p className="text-[10px] text-slate-600 whitespace-pre-wrap">{formData.minutesActionItems}</p>
+                        </div>
+                      </div>
+                    ) : activeType === 'contract' ? (
+                      <div className="space-y-4">
+                        <h6 className="font-black text-slate-900 text-sm text-center uppercase underline">{formData.contractTitle}</h6>
+                        <p className="text-[9px] text-slate-600 leading-relaxed whitespace-pre-wrap">
+                          This agreement is made between {formData.senderName} and {formData.clientName} on {formData.date}.
+                          {"\n\n"}
+                          {formData.contractTerms}
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-6">
