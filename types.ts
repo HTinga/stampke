@@ -30,6 +30,9 @@ export interface StampTemplate {
   showDateLine?: boolean;
   showStars?: boolean;
   logoUrl?: string;
+  showInnerLine?: boolean;
+  innerLineOffset?: number;
+  wetInk?: boolean;
 }
 
 export interface StampConfig {
@@ -42,6 +45,7 @@ export interface StampConfig {
   centerSubText: string;
   fontSize: number;
   letterSpacing: number;
+  letterStretch: number;
   borderColor: string;
   secondaryColor: string;
   borderWidth: number;
@@ -53,9 +57,29 @@ export interface StampConfig {
   showSignatureLine: boolean;
   showDateLine: boolean;
   showStars: boolean;
+  showInnerLine: boolean;
+  innerLineOffset: number;
+  innerLineWidth: number;
   distressLevel: number;
   isVintage: boolean;
+  wetInk: boolean;
   logoUrl: string | null;
+  customElements: CustomElement[];
+  previewBg: 'default' | 'transparent' | 'white' | 'paper';
+}
+
+export interface CustomElement {
+  id: string;
+  type: 'image' | 'text';
+  x: number;
+  y: number;
+  content: string;
+  width?: number;
+  height?: number;
+  rotation?: number;
+  scale?: number;
+  isBlackAndWhite?: boolean;
+  contrast?: number;
 }
 
 export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'custom';

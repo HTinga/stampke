@@ -75,6 +75,7 @@ import BookingSystem from './components/BookingSystem';
 import DocumentArchitect from './components/DocumentArchitect';
 import PresentationGenerator from './components/PresentationGenerator';
 import CommunicationCenter from './components/CommunicationCenter';
+import StampApplier from './components/StampApplier';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -176,7 +177,7 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account' | 'apply-stamp'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [showPayment, setShowPayment] = useState(false);
@@ -193,6 +194,12 @@ const App: React.FC = () => {
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (activeTab === 'stamp-studio' || activeTab === 'apply-stamp') {
+      setIsSidebarOpen(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
@@ -254,9 +261,12 @@ const App: React.FC = () => {
       showSignatureLine: template.showSignatureLine || false,
       showDateLine: template.showDateLine || false,
       showStars: template.showStars || false,
+      showInnerLine: template.showInnerLine || false,
+      innerLineOffset: template.innerLineOffset || 15,
+      wetInk: template.wetInk || false,
       logoUrl: null
     });
-    setActiveTab('editor');
+    setActiveTab('stamp-studio');
   };
 
   const handleDownload = () => {
@@ -383,8 +393,7 @@ const App: React.FC = () => {
                   { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
                   { id: 'presentation', label: 'Slide Deck', icon: Monitor },
                   { id: 'templates', label: 'Templates', icon: Layout },
-                  { id: 'bulk', label: 'Bulk Engine', icon: Layers },
-                  { id: 'convert', label: 'AI Scan', icon: Camera },
+                  { id: 'apply-stamp', label: 'Apply Stamp', icon: FileText },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -631,8 +640,16 @@ const App: React.FC = () => {
                           <button onClick={() => triggerPayment('single')} className="flex-1 bg-blue-600 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-200 dark:shadow-none active:scale-95">
                             <Download size={24} /> Download SVG
                           </button>
+                          <button onClick={() => setActiveTab('apply-stamp')} className="flex-1 bg-emerald-600 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-emerald-700 shadow-xl active:scale-95">
+                            <FileText size={24} /> Apply to PDF
+                          </button>
+                        </div>
+                        <div className="flex gap-4">
                           <button onClick={() => setActiveTab('bulk')} className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95">
-                            <Copy size={24} className="text-blue-400" /> Bulk Run
+                            <Layers size={24} className="text-blue-400" /> Bulk Engine
+                          </button>
+                          <button onClick={() => setActiveTab('convert')} className="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xl active:scale-95">
+                            <Camera size={24} className="text-blue-600" /> AI Scan
                           </button>
                         </div>
                         {openedFromSignCenter && (
@@ -677,6 +694,7 @@ const App: React.FC = () => {
                   <TemplateLibrary onSelect={handleTemplateSelect} />
                 </div>
               )}
+              {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
               {activeTab === 'bulk' && <BulkStamper config={stampConfig} onStartBulk={(cost) => triggerPayment('bulk', cost)} />}
               {activeTab === 'convert' && (
                 <div className="max-w-4xl mx-auto py-12 text-center">

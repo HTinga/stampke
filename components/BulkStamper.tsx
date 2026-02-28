@@ -272,8 +272,41 @@ const BulkStamper: React.FC<BulkStamperProps> = ({ config: initialConfig, onStar
                )}
 
                <div className="space-y-4">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Scale</label>
-                 <input type="range" min="0.1" max="0.5" step="0.01" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full h-1.5 bg-slate-100 rounded-lg accent-blue-600" />
+                  <div className="flex justify-between">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Scale</label>
+                    <span className="text-[10px] font-bold text-slate-400">{Math.round(scale * 100)}%</span>
+                  </div>
+                  <input type="range" min="0.05" max="0.8" step="0.01" value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="w-full h-1.5 bg-slate-100 rounded-lg accent-blue-600" />
+               </div>
+
+               <div className="space-y-6 pt-4 border-t border-slate-100">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Precise Positioning</h4>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <label className="text-[10px] font-bold text-slate-500">Horizontal (X)</label>
+                        <span className="text-[10px] font-bold text-slate-400">{Math.round(customPos.x)}%</span>
+                      </div>
+                      <input 
+                        type="range" min="0" max="100" step="1"
+                        value={customPos.x}
+                        onChange={(e) => setCustomPos({ ...customPos, x: parseInt(e.target.value) })}
+                        className="w-full h-1 bg-slate-100 rounded-lg accent-blue-600"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <label className="text-[10px] font-bold text-slate-500">Vertical (Y)</label>
+                        <span className="text-[10px] font-bold text-slate-400">{Math.round(customPos.y)}%</span>
+                      </div>
+                      <input 
+                        type="range" min="0" max="100" step="1"
+                        value={customPos.y}
+                        onChange={(e) => setCustomPos({ ...customPos, y: parseInt(e.target.value) })}
+                        className="w-full h-1 bg-slate-100 rounded-lg accent-blue-600"
+                      />
+                    </div>
+                  </div>
                </div>
 
                <div className="pt-8 border-t border-slate-100">

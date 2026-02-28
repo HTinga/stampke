@@ -16,7 +16,10 @@ export const TEMPLATES: StampTemplate[] = [
     borderColor: '#0000FF',
     secondaryColor: '#FF0000',
     fontFamily: 'Crimson Pro',
-    showStars: true
+    showStars: true,
+    showInnerLine: true,
+    innerLineOffset: 12,
+    wetInk: true
   },
   
   // HELMARC GROUP (High Accuracy)
@@ -31,7 +34,9 @@ export const TEMPLATES: StampTemplate[] = [
     secondaryText: 'P.O. Box 4417 - 00100 NAIROBI',
     borderColor: '#1e3a8a',
     secondaryColor: '#991b1b',
-    fontFamily: 'Inter'
+    fontFamily: 'Inter',
+    showInnerLine: true,
+    innerLineOffset: 8
   },
   {
     id: 'helmarc-02',
@@ -204,6 +209,7 @@ export const DEFAULT_CONFIG: StampConfig = {
   centerSubText: '',
   fontSize: 22,
   letterSpacing: 2,
+  letterStretch: 1,
   borderColor: '#1e3a8a',
   secondaryColor: '#991b1b',
   borderWidth: 3,
@@ -215,9 +221,15 @@ export const DEFAULT_CONFIG: StampConfig = {
   showSignatureLine: false,
   showDateLine: false,
   showStars: false,
+  showInnerLine: false,
+  innerLineOffset: 15,
+  innerLineWidth: 2,
   distressLevel: 0.1,
   isVintage: false,
-  logoUrl: null
+  wetInk: false,
+  logoUrl: null,
+  customElements: [],
+  previewBg: 'default'
 };
 
 export const COLORS = [
