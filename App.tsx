@@ -72,7 +72,9 @@ import BulkStamper from './components/BulkStamper';
 import DigitalSignCenter from './components/DigitalSignCenter';
 import PDFTools from './components/PDFTools';
 import BookingSystem from './components/BookingSystem';
-import DocumentGenerator from './components/DocumentGenerator';
+import DocumentArchitect from './components/DocumentArchitect';
+import PresentationGenerator from './components/PresentationGenerator';
+import CommunicationCenter from './components/CommunicationCenter';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -136,8 +138,45 @@ const RESOURCES = [
   { id: 4, name: 'High-Resolution Vector Logo Pack', type: 'Asset Bundle', size: '15 MB' }
 ];
 
+const FeatureRotator = () => {
+  const [index, setIndex] = useState(0);
+  const features = [
+    { icon: PenTool, label: 'Stamp Studio', desc: 'Vector-perfect rubber stamps.', color: 'text-blue-600' },
+    { icon: CheckCircle2, label: 'Sign Center', desc: 'Legally-binding e-signatures.', color: 'text-emerald-600' },
+    { icon: FileSpreadsheet, label: 'Doc Architect', desc: 'Industry-standard templates.', color: 'text-violet-600' },
+    { icon: Monitor, label: 'Slide Deck', desc: 'Corporate presentations.', color: 'text-indigo-600' },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % features.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const feature = features[index];
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        className="flex flex-col items-center"
+      >
+        <div className={`w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center ${feature.color} mb-4`}>
+          <feature.icon size={40} />
+        </div>
+        <h4 className="font-black text-xl mb-1">{feature.label}</h4>
+        <p className="text-slate-400 font-bold text-sm">{feature.desc}</p>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'stamp-studio' | 'templates' | 'convert' | 'bulk' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'help' | 'terms' | 'privacy' | 'blogs' | 'resources' | 'account'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [showPayment, setShowPayment] = useState(false);
@@ -145,6 +184,11 @@ const App: React.FC = () => {
   const [bulkCost, setBulkCost] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
@@ -169,13 +213,23 @@ const App: React.FC = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      const response = await fetch('/api/auth/google/url');
-      const { url } = await response.json();
-      window.open(url, 'google_oauth', 'width=600,height=700');
-    } catch (error) {
-      console.error('Failed to get Google OAuth URL', error);
+  const handleGoogleLogin = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleDemoLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Lenient login for demo/signup
+    if (isSignUp || (loginEmail && loginPassword)) {
+      setUser({
+        name: loginEmail.split('@')[0] || 'User',
+        email: loginEmail,
+      });
+      setIsLoggedIn(true);
+      setShowLoginModal(false);
+      setLoginError('');
+    } else {
+      setLoginError('Please enter your credentials.');
     }
   };
 
@@ -311,7 +365,7 @@ const App: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <AnimatePresence mode="wait">
-          {isSidebarOpen && (
+          {isSidebarOpen && isLoggedIn && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 280, opacity: 1 }}
@@ -325,7 +379,9 @@ const App: React.FC = () => {
                   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
                   { id: 'pdf-forge', label: 'PDF Forge', icon: FileCode },
                   { id: 'booking', label: 'Booking', icon: CalendarDays },
+                  { id: 'comm-center', label: 'Comm Hub', icon: Mail },
                   { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
+                  { id: 'presentation', label: 'Slide Deck', icon: Monitor },
                   { id: 'templates', label: 'Templates', icon: Layout },
                   { id: 'bulk', label: 'Bulk Engine', icon: Layers },
                   { id: 'convert', label: 'AI Scan', icon: Camera },
@@ -382,8 +438,88 @@ const App: React.FC = () => {
               className="h-full"
             >
               {activeTab === 'home' && (
-                <div className="max-w-7xl mx-auto space-y-12">
-                  <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="max-w-7xl mx-auto space-y-20">
+                  {/* Hero Section - Calendly Style */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center py-12">
+                    <div className="space-y-10">
+                      <h1 className="text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-slate-900">
+                        Easy <span className="text-blue-600">authority</span> ahead.
+                      </h1>
+                      <p className="text-2xl text-slate-500 font-medium leading-relaxed max-w-xl">
+                        Join 20,000+ Kenyan professionals who easily manage stamps, signatures, and documents with the #1 digital authority tool.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <button onClick={handleGoogleLogin} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all active:scale-95">
+                          <Globe size={24} /> Sign up with Google
+                        </button>
+                        <button className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 transition-all active:scale-95">
+                          <Monitor size={24} /> Sign up with Microsoft
+                        </button>
+                      </div>
+                      <p className="text-sm text-slate-400 font-bold">
+                        OR <button className="text-blue-600 hover:underline">Sign up free with email.</button> No credit card required.
+                      </p>
+                    </div>
+
+                    <div className="relative">
+                      {/* Rotating Feature Card */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white rounded-[48px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] border border-slate-100 p-10 relative z-10"
+                      >
+                        <div className="flex items-center justify-between mb-10">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white">
+                              <Plus size={24} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-xl">FreeStamps KE</h3>
+                              <p className="text-slate-400 font-bold text-sm">Enterprise Solution</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                            <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                            <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                          <div className="space-y-6">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400">
+                              <User size={32} />
+                            </div>
+                            <div>
+                              <h4 className="font-black text-lg">Feature Spotlight</h4>
+                              <p className="text-slate-500 font-medium">Digital Authority Management</p>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                                <motion.div 
+                                  animate={{ x: ['-100%', '100%'] }}
+                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                  className="h-full w-1/2 bg-blue-600"
+                                />
+                              </div>
+                              <div className="h-2 w-2/3 bg-slate-50 rounded-full"></div>
+                              <div className="h-2 w-1/2 bg-slate-50 rounded-full"></div>
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-50 rounded-3xl p-6 flex flex-col items-center justify-center text-center space-y-4">
+                            <FeatureRotator />
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* Decorative Background Elements */}
+                      <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl -z-10"></div>
+                      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl -z-10"></div>
+                    </div>
+                  </div>
+
+                  <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-20 border-t border-slate-100 dark:border-slate-800">
                     <div>
                       <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-2">Welcome Back, <span className="text-blue-600">{user?.name || 'Counsel'}</span></h2>
                       <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Manage your firm's digital authority from one central dashboard.</p>
@@ -531,7 +667,9 @@ const App: React.FC = () => {
               )}
               {activeTab === 'pdf-forge' && <PDFTools />}
               {activeTab === 'booking' && <BookingSystem />}
-              {activeTab === 'doc-gen' && <DocumentGenerator />}
+              {activeTab === 'comm-center' && <CommunicationCenter />}
+              {activeTab === 'doc-gen' && <DocumentArchitect />}
+              {activeTab === 'presentation' && <PresentationGenerator />}
               {activeTab === 'templates' && (
                 <div className="max-w-7xl mx-auto py-12">
                   <h2 className="text-4xl font-black mb-2 tracking-tight">Authentic Templates</h2>
@@ -576,6 +714,104 @@ const App: React.FC = () => {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Login Modal */}
+      <AnimatePresence>
+        {showLoginModal && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLoginModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 p-10 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8">
+                <button onClick={() => setShowLoginModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="text-center mb-10">
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-blue-200">
+                  <ShieldCheck size={32} />
+                </div>
+                <h2 className="text-3xl font-black tracking-tighter mb-2">{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
+                <p className="text-slate-500 font-medium">{isSignUp ? 'Join the FreeStamps KE workspace today.' : 'Enter your credentials to access your dashboard.'}</p>
+              </div>
+
+              <form onSubmit={handleDemoLogin} className="space-y-6">
+                {isSignUp && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="John Doe"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="email" 
+                      required
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="tinga@gmail.com"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="password" 
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                    />
+                  </div>
+                </div>
+
+                {loginError && (
+                  <p className="text-red-500 text-xs font-bold text-center">{loginError}</p>
+                )}
+
+                <button 
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all active:scale-95"
+                >
+                  {isSignUp ? 'Sign Up' : 'Sign In'}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-8 border-t border-slate-50 dark:border-slate-800 text-center">
+                <p className="text-slate-400 text-sm font-medium">
+                  {isSignUp ? 'Already have an account?' : "Don't have an account?"} <button onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 font-bold">{isSignUp ? 'Sign In' : 'Sign up free'}</button>
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Payment Modal */}
       {showPayment && (

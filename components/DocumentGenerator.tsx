@@ -23,12 +23,21 @@ import {
   Copy,
   Layout,
   FileCode,
-  Zap
+  Zap,
+  Search,
+  Filter,
+  X,
+  Share2,
+  MessageSquare,
+  PenTool,
+  Table,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
+import { DOCUMENT_TEMPLATES, DocTemplate } from '../constants/documentTemplates';
 
-type DocType = 'invoice' | 'letterhead' | 'contract' | 'accounting' | 'minutes' | 'none';
+type DocType = string;
 
 interface GeneratedDoc {
   id: string;
@@ -43,7 +52,9 @@ interface GeneratedDoc {
 export default function DocumentGenerator() {
   const [activeType, setActiveType] = useState<DocType>('none');
   const [history, setHistory] = useState<GeneratedDoc[]>([]);
-  const [formData, setFormData] = useState({
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [formData, setFormData] = useState<any>({
     invoiceNumber: 'INV-001',
     date: new Date().toISOString().split('T')[0],
     dueDate: '',
@@ -63,8 +74,28 @@ export default function DocumentGenerator() {
     minutesAttendees: 'John, Jane, Bob',
     minutesActionItems: '1. Fix PDF Editor\n2. Update Booking System',
     accountingPeriod: 'February 2026',
-    accountingEntries: [{ date: new Date().toISOString().split('T')[0], desc: 'Office Supplies', category: 'Expense', amount: 5000 }]
+    accountingEntries: [{ date: new Date().toISOString().split('T')[0], desc: 'Office Supplies', category: 'Expense', amount: 5000 }],
+    // Generic fields for new templates
+    title: '',
+    subject: '',
+    content: '',
+    recipient: '',
+    amount: 0,
+    referenceNumber: '',
+    terms: '',
+    details: ''
   });
+
+  const categories = ['All', 'Financial', 'Administrative', 'Legal', 'HR', 'Academic', 'Compliance'];
+
+  const filteredTemplates = DOCUMENT_TEMPLATES.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         t.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || t.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const activeTemplate = DOCUMENT_TEMPLATES.find(t => t.id === activeType);
 
   useEffect(() => {
     const saved = localStorage.getItem('doc_history');
@@ -93,6 +124,28 @@ export default function DocumentGenerator() {
 
   const calculateTotal = () => {
     return formData.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
+  };
+
+  const handleShare = (platform: string) => {
+    const text = `Check out this document generated via FreeStamps KE: ${activeTemplate?.name || 'Official Document'}`;
+    if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    } else if (platform === 'email') {
+      window.open(`mailto:?subject=${encodeURIComponent(activeTemplate?.name || 'Document')}&body=${encodeURIComponent(text)}`, '_blank');
+    }
+  };
+
+  const sendToSignCenter = () => {
+    alert('Document sent to Sign Center. You can now apply your digital signature and rubber stamp.');
+  };
+
+  const insertElement = (type: 'table' | 'image') => {
+    if (type === 'table') {
+      const tableText = "\n| Item | Description | Amount |\n|------|-------------|--------|\n| 1    | Sample      | 0.00   |\n";
+      setFormData({ ...formData, content: (formData.content || '') + tableText });
+    } else {
+      setFormData({ ...formData, content: (formData.content || '') + "\n[IMAGE_PLACEHOLDER]\n" });
+    }
   };
 
   const generateInvoicePDF = () => {
@@ -318,6 +371,65 @@ export default function DocumentGenerator() {
     { id: 'minutes', name: 'Meeting Minutes', icon: FileCode, color: 'bg-amber-500', desc: 'Document firm meetings, attendees, and action items.' },
   ];
 
+  const generateGenericPDF = () => {
+    if (!activeTemplate) return;
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, 0, 210, 20, 'F');
+    
+    doc.setFontSize(24);
+    doc.setTextColor(30, 41, 59);
+    doc.text(activeTemplate.name.toUpperCase(), 105, 40, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(formData.senderName, 20, 55);
+    doc.text(formData.senderAddress, 20, 60);
+    doc.text(formData.date, 160, 55);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(20, 70, 190, 70);
+
+    let y = 85;
+    activeTemplate.fields.forEach(field => {
+      if (field === 'items') {
+        doc.setFontSize(12);
+        doc.setTextColor(30, 41, 59);
+        doc.text('Items:', 20, y);
+        y += 10;
+        formData.items.forEach((item: any) => {
+          doc.setFontSize(10);
+          doc.text(`${item.desc} x ${item.qty}`, 30, y);
+          doc.text(`KES ${item.price.toFixed(2)}`, 160, y);
+          y += 8;
+        });
+        y += 5;
+      } else {
+        const label = field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+        const value = formData[field] || 'N/A';
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`${label}:`, 20, y);
+        doc.setTextColor(30, 41, 59);
+        const splitValue = doc.splitTextToSize(value.toString(), 140);
+        doc.text(splitValue, 50, y);
+        y += (splitValue.length * 5) + 5;
+      }
+    });
+
+    doc.save(`${activeTemplate.id}_${Date.now()}.pdf`);
+    saveToHistory({
+      id: Math.random().toString(36).substr(2, 9),
+      type: activeType as any,
+      title: activeTemplate.name,
+      recipient: formData.clientName || formData.recipient || 'N/A',
+      date: formData.date,
+      status: 'Sent'
+    });
+  };
+
   const getGenerateFunction = () => {
     switch(activeType) {
       case 'invoice': return generateInvoicePDF;
@@ -325,7 +437,7 @@ export default function DocumentGenerator() {
       case 'contract': return generateContractPDF;
       case 'accounting': return generateAccountingPDF;
       case 'minutes': return generateMinutesPDF;
-      default: return () => {};
+      default: return generateGenericPDF;
     }
   };
 
@@ -360,29 +472,68 @@ export default function DocumentGenerator() {
         </div>
 
         {activeType === 'none' ? (
-          <div className="space-y-20">
+          <div className="space-y-12">
+            {/* Search & Filter Bar */}
+            <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <input 
+                  type="text"
+                  placeholder="Search templates (e.g. 'Lease', 'NDA', 'Invoice')..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-16 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                />
+              </div>
+              <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                <Filter size={18} className="text-slate-400 shrink-0" />
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shrink-0 ${
+                      selectedCategory === cat 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Templates Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {templates.map((t, idx) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredTemplates.map((t, idx) => (
                 <motion.div
                   key={t.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.1 }}
-                  onClick={() => setActiveType(t.id as DocType)}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={() => setActiveType(t.id)}
                   className="group bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all cursor-pointer relative overflow-hidden"
                 >
-                  <div className={`${t.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <t.icon size={32} />
+                  <div className={`${t.color} w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <t.icon size={28} />
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">{t.name}</h3>
-                  <p className="text-slate-500 font-medium text-sm leading-relaxed">{t.desc}</p>
-                  <div className="mt-8 flex items-center text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                    Create <ChevronRight size={16} className="ml-1" />
+                  <div className="mb-2">
+                    <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-md">{t.category}</span>
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 mb-2 tracking-tight">{t.name}</h3>
+                  <p className="text-slate-500 font-medium text-xs leading-relaxed line-clamp-2">{t.desc}</p>
+                  <div className="mt-6 flex items-center text-blue-600 font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    Use Template <ChevronRight size={14} className="ml-1" />
                   </div>
                   <div className={`absolute -right-12 -bottom-12 w-48 h-48 ${t.color} opacity-[0.03] rounded-full group-hover:scale-150 transition-transform duration-700`}></div>
                 </motion.div>
               ))}
+              {filteredTemplates.length === 0 && (
+                <div className="col-span-full py-20 text-center bg-white rounded-[40px] border border-dashed border-slate-200">
+                  <p className="text-slate-400 font-bold uppercase text-sm tracking-widest">No templates found matching your search</p>
+                  <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="mt-4 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline">Clear Filters</button>
+                </div>
+              )}
             </div>
 
             {/* History Section */}
@@ -471,7 +622,7 @@ export default function DocumentGenerator() {
                 </button>
                 <div>
                   <h2 className="text-3xl font-black text-slate-900 tracking-tighter">
-                    {templates.find(t => t.id === activeType)?.name}
+                    {DOCUMENT_TEMPLATES.find(t => t.id === activeType)?.name}
                   </h2>
                   <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-1">
                     Configure your document details
@@ -479,11 +630,17 @@ export default function DocumentGenerator() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                <button onClick={() => insertElement('table')} className="p-4 bg-white text-slate-600 rounded-2xl shadow-sm hover:bg-slate-100 transition-all" title="Insert Table">
+                  <Table size={20} />
+                </button>
+                <button onClick={() => insertElement('image')} className="p-4 bg-white text-slate-600 rounded-2xl shadow-sm hover:bg-slate-100 transition-all" title="Insert Image">
+                  <ImageIcon size={20} />
+                </button>
                 <button 
                   onClick={getGenerateFunction()}
                   className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95"
                 >
-                  <Download size={18} /> Generate PDF
+                  <Download size={18} /> Generate A4 PDF
                 </button>
               </div>
             </div>
@@ -775,10 +932,103 @@ export default function DocumentGenerator() {
                     </div>
                   </div>
                 )}
+
+                {activeTemplate && !['invoice', 'letterhead', 'accounting', 'minutes', 'contract'].includes(activeType) && (
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Settings size={14} /> Document Details
+                    </h4>
+                    <div className="space-y-6">
+                      {activeTemplate.fields.map(field => {
+                        if (field === 'items') return (
+                          <div key={field} className="space-y-8">
+                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                              <span className="flex items-center gap-2"><Layout size={14} /> Line Items</span>
+                              <button onClick={addItem} className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                <Plus size={14} /> Add Item
+                              </button>
+                            </h4>
+                            <div className="space-y-4">
+                              {formData.items.map((item: any, idx: number) => (
+                                <div key={idx} className="grid grid-cols-12 gap-4 items-end">
+                                  <div className="col-span-6 space-y-2">
+                                    <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest ml-1">Description</label>
+                                    <input 
+                                      type="text" 
+                                      value={item.desc}
+                                      onChange={e => {
+                                        const newItems = [...formData.items];
+                                        newItems[idx].desc = e.target.value;
+                                        setFormData({...formData, items: newItems});
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-sm"
+                                    />
+                                  </div>
+                                  <div className="col-span-2 space-y-2">
+                                    <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest ml-1">Qty</label>
+                                    <input 
+                                      type="number" 
+                                      value={item.qty}
+                                      onChange={e => {
+                                        const newItems = [...formData.items];
+                                        newItems[idx].qty = parseInt(e.target.value) || 0;
+                                        setFormData({...formData, items: newItems});
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-sm"
+                                    />
+                                  </div>
+                                  <div className="col-span-3 space-y-2">
+                                    <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest ml-1">Price</label>
+                                    <input 
+                                      type="number" 
+                                      value={item.price}
+                                      onChange={e => {
+                                        const newItems = [...formData.items];
+                                        newItems[idx].price = parseFloat(e.target.value) || 0;
+                                        setFormData({...formData, items: newItems});
+                                      }}
+                                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-sm"
+                                    />
+                                  </div>
+                                  <div className="col-span-1 pb-3">
+                                    <button onClick={() => removeItem(idx)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                        const label = field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                        const isLongText = ['content', 'terms', 'details', 'statement', 'rules', 'scopeOfWork', 'executiveSummary', 'findings', 'description', 'reason', 'feedback'].includes(field);
+                        return (
+                          <div key={field} className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
+                            {isLongText ? (
+                              <textarea 
+                                value={formData[field] || ''}
+                                onChange={e => setFormData({...formData, [field]: e.target.value})}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold h-32"
+                              />
+                            ) : (
+                              <input 
+                                type={['amount', 'total', 'salary', 'interestRate', 'rating'].includes(field) ? 'number' : 'text'}
+                                value={formData[field] || ''}
+                                onChange={e => setFormData({...formData, [field]: e.target.value})}
+                                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preview Side */}
-              <div className="p-12 md:p-16 bg-slate-50 flex items-center justify-center">
+              <div className="p-12 md:p-16 bg-slate-50 flex items-center justify-center group">
                 <div className="w-full max-w-[500px] aspect-[1/1.41] bg-white shadow-2xl rounded-sm p-10 flex flex-col relative overflow-hidden">
                   {/* Branded Header */}
                   <div className="flex justify-between items-start mb-12">
@@ -795,11 +1045,11 @@ export default function DocumentGenerator() {
                   </div>
 
                   {/* Content Preview */}
-                  <div className="flex-1">
+                  <div className="flex-1 overflow-y-auto pr-2">
                     <div className="mb-8">
                       <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">Bill To:</p>
-                      <p className="text-xs font-black text-slate-900">{formData.clientName || 'Recipient Name'}</p>
-                      <p className="text-[10px] text-slate-500">{formData.clientAddress || 'Recipient Address'}</p>
+                      <h6 className="text-[10px] font-black text-slate-900">{formData.clientName || formData.recipient || formData.employeeName || formData.studentName || 'Recipient Name'}</h6>
+                      <p className="text-[8px] text-slate-400 font-medium">{formData.clientAddress || formData.propertyAddress || 'Address details...'}</p>
                     </div>
 
                     {activeType === 'invoice' ? (
@@ -808,7 +1058,7 @@ export default function DocumentGenerator() {
                           <span className="col-span-8 text-[8px] font-black text-slate-300 uppercase tracking-widest">Description</span>
                           <span className="col-span-4 text-[8px] font-black text-slate-300 uppercase tracking-widest text-right">Total</span>
                         </div>
-                        {formData.items.map((item, i) => (
+                        {formData.items.map((item: any, i: number) => (
                           <div key={i} className="grid grid-cols-12 text-[10px]">
                             <span className="col-span-8 font-bold text-slate-700">{item.desc || 'Item description'}</span>
                             <span className="col-span-4 font-black text-slate-900 text-right">KES {(item.qty * item.price).toFixed(2)}</span>
@@ -826,7 +1076,7 @@ export default function DocumentGenerator() {
                           <span className="col-span-5 text-[7px] font-black text-slate-300 uppercase tracking-widest">Desc</span>
                           <span className="col-span-3 text-[7px] font-black text-slate-300 uppercase tracking-widest text-right">Amount</span>
                         </div>
-                        {formData.accountingEntries.map((entry, i) => (
+                        {formData.accountingEntries.map((entry: any, i: number) => (
                           <div key={i} className="grid grid-cols-12 text-[9px] py-1 border-b border-slate-50">
                             <span className="col-span-4 text-slate-500">{entry.date}</span>
                             <span className="col-span-5 font-bold text-slate-700 truncate">{entry.desc}</span>
@@ -854,9 +1104,20 @@ export default function DocumentGenerator() {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        <h6 className="font-black text-slate-900 text-sm">{formData.letterSubject || 'Subject Line'}</h6>
+                        <h6 className="font-black text-slate-900 text-sm">{formData.letterSubject || formData.subject || formData.title || activeTemplate?.name}</h6>
+                        <div className="space-y-4">
+                          {activeTemplate?.fields.filter(f => !['invoiceNumber', 'clientName', 'clientAddress', 'date', 'senderName', 'senderAddress', 'senderEmail', 'letterSubject', 'letterContent', 'subject', 'title', 'recipient'].includes(f)).map(field => {
+                            const label = field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                            return (
+                              <div key={field}>
+                                <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest">{label}</p>
+                                <p className="text-[10px] text-slate-700 font-medium">{formData[field] || '...'}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
                         <p className="text-[10px] text-slate-600 leading-relaxed whitespace-pre-wrap">
-                          {formData.letterContent || 'Your letter content will appear here...'}
+                          {formData.letterContent || formData.content || formData.terms || formData.details || formData.statement || 'Your document content will appear here...'}
                         </p>
                       </div>
                     )}
@@ -865,6 +1126,19 @@ export default function DocumentGenerator() {
                   {/* Footer */}
                   <div className="mt-auto pt-8 border-t border-slate-50 text-center">
                     <p className="text-[7px] text-slate-300 font-bold uppercase tracking-widest">Generated by FreeStamps KE Document Architect</p>
+                  </div>
+                  
+                  {/* Action Overlay */}
+                  <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                    <button onClick={sendToSignCenter} className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-[10px] flex items-center gap-2 shadow-xl">
+                      <PenTool size={12} /> Sign & Stamp
+                    </button>
+                    <button onClick={() => handleShare('whatsapp')} className="bg-emerald-500 text-white p-2 rounded-xl shadow-xl">
+                      <MessageSquare size={14} />
+                    </button>
+                    <button onClick={() => handleShare('email')} className="bg-blue-600 text-white p-2 rounded-xl shadow-xl">
+                      <Share2 size={14} />
+                    </button>
                   </div>
                   
                   {/* Decorative element */}
