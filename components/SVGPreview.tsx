@@ -22,6 +22,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     borderColor,
     secondaryColor,
     borderWidth,
+    borderOffset,
     borderStyle,
     fontFamily,
     showSignatureLine,
@@ -34,6 +35,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     isVintage,
     wetInk,
     logoUrl,
+    embeddedSignatureUrl,
+    showEmbeddedSignature,
     customElements,
     previewBg
   } = config;
@@ -45,8 +48,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   const cy = INTERNAL_SIZE / 2;
   
   // Dynamic sizing based on shape to ensure containment
-  const maxR = (INTERNAL_SIZE / 2) - borderWidth - 60;
-  const r = shape === StampShape.OVAL ? maxR * 0.8 : maxR;
+  // Adjust base radius based on borderWidth to prevent text overlap
+  const baseR = (INTERNAL_SIZE / 2) - 60;
+  const r = shape === StampShape.OVAL ? (baseR - borderWidth/2) * 0.8 : (baseR - borderWidth/2);
+  const borderR = r + borderOffset;
 
   const getFinalColors = () => {
     if (isVintage) return { border: '#111827', secondary: '#111827' };
@@ -54,6 +59,14 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   };
 
   const finalColors = getFinalColors();
+
+  const textBaseStyle = { 
+    fontFamily, 
+    fontWeight: 'bold', 
+    textTransform: 'uppercase' as const,
+    letterSpacing: `${letterSpacing}px`,
+    filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)"
+  };
 
   const getStrokeDashArray = () => {
     if (borderStyle === BorderStyle.DOTTED) return '2, 4';
@@ -80,30 +93,32 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
       case StampShape.ROUND:
         return (
           <>
-            <circle cx={cx} cy={cy} r={r} {...commonProps} />
+            <circle cx={cx} cy={cy} r={borderR} {...commonProps} />
             {showInnerLine && (
-              <circle cx={cx} cy={cy} r={r - innerLineOffset} {...innerLineProps} />
+              <circle cx={cx} cy={cy} r={borderR - innerLineOffset} {...innerLineProps} />
             )}
             {borderStyle === BorderStyle.DOUBLE && (
-              <circle cx={cx} cy={cy} r={r - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
+              <circle cx={cx} cy={cy} r={borderR - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
             )}
           </>
         );
       case StampShape.OVAL:
+        const orx = borderR * 1.25;
+        const ory = borderR * 0.85;
         return (
           <>
-            <ellipse cx={cx} cy={cy} rx={r * 1.25} ry={r * 0.85} {...commonProps} />
+            <ellipse cx={cx} cy={cy} rx={orx} ry={ory} {...commonProps} />
             {showInnerLine && (
-              <ellipse cx={cx} cy={cy} rx={(r * 1.25) - innerLineOffset} ry={(r * 0.85) - innerLineOffset} {...innerLineProps} />
+              <ellipse cx={cx} cy={cy} rx={orx - innerLineOffset} ry={ory - innerLineOffset} {...innerLineProps} />
             )}
             {borderStyle === BorderStyle.DOUBLE && (
-              <ellipse cx={cx} cy={cy} rx={(r * 1.25) - borderWidth - 6} ry={(r * 0.85) - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
+              <ellipse cx={cx} cy={cy} rx={orx - borderWidth - 6} ry={ory - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
             )}
           </>
         );
       case StampShape.RECTANGLE:
-        const rw = INTERNAL_SIZE * 0.85;
-        const rh = INTERNAL_SIZE * 0.5;
+        const rw = (INTERNAL_SIZE * 0.85) + (borderOffset * 2);
+        const rh = (INTERNAL_SIZE * 0.5) + (borderOffset * 2);
         return (
           <>
             <rect x={cx - rw/2} y={cy - rh/2} width={rw} height={rh} rx={4} {...commonProps} />
@@ -116,14 +131,45 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </>
         );
       case StampShape.SQUARE:
-        const sSize = r * 1.5;
+        const sSize = (r * 1.5) + (borderOffset * 2);
         return (
-          <>
+          <g>
             <rect x={cx - sSize / 2} y={cy - sSize / 2} width={sSize} height={sSize} rx={4} {...commonProps} />
             {showInnerLine && (
               <rect x={cx - sSize / 2 + innerLineOffset} y={cy - sSize / 2 + innerLineOffset} width={sSize - innerLineOffset*2} height={sSize - innerLineOffset*2} rx={2} {...innerLineProps} />
             )}
-          </>
+            <text x={cx} y={cy - sSize/2 + 40} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.8}px` }} textLength={primaryText.length * fontSize * 0.5 * letterStretch} lengthAdjust="spacingAndGlyphs">
+              {primaryText}
+            </text>
+            {innerTopText && (
+              <text x={cx} y={cy - sSize/2 + 65} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+                {innerTopText}
+              </text>
+            )}
+            <g transform={`translate(${cx}, ${cy})`}>
+              {logoUrl && (
+                <image 
+                  href={logoUrl} 
+                  x={-fontSize * 1.5} 
+                  y={-fontSize * 1.5} 
+                  width={fontSize * 3} 
+                  height={fontSize * 3} 
+                  style={{ filter: `grayscale(1) contrast(8)` }} 
+                />
+              )}
+              <text x={0} y={fontSize * 0.2} fill={finalColors.secondary} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 1.5}px` }}>
+                {centerText}
+              </text>
+            </g>
+            {innerBottomText && (
+              <text x={cx} y={cy + sSize/2 - 45} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+                {innerBottomText}
+              </text>
+            )}
+            <text x={cx} y={cy + sSize/2 - 25} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.6}px`, fontWeight: 'normal' }}>
+              {secondaryText}
+            </text>
+          </g>
         );
       default:
         return null;
@@ -131,14 +177,6 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   };
 
   const renderText = () => {
-    const textBaseStyle = { 
-      fontFamily, 
-      fontWeight: 'bold', 
-      textTransform: 'uppercase' as const,
-      letterSpacing: `${letterSpacing}px`,
-      filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)"
-    };
-
     if (shape === StampShape.ROUND || shape === StampShape.OVAL) {
       const rx = shape === StampShape.ROUND ? r - (fontSize * 0.6) : (r * 1.25) - (fontSize * 0.6);
       const ry = shape === StampShape.ROUND ? r - (fontSize * 0.6) : (r * 0.85) - (fontSize * 0.6);
@@ -183,8 +221,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
 
           {showStars && (
             <g fill={finalColors.border}>
-              <text x={cx - rx - 10} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
-              <text x={cx + rx + 10} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
+              <text x={cx - rx - 25} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
+              <text x={cx + rx + 25} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
             </g>
           )}
           
@@ -214,9 +252,21 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
                 </text>
               )}
               {showSignatureLine && (
-                <text x={0} y={fontSize * 2.4} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px` }}>
-                  SIGN: .................................
-                </text>
+                <g>
+                  {showEmbeddedSignature && embeddedSignatureUrl && (
+                    <image 
+                      href={embeddedSignatureUrl} 
+                      x={-fontSize * 2.5} 
+                      y={fontSize * 0.5} 
+                      width={fontSize * 5} 
+                      height={fontSize * 2.5} 
+                      style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)" }} 
+                    />
+                  )}
+                  <text x={0} y={fontSize * 2.4} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px` }}>
+                    SIGN: .................................
+                  </text>
+                </g>
               )}
             </g>
           </g>
@@ -230,6 +280,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         <text x={cx} y={cy - rh/2 + 40} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.8}px` }} textLength={primaryText.length * fontSize * 0.5 * letterStretch} lengthAdjust="spacingAndGlyphs">
           {primaryText}
         </text>
+        
+        {innerTopText && (
+          <text x={cx} y={cy - rh/2 + 65} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+            {innerTopText}
+          </text>
+        )}
         
         <g transform={`translate(${cx}, ${cy})`}>
           {logoUrl && (
@@ -254,8 +310,26 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         )}
 
         {showSignatureLine && (
-          <text x={cx} y={cy + rh/2 - 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px` }}>
-            SIGN: .............................................
+          <g>
+            {showEmbeddedSignature && embeddedSignatureUrl && (
+              <image 
+                href={embeddedSignatureUrl} 
+                x={cx - (fontSize * 3.5)} 
+                y={cy + rh/2 - 90} 
+                width={fontSize * 7} 
+                height={fontSize * 3.5} 
+                style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)" }} 
+              />
+            )}
+            <text x={cx} y={cy + rh/2 - 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px` }}>
+              SIGN: .............................................
+            </text>
+          </g>
+        )}
+
+        {innerBottomText && (
+          <text x={cx} y={cy + rh/2 - 45} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+            {innerBottomText}
           </text>
         )}
 

@@ -61,8 +61,12 @@ import {
   Sun,
   Moon,
   ChevronRight,
-  Home
+  Home,
+  FileType,
+  File as FileIcon
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { StampConfig, StampTemplate, StampShape } from './types';
 import { DEFAULT_CONFIG, TEMPLATES } from './constants';
 import SVGPreview from './components/SVGPreview';
@@ -78,6 +82,20 @@ import CommunicationCenter from './components/CommunicationCenter';
 import StampApplier from './components/StampApplier';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
+
+const NAVIGATION_ITEMS = [
+  { id: 'home', label: 'Dashboard', icon: Home },
+  { id: 'stamp-studio', label: 'Stamp Studio', icon: PenTool },
+  { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
+  { id: 'pdf-forge', label: 'PDF Forge', icon: FileCode },
+  { id: 'booking', label: 'Booking', icon: CalendarDays },
+  { id: 'comm-center', label: 'Comm Hub', icon: Mail },
+  { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
+  { id: 'presentation', label: 'Slide Deck', icon: Monitor },
+  { id: 'bulk', label: 'Bulk Engine', icon: Layers },
+  { id: 'convert', label: 'AI Scan', icon: Camera },
+  { id: 'apply-stamp', label: 'Apply Stamp', icon: FileText },
+];
 
 const BLOG_POSTS = [
   { 
@@ -193,6 +211,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -315,6 +334,81 @@ const App: React.FC = () => {
     setShowPayment(true);
   };
 
+  const downloadStamp = async (format: 'svg' | 'png' | 'pdf', transparent: boolean = true) => {
+    if (!svgRef.current) return;
+
+    const fileName = `stamp_${stampConfig.primaryText.toLowerCase().replace(/\s+/g, '_')}`;
+
+    if (format === 'svg') {
+      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.svg`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'png') {
+      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      canvas.width = 2000;
+      canvas.height = 2000;
+      
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        if (ctx) {
+          if (!transparent) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.drawImage(img, 0, 0, 2000, 2000);
+          const pngUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = pngUrl;
+          link.download = `${fileName}.png`;
+          link.click();
+        }
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    } else if (format === 'pdf') {
+      const svgData = new XMLSerializer().serializeToString(svgRef.current);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      canvas.width = 2000;
+      canvas.height = 2000;
+      
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, 2000, 2000);
+          
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [2000, 2000]
+          });
+          
+          pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 2000, 2000);
+          pdf.save(`${fileName}.pdf`);
+        }
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+  };
+
   return (
     <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Top Bar */}
@@ -373,7 +467,50 @@ const App: React.FC = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar Hover Trigger */}
+      {!isSidebarOpen && (
+        <div 
+          className="fixed left-0 top-0 bottom-0 w-8 z-[100] group flex items-center"
+          onMouseEnter={() => setIsSidebarHovered(true)}
+        >
+          <div className="w-1.5 h-32 bg-blue-600/10 group-hover:bg-blue-600/40 rounded-r-full transition-all" />
+          
+          <AnimatePresence>
+            {isSidebarHovered && (
+              <motion.div
+                initial={{ x: -100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -100, opacity: 0 }}
+                onMouseLeave={() => setIsSidebarHovered(false)}
+                className="absolute left-6 top-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-2xl flex flex-col gap-4"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Navigation</span>
+                  <button 
+                    onClick={() => { setIsSidebarOpen(true); setIsSidebarHovered(false); }}
+                    className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg"
+                  >
+                    <Menu size={16} />
+                  </button>
+                </div>
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                {NAVIGATION_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id as any); setIsSidebarHovered(false); }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                  >
+                    <item.icon size={18} />
+                    <span className="text-xs font-bold whitespace-nowrap">{item.label}</span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* Sidebar */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && isLoggedIn && (
             <motion.aside
@@ -383,18 +520,7 @@ const App: React.FC = () => {
               className="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto hidden lg:block"
             >
               <nav className="p-6 space-y-2">
-                {[
-                  { id: 'home', label: 'Dashboard', icon: Home },
-                  { id: 'stamp-studio', label: 'Stamp Studio', icon: PenTool },
-                  { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
-                  { id: 'pdf-forge', label: 'PDF Forge', icon: FileCode },
-                  { id: 'booking', label: 'Booking', icon: CalendarDays },
-                  { id: 'comm-center', label: 'Comm Hub', icon: Mail },
-                  { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
-                  { id: 'presentation', label: 'Slide Deck', icon: Monitor },
-                  { id: 'templates', label: 'Templates', icon: Layout },
-                  { id: 'apply-stamp', label: 'Apply Stamp', icon: FileText },
-                ].map((item) => (
+                {NAVIGATION_ITEMS.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id as any)}
@@ -635,23 +761,49 @@ const App: React.FC = () => {
                       <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
                         <SVGPreview config={stampConfig} ref={svgRef} />
                       </div>
-                      <div className="mt-12 w-full max-w-md flex flex-col gap-4">
+                      <div className="mt-12 w-full max-w-md space-y-4">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700">
+                          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Download Options</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <button 
+                              onClick={() => downloadStamp('svg')}
+                              className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-400 transition-all group"
+                            >
+                              <FileType size={20} className="text-blue-600 group-hover:scale-110 transition-transform" />
+                              <span className="text-[10px] font-black uppercase">SVG</span>
+                            </button>
+                            <button 
+                              onClick={() => downloadStamp('png')}
+                              className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-emerald-400 transition-all group"
+                            >
+                              <ImageIcon size={20} className="text-emerald-600 group-hover:scale-110 transition-transform" />
+                              <span className="text-[10px] font-black uppercase">PNG</span>
+                            </button>
+                            <button 
+                              onClick={() => downloadStamp('pdf')}
+                              className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-orange-400 transition-all group"
+                            >
+                              <FileIcon size={20} className="text-orange-600 group-hover:scale-110 transition-transform" />
+                              <span className="text-[10px] font-black uppercase">PDF</span>
+                            </button>
+                          </div>
+                          <div className="mt-4 flex items-center justify-center gap-2">
+                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transparent Background Enabled</span>
+                          </div>
+                        </div>
+
                         <div className="flex gap-4">
-                          <button onClick={() => triggerPayment('single')} className="flex-1 bg-blue-600 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-200 dark:shadow-none active:scale-95">
-                            <Download size={24} /> Download SVG
-                          </button>
                           <button onClick={() => setActiveTab('apply-stamp')} className="flex-1 bg-emerald-600 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-emerald-700 shadow-xl active:scale-95">
                             <FileText size={24} /> Apply to PDF
                           </button>
-                        </div>
-                        <div className="flex gap-4">
                           <button onClick={() => setActiveTab('bulk')} className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95">
                             <Layers size={24} className="text-blue-400" /> Bulk Engine
                           </button>
-                          <button onClick={() => setActiveTab('convert')} className="flex-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xl active:scale-95">
-                            <Camera size={24} className="text-blue-600" /> AI Scan
-                          </button>
                         </div>
+                        <button onClick={() => setActiveTab('convert')} className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xl active:scale-95">
+                          <Camera size={24} className="text-blue-600" /> AI Scan & Vectorize
+                        </button>
                         {openedFromSignCenter && (
                           <button 
                             onClick={() => {

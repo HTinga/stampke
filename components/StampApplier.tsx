@@ -31,6 +31,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
   const [selectedStampId, setSelectedStampId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pageDimensions, setPageDimensions] = useState({ width: 0, height: 0 });
+  const [stampPreviewUrl, setStampPreviewUrl] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -73,6 +74,14 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
       renderPage(currentPage);
     }
   }, [pdfDoc, currentPage]);
+
+  useEffect(() => {
+    const updatePreview = async () => {
+      const url = await svgToImage();
+      setStampPreviewUrl(url);
+    };
+    updatePreview();
+  }, [config]);
 
   const addStamp = (e: React.MouseEvent) => {
     if (!containerRef.current || !pdfDoc) return;
@@ -319,11 +328,14 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
                     setSelectedStampId(s.id);
                   }}
                 >
-                  <div className="w-full h-full pointer-events-none opacity-80">
-                    {/* Simplified SVG preview for the overlay */}
-                    <div className="w-full h-full bg-blue-600/10 border-2 border-blue-600/30 rounded-full flex items-center justify-center">
-                      <span className="text-[10px] font-black text-blue-600 uppercase">STAMP</span>
-                    </div>
+                  <div className="w-full h-full pointer-events-none">
+                    {stampPreviewUrl ? (
+                      <img src={stampPreviewUrl} className="w-full h-full object-contain drop-shadow-lg" alt="Stamp" />
+                    ) : (
+                      <div className="w-full h-full bg-blue-600/10 border-2 border-blue-600/30 rounded-full flex items-center justify-center">
+                        <span className="text-[10px] font-black text-blue-600 uppercase">STAMP</span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Controls Overlay */}

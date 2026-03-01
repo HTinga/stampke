@@ -213,6 +213,7 @@ export const DEFAULT_CONFIG: StampConfig = {
   borderColor: '#1e3a8a',
   secondaryColor: '#991b1b',
   borderWidth: 3,
+  borderOffset: 0,
   borderStyle: BorderStyle.SINGLE,
   rotation: 0,
   width: 600,
@@ -228,6 +229,8 @@ export const DEFAULT_CONFIG: StampConfig = {
   isVintage: false,
   wetInk: false,
   logoUrl: null,
+  embeddedSignatureUrl: null,
+  showEmbeddedSignature: false,
   customElements: [],
   previewBg: 'default'
 };

@@ -49,6 +49,7 @@ export interface StampConfig {
   borderColor: string;
   secondaryColor: string;
   borderWidth: number;
+  borderOffset: number;
   borderStyle: BorderStyle;
   rotation: number;
   width: number;
@@ -64,6 +65,8 @@ export interface StampConfig {
   isVintage: boolean;
   wetInk: boolean;
   logoUrl: string | null;
+  embeddedSignatureUrl: string | null;
+  showEmbeddedSignature: boolean;
   customElements: CustomElement[];
   previewBg: 'default' | 'transparent' | 'white' | 'paper';
 }

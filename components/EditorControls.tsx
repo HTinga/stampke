@@ -2,7 +2,90 @@
 import React from 'react';
 import { StampConfig, StampShape, BorderStyle, CustomElement } from '../types';
 import { COLORS, FONTS } from '../constants';
-import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff } from 'lucide-react';
+import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Eraser, Save, X, Download, FileText, Image } from 'lucide-react';
+
+const SignaturePad: React.FC<{ onSave: (url: string) => void, onCancel: () => void }> = ({ onSave, onCancel }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = React.useState(false);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+  }, []);
+
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDrawing(true);
+    draw(e);
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx?.beginPath();
+    }
+  };
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.MouseEvent).clientX) - rect.left;
+    const y = ('touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY) - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-sm animate-in zoom-in duration-200">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-lg font-black tracking-tight dark:text-white">Draw Signature</h4>
+        <button onClick={onCancel} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all dark:text-slate-400"><X size={18} /></button>
+      </div>
+      <div className="bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden mb-4 touch-none">
+        <canvas 
+          ref={canvasRef}
+          width={350}
+          height={180}
+          onMouseDown={startDrawing}
+          onMouseUp={stopDrawing}
+          onMouseMove={draw}
+          onTouchStart={startDrawing}
+          onTouchEnd={stopDrawing}
+          onTouchMove={draw}
+          className="w-full h-auto cursor-crosshair"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => {
+          const canvas = canvasRef.current;
+          const ctx = canvas?.getContext('2d');
+          if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-xs">
+          <Eraser size={14} /> Clear
+        </button>
+        <button onClick={() => {
+          const canvas = canvasRef.current;
+          if (canvas) onSave(canvas.toDataURL('image/png'));
+        }} className="bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-100 dark:shadow-none transition-all text-xs">
+          <Save size={14} /> Apply
+        </button>
+      </div>
+    </div>
+  );
+};
 
 interface EditorControlsProps {
   config: StampConfig;
@@ -10,6 +93,8 @@ interface EditorControlsProps {
 }
 
 const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => {
+  const [showSignPad, setShowSignPad] = React.useState(false);
+
   const addCustomElement = (type: 'image' | 'text') => {
     const newEl: CustomElement = {
       id: Math.random().toString(36).substr(2, 9),
@@ -121,6 +206,20 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
           </div>
 
           <div className="space-y-1">
+            <div className="flex justify-between">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Border Offset</label>
+              <span className="text-[10px] font-bold text-slate-400">{config.borderOffset}px</span>
+            </div>
+            <input 
+              type="range" min="-20" max="50" step="1"
+              value={config.borderOffset}
+              onChange={(e) => onChange({ borderOffset: parseInt(e.target.value) })}
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+            <p className="text-[10px] text-slate-400 font-medium">Adjust this if the border eats into the letters.</p>
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Background</label>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -160,7 +259,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
               <input 
                 type="checkbox" 
@@ -178,6 +277,15 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
                 className="w-4 h-4 rounded text-blue-600 border-slate-300"
               />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Wet Ink</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+              <input 
+                type="checkbox" 
+                checked={config.showStars} 
+                onChange={(e) => onChange({ showStars: e.target.checked })}
+                className="w-4 h-4 rounded text-yellow-500 border-slate-300"
+              />
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Stars</span>
             </label>
           </div>
 
@@ -239,6 +347,39 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
           </div>
 
           <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Sub Header (Bottom)</label>
+            <input 
+              type="text"
+              value={config.secondaryText}
+              onChange={(e) => onChange({ secondaryText: e.target.value.toUpperCase() })}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
+              <input 
+                type="text"
+                value={config.innerTopText}
+                onChange={(e) => onChange({ innerTopText: e.target.value.toUpperCase() })}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Inner top text..."
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
+              <input 
+                type="text"
+                value={config.innerBottomText}
+                onChange={(e) => onChange({ innerBottomText: e.target.value.toUpperCase() })}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Inner bottom text..."
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text</label>
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md cursor-pointer relative group">
@@ -255,6 +396,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
                         month: 'short',
                         year: 'numeric'
                       }).toUpperCase();
+                      // Always update centerSubText if showDateLine is on, otherwise centerText
                       if (config.showDateLine) {
                         onChange({ centerSubText: formatted });
                       } else {
@@ -293,6 +435,59 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Sign Line</span>
             </label>
           </div>
+
+          {config.showSignatureLine && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Embed Signature</label>
+                <input 
+                  type="checkbox" 
+                  checked={config.showEmbeddedSignature} 
+                  onChange={(e) => onChange({ showEmbeddedSignature: e.target.checked })}
+                  className="w-4 h-4 rounded text-blue-600 border-slate-300"
+                />
+              </div>
+              {config.showEmbeddedSignature && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowSignPad(true)}
+                    className="flex-1 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 py-2 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
+                  >
+                    <PenTool size={12} /> Draw
+                  </button>
+                  <div className="flex-1 relative">
+                    <button className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 py-2 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all">
+                      <ImageIcon size={12} /> Upload
+                    </button>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => onChange({ embeddedSignatureUrl: reader.result as string });
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              {config.showEmbeddedSignature && config.embeddedSignatureUrl && (
+                <div className="relative group">
+                  <img src={config.embeddedSignatureUrl} className="w-full h-16 object-contain bg-white dark:bg-slate-900 rounded-xl border border-blue-100 dark:border-blue-800 p-2" alt="Signature" />
+                  <button 
+                    onClick={() => onChange({ embeddedSignatureUrl: null })}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -442,6 +637,18 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
             </div>
           </div>
         </section>
+      )}
+
+      {showSignPad && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <SignaturePad 
+            onSave={(url) => {
+              onChange({ embeddedSignatureUrl: url });
+              setShowSignPad(false);
+            }}
+            onCancel={() => setShowSignPad(false)}
+          />
+        </div>
       )}
     </div>
   );
