@@ -57,6 +57,9 @@ import {
   TrendingUp,
   Receipt,
   Briefcase,
+  Briefcase as ListTodo,
+  BarChart3,
+  ClipboardList,
   Layout,
   Sun,
   Moon,
@@ -80,15 +83,47 @@ import DocumentArchitect from './components/DocumentArchitect';
 import PresentationGenerator from './components/PresentationGenerator';
 import CommunicationCenter from './components/CommunicationCenter';
 import StampApplier from './components/StampApplier';
+import WorkspaceSuite from './components/WorkspaceSuite';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 
+const NAVIGATION_GROUPS = [
+  {
+    id: 'workspace',
+    label: 'Workspace Suite',
+    items: ['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload']
+  },
+  {
+    id: 'studio',
+    label: 'Stamp & Authority',
+    items: ['stamp-studio', 'apply-stamp', 'convert', 'esign']
+  },
+  {
+    id: 'docs',
+    label: 'Document Forge',
+    items: ['pdf-forge', 'doc-gen', 'presentation', 'bulk']
+  },
+  {
+    id: 'ops',
+    label: 'Business Ops',
+    items: ['booking', 'comm-center']
+  }
+];
+
 const NAVIGATION_ITEMS = [
   { id: 'home', label: 'Dashboard', icon: Home },
-  { id: 'stamp-studio', label: 'Stamp Studio', icon: PenTool },
+  { id: 'workspace-dashboard', label: 'Overview', icon: LayoutDashboard },
+  { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
+  { id: 'tasks', label: 'Tasks & Projects', icon: ListTodo },
+  { id: 'gantt', label: 'Gantt Charts', icon: BarChart3 },
+  { id: 'time', label: 'Time Tracking', icon: Clock },
+  { id: 'whiteboard', label: 'Whiteboard', icon: PenTool },
+  { id: 'forms', label: 'Forms', icon: ClipboardList },
+  { id: 'automation', label: 'Automation Hub', icon: Zap },
+  { id: 'workload', label: 'Team Workload', icon: Users },
   { id: 'pdf-forge', label: 'PDF Forge', icon: FileCode },
-  { id: 'booking', label: 'Booking', icon: CalendarDays },
+  { id: 'booking', label: 'Booking System', icon: CalendarDays },
   { id: 'comm-center', label: 'Comm Hub', icon: Mail },
   { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
   { id: 'presentation', label: 'Slide Deck', icon: Monitor },
@@ -195,16 +230,17 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account' | 'apply-stamp'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'workspace-dashboard' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account' | 'apply-stamp'>('stamp-studio');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentType, setPaymentType] = useState<'single' | 'bulk' | 'esign'>('single');
   const [bulkCost, setBulkCost] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'staff'>('admin');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -240,7 +276,9 @@ const App: React.FC = () => {
   }, [theme]);
 
   const handleGoogleLogin = () => {
-    setShowLoginModal(true);
+    setIsLoggedIn(true);
+    setUser({ name: 'Kenyan SME', email: 'sme@firm.ke', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sme' });
+    setActiveTab('stamp-studio');
   };
 
   const handleDemoLogin = (e: React.FormEvent) => {
@@ -254,6 +292,7 @@ const App: React.FC = () => {
       setIsLoggedIn(true);
       setShowLoginModal(false);
       setLoginError('');
+      setActiveTab('stamp-studio');
     } else {
       setLoginError('Please enter your credentials.');
     }
@@ -322,16 +361,17 @@ const App: React.FC = () => {
           centerText: analysis.centerText || '',
           borderColor: analysis.color || prev.borderColor
         }));
-        setActiveTab('editor');
+        setActiveTab('stamp-studio');
       }
     };
     reader.readAsDataURL(file);
   };
 
   const triggerPayment = (type: 'single' | 'bulk' | 'esign', cost?: number) => {
-    setPaymentType(type);
-    if (cost) setBulkCost(cost);
-    setShowPayment(true);
+    // Muted for testing
+    console.log(`Payment triggered for ${type} with cost ${cost}`);
+    setShowPayment(false);
+    alert("Testing Mode: Process completed successfully without payment.");
   };
 
   const downloadStamp = async (format: 'svg' | 'png' | 'pdf', transparent: boolean = true) => {
@@ -414,19 +454,36 @@ const App: React.FC = () => {
       {/* Top Bar */}
       <header className="h-20 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-[100] px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-          >
-            <Menu size={24} />
-          </button>
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
             <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={24} /></div>
             <h1 className="text-2xl font-black tracking-tighter">FreeStamps <span className="text-blue-600">KE</span></h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
+            <button 
+              onClick={() => setActiveTab('stamp-studio')}
+              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'stamp-studio' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Stamp Studio
+            </button>
+            <button 
+              onClick={() => setActiveTab('esign')}
+              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'esign' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Sign Center
+            </button>
+            {isLoggedIn && (
+              <button 
+                onClick={() => setActiveTab('home')}
+                className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'home' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Dashboard
+              </button>
+            )}
+          </div>
+
           <button 
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-500 dark:text-slate-400"
@@ -436,6 +493,18 @@ const App: React.FC = () => {
           
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 mr-4">
+                <ShieldCheck size={16} className="text-blue-600" />
+                <select 
+                  value={userRole}
+                  onChange={(e) => setUserRole(e.target.value as any)}
+                  className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
               <div className="hidden md:block text-right">
                 <p className="text-sm font-black">{user?.name}</p>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user?.email}</p>
@@ -519,21 +588,46 @@ const App: React.FC = () => {
               exit={{ width: 0, opacity: 0 }}
               className="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto hidden lg:block"
             >
-              <nav className="p-6 space-y-2">
-                {NAVIGATION_ITEMS.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id as any)}
-                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all group ${
-                      activeTab === item.id 
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' 
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <item.icon size={20} className={activeTab === item.id ? 'text-white' : 'group-hover:text-blue-600'} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {activeTab === item.id && <ChevronRight size={16} />}
-                  </button>
+              <nav className="p-6 space-y-8">
+                <button
+                  onClick={() => setActiveTab('home')}
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all group ${
+                    activeTab === 'home' 
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' 
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <Home size={20} className={activeTab === 'home' ? 'text-white' : 'group-hover:text-blue-600'} />
+                  <span className="flex-1 text-left">Dashboard</span>
+                </button>
+
+                {NAVIGATION_GROUPS.map((group) => (
+                  <div key={group.id} className="space-y-2">
+                    <h4 className="px-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                      {group.label}
+                    </h4>
+                    <div className="space-y-1">
+                      {group.items.map((itemId) => {
+                        const item = NAVIGATION_ITEMS.find(i => i.id === itemId);
+                        if (!item) return null;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id as any)}
+                            className={`w-full flex items-center gap-4 px-5 py-3 rounded-xl font-bold transition-all group ${
+                              activeTab === item.id 
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' 
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            <item.icon size={18} className={activeTab === item.id ? 'text-blue-600' : 'group-hover:text-blue-600'} />
+                            <span className="flex-1 text-left text-sm">{item.label}</span>
+                            {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
               </nav>
               
@@ -577,7 +671,7 @@ const App: React.FC = () => {
                   {/* Hero Section - Calendly Style */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center py-12">
                     <div className="space-y-10">
-                      <h1 className="text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-slate-900">
+                      <h1 className="text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-slate-900 dark:text-white">
                         Easy <span className="text-blue-600">authority</span> ahead.
                       </h1>
                       <p className="text-2xl text-slate-500 font-medium leading-relaxed max-w-xl">
@@ -758,7 +852,7 @@ const App: React.FC = () => {
                         <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Vector SVG</div>
                         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">High Res</div>
                       </div>
-                      <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
+                      <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-white dark:bg-slate-900 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
                         <SVGPreview config={stampConfig} ref={svgRef} />
                       </div>
                       <div className="mt-12 w-full max-w-md space-y-4">
@@ -789,7 +883,7 @@ const App: React.FC = () => {
                           </div>
                           <div className="mt-4 flex items-center justify-center gap-2">
                              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transparent Background Enabled</span>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">High-Resolution Vector Ready</span>
                           </div>
                         </div>
 
@@ -848,6 +942,9 @@ const App: React.FC = () => {
               )}
               {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
               {activeTab === 'bulk' && <BulkStamper config={stampConfig} onStartBulk={(cost) => triggerPayment('bulk', cost)} />}
+              {['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload', 'company'].includes(activeTab) && (
+                <WorkspaceSuite activeTab={activeTab === 'workspace-dashboard' ? 'home' : activeTab} />
+              )}
               {activeTab === 'convert' && (
                 <div className="max-w-4xl mx-auto py-12 text-center">
                   <div className="bg-blue-600 text-white w-24 h-24 rounded-[36px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-blue-200">
@@ -882,6 +979,11 @@ const App: React.FC = () => {
               )}
             </motion.div>
           </AnimatePresence>
+          
+          {/* Hidden SVG Preview for Ref access in other tabs (Fixes StampApplier bug) */}
+          <div className="fixed -left-[9999px] -top-[9999px] invisible pointer-events-none">
+            <SVGPreview config={stampConfig} ref={svgRef} />
+          </div>
         </main>
       </div>
 

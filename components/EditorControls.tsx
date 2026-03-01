@@ -2,7 +2,7 @@
 import React from 'react';
 import { StampConfig, StampShape, BorderStyle, CustomElement } from '../types';
 import { COLORS, FONTS } from '../constants';
-import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Eraser, Save, X, Download, FileText, Image } from 'lucide-react';
+import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Star, Eraser, Save, X, Download, FileText, Image } from 'lucide-react';
 
 const SignaturePad: React.FC<{ onSave: (url: string) => void, onCancel: () => void }> = ({ onSave, onCancel }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -135,8 +135,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
 
   return (
     <div className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-y-auto max-h-[75vh] custom-scrollbar">
-      <section>
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
            <Layout size={14} /> Typography & Shape
         </h3>
         <div className="grid grid-cols-2 gap-4 mb-4">
@@ -145,7 +145,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
             <select 
               value={config.fontFamily}
               onChange={(e) => onChange({ fontFamily: e.target.value })}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             >
               {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
             </select>
@@ -155,7 +155,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
             <select 
               value={config.shape}
               onChange={(e) => onChange({ shape: e.target.value as StampShape })}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={StampShape.ROUND}>Round</option>
               <option value={StampShape.OVAL}>Oval</option>
@@ -191,7 +191,14 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
           </div>
+        </div>
+      </section>
 
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <Sliders size={14} /> Border & Layout
+        </h3>
+        <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Border Thickness</label>
@@ -216,80 +223,9 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               onChange={(e) => onChange({ borderOffset: parseInt(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
-            <p className="text-[10px] text-slate-400 font-medium">Adjust this if the border eats into the letters.</p>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Preview Background</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { id: 'default', label: 'Def', color: 'bg-slate-100' },
-                { id: 'transparent', label: 'Trp', color: 'bg-transparent border-2 border-dashed border-slate-300' },
-                { id: 'white', label: 'Wht', color: 'bg-white' },
-                { id: 'paper', label: 'Ppr', color: 'bg-[#fdfbf7]' }
-              ].map((bg) => (
-                <button
-                  key={bg.id}
-                  onClick={() => onChange({ previewBg: bg.id as any })}
-                  className={`py-2 rounded-lg text-[10px] font-black uppercase transition-all border-2 ${config.previewBg === bg.id ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400'}`}
-                >
-                  {bg.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-           <Sliders size={14} /> Rubber Stamp Effects
-        </h3>
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Rustness / Distress</label>
-              <span className="text-[10px] font-bold text-slate-400">{Math.round(config.distressLevel * 100)}%</span>
-            </div>
-            <input 
-              type="range" min="0" max="1" step="0.05"
-              value={config.distressLevel}
-              onChange={(e) => onChange({ distressLevel: parseFloat(e.target.value) })}
-              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
-              <input 
-                type="checkbox" 
-                checked={config.isVintage} 
-                onChange={(e) => onChange({ isVintage: e.target.checked })}
-                className="w-4 h-4 rounded text-slate-900 border-slate-300"
-              />
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Vintage</span>
-            </label>
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
-              <input 
-                type="checkbox" 
-                checked={config.wetInk} 
-                onChange={(e) => onChange({ wetInk: e.target.checked })}
-                className="w-4 h-4 rounded text-blue-600 border-slate-300"
-              />
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Wet Ink</span>
-            </label>
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
-              <input 
-                type="checkbox" 
-                checked={config.showStars} 
-                onChange={(e) => onChange({ showStars: e.target.checked })}
-                className="w-4 h-4 rounded text-yellow-500 border-slate-300"
-              />
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Stars</span>
-            </label>
-          </div>
-
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl space-y-3">
+          <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inner Line</label>
               <input 
@@ -331,18 +267,18 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-          <Type size={14} /> Text & Date Controls
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <Type size={14} /> Text Content & Styling
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Main Header</label>
             <input 
               type="text"
               value={config.primaryText}
               onChange={(e) => onChange({ primaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
           </div>
 
@@ -352,71 +288,211 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               type="text"
               value={config.secondaryText}
               onChange={(e) => onChange({ secondaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
-              <input 
-                type="text"
-                value={config.innerTopText}
-                onChange={(e) => onChange({ innerTopText: e.target.value.toUpperCase() })}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Inner top text..."
-              />
+          <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inner Text Customization</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
+                <input 
+                  type="text"
+                  value={config.innerTopText}
+                  onChange={(e) => onChange({ innerTopText: e.target.value.toUpperCase() })}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
+                <input 
+                  type="text"
+                  value={config.innerBottomText}
+                  onChange={(e) => onChange({ innerBottomText: e.target.value.toUpperCase() })}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
-              <input 
-                type="text"
-                value={config.innerBottomText}
-                onChange={(e) => onChange({ innerBottomText: e.target.value.toUpperCase() })}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Inner bottom text..."
-              />
+            
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Inner Text Color</label>
+                <input 
+                  type="color" 
+                  value={config.innerTextColor || config.borderColor}
+                  onChange={(e) => onChange({ innerTextColor: e.target.value })}
+                  className="w-8 h-8 rounded-lg cursor-pointer"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Inner Text Size</label>
+                  <span className="text-[10px] font-bold text-slate-400">{config.innerTextSize}px</span>
+                </div>
+                <input 
+                  type="range" min="8" max="40" step="1"
+                  value={config.innerTextSize || 14}
+                  onChange={(e) => onChange({ innerTextSize: parseInt(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Inner Text Intensity</label>
+                  <span className="text-[10px] font-bold text-slate-400">{Math.round((config.innerTextIntensity || 1) * 100)}%</span>
+                </div>
+                <input 
+                  type="range" min="0.1" max="1" step="0.05"
+                  value={config.innerTextIntensity || 1}
+                  onChange={(e) => onChange({ innerTextIntensity: parseFloat(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+              </div>
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text</label>
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-md cursor-pointer relative group">
-                <Calendar size={12} className="text-blue-600" />
-                <span className="text-[10px] font-black uppercase text-blue-600">Date</span>
-                <input 
-                  type="date" 
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={(e) => {
-                    const date = new Date(e.target.value);
-                    if (!isNaN(date.getTime())) {
-                      const formatted = date.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      }).toUpperCase();
-                      // Always update centerSubText if showDateLine is on, otherwise centerText
-                      if (config.showDateLine) {
-                        onChange({ centerSubText: formatted });
-                      } else {
-                        onChange({ centerText: formatted });
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl cursor-pointer relative group border border-blue-100 dark:border-blue-800">
+                  <Calendar size={14} className="text-blue-600" />
+                  <span className="text-[10px] font-black uppercase text-blue-600">Pick Date</span>
+                  <input 
+                    type="date" 
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) => {
+                      const date = new Date(e.target.value);
+                      if (!isNaN(date.getTime())) {
+                        const formatted = date.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }).toUpperCase();
+                        if (config.showDateLine) {
+                          onChange({ centerSubText: formatted });
+                        } else {
+                          onChange({ centerText: formatted });
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
             </div>
             <input 
               type="text"
               value={config.centerText}
               onChange={(e) => onChange({ centerText: e.target.value.toUpperCase() })}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <Star size={14} /> Embellishments & Stars
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <Star size={18} className="text-yellow-500" />
+              <span className="text-sm font-bold">Show Stars</span>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={config.showStars} 
+              onChange={(e) => onChange({ showStars: e.target.checked })}
+              className="w-5 h-5 rounded text-yellow-500 border-slate-300"
+            />
+          </div>
+
+          {config.showStars && (
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-4 border border-slate-100 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Star Count</label>
+                  <span className="text-[10px] font-bold text-slate-400">{config.starCount || 2}</span>
+                </div>
+                <input 
+                  type="range" min="1" max="10" step="1"
+                  value={config.starCount || 2}
+                  onChange={(e) => onChange({ starCount: parseInt(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Star Size</label>
+                  <span className="text-[10px] font-bold text-slate-400">{config.starSize || 20}px</span>
+                </div>
+                <input 
+                  type="range" min="5" max="50" step="1"
+                  value={config.starSize || 20}
+                  onChange={(e) => onChange({ starSize: parseInt(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Star Offset (Alignment)</label>
+                  <span className="text-[10px] font-bold text-slate-400">{config.starOffset || 0}px</span>
+                </div>
+                <input 
+                  type="range" min="-50" max="50" step="1"
+                  value={config.starOffset || 0}
+                  onChange={(e) => onChange({ starOffset: parseInt(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <Sliders size={14} /> Rubber Stamp Effects
+        </h3>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Rustness / Distress</label>
+              <span className="text-[10px] font-bold text-slate-400">{Math.round(config.distressLevel * 100)}%</span>
+            </div>
+            <input 
+              type="range" min="0" max="1" step="0.05"
+              value={config.distressLevel}
+              onChange={(e) => onChange({ distressLevel: parseFloat(e.target.value) })}
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+            <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
+              <input 
+                type="checkbox" 
+                checked={config.isVintage} 
+                onChange={(e) => onChange({ isVintage: e.target.checked })}
+                className="w-4 h-4 rounded text-slate-900 border-slate-300"
+              />
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Vintage</span>
+            </label>
+            <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
+              <input 
+                type="checkbox" 
+                checked={config.wetInk} 
+                onChange={(e) => onChange({ wetInk: e.target.checked })}
+                className="w-4 h-4 rounded text-blue-600 border-slate-300"
+              />
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Wet Ink</span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
               <input 
                 type="checkbox" 
                 checked={config.showDateLine} 
@@ -425,7 +501,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               />
               <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">Date Line</span>
             </label>
-            <label className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+            <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
               <input 
                 type="checkbox" 
                 checked={config.showSignatureLine} 

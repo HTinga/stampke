@@ -648,7 +648,7 @@ export default function PDFTools() {
                         <div className="bg-slate-50 p-8 rounded-[40px] border border-slate-100 space-y-6">
                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Editor Tools</h4>
                            <button 
-                             onClick={addTextElement}
+                             onClick={() => addTextElement()}
                              className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
                            >
                              <Type size={18} /> Add Text

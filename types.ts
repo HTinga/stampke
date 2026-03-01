@@ -61,6 +61,12 @@ export interface StampConfig {
   showInnerLine: boolean;
   innerLineOffset: number;
   innerLineWidth: number;
+  innerTextColor: string;
+  innerTextSize: number;
+  innerTextIntensity: number; // 0 to 1
+  starCount: number;
+  starSize: number;
+  starOffset: number;
   distressLevel: number;
   isVintage: boolean;
   wetInk: boolean;
@@ -68,7 +74,6 @@ export interface StampConfig {
   embeddedSignatureUrl: string | null;
   showEmbeddedSignature: boolean;
   customElements: CustomElement[];
-  previewBg: 'default' | 'transparent' | 'white' | 'paper';
 }
 
 export interface CustomElement {

@@ -225,14 +225,19 @@ export const DEFAULT_CONFIG: StampConfig = {
   showInnerLine: false,
   innerLineOffset: 15,
   innerLineWidth: 2,
+  innerTextColor: '#1e3a8a',
+  innerTextSize: 14,
+  innerTextIntensity: 1,
+  starCount: 2,
+  starSize: 20,
+  starOffset: 0,
   distressLevel: 0.1,
   isVintage: false,
   wetInk: false,
   logoUrl: null,
   embeddedSignatureUrl: null,
   showEmbeddedSignature: false,
-  customElements: [],
-  previewBg: 'default'
+  customElements: []
 };
 
 export const COLORS = [

@@ -31,14 +31,19 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     showInnerLine,
     innerLineOffset,
     innerLineWidth,
+    innerTextColor,
+    innerTextSize,
+    innerTextIntensity,
+    starCount,
+    starSize,
+    starOffset,
     distressLevel,
     isVintage,
     wetInk,
     logoUrl,
     embeddedSignatureUrl,
     showEmbeddedSignature,
-    customElements,
-    previewBg
+    customElements
   } = config;
 
   // Internal coordinate system to prevent clipping
@@ -205,14 +210,30 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </text>
           
           {innerTopText && (
-            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+            <text 
+              fill={innerTextColor || finalColors.border} 
+              style={{ 
+                ...textBaseStyle, 
+                fontSize: `${innerTextSize || fontSize * 0.55}px`, 
+                fontWeight: 'normal',
+                opacity: innerTextIntensity ?? 1
+              }}
+            >
               <textPath xlinkHref="#pathInnerTop" startOffset="50%" textAnchor="middle">
                 {innerTopText}
               </textPath>
             </text>
           )}
           {innerBottomText && (
-            <text fill={finalColors.border} style={{ ...textBaseStyle, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal' }}>
+            <text 
+              fill={innerTextColor || finalColors.border} 
+              style={{ 
+                ...textBaseStyle, 
+                fontSize: `${innerTextSize || fontSize * 0.55}px`, 
+                fontWeight: 'normal',
+                opacity: innerTextIntensity ?? 1
+              }}
+            >
               <textPath xlinkHref="#pathInnerBottom" startOffset="50%" textAnchor="middle" dominantBaseline="hanging">
                 {innerBottomText}
               </textPath>
@@ -221,8 +242,23 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
 
           {showStars && (
             <g fill={finalColors.border}>
-              <text x={cx - rx - 25} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
-              <text x={cx + rx + 25} y={cy + 8} fontSize={fontSize * 0.8} textAnchor="middle">★</text>
+              {Array.from({ length: starCount || 2 }).map((_, i) => {
+                const angle = i === 0 ? 180 : 0; // Simple left/right for 2 stars
+                // For more stars, we could distribute them along the path
+                const xPos = i === 0 ? cx - rx - 25 - starOffset : cx + rx + 25 + starOffset;
+                return (
+                  <text 
+                    key={i}
+                    x={xPos} 
+                    y={cy + 8} 
+                    fontSize={starSize || fontSize * 0.8} 
+                    textAnchor="middle"
+                    style={{ filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)" }}
+                  >
+                    ★
+                  </text>
+                );
+              })}
             </g>
           )}
           
@@ -380,17 +416,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     });
   };
 
-  const getBgClass = () => {
-    switch (previewBg) {
-      case 'transparent': return 'bg-transparent';
-      case 'white': return 'bg-white';
-      case 'paper': return 'bg-[#fdfbf7]';
-      default: return 'bg-slate-50 dark:bg-slate-800/50';
-    }
-  };
-
   return (
-    <div className={`relative flex items-center justify-center p-4 rounded-lg overflow-hidden ${getBgClass()} ${className}`}>
+    <div className={`relative flex items-center justify-center p-4 rounded-lg overflow-hidden bg-white dark:bg-slate-900 ${className}`}>
         <svg
           ref={ref}
           viewBox={viewBox}

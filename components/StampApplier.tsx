@@ -112,7 +112,13 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
 
   const svgToImage = async (): Promise<string> => {
     if (!svgRef.current) return '';
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    
+    // Create a clone to ensure we don't modify the original
+    const svgElement = svgRef.current.cloneNode(true) as SVGSVGElement;
+    svgElement.setAttribute('width', '1000');
+    svgElement.setAttribute('height', '1000');
+    
+    const svgData = new XMLSerializer().serializeToString(svgElement);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -126,9 +132,16 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
 
     return new Promise((resolve) => {
       img.onload = () => {
-        ctx?.drawImage(img, 0, 0, 1000, 1000);
+        if (ctx) {
+          ctx.clearRect(0, 0, 1000, 1000);
+          ctx.drawImage(img, 0, 0, 1000, 1000);
+        }
         URL.revokeObjectURL(url);
         resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve('');
       };
       img.src = url;
     });
@@ -141,8 +154,13 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
     try {
       const existingPdfBytes = await pdfFile.arrayBuffer();
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
+      
       const stampImageUrl = await svgToImage();
-      const stampImage = await pdfDoc.embedPng(stampImageUrl);
+      if (!stampImageUrl) throw new Error('Failed to generate stamp image');
+      
+      // pdf-lib embedPng expects raw base64 or bytes, not a data URL with prefix
+      const base64Data = stampImageUrl.split(',')[1];
+      const stampImage = await pdfDoc.embedPng(base64Data);
 
       for (const placed of placedStamps) {
         const page = pdfDoc.getPage(placed.page - 1);

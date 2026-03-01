@@ -81,7 +81,7 @@ export default function BookingSystem() {
     clientName: '',
     clientEmail: '',
     time: '09:00 AM',
-    type: 'Video' as const
+    type: 'Video' as 'Video' | 'In-Person' | 'Blocked'
   });
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
