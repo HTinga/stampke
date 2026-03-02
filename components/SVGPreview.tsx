@@ -43,7 +43,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     logoUrl,
     embeddedSignatureUrl,
     showEmbeddedSignature,
-    customElements
+    customElements,
+    previewBg
   } = config;
 
   // Internal coordinate system to prevent clipping
@@ -416,8 +417,17 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     });
   };
 
+  const getBgClass = () => {
+    switch (previewBg) {
+      case 'transparent': return 'bg-transparent';
+      case 'white': return 'bg-white';
+      case 'paper': return 'bg-[#fdfbf7]';
+      default: return 'bg-slate-50 dark:bg-slate-800/50';
+    }
+  };
+
   return (
-    <div className={`relative flex items-center justify-center p-4 rounded-lg overflow-hidden bg-white dark:bg-slate-900 ${className}`}>
+    <div className={`relative flex items-center justify-center p-4 rounded-lg overflow-hidden ${getBgClass()} ${className}`}>
         <svg
           ref={ref}
           viewBox={viewBox}

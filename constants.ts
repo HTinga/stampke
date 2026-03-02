@@ -237,7 +237,8 @@ export const DEFAULT_CONFIG: StampConfig = {
   logoUrl: null,
   embeddedSignatureUrl: null,
   showEmbeddedSignature: false,
-  customElements: []
+  customElements: [],
+  previewBg: 'default'
 };
 
 export const COLORS = [

@@ -5,6 +5,7 @@ import { PDFDocument, rgb } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Upload, Download, MousePointer, Maximize, Move, Trash2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import SVGPreview from './SVGPreview';
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -35,6 +36,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const internalSvgRef = useRef<SVGSVGElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -76,11 +78,18 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
   }, [pdfDoc, currentPage]);
 
   useEffect(() => {
+    let mounted = true;
     const updatePreview = async () => {
+      // Small delay to ensure ref is populated
+      if (!internalSvgRef.current && !svgRef.current) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      if (!mounted) return;
       const url = await svgToImage();
       setStampPreviewUrl(url);
     };
     updatePreview();
+    return () => { mounted = false; };
   }, [config]);
 
   const addStamp = (e: React.MouseEvent) => {
@@ -111,10 +120,11 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
   };
 
   const svgToImage = async (): Promise<string> => {
-    if (!svgRef.current) return '';
+    const targetSvg = internalSvgRef.current || svgRef.current;
+    if (!targetSvg) return '';
     
     // Create a clone to ensure we don't modify the original
-    const svgElement = svgRef.current.cloneNode(true) as SVGSVGElement;
+    const svgElement = targetSvg.cloneNode(true) as SVGSVGElement;
     svgElement.setAttribute('width', '1000');
     svgElement.setAttribute('height', '1000');
     
@@ -199,6 +209,11 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 rounded-[40px] overflow-hidden border border-slate-200 dark:border-slate-800">
+      {/* Hidden SVG for rendering */}
+      <div className="fixed -left-[9999px] -top-[9999px] opacity-0 pointer-events-none">
+        <SVGPreview config={config} ref={internalSvgRef} />
+      </div>
+
       <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="bg-blue-600 text-white p-2 rounded-xl">

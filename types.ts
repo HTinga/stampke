@@ -74,6 +74,7 @@ export interface StampConfig {
   embeddedSignatureUrl: string | null;
   showEmbeddedSignature: boolean;
   customElements: CustomElement[];
+  previewBg: 'default' | 'transparent' | 'white' | 'paper';
 }
 
 export interface CustomElement {

@@ -695,6 +695,35 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
       </section>
 
       {!config.isVintage && (
+        <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+             <Eye size={14} /> Preview Background
+          </h3>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { id: 'default', label: 'Default', icon: MousePointer },
+              { id: 'white', label: 'White', icon: ImageIcon },
+              { id: 'paper', label: 'Paper', icon: FileText },
+              { id: 'transparent', label: 'Transp', icon: EyeOff }
+            ].map((bg) => (
+              <button
+                key={bg.id}
+                onClick={() => onChange({ previewBg: bg.id as any })}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                  config.previewBg === bg.id 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100' 
+                    : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800 hover:border-blue-200'
+                }`}
+              >
+                <bg.icon size={14} />
+                <span className="text-[8px] font-black uppercase">{bg.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!config.isVintage && (
         <section>
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Color Themes</h3>
           <div className="space-y-4">

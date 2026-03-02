@@ -278,7 +278,7 @@ const App: React.FC = () => {
   const handleGoogleLogin = () => {
     setIsLoggedIn(true);
     setUser({ name: 'Kenyan SME', email: 'sme@firm.ke', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sme' });
-    setActiveTab('stamp-studio');
+    setActiveTab('home');
   };
 
   const handleDemoLogin = (e: React.FormEvent) => {
@@ -292,7 +292,7 @@ const App: React.FC = () => {
       setIsLoggedIn(true);
       setShowLoginModal(false);
       setLoginError('');
-      setActiveTab('stamp-studio');
+      setActiveTab('home');
     } else {
       setLoginError('Please enter your credentials.');
     }
@@ -462,6 +462,14 @@ const App: React.FC = () => {
 
         <div className="flex items-center gap-8">
           <div className="hidden md:flex items-center gap-6">
+            {isLoggedIn && (
+              <button 
+                onClick={() => setActiveTab('home')}
+                className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'home' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Dashboard
+              </button>
+            )}
             <button 
               onClick={() => setActiveTab('stamp-studio')}
               className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'stamp-studio' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
@@ -474,14 +482,6 @@ const App: React.FC = () => {
             >
               Sign Center
             </button>
-            {isLoggedIn && (
-              <button 
-                onClick={() => setActiveTab('home')}
-                className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'home' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                Dashboard
-              </button>
-            )}
           </div>
 
           <button 
@@ -852,7 +852,7 @@ const App: React.FC = () => {
                         <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Vector SVG</div>
                         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">High Res</div>
                       </div>
-                      <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-white dark:bg-slate-900 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
+                      <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
                         <SVGPreview config={stampConfig} ref={svgRef} />
                       </div>
                       <div className="mt-12 w-full max-w-md space-y-4">
