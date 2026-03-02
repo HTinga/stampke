@@ -6,7 +6,7 @@ import {
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
   FileDown, Share2, Mail, Edit3, Check
 } from 'lucide-react';
-import { Envelope, SignField, FieldType, BulkDocument, StampConfig } from '../types';
+import { Envelope, SignField, FieldType, BulkDocument, StampConfig, SignerInfo } from '../types';
 import SVGPreview from './SVGPreview';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -225,6 +225,8 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [activeEnvelope, setActiveEnvelope] = useState<Envelope | null>(null);
   const [showSignPad, setShowSignPad] = useState<{ fieldId?: string, isDesignerPlacement?: boolean, type?: FieldType } | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [newSigner, setNewSigner] = useState({ name: '', email: '', role: 'signer' as const });
   const [capturedValue, setCapturedValue] = useState<string | null>(null);
   const [isAuthDockOpen, setIsAuthDockOpen] = useState(true);
   const [wordHtml, setWordHtml] = useState<string | null>(null);
@@ -235,6 +237,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
   const [localStampConfig, setLocalStampConfig] = useState<StampConfig>(stampConfig);
   const [isEditingStamp, setIsEditingStamp] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [draggedField, setDraggedField] = useState<FieldType | null>(null);
 
   // Sync local config with prop when it changes (e.g. from Studio)
   useEffect(() => {
@@ -274,8 +277,6 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
       img.onload = () => {
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          // Use white background for the stamp if needed, but usually transparent is better for PDFs
-          // However, some PDF viewers handle transparency poorly. Let's keep it transparent for now.
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve(canvas.toDataURL('image/png'));
         } else {
@@ -294,13 +295,57 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
     }
   }, [showToast]);
 
+  const addSigner = () => {
+    if (!activeEnvelope || !newSigner.name || !newSigner.email) return;
+    
+    const signer: SignerInfo = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newSigner.name,
+      email: newSigner.email,
+      role: newSigner.role,
+      order: activeEnvelope.signers.length + 1,
+      status: 'pending'
+    };
+
+    setActiveEnvelope({
+      ...activeEnvelope,
+      signers: [...activeEnvelope.signers, signer]
+    });
+    setNewSigner({ name: '', email: '', role: 'signer' });
+    setShowInviteModal(false);
+    setShowToast({ message: `${signer.name} added to document`, type: 'success' });
+  };
+
+  const removeSigner = (id: string) => {
+    if (!activeEnvelope) return;
+    setActiveEnvelope({
+      ...activeEnvelope,
+      signers: activeEnvelope.signers.filter(s => s.id !== id),
+      fields: activeEnvelope.fields.filter(f => f.signerId !== id)
+    });
+  };
+
+  const handleSendEnvelope = () => {
+    if (!activeEnvelope) return;
+    setIsLoadingDoc(true);
+    setProcessingStatus('Distributing Documents...');
+    
+    setTimeout(() => {
+      setActiveEnvelope({ ...activeEnvelope, status: 'sent' });
+      setEnvelopes(prev => prev.map(e => e.id === activeEnvelope.id ? { ...activeEnvelope, status: 'sent' } : e));
+      setIsLoadingDoc(false);
+      setShowToast({ message: 'Documents dispatched to all signers', type: 'success' });
+      setView('dashboard');
+    }, 2000);
+  };
+
   const downloadDocument = async (envelope: Envelope) => {
     setIsLoadingDoc(true);
-    setProcessingStatus('Finalizing Authenticated Protocol...');
+    setProcessingStatus('Finalizing Document...');
     try {
       const doc = envelope.documents[0];
       if (!doc) {
-        throw new Error("No document found in protocol");
+        throw new Error("No document found");
       }
 
       let sourceBytes: ArrayBuffer | Uint8Array;
@@ -427,7 +472,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
   };
 
   const sendDocument = (envelope: Envelope) => {
-    setShowToast({ message: `Protocol dispatched to ${envelope.signers.length} recipients`, type: 'success' });
+    setShowToast({ message: `Document dispatched to ${envelope.signers.length} recipients`, type: 'success' });
   };
 
   const [newEnv, setNewEnv] = useState<Partial<Envelope>>({
@@ -439,13 +484,16 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedSignerId, setSelectedSignerId] = useState<string>('s-1');
   const [draggedFieldType, setDraggedFieldType] = useState<FieldType | null>(null);
+  const [globalScale, setGlobalScale] = useState<number>(1.0);
+  const [capturedSignature, setCapturedSignature] = useState<string | null>(null);
+  const [capturedStamp, setCapturedStamp] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMoving, setIsMoving] = useState<string | null>(null);
 
   const convertDocToPdf = async (file: File) => {
     setIsLoadingDoc(true);
-    setProcessingStatus('Initializing Protocol Conversion...');
+    setProcessingStatus('Initializing Conversion...');
     try {
       let pdfData: Uint8Array;
 
@@ -628,13 +676,16 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     const fieldId = `f-${Math.random().toString(36).substr(2, 5)}`;
+    const baseWidth = draggedFieldType === 'stamp' ? 15 : 10;
+    const baseHeight = draggedFieldType === 'stamp' ? 10 : 5;
+    
     const newField: SignField = {
       id: fieldId,
       type: draggedFieldType,
       x,
       y,
-      width: draggedFieldType === 'stamp' ? 15 : 10,
-      height: draggedFieldType === 'stamp' ? 10 : 5,
+      width: baseWidth * globalScale,
+      height: baseHeight * globalScale,
       page: pageNum,
       signerId: selectedSignerId,
       value: capturedValue || undefined,
@@ -643,7 +694,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
     
     setNewEnv(prev => ({ ...prev, fields: [...(prev.fields || []), newField] }));
     
-    if (!capturedValue && (draggedFieldType === 'date' || draggedFieldType === 'text') && selectedSignerId === 's-1') {
+    if (!capturedValue && selectedSignerId === 's-1') {
       if (draggedFieldType === 'date') {
         const dateStr = new Date().toLocaleDateString();
         setNewEnv(prev => ({
@@ -667,7 +718,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
       auditLog: [{ 
         id: 'a-1', 
         timestamp: new Date().toISOString(), 
-        action: 'Protocol Dispatched', 
+        action: 'Document Dispatched', 
         user: 'System Admin', 
         ip: '197.248.33.102', 
         details: `Ready for ${newEnv.signers?.length} signers` 
@@ -690,6 +741,8 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
         }));
       } else {
         // New immediate capture path
+        if (showSignPad?.type === 'signature') setCapturedSignature(url);
+        if (showSignPad?.type === 'stamp') setCapturedStamp(url);
         setCapturedValue(url);
         setDraggedFieldType(showSignPad?.type || 'signature');
       }
@@ -708,22 +761,57 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
   };
 
   const renderLanding = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 py-12">
-      <div className="max-w-4xl mx-auto text-center space-y-12 px-4">
-        <div className="space-y-6">
-          <h2 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter leading-tight">Seal. Sign. <span className="text-blue-600">Succeed.</span></h2>
-          <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed max-w-2xl mx-auto">The enterprise gateway for Kenyan legal and corporate document authentication.</p>
+    <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 animate-in fade-in duration-1000">
+      <div className="max-w-4xl w-full text-center space-y-12 px-4">
+        <div className="inline-flex items-center gap-3 px-6 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] animate-bounce">
+          <ShieldCheck size={14} /> Legally Binding in Kenya
+        </div>
+        
+        <h2 className="text-7xl md:text-8xl font-black text-slate-900 dark:text-white tracking-tighter leading-[0.85]">
+          Sign & Stamp <br/> <span className="text-blue-600">Instantly.</span>
+        </h2>
+        
+        <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
+          Upload your document, place your signature or stamp, and download. Simple, secure, and professional.
+        </p>
+
+        <div className="flex flex-col items-center justify-center gap-8 pt-10">
+          <div className="relative group">
+            <input 
+              type="file" 
+              onChange={handleFileUpload}
+              className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+              accept=".pdf,.doc,.docx"
+            />
+            <button 
+              className="bg-slate-900 dark:bg-blue-600 text-white px-16 py-8 rounded-[40px] font-black text-3xl hover:scale-105 transition-all shadow-2xl flex items-center gap-6"
+            >
+              <Upload size={40} /> Upload Document
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => setView('dashboard')}
+            className="text-slate-500 dark:text-slate-400 font-black text-lg hover:text-blue-600 transition-all flex items-center gap-2"
+          >
+            <History size={20} /> View Past Documents
+          </button>
         </div>
 
-        <div className="bg-white p-1 rounded-[64px] shadow-2xl shadow-blue-100 group relative border border-slate-100">
-          <div className="bg-slate-50 border-4 border-dashed border-white rounded-[62px] p-16 md:p-32 text-center cursor-pointer transition-all hover:bg-white">
-            <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-            <div className="bg-blue-600 text-white w-24 h-24 rounded-[40px] flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-blue-200 group-hover:scale-110 transition-transform">
-              <Upload size={48} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-24">
+          {[
+            { icon: ShieldCheck, title: 'KICA Compliant', desc: 'Fully adheres to Section 83G of the Kenya Information and Communications Act.' },
+            { icon: Zap, title: 'Instant Execution', desc: 'Deploy complex multi-signer workflows in seconds, not hours.' },
+            { icon: PenTool, title: 'Vector Precision', desc: 'High-fidelity SVG impressions that remain sharp at any scale.' }
+          ].map((feature, i) => (
+            <div key={i} className="p-10 bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 text-left space-y-4 hover:shadow-2xl transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center">
+                <feature.icon size={28} />
+              </div>
+              <h4 className="text-xl font-black tracking-tight">{feature.title}</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{feature.desc}</p>
             </div>
-            <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter mb-4">Start Authentication</h3>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">Drop PDF, Word or Image to begin</p>
-          </div>
+          ))}
         </div>
       </div>
     </div>
@@ -733,81 +821,95 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
     const activeDoc = newEnv.documents?.[0];
 
     return (
-      <div className="animate-in fade-in slide-in-from-right-4 duration-700 fixed inset-0 z-[100] bg-slate-900 flex flex-col overflow-hidden">
+      <div className="animate-in fade-in slide-in-from-right-4 duration-700 fixed inset-0 z-[100] bg-slate-900 dark:bg-slate-950 flex flex-col overflow-hidden">
          {/* Top Header Bar */}
-         <div className="bg-white border-b border-slate-200 px-6 md:px-12 py-4 flex items-center justify-between z-[110]">
-            <div className="flex items-center gap-4">
-               <div className="bg-blue-600 text-white p-2.5 rounded-2xl shadow-xl flex-shrink-0"><FileText size={20} /></div>
+         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 md:px-12 py-4 flex items-center justify-between z-[110] shadow-sm">
+            <div className="flex items-center gap-6">
+               <div className="bg-blue-600 text-white p-3 rounded-2xl shadow-xl flex-shrink-0"><FileText size={24} /></div>
                <div className="min-w-0">
-                  <h3 className="text-xl font-black text-slate-900 truncate leading-none">{newEnv.title}</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                     Preparation Mode • Assigning Tags
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white truncate leading-none tracking-tight">{newEnv.title || 'Untitled Document'}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 flex items-center gap-2">
+                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                     Ready to Place Tags
                   </p>
                </div>
             </div>
             
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-2.5">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Signer:</span>
+            <div className="flex items-center gap-8">
+               <div className="hidden md:flex items-center gap-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-6 py-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Signer:</span>
                   <select 
                     value={selectedSignerId} 
                     onChange={e => setSelectedSignerId(e.target.value)}
-                    className="bg-transparent text-xs font-black text-slate-900 outline-none min-w-[120px]"
+                    className="bg-transparent text-sm font-black text-slate-900 dark:text-white outline-none min-w-[160px] cursor-pointer"
                   >
                     {newEnv.signers?.map(s => (
-                      <option key={s.id} value={s.id}>{s.name || s.email}</option>
+                      <option key={s.id} value={s.id} className="dark:bg-slate-900">{s.name || s.email}</option>
                     ))}
                   </select>
                </div>
-               <button onClick={() => setView('landing')} className="p-3 hover:bg-slate-100 rounded-full transition-all text-slate-400"><X size={28} /></button>
+
+               <button 
+                 onClick={() => setShowInviteModal(true)}
+                 className="flex items-center gap-3 px-6 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-100 transition-all border border-blue-100 dark:border-blue-800"
+               >
+                 <UserPlus size={18} /> Invite Others
+               </button>
+
+               <button onClick={() => setView('landing')} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400"><X size={32} /></button>
             </div>
          </div>
 
          {/* Main Workspace */}
          <div className="flex-1 flex overflow-hidden relative">
             {/* Preparation Tool Dock - Vertical Left */}
-            <div className="w-24 md:w-32 bg-white border-r border-slate-200 flex flex-col items-center py-10 z-[120] shadow-2xl shrink-0">
-               <div className="flex flex-col items-center gap-10 w-full overflow-y-auto custom-scrollbar px-2">
+            <div className="w-24 md:w-32 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-12 z-[120] shadow-2xl shrink-0">
+               <div className="flex flex-col items-center gap-12 w-full overflow-y-auto custom-scrollbar px-2">
                   {[
-                    { type: 'signature', label: 'Sign', icon: <PenTool size={24}/>, color: 'text-blue-600' },
-                    { type: 'stamp', label: 'Stamp', icon: <Stamp size={24}/>, color: 'text-orange-600' },
-                    { type: 'date', label: 'Date', icon: <Calendar size={24}/>, color: 'text-green-600' },
-                    { type: 'text', label: 'Text', icon: <Type size={24}/>, color: 'text-purple-600' }
+                    { type: 'signature', label: 'Sign', icon: <PenTool size={28}/>, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                    { type: 'stamp', label: 'Stamp', icon: <Stamp size={28}/>, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+                    { type: 'date', label: 'Date', icon: <Calendar size={28}/>, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
+                    { type: 'text', label: 'Text', icon: <Type size={28}/>, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' }
                   ].map(tag => (
                     <div 
                       key={tag.type}
                       onClick={() => {
                         if ((tag.type === 'signature' || tag.type === 'stamp') && selectedSignerId === 's-1') {
-                          setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
+                          const existing = tag.type === 'signature' ? capturedSignature : capturedStamp;
+                          if (existing) {
+                            setCapturedValue(existing);
+                            setDraggedFieldType(tag.type as FieldType);
+                          } else {
+                            setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
+                          }
                         } else {
                           setDraggedFieldType(tag.type as FieldType);
                         }
                       }}
-                      className={`flex flex-col items-center gap-2 cursor-pointer transition-all w-full ${draggedFieldType === tag.type ? 'scale-110' : 'hover:scale-105 opacity-80 hover:opacity-100'}`}
+                      className={`flex flex-col items-center gap-3 cursor-pointer transition-all w-full ${draggedFieldType === tag.type ? 'scale-110' : 'hover:scale-110 opacity-80 hover:opacity-100'}`}
                     >
-                       <div className={`p-5 rounded-3xl border-2 transition-all flex items-center justify-center ${draggedFieldType === tag.type ? 'border-blue-600 bg-white ring-8 ring-blue-50 shadow-inner' : 'bg-slate-50 border-transparent shadow-sm'} ${tag.color}`}>
+                       <div className={`w-16 h-16 rounded-[24px] border-2 transition-all flex items-center justify-center ${draggedFieldType === tag.type ? 'border-blue-600 bg-white dark:bg-slate-800 ring-8 ring-blue-500/10 shadow-inner' : `${tag.bg} border-transparent shadow-sm`} ${tag.color}`}>
                           {tag.icon}
                        </div>
-                       <span className="font-black text-[9px] uppercase tracking-widest text-slate-500 text-center">{tag.label}</span>
+                       <span className="font-black text-[10px] uppercase tracking-widest text-slate-500 text-center">{tag.label}</span>
                     </div>
                   ))}
 
-                  <div className="w-12 h-px bg-slate-100 my-4"></div>
+                  <div className="w-12 h-px bg-slate-100 dark:bg-slate-800 my-4"></div>
 
                   <button 
                     disabled={newEnv.fields?.length === 0}
-                    onClick={() => setCurrentStep(3)} 
-                    className="bg-slate-900 text-white p-5 rounded-3xl font-black text-xs hover:bg-blue-600 transition-all shadow-xl disabled:opacity-20 flex flex-col items-center gap-2 active:scale-95 mt-auto"
+                    onClick={() => handleSendEnvelope()} 
+                    className="bg-slate-900 dark:bg-blue-600 text-white w-16 h-16 rounded-[24px] font-black text-xs hover:scale-110 transition-all shadow-xl disabled:opacity-20 flex flex-col items-center justify-center gap-1 active:scale-95 mt-auto mb-10"
                   >
-                    <ChevronRight size={24} />
-                    <span>DONE</span>
+                    <Send size={24} />
+                    <span className="text-[8px] uppercase tracking-tighter">SEND</span>
                   </button>
                </div>
             </div>
 
             {/* Document Canvas - Maximized Focus */}
-            <div className="flex-1 bg-slate-800 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-12">
+            <div className="flex-1 bg-slate-100 dark:bg-slate-900 relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-16">
                {isLoadingDoc && (
                  <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-xl">
                    <div className="relative">
@@ -816,7 +918,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                        <FileCode size={32} className="text-blue-200 animate-pulse" />
                      </div>
                    </div>
-                   <p className="text-white font-black uppercase tracking-[0.3em] text-xl mb-2">Universal Protocol Processing</p>
+                   <p className="text-white font-black uppercase tracking-[0.3em] text-xl mb-2">Universal Document Processing</p>
                    <p className="text-blue-400 font-bold uppercase tracking-widest text-xs animate-pulse">{processingStatus}</p>
                  </div>
                )}
@@ -826,7 +928,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                    key={idx}
                    onClick={(e) => handlePageClick(e, idx + 1)}
                    onPointerMove={handlePointerMove}
-                   className="pdf-page-container w-full max-w-5xl bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-white/5"
+                   className="pdf-page-container w-full max-w-5xl bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-slate-200 dark:border-slate-800"
                  >
                     {/* High-Resolution Document Rendering */}
                     <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-white">
@@ -846,10 +948,10 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                                setIsMoving(field.id);
                              }}
                              onPointerUp={handlePointerUp}
-                             className={`absolute -translate-x-1/2 -translate-y-1/2 p-3 rounded-2xl flex flex-col items-center justify-center group cursor-move transition-transform active:scale-110 ${
+                             className={`absolute -translate-x-1/2 -translate-y-1/2 p-4 rounded-2xl flex flex-col items-center justify-center group cursor-move transition-all active:scale-110 ${
                                field.isCompleted 
                                  ? 'border-none shadow-none' 
-                                 : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-blue-500' : 'border-slate-300 opacity-50'}`
+                                 : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-blue-500 bg-blue-50/10' : 'border-slate-300 opacity-50'}`
                              }`}
                              style={{ 
                                left: `${field.x}%`, 
@@ -857,7 +959,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                                width: field.width ? `${field.width}%` : 'auto',
                                height: field.height ? `${field.height}%` : 'auto',
                                pointerEvents: 'auto', 
-                               minWidth: '120px', 
+                               minWidth: '140px', 
                                touchAction: 'none' 
                              }}
                            >
@@ -875,15 +977,15 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                                </div>
                              ) : (
                                <>
-                                 <div className={`p-2 rounded-xl mb-1.5 ${field.signerId === selectedSignerId ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'}`}>
-                                   {field.type === 'signature' && <PenTool size={18} />}
-                                   {field.type === 'stamp' && <Stamp size={18} />}
-                                   {field.type === 'date' && <Calendar size={18} />}
-                                   {field.type === 'text' && <Type size={18} />}
+                                 <div className={`p-3 rounded-xl mb-2 ${field.signerId === selectedSignerId ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-500'}`}>
+                                   {field.type === 'signature' && <PenTool size={20} />}
+                                   {field.type === 'stamp' && <Stamp size={20} />}
+                                   {field.type === 'date' && <Calendar size={20} />}
+                                   {field.type === 'text' && <Type size={20} />}
                                  </div>
                                  <div className="text-center">
-                                   <span className={`text-[11px] font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-slate-600'}`}>{signer?.name || 'Signer'}</span>
-                                   <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest text-slate-500">{field.type} Area</span>
+                                   <span className={`text-xs font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-slate-600'}`}>{signer?.name || 'Signer'}</span>
+                                   <span className="text-[9px] font-bold opacity-60 uppercase tracking-widest text-slate-500">{field.type} Area</span>
                                  </div>
                                </>
                              )}
@@ -895,9 +997,9 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                                    setIsResizing(field.id);
                                    (e.target as HTMLElement).setPointerCapture(e.pointerId);
                                  }}
-                                 className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize bg-blue-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                 className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize bg-blue-500 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                                >
-                                 <Maximize2 size={10} />
+                                 <Maximize2 size={12} />
                                </div>
                              )}
                              
@@ -906,9 +1008,9 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                                  e.stopPropagation();
                                  setNewEnv(prev => ({ ...prev, fields: prev.fields?.filter(f => f.id !== field.id) }));
                                }}
-                               className="absolute -top-4 -right-4 bg-red-500 text-white p-2 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                               className="absolute -top-5 -right-5 bg-red-500 text-white p-2.5 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
                              >
-                               <X size={12} />
+                               <X size={14} />
                              </button>
                            </div>
                          );
@@ -916,40 +1018,63 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                     </div>
                  </div>
                ))}
-               
-               {draggedFieldType && (
-                 <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[130] flex items-center gap-3 text-blue-600 animate-pulse bg-white/90 backdrop-blur-md px-8 py-4 rounded-full border border-blue-100 shadow-2xl">
-                   <MousePointer2 size={20} />
-                   <p className="text-sm font-black uppercase tracking-widest">Click on document to place {draggedFieldType}</p>
-                   <button onClick={() => setDraggedFieldType(null)} className="ml-4 p-2 hover:bg-slate-100 rounded-full transition-all"><X size={18}/></button>
-                 </div>
-               )}
+            </div>
 
-               {newEnv.fields && newEnv.fields.length > 0 && (
-                 <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">
-                    <button 
-                      onClick={() => downloadDocument(newEnv as Envelope)}
-                      className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all group relative"
+            {/* Signers Sidebar - Right */}
+            <div className="hidden lg:flex w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex-col z-[120] shadow-2xl">
+               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Signers</h4>
+                  <button onClick={() => setShowInviteModal(true)} className="text-blue-600 hover:scale-110 transition-transform"><UserPlus size={20} /></button>
+               </div>
+               <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
+                  {newEnv.signers?.map((signer, idx) => (
+                    <div 
+                      key={signer.id}
+                      onClick={() => setSelectedSignerId(signer.id)}
+                      className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${
+                        selectedSignerId === signer.id 
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-600 shadow-lg' 
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+                      }`}
                     >
-                      <FileDown size={28} />
-                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Signed PDF</span>
-                    </button>
-                    <button 
-                      onClick={() => shareDocument(newEnv as Envelope)}
-                      className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
-                    >
-                      <Share2 size={28} />
-                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Copy Share Link</span>
-                    </button>
-                    <button 
-                      onClick={() => setCurrentStep(1)}
-                      className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
-                    >
-                      <Edit3 size={28} />
-                      <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Recipients</span>
-                    </button>
-                 </div>
-               )}
+                       <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm ${
+                            selectedSignerId === signer.id ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-400'
+                          }`}>
+                            {signer.name.charAt(0) || idx + 1}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                             <p className={`font-black text-sm truncate ${selectedSignerId === signer.id ? 'text-blue-900 dark:text-blue-100' : 'text-slate-900 dark:text-white'}`}>{signer.name || 'Unnamed Recipient'}</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate mt-1">{signer.role}</p>
+                          </div>
+                          {selectedSignerId === signer.id && <div className="w-2 h-2 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]"></div>}
+                       </div>
+                    </div>
+                  ))}
+               </div>
+               <div className="p-8 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                  <div className="space-y-4">
+                     <div className="flex justify-between">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Scale</label>
+                       <span className="text-[10px] font-bold text-slate-400">{Math.round(globalScale * 100)}%</span>
+                     </div>
+                     <input 
+                       type="range" 
+                       min="0.5" 
+                       max="2.5" 
+                       step="0.1" 
+                       value={globalScale} 
+                       onChange={e => setGlobalScale(parseFloat(e.target.value))} 
+                       className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg accent-blue-600 cursor-pointer" 
+                     />
+                  </div>
+                  <button 
+                    onClick={() => handleSendEnvelope()}
+                    className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-[24px] font-black text-sm hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3"
+                  >
+                    Finish & Send Document <Send size={20} />
+                  </button>
+               </div>
             </div>
          </div>
 
@@ -969,8 +1094,8 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                       {/* Right Side: Controls */}
                       <div className="flex flex-col justify-center space-y-8">
                         <div>
-                          <h4 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4">Apply Seal</h4>
-                          <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Professional Authentication Protocol</p>
+                          <h4 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4">Apply Stamp</h4>
+                          <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest">Place your official seal</p>
                         </div>
 
                         {isEditingStamp ? (
@@ -1011,7 +1136,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                               }} 
                               className="w-full py-6 rounded-3xl font-black text-white bg-blue-600 shadow-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3 text-lg"
                             >
-                              <Check size={24} /> Use This Seal
+                              <Check size={24} /> Apply to Document
                             </button>
                             
                             <div className="grid grid-cols-2 gap-4">
@@ -1057,7 +1182,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
               <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-none">{activeEnvelope.title}</h2>
               <p className="text-slate-500 font-bold uppercase text-[11px] tracking-widest mt-2 flex items-center gap-2">
                  <ShieldCheck size={16} className="text-green-500" />
-                 Secure Authentication Protocol Enabled
+                 Secure Document Signing Enabled
               </p>
            </div>
            <button onClick={() => setView('dashboard')} className="p-4 bg-slate-100 hover:bg-slate-200 rounded-full transition-all text-slate-400"><X size={28} /></button>
@@ -1109,7 +1234,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                     <div className="w-full bg-slate-50 h-4 rounded-full overflow-hidden border border-slate-100 shadow-inner">
                        <div className="bg-blue-600 h-full transition-all duration-1000 ease-out shadow-lg" style={{ width: `${(activeEnvelope.fields.filter(f => f.isCompleted).length / activeEnvelope.fields.length) * 100}%` }}></div>
                     </div>
-                    <p className="text-sm font-black text-slate-900 tracking-tight">{activeEnvelope.fields.filter(f => f.isCompleted).length} of {activeEnvelope.fields.length} Tasks Finalized</p>
+                    <p className="text-sm font-black text-slate-900 tracking-tight">{activeEnvelope.fields.filter(f => f.isCompleted).length} of {activeEnvelope.fields.length} Fields Completed</p>
                  </div>
                  
                  <div className="pt-6 border-t border-slate-100 space-y-6">
@@ -1146,7 +1271,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                     >
                       Finish Document <CheckCircle2 size={32} />
                     </button>
-                    {!allSigned && <p className="text-center text-[10px] text-slate-400 font-bold uppercase mt-6 tracking-widest leading-relaxed">Please address all assigned identifiers <br/> to archive the protocol.</p>}
+                    {!allSigned && <p className="text-center text-[10px] text-slate-400 font-bold uppercase mt-6 tracking-widest leading-relaxed">Please sign all required fields <br/> to complete the document.</p>}
                  </div>
               </div>
 
@@ -1185,7 +1310,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
              className="w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 hover:scale-110 transition-all group relative"
            >
              <FileDown size={28} />
-             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Protocol</span>
+             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Document</span>
            </button>
            <button 
              onClick={() => shareDocument(activeEnvelope)}
@@ -1203,7 +1328,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
              className="w-16 h-16 bg-white text-slate-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-50 hover:scale-110 transition-all group relative border border-slate-100"
            >
              <Edit3 size={28} />
-             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Tags</span>
+             <span className="absolute right-20 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Fields</span>
            </button>
         </div>
       </div>
@@ -1214,80 +1339,81 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
     <div className="animate-in fade-in duration-500 px-4 md:px-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
         <div>
-          <h2 className="text-5xl font-black text-slate-900 tracking-tighter">Protocol Hub</h2>
-          <p className="text-slate-500 font-medium text-lg">Manage, track, and download your firm's authenticated records.</p>
+          <h2 className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Documents</h2>
+          <p className="text-slate-500 dark:text-slate-400 font-medium text-lg mt-4">Manage and download your signed documents.</p>
         </div>
-        <button onClick={() => setView('landing')} className="bg-blue-600 text-white px-10 py-5 rounded-[32px] font-black text-xl shadow-2xl shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95">
-          <Plus size={28} /> Create Workflow
+        <button onClick={() => setView('landing')} className="bg-blue-600 text-white px-12 py-6 rounded-[32px] font-black text-xl shadow-2xl shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95">
+          <Plus size={28} /> New Document
         </button>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-[56px] overflow-hidden shadow-xl">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[56px] overflow-hidden shadow-xl">
         {envelopes.length === 0 ? (
-          <div className="p-32 text-center">
-            <div className="bg-slate-50 w-24 h-24 rounded-[40px] flex items-center justify-center mx-auto mb-8">
-               <FileText size={48} className="text-slate-200" />
+          <div className="p-40 text-center">
+            <div className="bg-slate-50 dark:bg-slate-800 w-32 h-32 rounded-[48px] flex items-center justify-center mx-auto mb-10">
+               <FileText size={56} className="text-slate-200 dark:text-slate-700" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 mb-4">No active protocols</h3>
-            <button onClick={() => setView('landing')} className="text-blue-600 font-black uppercase text-sm tracking-widest hover:underline decoration-2 underline-offset-8">Initialize First Signing Session</button>
+            <h3 className="text-4xl font-black text-slate-900 dark:text-white mb-4">No documents yet</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-10 max-w-sm mx-auto">Your document list is empty. Upload a document to begin.</p>
+            <button onClick={() => setView('landing')} className="text-blue-600 font-black uppercase text-sm tracking-widest hover:underline decoration-2 underline-offset-8">Start Your First Document</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">Document Registry</th>
-                  <th className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">Signer Status</th>
-                  <th className="px-10 py-8 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Access</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-12 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Document Name</th>
+                  <th className="px-12 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-12 py-10 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Access</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {envelopes.map(env => (
-                  <tr key={env.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-5 cursor-pointer" onClick={() => { setActiveEnvelope(env); setView('signer-view'); }}>
-                        <div className="bg-blue-50 text-blue-600 p-4 rounded-3xl flex-shrink-0"><FileText size={24} /></div>
-                        <div className="min-w-0 flex-1 font-black text-slate-900 text-lg truncate">{env.title}</div>
+                  <tr key={env.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <td className="px-12 py-10">
+                      <div className="flex items-center gap-6 cursor-pointer" onClick={() => { setActiveEnvelope(env); setView('signer-view'); }}>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 p-5 rounded-3xl flex-shrink-0"><FileText size={28} /></div>
+                        <div>
+                          <div className="font-black text-slate-900 dark:text-white text-xl truncate max-w-md">{env.title}</div>
+                          <div className="text-xs text-slate-400 font-bold mt-1">ID: {env.id.toUpperCase()} • {new Date(env.createdAt).toLocaleDateString()}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-10 py-8">
-                      <span className={`px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest ${
-                        env.status === 'sent' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-green-50 text-green-600 border border-green-100'
-                      }`}>
-                        {env.status}
-                      </span>
+                    <td className="px-12 py-10">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border ${
+                          env.status === 'sent' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' : 
+                          env.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800' :
+                          'bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-800 dark:border-slate-700'
+                        }`}>
+                          {env.status}
+                        </span>
+                        <div className="flex -space-x-3">
+                          {env.signers.map((s, i) => (
+                            <div key={s.id} className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-900 flex items-center justify-center text-[10px] font-black text-slate-400" title={s.name}>
+                              {s.name.charAt(0)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-10 py-8 text-right">
-                      <div className="flex items-center justify-end gap-3">
+                    <td className="px-12 py-10 text-right">
+                      <div className="flex items-center justify-end gap-4">
                         <button 
                           onClick={() => { setActiveEnvelope(env); setView('create'); setCurrentStep(2); setNewEnv(env); }}
-                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          className="p-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"
                           title="Edit Tags"
                         >
-                          <Edit3 size={18} />
+                          <Edit3 size={20} />
                         </button>
                         <button 
                           onClick={() => downloadDocument(env)}
-                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          className="p-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"
                           title="Download PDF"
                         >
-                          <FileDown size={18} />
+                          <FileDown size={20} />
                         </button>
-                        <button 
-                          onClick={() => shareDocument(env)}
-                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
-                          title="Share Link"
-                        >
-                          <Share2 size={18} />
-                        </button>
-                        <button 
-                          onClick={() => sendDocument(env)}
-                          className="p-3 bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all"
-                          title="Send Email"
-                        >
-                          <Mail size={18} />
-                        </button>
-                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase hover:bg-blue-600 transition-all shadow-lg active:scale-95">View</button>
+                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="bg-slate-900 dark:bg-blue-600 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95">Open Document</button>
                       </div>
                     </td>
                   </tr>
@@ -1302,34 +1428,39 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
 
   const renderCreateStep1 = () => (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 max-w-4xl mx-auto py-16 px-4">
-      <div className="bg-white p-14 rounded-[64px] border border-slate-100 shadow-2xl space-y-12">
+      <div className="bg-white dark:bg-slate-900 p-14 rounded-[64px] border border-slate-100 dark:border-slate-800 shadow-2xl space-y-12">
+        <div className="text-center space-y-4">
+          <h3 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Document Details</h3>
+          <p className="text-slate-500 font-medium">Give your document a name and add any other signers if needed.</p>
+        </div>
+
         <div className="space-y-6">
           <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <GripHorizontal size={14} /> Workflow Identifier
+            Document Title
           </label>
           <input 
             type="text" 
-            placeholder="e.g., Partnership Agreement - JijiTechy"
+            placeholder="e.g., Partnership Agreement"
             value={newEnv.title}
             onChange={e => setNewEnv(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-7 px-10 outline-none focus:ring-8 focus:ring-blue-50 text-2xl font-black transition-all"
+            className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl py-7 px-10 outline-none focus:ring-8 focus:ring-blue-500/10 text-2xl font-black transition-all dark:text-white"
           />
         </div>
 
         <div className="space-y-10">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Recipient Configuration</label>
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Signers</label>
             <button 
               onClick={() => setNewEnv(prev => ({ ...prev, signers: [...(prev.signers || []), { id: `s-${Date.now()}`, name: '', email: '', role: 'signer', order: (prev.signers?.length || 0) + 1, status: 'pending' }] }))} 
-              className="text-blue-600 font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-blue-50 px-6 py-4 rounded-[28px] hover:bg-blue-100 transition-all shadow-sm"
+              className="text-blue-600 font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 px-6 py-4 rounded-[28px] hover:bg-blue-100 transition-all shadow-sm"
             >
-              <UserPlus size={20} /> Add Recipient
+              <UserPlus size={20} /> Add Another Signer
             </button>
           </div>
           <div className="space-y-6">
             {newEnv.signers?.map((signer, i) => (
-              <div key={signer.id} className="flex flex-col md:flex-row gap-6 p-10 bg-slate-50 rounded-[48px] items-center group border border-slate-100 transition-all hover:bg-white hover:shadow-2xl">
-                <div className="w-14 h-14 bg-white rounded-3xl flex items-center justify-center font-black text-slate-400 border border-slate-100 flex-shrink-0 shadow-lg">{i + 1}</div>
+              <div key={signer.id} className="flex flex-col md:flex-row gap-6 p-8 bg-slate-50 dark:bg-slate-800/50 rounded-[40px] items-center group border border-slate-100 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl">
+                <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center font-black text-slate-400 border border-slate-100 dark:border-slate-800 flex-shrink-0 shadow-md">{i + 1}</div>
                 <input 
                   type="text" placeholder="Full Name" value={signer.name}
                   onChange={e => {
@@ -1337,7 +1468,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                     updated[i].name = e.target.value;
                     setNewEnv(prev => ({ ...prev, signers: updated }));
                   }}
-                  className="w-full md:flex-1 bg-white border border-slate-200 rounded-3xl py-5 px-8 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-blue-50" 
+                  className="w-full md:flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-blue-500/10 dark:text-white" 
                 />
                 <input 
                   type="email" placeholder="Email Address" value={signer.email}
@@ -1346,14 +1477,16 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                     updated[i].email = e.target.value;
                     setNewEnv(prev => ({ ...prev, signers: updated }));
                   }}
-                  className="w-full md:flex-1 bg-white border border-slate-200 rounded-3xl py-5 px-8 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-blue-50" 
+                  className="w-full md:flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-blue-500/10 dark:text-white" 
                 />
-                <button 
-                  onClick={() => setNewEnv(prev => ({ ...prev, signers: prev.signers?.filter(s => s.id !== signer.id) }))} 
-                  className="text-slate-300 hover:text-red-500 transition-colors p-5 bg-white rounded-3xl shadow-sm border border-slate-100"
-                >
-                  <Trash2 size={24} />
-                </button>
+                {i > 0 && (
+                  <button 
+                    onClick={() => setNewEnv(prev => ({ ...prev, signers: prev.signers?.filter(s => s.id !== signer.id) }))} 
+                    className="text-slate-300 hover:text-red-500 transition-colors p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1363,9 +1496,9 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
       <div className="flex justify-end">
          <button 
           onClick={() => setCurrentStep(2)}
-          className="bg-slate-900 text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:bg-blue-600 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
+          className="bg-slate-900 dark:bg-blue-600 text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:scale-105 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
         >
-          Initialize Studio <ChevronRight size={32} />
+          Continue to Studio <ChevronRight size={32} />
         </button>
       </div>
     </div>
@@ -1373,13 +1506,71 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
 
   return (
     <div className="min-h-[80vh] flex flex-col">
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-2xl z-[300] flex items-center justify-center p-6">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[64px] shadow-2xl overflow-hidden animate-in zoom-in duration-500 border border-slate-100 dark:border-slate-800">
+            <div className="p-16 space-y-12">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Invite Signer</h4>
+                  <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-4">Expand the Signing Session</p>
+                </div>
+                <button onClick={() => setShowInviteModal(false)} className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"><X size={32} /></button>
+              </div>
+
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
+                  <input 
+                    type="text" 
+                    value={newSigner.name}
+                    onChange={e => setNewSigner(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-blue-500/10 font-bold text-lg dark:text-white"
+                    placeholder="e.g., Jane Doe"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email Address</label>
+                  <input 
+                    type="email" 
+                    value={newSigner.email}
+                    onChange={e => setNewSigner(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-blue-500/10 font-bold text-lg dark:text-white"
+                    placeholder="e.g., jane@firm.ke"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</label>
+                  <select 
+                    value={newSigner.role}
+                    onChange={e => setNewSigner(prev => ({ ...prev, role: e.target.value as any }))}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-800 rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-blue-500/10 font-bold text-lg dark:text-white appearance-none"
+                  >
+                    <option value="signer">Signer</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="approver">Approver</option>
+                  </select>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => addSigner()}
+                className="w-full bg-slate-900 dark:bg-blue-600 text-white py-8 rounded-[32px] font-black text-2xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4"
+              >
+                Add to Document <UserPlus size={28} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showToast && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300] animate-in slide-in-from-top-10 duration-500">
-          <div className={`px-8 py-4 rounded-[32px] shadow-2xl flex items-center gap-4 border ${
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[400] animate-in slide-in-from-top-10 duration-500">
+          <div className={`px-10 py-5 rounded-[40px] shadow-2xl flex items-center gap-5 border ${
             showToast.type === 'success' ? 'bg-green-600 text-white border-green-500' : 'bg-blue-600 text-white border-blue-500'
           }`}>
-            <CheckCircle2 size={24} />
-            <span className="font-black uppercase tracking-widest text-xs">{showToast.message}</span>
+            <CheckCircle2 size={28} />
+            <span className="font-black uppercase tracking-[0.2em] text-xs">{showToast.message}</span>
           </div>
         </div>
       )}
@@ -1402,7 +1593,7 @@ export default function DigitalSignCenter({ stampConfig, onOpenStudio, pendingSt
                   
                   <div className="bg-slate-50 p-12 rounded-[56px] text-left space-y-8 border border-slate-100 shadow-inner">
                      <div className="flex items-center justify-between border-b border-slate-200 pb-6">
-                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Protocol</span>
+                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Document</span>
                         <span className="font-black text-slate-900 text-lg truncate max-w-[250px]">{newEnv.title}</span>
                      </div>
                      <div className="flex items-center justify-between">

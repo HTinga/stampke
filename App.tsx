@@ -89,47 +89,16 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const NAVIGATION_GROUPS = [
   {
-    id: 'workspace',
-    label: 'Workspace Suite',
-    items: ['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload']
-  },
-  {
-    id: 'studio',
-    label: 'Stamp & Authority',
-    items: ['stamp-studio', 'apply-stamp', 'convert', 'esign']
-  },
-  {
-    id: 'docs',
-    label: 'Document Forge',
-    items: ['pdf-forge', 'doc-gen', 'presentation', 'bulk']
-  },
-  {
-    id: 'ops',
-    label: 'Business Ops',
-    items: ['booking', 'comm-center']
+    id: 'core',
+    label: 'Digital Authority',
+    items: ['stamp-studio', 'esign', 'bulk']
   }
 ];
 
 const NAVIGATION_ITEMS = [
-  { id: 'home', label: 'Dashboard', icon: Home },
-  { id: 'workspace-dashboard', label: 'Overview', icon: LayoutDashboard },
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
-  { id: 'tasks', label: 'Tasks & Projects', icon: ListTodo },
-  { id: 'gantt', label: 'Gantt Charts', icon: BarChart3 },
-  { id: 'time', label: 'Time Tracking', icon: Clock },
-  { id: 'whiteboard', label: 'Whiteboard', icon: PenTool },
-  { id: 'forms', label: 'Forms', icon: ClipboardList },
-  { id: 'automation', label: 'Automation Hub', icon: Zap },
-  { id: 'workload', label: 'Team Workload', icon: Users },
-  { id: 'pdf-forge', label: 'PDF Forge', icon: FileCode },
-  { id: 'booking', label: 'Booking System', icon: CalendarDays },
-  { id: 'comm-center', label: 'Comm Hub', icon: Mail },
-  { id: 'doc-gen', label: 'Doc Generator', icon: FileSpreadsheet },
-  { id: 'presentation', label: 'Slide Deck', icon: Monitor },
   { id: 'bulk', label: 'Bulk Engine', icon: Layers },
-  { id: 'convert', label: 'AI Scan', icon: Camera },
-  { id: 'apply-stamp', label: 'Apply Stamp', icon: FileText },
 ];
 
 const BLOG_POSTS = [
@@ -230,21 +199,18 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'workspace-dashboard' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'stamp-studio' | 'esign' | 'pdf-forge' | 'booking' | 'doc-gen' | 'presentation' | 'comm-center' | 'templates' | 'bulk' | 'convert' | 'blogs' | 'resources' | 'terms' | 'privacy' | 'help' | 'account' | 'apply-stamp'>('stamp-studio');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'bulk' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentType, setPaymentType] = useState<'single' | 'bulk' | 'esign'>('single');
-  const [bulkCost, setBulkCost] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'staff'>('admin');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
+  const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>({ name: 'Sahihi User', email: 'user@sahihi.ke' });
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
@@ -276,9 +242,8 @@ const App: React.FC = () => {
   }, [theme]);
 
   const handleGoogleLogin = () => {
-    setIsLoggedIn(true);
-    setUser({ name: 'Kenyan SME', email: 'sme@firm.ke', picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sme' });
-    setActiveTab('home');
+    // Disabled as per request
+    console.log("Google Login disabled");
   };
 
   const handleDemoLogin = (e: React.FormEvent) => {
@@ -292,7 +257,7 @@ const App: React.FC = () => {
       setIsLoggedIn(true);
       setShowLoginModal(false);
       setLoginError('');
-      setActiveTab('home');
+      setActiveTab('stamp-studio');
     } else {
       setLoginError('Please enter your credentials.');
     }
@@ -341,7 +306,6 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    setShowPayment(false);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -365,13 +329,6 @@ const App: React.FC = () => {
       }
     };
     reader.readAsDataURL(file);
-  };
-
-  const triggerPayment = (type: 'single' | 'bulk' | 'esign', cost?: number) => {
-    // Muted for testing
-    console.log(`Payment triggered for ${type} with cost ${cost}`);
-    setShowPayment(false);
-    alert("Testing Mode: Process completed successfully without payment.");
   };
 
   const downloadStamp = async (format: 'svg' | 'png' | 'pdf', transparent: boolean = true) => {
@@ -454,27 +411,25 @@ const App: React.FC = () => {
       {/* Top Bar */}
       <header className="h-20 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-[100] px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('stamp-studio')}>
             <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={24} /></div>
-            <h1 className="text-2xl font-black tracking-tighter">FreeStamps <span className="text-blue-600">KE</span></h1>
+            <h1 className="text-2xl font-black tracking-tighter">Sahihi</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-8">
           <div className="hidden md:flex items-center gap-6">
-            {isLoggedIn && (
-              <button 
-                onClick={() => setActiveTab('home')}
-                className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'home' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                Dashboard
-              </button>
-            )}
             <button 
               onClick={() => setActiveTab('stamp-studio')}
               className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'stamp-studio' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
             >
               Stamp Studio
+            </button>
+            <button 
+              onClick={() => setActiveTab('bulk')}
+              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'bulk' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Bulk Sign
             </button>
             <button 
               onClick={() => setActiveTab('esign')}
@@ -516,22 +471,8 @@ const App: React.FC = () => {
                   {user?.name.charAt(0)}
                 </div>
               )}
-              <button 
-                onClick={handleLogout}
-                className="p-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-2xl transition-all"
-                title="Logout"
-              >
-                <LogOut size={20} />
-              </button>
             </div>
-          ) : (
-            <button 
-              onClick={handleGoogleLogin}
-              className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 dark:shadow-none active:scale-95"
-            >
-              <Globe size={18} /> Login with Google
-            </button>
-          )}
+          ) : null}
         </div>
       </header>
 
@@ -589,18 +530,6 @@ const App: React.FC = () => {
               className="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto hidden lg:block"
             >
               <nav className="p-6 space-y-8">
-                <button
-                  onClick={() => setActiveTab('home')}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold transition-all group ${
-                    activeTab === 'home' 
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' 
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <Home size={20} className={activeTab === 'home' ? 'text-white' : 'group-hover:text-blue-600'} />
-                  <span className="flex-1 text-left">Dashboard</span>
-                </button>
-
                 {NAVIGATION_GROUPS.map((group) => (
                   <div key={group.id} className="space-y-2">
                     <h4 className="px-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
@@ -765,9 +694,6 @@ const App: React.FC = () => {
                     {[
                       { id: 'stamp-studio', label: 'Stamp Studio', desc: 'Design high-precision vector rubber stamps for legal and corporate use.', icon: PenTool, color: 'blue' },
                       { id: 'esign', label: 'Sign Center', desc: 'Collect legally-binding digital signatures with full audit trails.', icon: CheckCircle2, color: 'emerald' },
-                      { id: 'pdf-forge', label: 'PDF Forge', desc: 'Merge, split, unlock, and watermark PDFs with enterprise security.', icon: FileCode, color: 'slate' },
-                      { id: 'booking', label: 'Smart Booking', desc: 'Automated scheduling for client consultations and firm meetings.', icon: CalendarDays, color: 'indigo' },
-                      { id: 'doc-gen', label: 'Doc Architect', desc: 'Generate invoices, letterheads, and contracts with usage tracking.', icon: FileSpreadsheet, color: 'violet' },
                       { id: 'bulk', label: 'Bulk Engine', desc: 'Process thousands of documents in seconds with automated stamping.', icon: Layers, color: 'orange' },
                     ].map((feature) => (
                       <button
@@ -941,7 +867,7 @@ const App: React.FC = () => {
                 </div>
               )}
               {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
-              {activeTab === 'bulk' && <BulkStamper config={stampConfig} onStartBulk={(cost) => triggerPayment('bulk', cost)} />}
+              {activeTab === 'bulk' && <BulkStamper config={stampConfig} />}
               {['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload', 'company'].includes(activeTab) && (
                 <WorkspaceSuite activeTab={activeTab === 'workspace-dashboard' ? 'home' : activeTab} />
               )}
@@ -1085,35 +1011,12 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Payment Modal */}
-      {showPayment && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[48px] shadow-2xl max-w-lg w-full p-12">
-            <div className="flex justify-between items-start mb-10">
-              <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 p-6 rounded-[32px]"><Zap size={40} /></div>
-              <button onClick={() => setShowPayment(false)} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-all"><X size={24} /></button>
-            </div>
-            <h3 className="text-4xl font-black tracking-tighter mb-6">Confirm Transaction</h3>
-            <div className="bg-slate-50 dark:bg-slate-800 p-8 rounded-[36px] mb-10 flex items-center justify-between border border-slate-100 dark:border-slate-800">
-              <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{paymentType === 'bulk' ? 'Bulk Processing Fee' : 'Platform License'}</p>
-                <p className="text-2xl font-black">{paymentType === 'bulk' ? 'Verified Batch' : 'Digital Authority'}</p>
-              </div>
-              <p className="text-4xl font-black text-blue-600 tracking-tighter">KES {(paymentType === 'bulk' ? bulkCost : 650).toLocaleString()}</p>
-            </div>
-            <div className="space-y-4">
-              <button onClick={handleDownload} className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-3xl font-black text-xl hover:opacity-90 transition-all shadow-2xl shadow-slate-200 dark:shadow-none active:scale-95">Complete Transaction</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Footer */}
       <footer className="bg-white dark:bg-slate-950 text-slate-400 py-12 border-t border-slate-100 dark:border-slate-900">
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 text-white p-1.5 rounded-lg"><Plus size={16} /></div>
-            <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">FreeStamps <span className="text-blue-600">KE</span></h3>
+            <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">Sahihi</h3>
           </div>
           <p className="font-black text-[10px] uppercase tracking-widest text-slate-500">© 2024 JijiTechy Innovations. LSK Standards Applied.</p>
           <div className="flex gap-6">

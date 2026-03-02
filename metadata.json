@@ -1,6 +1,6 @@
 {
-  "name": "FreeStamps KE",
-  "description": "The ultimate workspace solution for Kenyan SMEs. Professional rubber stamp builder, task management, Gantt charts, time tracking, and document automation. Powered by JijiTechy.",
+  "name": "Sahihi",
+  "description": "The ultimate digital authority workspace. Professional rubber stamp builder, bulk document processing, and legally-binding digital signatures.",
   "requestFramePermissions": [
     "camera"
   ]
