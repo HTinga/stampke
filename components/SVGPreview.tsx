@@ -44,7 +44,9 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     embeddedSignatureUrl,
     showEmbeddedSignature,
     customElements,
-    previewBg
+    previewBg,
+    stretchX,
+    stretchY
   } = config;
 
   // Internal coordinate system to prevent clipping
@@ -451,9 +453,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             </filter>
           </defs>
           
-          {renderShape()}
-          {renderText()}
-          {renderCustomElements()}
+          {/* Apply stretch transform to the entire stamp content */}
+          <g transform={`translate(${cx}, ${cy}) scale(${stretchX || 1}, ${stretchY || 1}) translate(${-cx}, ${-cy})`}>
+            {renderShape()}
+            {renderText()}
+            {renderCustomElements()}
+          </g>
         </svg>
         {/* Ink Texture Overlay */}
         <div className={`absolute inset-0 pointer-events-none mix-blend-multiply bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')] transition-opacity ${isVintage || wetInk ? 'opacity-20' : 'opacity-5'}`}></div>

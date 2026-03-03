@@ -75,7 +75,6 @@ import { DEFAULT_CONFIG, TEMPLATES } from './constants';
 import SVGPreview from './components/SVGPreview';
 import TemplateLibrary from './components/TemplateLibrary';
 import EditorControls from './components/EditorControls';
-import BulkStamper from './components/BulkStamper';
 import DigitalSignCenter from './components/DigitalSignCenter';
 import PDFTools from './components/PDFTools';
 import BookingSystem from './components/BookingSystem';
@@ -91,14 +90,13 @@ const NAVIGATION_GROUPS = [
   {
     id: 'core',
     label: 'Digital Authority',
-    items: ['stamp-studio', 'esign', 'bulk']
+    items: ['stamp-studio', 'esign']
   }
 ];
 
 const NAVIGATION_ITEMS = [
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
-  { id: 'bulk', label: 'Bulk Engine', icon: Layers },
 ];
 
 const BLOG_POSTS = [
@@ -123,7 +121,7 @@ const BLOG_POSTS = [
       ### Security in the Age of AI
       As AI becomes more sophisticated, so do forgeries. FreeStamps KE recommends a "Layered Authentication" approach:
       1. Use a High-Resolution Custom Stamp.
-      2. Pair it with a handwritten digital signature (using our Bulk Signing tool).
+      2. Pair it with a handwritten digital signature (using our multi-page signing tool).
       3. Secure the final document with a cryptographic hash.
       
       ### The Practical Future
@@ -140,7 +138,7 @@ const BLOG_POSTS = [
       For a Kenyan Advocate, their stamp is their "Sword of Office." The Judiciary's e-filing system is notoriously picky about stamp impressions. This article details the exact technical specifications required for your digital tools to pass the "Registrar's Test."
 
       ### Dimensions and Ratios
-      The standard "Round" Advocate stamp is typically 40mm to 42mm in diameter. In the digital world, this translates to roughly 400px to 600px in SVG viewbox units. Our templates are hard-coded to maintain these ratios, ensuring that when you "place" a stamp on a document using our Bulk Tool, the scale is physically accurate.
+      The standard "Round" Advocate stamp is typically 40mm to 42mm in diameter. In the digital world, this translates to roughly 400px to 600px in SVG viewbox units. Our templates are hard-coded to maintain these ratios, ensuring that when you "place" a stamp on a document using our multi-page tool, the scale is physically accurate.
 
       ### Wording: The "Commissioner for Oaths" Requirement
       Many practitioners forget the specific line required for the date of admission or the P.105 designation. A stamp that says "Michael Kamau Advocate" is fine, but one that includes "Commissioner for Oaths & Notary Public" alongside a clear P.O. Box and Firm Name is authoritative.
@@ -148,8 +146,8 @@ const BLOG_POSTS = [
       ### The Color Protocol of Kenyan Institutions
       While most business stamps are Royal Blue (#0000FF), the Kenyan Judiciary has historically favored specific shades of Black or Deep Blue for certified copies. "PAID" and "URGENT" stamps should almost always be Crimson Red (#991b1b). Using the wrong color can lead to psychological friction during document review.
 
-      ### Bulk Processing: A Game Changer for Large Firms
-      Imagine having to certify 500 pages of a bank mortgage application. Doing this manually with a physical stamp takes hours. Our Bulk Stamping & Signing engine can process those 500 pages in under 30 seconds. This isn't just a tool; it's an efficiency multiplier for modern legal firms.
+      ### Multi-Page Processing: A Game Changer for Large Firms
+      Imagine having to certify 500 pages of a bank mortgage application. Doing this manually with a physical stamp takes hours. Our multi-page stamping & signing engine can process those 500 pages in under 30 seconds. This isn't just a tool; it's an efficiency multiplier for modern legal firms.
     `
   }
 ];
@@ -199,7 +197,7 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'bulk' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('home');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -426,12 +424,6 @@ const App: React.FC = () => {
               Stamp Studio
             </button>
             <button 
-              onClick={() => setActiveTab('bulk')}
-              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'bulk' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Bulk Sign
-            </button>
-            <button 
               onClick={() => setActiveTab('esign')}
               className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'esign' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
             >
@@ -563,7 +555,7 @@ const App: React.FC = () => {
               <div className="p-6 mt-10">
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800">
                   <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Pro Account</p>
-                  <p className="text-sm font-bold mb-4">Unlock unlimited bulk processing and custom templates.</p>
+                  <p className="text-sm font-bold mb-4">Unlock unlimited multi-page processing and custom templates.</p>
                   <button className="w-full bg-slate-900 dark:bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all">Upgrade Now</button>
                 </div>
               </div>
@@ -694,7 +686,6 @@ const App: React.FC = () => {
                     {[
                       { id: 'stamp-studio', label: 'Stamp Studio', desc: 'Design high-precision vector rubber stamps for legal and corporate use.', icon: PenTool, color: 'blue' },
                       { id: 'esign', label: 'Sign Center', desc: 'Collect legally-binding digital signatures with full audit trails.', icon: CheckCircle2, color: 'emerald' },
-                      { id: 'bulk', label: 'Bulk Engine', desc: 'Process thousands of documents in seconds with automated stamping.', icon: Layers, color: 'orange' },
                     ].map((feature) => (
                       <button
                         key={feature.id}
@@ -739,7 +730,6 @@ const App: React.FC = () => {
                         {[
                           { label: 'Stamps Created', value: '12', icon: PenTool },
                           { label: 'Docs Signed', value: '48', icon: CheckCircle2 },
-                          { label: 'Bulk Runs', value: '3', icon: Layers },
                         ].map((stat, i) => (
                           <div key={i} className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
@@ -771,7 +761,10 @@ const App: React.FC = () => {
                   
                   <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-10">
                     <div className="lg:col-span-4 space-y-8 overflow-y-auto pr-4">
-                      <EditorControls config={stampConfig} onChange={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))} />
+                      <EditorControls 
+                        config={stampConfig} 
+                        onChange={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))} 
+                      />
                     </div>
                     <div className="lg:col-span-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[56px] border border-slate-100 dark:border-slate-800 p-12 shadow-sm relative group">
                       <div className="absolute top-8 left-8 flex gap-3">
@@ -817,8 +810,14 @@ const App: React.FC = () => {
                           <button onClick={() => setActiveTab('apply-stamp')} className="flex-1 bg-emerald-600 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-emerald-700 shadow-xl active:scale-95">
                             <FileText size={24} /> Apply to PDF
                           </button>
-                          <button onClick={() => setActiveTab('bulk')} className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95">
-                            <Layers size={24} className="text-blue-400" /> Bulk Engine
+                          <button 
+                            onClick={() => {
+                              setOpenedFromSignCenter(true);
+                              setActiveTab('esign');
+                            }} 
+                            className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 shadow-xl active:scale-95"
+                          >
+                            <Layers size={24} className="text-blue-400" /> Bulk Stamp
                           </button>
                         </div>
                         <button onClick={() => setActiveTab('convert')} className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 py-5 px-10 rounded-3xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xl active:scale-95">
@@ -867,7 +866,6 @@ const App: React.FC = () => {
                 </div>
               )}
               {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
-              {activeTab === 'bulk' && <BulkStamper config={stampConfig} />}
               {['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload', 'company'].includes(activeTab) && (
                 <WorkspaceSuite activeTab={activeTab === 'workspace-dashboard' ? 'home' : activeTab} />
               )}

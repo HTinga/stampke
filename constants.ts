@@ -218,6 +218,8 @@ export const DEFAULT_CONFIG: StampConfig = {
   rotation: 0,
   width: 600,
   height: 600,
+  stretchX: 1,
+  stretchY: 1,
   fontFamily: 'Crimson Pro',
   showSignatureLine: false,
   showDateLine: false,

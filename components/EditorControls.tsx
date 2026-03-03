@@ -2,7 +2,7 @@
 import React from 'react';
 import { StampConfig, StampShape, BorderStyle, CustomElement } from '../types';
 import { COLORS, FONTS } from '../constants';
-import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Star, Eraser, Save, X, Download, FileText, Image } from 'lucide-react';
+import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Star, Eraser, Save, X, Download, FileText, Image, Zap } from 'lucide-react';
 
 const SignaturePad: React.FC<{ onSave: (url: string) => void, onCancel: () => void }> = ({ onSave, onCancel }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -90,9 +90,10 @@ const SignaturePad: React.FC<{ onSave: (url: string) => void, onCancel: () => vo
 interface EditorControlsProps {
   config: StampConfig;
   onChange: (updates: Partial<StampConfig>) => void;
+  onBulkRun?: () => void;
 }
 
-const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => {
+const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBulkRun }) => {
   const [showSignPad, setShowSignPad] = React.useState(false);
 
   const addCustomElement = (type: 'image' | 'text') => {
@@ -135,6 +136,15 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
 
   return (
     <div className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-y-auto max-h-[75vh] custom-scrollbar">
+      {onBulkRun && (
+        <button 
+          onClick={onBulkRun}
+          className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2 mb-2"
+        >
+          <Zap size={16} /> Start Bulk Processing
+        </button>
+      )}
+      
       <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
            <Layout size={14} /> Typography & Shape
@@ -190,6 +200,33 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               onChange={(e) => onChange({ letterStretch: parseFloat(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <label className="text-[10px] font-bold text-slate-500">Stretch X</label>
+                <span className="text-[10px] font-bold text-slate-400">{Math.round((config.stretchX || 1) * 100)}%</span>
+              </div>
+              <input 
+                type="range" min="0.5" max="2" step="0.05"
+                value={config.stretchX || 1}
+                onChange={(e) => onChange({ stretchX: parseFloat(e.target.value) })}
+                className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <label className="text-[10px] font-bold text-slate-500">Stretch Y</label>
+                <span className="text-[10px] font-bold text-slate-400">{Math.round((config.stretchY || 1) * 100)}%</span>
+              </div>
+              <input 
+                type="range" min="0.5" max="2" step="0.05"
+                value={config.stretchY || 1}
+                onChange={(e) => onChange({ stretchY: parseFloat(e.target.value) })}
+                className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -354,9 +391,9 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
 
           <div className="space-y-1">
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text</label>
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text (Primary)</label>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl cursor-pointer relative group border border-blue-100 dark:border-blue-800">
+                <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl cursor-pointer relative group border border-blue-100 dark:border-blue-800 hover:bg-blue-100 transition-all">
                   <Calendar size={14} className="text-blue-600" />
                   <span className="text-[10px] font-black uppercase text-blue-600">Pick Date</span>
                   <input 
@@ -385,6 +422,18 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange }) => 
               type="text"
               value={config.centerText}
               onChange={(e) => onChange({ centerText: e.target.value.toUpperCase() })}
+              placeholder="CENTER TEXT"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-500 uppercase">Center Sub-Text (Date Line)</label>
+            <input 
+              type="text"
+              value={config.centerSubText}
+              onChange={(e) => onChange({ centerSubText: e.target.value.toUpperCase() })}
+              placeholder="DATE LINE TEXT"
               className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
             />
           </div>

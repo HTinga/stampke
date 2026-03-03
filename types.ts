@@ -54,6 +54,8 @@ export interface StampConfig {
   rotation: number;
   width: number;
   height: number;
+  stretchX: number;
+  stretchY: number;
   fontFamily: string;
   showSignatureLine: boolean;
   showDateLine: boolean;
