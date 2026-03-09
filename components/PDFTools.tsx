@@ -46,7 +46,19 @@ interface EditElement {
   isItalic?: boolean;
 }
 
-export default function PDFTools() {
+interface PDFToolsProps {
+  usageCount: number;
+  hasPaid: boolean;
+  setUsageCount: React.Dispatch<React.SetStateAction<number>>;
+  setShowPaymentModal: (show: boolean) => void;
+}
+
+export default function PDFTools({
+  usageCount,
+  hasPaid,
+  setUsageCount,
+  setShowPaymentModal
+}: PDFToolsProps) {
   const [activeTool, setActiveTool] = useState<ToolType>('none');
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -123,6 +135,10 @@ export default function PDFTools() {
   };
 
   const processMerge = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length < 2) return;
     setIsProcessing(true);
     setStatus('Merging Documents...');
@@ -136,6 +152,7 @@ export default function PDFTools() {
       }
       const pdfBytes = await mergedPdf.save();
       downloadBlob(pdfBytes, 'merged_document.pdf');
+      setUsageCount(prev => prev + 1);
       setStatus('Merge Complete!');
     } catch (err) {
       console.error(err);
@@ -146,6 +163,10 @@ export default function PDFTools() {
   };
 
   const processWatermark = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Applying Watermark...');
@@ -171,6 +192,7 @@ export default function PDFTools() {
 
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `watermarked_${f.name}`);
+      setUsageCount(prev => prev + 1);
       setStatus('Watermark Applied!');
     } catch (err) {
       console.error(err);
@@ -181,6 +203,10 @@ export default function PDFTools() {
   };
 
   const processUnlock = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Unlocking PDF...');
@@ -190,6 +216,7 @@ export default function PDFTools() {
       const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `unlocked_${f.name}`);
+      setUsageCount(prev => prev + 1);
       setStatus('PDF Unlocked!');
     } catch (err) {
       console.error(err);
@@ -200,6 +227,10 @@ export default function PDFTools() {
   };
 
   const processCompress = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Compressing PDF...');
@@ -214,6 +245,7 @@ export default function PDFTools() {
         updateFieldAppearances: false
       });
       downloadBlob(pdfBytes, `compressed_${f.name}`);
+      setUsageCount(prev => prev + 1);
       setStatus('Compression Complete!');
     } catch (err) {
       console.error(err);
@@ -224,6 +256,10 @@ export default function PDFTools() {
   };
 
   const processWordToPdf = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Converting Word to PDF...');
@@ -235,8 +271,9 @@ export default function PDFTools() {
 
       const pdf = new jsPDF();
       await pdf.html(html, {
-        callback: function (doc) {
+        callback: (doc) => {
           doc.save(`converted_${f.name.replace('.docx', '.pdf')}`);
+          setUsageCount(prev => prev + 1);
         },
         x: 15,
         y: 15,
@@ -253,6 +290,10 @@ export default function PDFTools() {
   };
 
   const processPdfToWord = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Extracting Text for Word...');
@@ -275,6 +316,7 @@ export default function PDFTools() {
       link.href = url;
       link.download = `${f.name.replace('.pdf', '.doc')}`;
       link.click();
+      setUsageCount(prev => prev + 1);
       setStatus('Text Extracted!');
     } catch (err) {
       console.error(err);
@@ -285,6 +327,10 @@ export default function PDFTools() {
   };
 
   const processEdit = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Saving Edits...');
@@ -333,6 +379,7 @@ export default function PDFTools() {
 
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `edited_${f.name}`);
+      setUsageCount(prev => prev + 1);
       setStatus('Edits Saved!');
     } catch (err) {
       console.error(err);
@@ -345,6 +392,10 @@ export default function PDFTools() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const processSplitSort = async () => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Processing Pages...');
@@ -353,13 +404,9 @@ export default function PDFTools() {
       const bytes = await f.file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(bytes);
       
-      // In a real app, we'd have a list of indices to keep.
-      // For this demo, let's assume we have a state for selected pages.
-      // Since we don't have that yet, let's just save it.
-      // I will add a "Delete Page" button in the UI that updates the file.
-      
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `sorted_${f.name}`);
+      setUsageCount(prev => prev + 1);
       setStatus('Pages Sorted!');
     } catch (err) {
       console.error(err);
@@ -370,6 +417,10 @@ export default function PDFTools() {
   };
 
   const deletePage = async (pageIndex: number) => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Deleting Page...');
@@ -413,6 +464,7 @@ export default function PDFTools() {
         setCurrentPage(Math.max(0, pages - 1));
       }
 
+      setUsageCount(prev => prev + 1);
       setStatus('Page Deleted!');
     } catch (err) {
       console.error(err);

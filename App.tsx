@@ -66,7 +66,8 @@ import {
   ChevronRight,
   Home,
   FileType,
-  File as FileIcon
+  File as FileIcon,
+  Loader2
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -197,18 +198,21 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('home');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('stamp-studio');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
   const [userRole, setUserRole] = useState<'admin' | 'supervisor' | 'staff'>('admin');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>({ name: 'Sahihi User', email: 'user@sahihi.ke' });
+  const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
+  const [usageCount, setUsageCount] = useState<number>(0);
+  const [hasPaid, setHasPaid] = useState<boolean>(false);
+  const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
@@ -307,6 +311,10 @@ const App: React.FC = () => {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
     const file = event.target.files?.[0];
     if (!file) return;
     setActiveTab('convert');
@@ -330,6 +338,11 @@ const App: React.FC = () => {
   };
 
   const downloadStamp = async (format: 'svg' | 'png' | 'pdf', transparent: boolean = true) => {
+    if (usageCount >= 1 && !hasPaid) {
+      setShowPaymentModal(true);
+      return;
+    }
+
     if (!svgRef.current) return;
 
     const fileName = `stamp_${stampConfig.primaryText.toLowerCase().replace(/\s+/g, '_')}`;
@@ -343,6 +356,7 @@ const App: React.FC = () => {
       link.download = `${fileName}.svg`;
       link.click();
       URL.revokeObjectURL(url);
+      setUsageCount(prev => prev + 1);
     } else if (format === 'png') {
       const svgData = new XMLSerializer().serializeToString(svgRef.current);
       const canvas = document.createElement('canvas');
@@ -369,6 +383,7 @@ const App: React.FC = () => {
           link.click();
         }
         URL.revokeObjectURL(url);
+        setUsageCount(prev => prev + 1);
       };
       img.src = url;
     } else if (format === 'pdf') {
@@ -397,6 +412,7 @@ const App: React.FC = () => {
           
           pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 2000, 2000);
           pdf.save(`${fileName}.pdf`);
+          setUsageCount(prev => prev + 1);
         }
         URL.revokeObjectURL(url);
       };
@@ -464,7 +480,14 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : null}
+          ) : (
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="bg-slate-900 dark:bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -851,9 +874,20 @@ const App: React.FC = () => {
                   pendingStampFieldId={pendingStampFieldId}
                   onClearPendingField={() => setPendingStampFieldId(null)}
                   isActive={activeTab === 'esign'}
+                  usageCount={usageCount}
+                  hasPaid={hasPaid}
+                  setUsageCount={setUsageCount}
+                  setShowPaymentModal={setShowPaymentModal}
                 />
               )}
-              {activeTab === 'pdf-forge' && <PDFTools />}
+              {activeTab === 'pdf-forge' && (
+                <PDFTools 
+                  usageCount={usageCount}
+                  hasPaid={hasPaid}
+                  setUsageCount={setUsageCount}
+                  setShowPaymentModal={setShowPaymentModal}
+                />
+              )}
               {activeTab === 'booking' && <BookingSystem />}
               {activeTab === 'comm-center' && <CommunicationCenter />}
               {activeTab === 'doc-gen' && <DocumentArchitect />}
@@ -865,7 +899,16 @@ const App: React.FC = () => {
                   <TemplateLibrary onSelect={handleTemplateSelect} />
                 </div>
               )}
-              {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
+              {activeTab === 'apply-stamp' && (
+                <StampApplier 
+                  config={stampConfig} 
+                  svgRef={svgRef} 
+                  usageCount={usageCount}
+                  hasPaid={hasPaid}
+                  setUsageCount={setUsageCount}
+                  setShowPaymentModal={setShowPaymentModal}
+                />
+              )}
               {['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload', 'company'].includes(activeTab) && (
                 <WorkspaceSuite activeTab={activeTab === 'workspace-dashboard' ? 'home' : activeTab} />
               )}
@@ -1024,6 +1067,179 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+          >
+            <div className="p-16 space-y-12">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-8">
+                  <ShieldCheck size={40} />
+                </div>
+                <h3 className="text-5xl font-black tracking-tighter">{isSignUp ? 'Join Sahihi' : 'Welcome Back'}</h3>
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">
+                  {isSignUp ? 'Create your professional digital authority account.' : 'Sign in to manage your stamps and documents.'}
+                </p>
+              </div>
+
+              <form onSubmit={handleDemoLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Email Address</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-blue-500/10 font-bold text-lg"
+                    placeholder="counsel@firm.ke"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Password</label>
+                  <input 
+                    type="password" 
+                    required
+                    value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-blue-500/10 font-bold text-lg"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
+
+                <button 
+                  type="submit"
+                  className="w-full bg-slate-900 dark:bg-blue-600 text-white py-8 rounded-[32px] font-black text-2xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4 active:scale-95"
+                >
+                  {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={28} />
+                </button>
+              </form>
+
+              <div className="text-center">
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-slate-400 font-bold hover:text-blue-600 transition-all"
+                >
+                  {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showPaymentModal && (
+        <PaymentModal 
+          isLoggedIn={isLoggedIn}
+          setShowLoginModal={setShowLoginModal}
+          onClose={() => setShowPaymentModal(false)} 
+          onSuccess={() => {
+            setHasPaid(true);
+            setShowPaymentModal(false);
+          }} 
+        />
+      )}
+    </div>
+  );
+};
+
+const PaymentModal: React.FC<{ 
+  isLoggedIn: boolean,
+  setShowLoginModal: (show: boolean) => void,
+  onClose: () => void, 
+  onSuccess: () => void 
+}> = ({ isLoggedIn, setShowLoginModal, onClose, onSuccess }) => {
+  const [method, setMethod] = useState<'mpesa' | 'card' | 'skrill'>('mpesa');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handlePay = () => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      onSuccess();
+    }, 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[500] flex items-center justify-center p-6">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[48px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
+      >
+        <div className="p-12 space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-4xl font-black tracking-tighter">Premium Access</h3>
+              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2">Unlock all features of Sahihi</p>
+            </div>
+            <button onClick={onClose} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"><X size={24} /></button>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-3xl border border-blue-100 dark:border-blue-800 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Total Amount</p>
+              <p className="text-3xl font-black text-blue-900 dark:text-blue-100">KES 2,500</p>
+            </div>
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Lifetime Access</div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Select Payment Method</label>
+            <div className="grid grid-cols-3 gap-4">
+              <button 
+                onClick={() => setMethod('mpesa')}
+                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'mpesa' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
+              >
+                <Smartphone className={method === 'mpesa' ? 'text-green-600' : 'text-slate-400'} size={24} />
+                <span className="text-[10px] font-black uppercase">M-Pesa</span>
+              </button>
+              <button 
+                onClick={() => setMethod('card')}
+                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'card' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
+              >
+                <CreditCard className={method === 'card' ? 'text-blue-600' : 'text-slate-400'} size={24} />
+                <span className="text-[10px] font-black uppercase">Card</span>
+              </button>
+              <button 
+                onClick={() => setMethod('skrill')}
+                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'skrill' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
+              >
+                <Globe className={method === 'skrill' ? 'text-purple-600' : 'text-slate-400'} size={24} />
+                <span className="text-[10px] font-black uppercase">Skrill</span>
+              </button>
+            </div>
+          </div>
+
+          {method === 'mpesa' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">M-Pesa Phone Number</label>
+              <input 
+                type="text" 
+                placeholder="07XX XXX XXX" 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-green-500/10 font-bold"
+              />
+            </div>
+          )}
+
+          <button 
+            onClick={handlePay}
+            disabled={isProcessing}
+            className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-3xl font-black text-xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50"
+          >
+            {isProcessing ? <Loader2 className="animate-spin" size={24} /> : <ShieldCheck size={24} />}
+            {isProcessing ? 'Processing...' : `Pay with ${method.toUpperCase()}`}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 };

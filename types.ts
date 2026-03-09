@@ -135,7 +135,7 @@ export interface SignerInfo {
 export interface Envelope {
   id: string;
   title: string;
-  status: 'draft' | 'sent' | 'completed' | 'voided';
+  status: 'draft' | 'sent' | 'completed' | 'voided' | 'archived';
   createdAt: string;
   updatedAt: string;
   documents: BulkDocument[];
