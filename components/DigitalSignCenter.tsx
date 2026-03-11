@@ -54,6 +54,8 @@ const SignaturePad: React.FC<{
   const [isDrawing, setIsDrawing] = useState(false);
   const [typedName, setTypedName] = useState('');
   const [selectedFont, setSelectedFont] = useState(SIGNATURE_FONTS[1].family);
+  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [isBold, setIsBold] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'draw') {
@@ -62,10 +64,11 @@ const SignaturePad: React.FC<{
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       ctx.strokeStyle = '#000080';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = strokeWidth;
       ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
     }
-  }, [activeTab]);
+  }, [activeTab, strokeWidth]);
 
   const getPointerPos = (e: any) => {
     const canvas = canvasRef.current;
@@ -102,11 +105,11 @@ const SignaturePad: React.FC<{
       if (canvas) onSave(canvas.toDataURL('image/png'));
     } else if (activeTab === 'type') {
       const canvas = document.createElement('canvas');
-      canvas.width = 600;
-      canvas.height = 200;
+      canvas.width = 800;
+      canvas.height = 300;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.font = `60px ${selectedFont}`;
+        ctx.font = `${isBold ? 'bold ' : ''}70px ${selectedFont}`;
         ctx.fillStyle = '#000080';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -168,10 +171,17 @@ const SignaturePad: React.FC<{
               placeholder="Your Name Here"
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
-              className="w-full bg-transparent border-b-2 border-slate-200 py-6 px-4 text-center text-4xl outline-none focus:border-blue-500 transition-colors"
+              className={`w-full bg-transparent border-b-2 border-slate-200 py-6 px-4 text-center text-4xl outline-none focus:border-blue-500 transition-colors ${isBold ? 'font-bold' : ''}`}
               style={{ fontFamily: selectedFont }}
             />
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-4">
+              <button 
+                onClick={() => setIsBold(!isBold)}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center gap-2 ${isBold ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-400'}`}
+              >
+                {isBold ? <Check size={14} /> : null} Bold Text
+              </button>
+              <div className="h-8 w-px bg-slate-200 mx-2"></div>
               {SIGNATURE_FONTS.map((font) => (
                 <button
                   key={font.family}
@@ -197,6 +207,24 @@ const SignaturePad: React.FC<{
           </div>
         )}
       </div>
+
+      {(activeTab === 'draw' || activeTab === 'type') && (
+        <div className="mb-8 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+          <div className="flex justify-between items-center mb-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Stroke Thickness</label>
+            <span className="text-xs font-bold text-blue-600">{strokeWidth}px</span>
+          </div>
+          <input 
+            type="range" 
+            min="1" 
+            max="12" 
+            step="1" 
+            value={strokeWidth} 
+            onChange={e => setStrokeWidth(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-slate-200 rounded-lg accent-blue-600 cursor-pointer"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-6">
         <button
@@ -252,6 +280,7 @@ export default function DigitalSignCenter({
   const [isEditingStamp, setIsEditingStamp] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const [draggedField, setDraggedField] = useState<FieldType | null>(null);
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
 
   // Sync local config with prop when it changes (e.g. from Studio)
   useEffect(() => {
@@ -358,15 +387,15 @@ export default function DigitalSignCenter({
     }, 2000);
   };
 
-  const downloadDocument = async (envelope: Envelope) => {
+  const downloadDocument = async (envelope: Envelope): Promise<boolean> => {
     if (usageCount >= 1 && !hasPaid) {
       setShowPaymentModal(true);
-      return;
+      return false;
     }
     setIsLoadingDoc(true);
     setProcessingStatus('Finalizing Document...');
     try {
-      const doc = envelope.documents[0];
+      const doc = envelope.documents?.[0];
       if (!doc) {
         throw new Error("No document found");
       }
@@ -413,7 +442,8 @@ export default function DigitalSignCenter({
         });
 
         // Draw fields for this page
-        for (const field of envelope.fields) {
+        const fields = envelope.fields || [];
+        for (const field of fields) {
           if (!field.isCompleted || !field.value || field.page !== i + 1) continue;
           
           // Field coordinates are relative to the original page size
@@ -479,9 +509,11 @@ export default function DigitalSignCenter({
       document.body.removeChild(link);
       setUsageCount(prev => prev + 1);
       setShowToast({ message: 'Document downloaded successfully', type: 'success' });
+      return true;
     } catch (err) {
       console.error("Download failed:", err);
       setShowToast({ message: `Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'info' });
+      return false;
     } finally {
       setIsLoadingDoc(false);
       setProcessingStatus('');
@@ -819,6 +851,7 @@ export default function DigitalSignCenter({
       };
       setActiveEnvelope(updatedEnvelope);
       setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+      setShowToast({ message: `${showSignPad?.type === 'stamp' ? 'Stamp' : 'Signature'} applied successfully`, type: 'success' });
     }
     setShowSignPad(null);
   };
@@ -1000,13 +1033,22 @@ export default function DigitalSignCenter({
                 </div>
 
                 <div className="p-8 border-t border-slate-100 dark:border-slate-800">
-                   <button 
-                     disabled={newEnv.fields?.length === 0}
-                     onClick={() => handleSendEnvelope()} 
-                     className="w-full bg-slate-900 dark:bg-blue-600 text-white py-5 rounded-2xl font-black text-xs hover:scale-105 transition-all shadow-2xl disabled:opacity-20 flex items-center justify-center gap-3 active:scale-95"
-                   >
-                     <Send size={18} /> Finish & Send
-                   </button>
+                   <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        disabled={newEnv.fields?.length === 0}
+                        onClick={() => downloadDocument(newEnv as Envelope)}
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-lg flex flex-col items-center justify-center gap-2 active:scale-95 disabled:opacity-20"
+                      >
+                        <FileDown size={18} /> Download
+                      </button>
+                      <button 
+                        disabled={newEnv.fields?.length === 0}
+                        onClick={() => handleSend()} 
+                        className="bg-slate-900 dark:bg-blue-600 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl disabled:opacity-20 flex flex-col items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Send size={18} /> Finish & Send
+                      </button>
+                   </div>
                 </div>
              </div>
 
@@ -1190,7 +1232,13 @@ export default function DigitalSignCenter({
                <div className="p-8 border-t border-slate-100 dark:border-slate-800">
 
                   <button 
-                    onClick={() => handleSendEnvelope()}
+                    onClick={() => downloadDocument(newEnv as Envelope)}
+                    className="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-4 rounded-[20px] font-black text-xs hover:bg-blue-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-3 mb-4"
+                  >
+                    <FileDown size={20} /> Download PDF
+                  </button>
+                  <button 
+                    onClick={() => handleSend()}
                     className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-[24px] font-black text-sm hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3"
                   >
                     Finish & Send Document <Send size={20} />
@@ -1381,14 +1429,17 @@ export default function DigitalSignCenter({
                       </div>
                     <button 
                       disabled={!allSigned}
-                      onClick={() => {
-                        const updated = envelopes.map(e => e.id === activeEnvelope.id ? { ...e, status: 'completed' } as Envelope : e);
-                        setEnvelopes(updated);
-                        setView('dashboard');
+                      onClick={async () => {
+                        const success = await downloadDocument(activeEnvelope);
+                        if (success) {
+                          const updated = envelopes.map(e => e.id === activeEnvelope.id ? { ...e, status: 'completed' } as Envelope : e);
+                          setEnvelopes(updated);
+                          setView('dashboard');
+                        }
                       }}
                       className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 md:py-7 rounded-[24px] md:rounded-[32px] font-black text-xl md:text-2xl hover:bg-blue-600 transition-all shadow-2xl active:scale-95 disabled:opacity-20 flex items-center justify-center gap-4"
                     >
-                      Finish Document <CheckCircle2 size={28} className="md:size-[32px]" />
+                      Finish & Download <CheckCircle2 size={28} className="md:size-[32px]" />
                     </button>
                     {!allSigned && <p className="text-center text-[10px] text-slate-400 font-bold uppercase mt-6 tracking-widest leading-relaxed">Please sign all required fields <br/> to complete the document.</p>}
                  </div>
