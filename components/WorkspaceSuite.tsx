@@ -24,7 +24,8 @@ import {
   LayoutDashboard,
   Building2,
   ShieldCheck,
-  UserCircle
+  UserCircle,
+  Coffee
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
@@ -69,6 +70,7 @@ const WorkspaceSuite: React.FC<WorkspaceSuiteProps> = ({ activeTab }) => {
   const [timerActive, setTimerActive] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [isOnBreak, setIsOnBreak] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'supervisor' | 'staff'>('admin');
 
   // Company Structure Data
@@ -206,19 +208,37 @@ const WorkspaceSuite: React.FC<WorkspaceSuiteProps> = ({ activeTab }) => {
             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Active Timer</h3>
             <div className="text-6xl font-black tracking-tighter mb-8 tabular-nums">
               {format(new Date(elapsedTime * 1000), 'mm:ss')}
+              {isOnBreak && <span className="text-sm text-orange-400 ml-2 uppercase tracking-widest">On Break</span>}
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => {
+                    setTimerActive(!timerActive);
+                    if (isOnBreak) setIsOnBreak(false);
+                  }}
+                  className={`flex-1 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${timerActive ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {timerActive ? <><Pause size={18} /> Stop</> : <><Play size={18} /> Start</>}
+                </button>
+                <button 
+                  onClick={() => {
+                    setTimerActive(false);
+                    setIsOnBreak(true);
+                  }}
+                  className={`flex-1 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${isOnBreak ? 'bg-orange-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+                >
+                  <Coffee size={18} /> Break
+                </button>
+              </div>
               <button 
-                onClick={() => setTimerActive(!timerActive)}
-                className={`flex-1 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${timerActive ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                onClick={() => {
+                  setElapsedTime(0);
+                  setIsOnBreak(false);
+                }}
+                className="w-full py-3 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-xs font-bold"
               >
-                {timerActive ? <><Pause size={18} /> Stop</> : <><Play size={18} /> Start</>}
-              </button>
-              <button 
-                onClick={() => setElapsedTime(0)}
-                className="p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all"
-              >
-                <RotateCcw size={18} />
+                <RotateCcw size={14} /> Reset Timer
               </button>
             </div>
           </div>

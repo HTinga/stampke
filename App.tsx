@@ -69,7 +69,10 @@ import {
   FileType,
   File as FileIcon,
   Loader2,
-  Cloud
+  Cloud,
+  Megaphone,
+  HardDrive,
+  UserPlus
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -93,12 +96,22 @@ import { motion, AnimatePresence } from 'motion/react';
 import QRTracker from './components/QRTracker';
 import FinanceCenter from './components/FinanceCenter';
 import EditorSuite from './components/EditorSuite';
+import HRHub from './components/HRHub';
+import EnterpriseDrive from './components/EnterpriseDrive';
+import EnterpriseChat from './components/EnterpriseChat';
+import Announcements from './components/Announcements';
+import MarketingHub from './components/MarketingHub';
 
 const NAVIGATION_GROUPS = [
   {
     id: 'apps',
     label: 'Core Workspace',
-    items: ['home', 'dashboard', 'workspace-dashboard', 'comm-center', 'booking', 'reminders']
+    items: ['home', 'dashboard', 'workspace-dashboard', 'announcements', 'marketing-hub', 'comm-center', 'chat', 'booking', 'reminders']
+  },
+  {
+    id: 'hr',
+    label: 'HR & Talent',
+    items: ['hr-hub', 'qr-tracker', 'time', 'workload', 'company']
   },
   {
     id: 'authority',
@@ -108,17 +121,17 @@ const NAVIGATION_GROUPS = [
   {
     id: 'productivity',
     label: 'Productivity Suite',
-    items: ['editor-suite', 'pdf-forge', 'doc-gen', 'presentation', 'templates']
+    items: ['drive', 'editor-suite', 'pdf-forge', 'doc-gen', 'presentation', 'templates']
   },
   {
     id: 'ops',
     label: 'Operations & Tracking',
-    items: ['qr-tracker', 'tasks', 'gantt', 'time', 'whiteboard']
+    items: ['tasks', 'gantt', 'whiteboard', 'forms', 'automation']
   },
   {
     id: 'finance',
     label: 'Finance & Accounts',
-    items: ['finance-center', 'forms', 'automation', 'workload', 'company']
+    items: ['finance-center']
   }
 ];
 
@@ -126,9 +139,14 @@ const NAVIGATION_ITEMS = [
   { id: 'home', label: 'Portal Home', icon: Home },
   { id: 'dashboard', label: 'SaaS Dashboard', icon: LayoutDashboard },
   { id: 'workspace-dashboard', label: 'Workspace Hub', icon: Briefcase },
-  { id: 'comm-center', label: 'Mail & Chat', icon: MessageSquare },
+  { id: 'announcements', label: 'Announcements', icon: Megaphone },
+  { id: 'marketing-hub', label: 'Marketing Hub', icon: Globe },
+  { id: 'comm-center', label: 'Mail Center', icon: Mail },
+  { id: 'chat', label: 'Enterprise Chat', icon: MessageSquare },
   { id: 'booking', label: 'Appointments', icon: CalendarDays },
   { id: 'reminders', label: 'Reminders', icon: Bell },
+  { id: 'hr-hub', label: 'HR Hub', icon: UserPlus },
+  { id: 'drive', label: 'Enterprise Drive', icon: HardDrive },
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
   { id: 'apply-stamp', label: 'Stamp Applier', icon: FileText },
@@ -248,7 +266,7 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'dashboard' | 'pdf-forge' | 'booking' | 'reminders' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'company' | 'qr-tracker' | 'finance-center' | 'editor-suite'>('home');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'dashboard' | 'pdf-forge' | 'booking' | 'reminders' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'company' | 'qr-tracker' | 'finance-center' | 'editor-suite' | 'hr-hub' | 'drive' | 'chat' | 'announcements' | 'marketing-hub'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -932,6 +950,11 @@ const App: React.FC = () => {
               )}
               {activeTab === 'booking' && <BookingSystem />}
               {activeTab === 'reminders' && <Reminders />}
+              {activeTab === 'hr-hub' && <HRHub />}
+              {activeTab === 'drive' && <EnterpriseDrive />}
+              {activeTab === 'chat' && <EnterpriseChat />}
+              {activeTab === 'announcements' && <Announcements />}
+              {activeTab === 'marketing-hub' && <MarketingHub />}
               {activeTab === 'comm-center' && <CommunicationCenter />}
               {activeTab === 'qr-tracker' && <QRTracker />}
               {activeTab === 'finance-center' && <FinanceCenter />}
