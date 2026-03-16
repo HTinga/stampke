@@ -65,9 +65,11 @@ import {
   Moon,
   ChevronRight,
   Home,
+  QrCode,
   FileType,
   File as FileIcon,
-  Loader2
+  Loader2,
+  Cloud
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -84,20 +86,68 @@ import PresentationGenerator from './components/PresentationGenerator';
 import CommunicationCenter from './components/CommunicationCenter';
 import StampApplier from './components/StampApplier';
 import WorkspaceSuite from './components/WorkspaceSuite';
+import Reminders from './components/Reminders';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 
+import QRTracker from './components/QRTracker';
+import FinanceCenter from './components/FinanceCenter';
+import EditorSuite from './components/EditorSuite';
+
 const NAVIGATION_GROUPS = [
   {
-    id: 'core',
+    id: 'apps',
+    label: 'Core Workspace',
+    items: ['home', 'dashboard', 'workspace-dashboard', 'comm-center', 'booking', 'reminders']
+  },
+  {
+    id: 'authority',
     label: 'Digital Authority',
-    items: ['stamp-studio', 'esign']
+    items: ['stamp-studio', 'esign', 'apply-stamp', 'convert']
+  },
+  {
+    id: 'productivity',
+    label: 'Productivity Suite',
+    items: ['editor-suite', 'pdf-forge', 'doc-gen', 'presentation', 'templates']
+  },
+  {
+    id: 'ops',
+    label: 'Operations & Tracking',
+    items: ['qr-tracker', 'tasks', 'gantt', 'time', 'whiteboard']
+  },
+  {
+    id: 'finance',
+    label: 'Finance & Accounts',
+    items: ['finance-center', 'forms', 'automation', 'workload', 'company']
   }
 ];
 
 const NAVIGATION_ITEMS = [
+  { id: 'home', label: 'Portal Home', icon: Home },
+  { id: 'dashboard', label: 'SaaS Dashboard', icon: LayoutDashboard },
+  { id: 'workspace-dashboard', label: 'Workspace Hub', icon: Briefcase },
+  { id: 'comm-center', label: 'Mail & Chat', icon: MessageSquare },
+  { id: 'booking', label: 'Appointments', icon: CalendarDays },
+  { id: 'reminders', label: 'Reminders', icon: Bell },
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
+  { id: 'apply-stamp', label: 'Stamp Applier', icon: FileText },
+  { id: 'convert', label: 'AI Scan', icon: Camera },
+  { id: 'editor-suite', label: 'Editor Suite', icon: FileCode },
+  { id: 'pdf-forge', label: 'PDF Forge', icon: Wrench },
+  { id: 'doc-gen', label: 'Doc Architect', icon: FileCode },
+  { id: 'presentation', label: 'Presentation', icon: Monitor },
+  { id: 'templates', label: 'Templates', icon: BookOpen },
+  { id: 'qr-tracker', label: 'QR & GPS Tracking', icon: QrCode },
+  { id: 'tasks', label: 'Task Board', icon: ListTodo },
+  { id: 'gantt', label: 'Gantt Chart', icon: BarChart3 },
+  { id: 'time', label: 'Time Tracking', icon: Clock },
+  { id: 'whiteboard', label: 'Whiteboard', icon: Layout },
+  { id: 'finance-center', label: 'Finance Hub', icon: Receipt },
+  { id: 'forms', label: 'Smart Forms', icon: ClipboardList },
+  { id: 'automation', label: 'Automations', icon: Zap },
+  { id: 'workload', label: 'Workload', icon: TrendingUp },
+  { id: 'company', label: 'Company', icon: Users },
 ];
 
 const BLOG_POSTS = [
@@ -165,8 +215,8 @@ const FeatureRotator = () => {
   const features = [
     { icon: PenTool, label: 'Stamp Studio', desc: 'Vector-perfect rubber stamps.', color: 'text-blue-600' },
     { icon: CheckCircle2, label: 'Sign Center', desc: 'Legally-binding e-signatures.', color: 'text-emerald-600' },
-    { icon: FileSpreadsheet, label: 'Doc Architect', desc: 'Industry-standard templates.', color: 'text-violet-600' },
-    { icon: Monitor, label: 'Slide Deck', desc: 'Corporate presentations.', color: 'text-indigo-600' },
+    { icon: QrCode, label: 'QR Tracking', desc: 'GPS-verified personnel tracking.', color: 'text-orange-600' },
+    { icon: Receipt, label: 'Finance Hub', icon2: FileSpreadsheet, label2: 'Editor Suite', desc: 'Invoicing & cloud document editors.', color: 'text-rose-600' },
   ];
 
   useEffect(() => {
@@ -198,7 +248,7 @@ const FeatureRotator = () => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'pdf-forge' | 'booking' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center'>('stamp-studio');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'dashboard' | 'pdf-forge' | 'booking' | 'reminders' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'company' | 'qr-tracker' | 'finance-center' | 'editor-suite'>('home');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -421,133 +471,86 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      {/* Top Bar */}
-      <header className="h-20 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-[100] px-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('stamp-studio')}>
-            <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={24} /></div>
-            <h1 className="text-2xl font-black tracking-tighter">Sahihi</h1>
-          </div>
+    <div className={`h-screen flex overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      {/* Persistent Desktop Sidebar */}
+      <aside className="hidden lg:flex w-72 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[100]">
+        <div className="p-6 flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+          <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={24} /></div>
+          <h1 className="text-2xl font-black tracking-tighter">Sahihi</h1>
         </div>
 
-        <div className="flex items-center gap-8">
-          <div className="hidden md:flex items-center gap-6">
-            <button 
-              onClick={() => setActiveTab('stamp-studio')}
-              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'stamp-studio' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Stamp Studio
-            </button>
-            <button 
-              onClick={() => setActiveTab('esign')}
-              className={`text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'esign' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Sign Center
-            </button>
-          </div>
-
-          <button 
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-500 dark:text-slate-400"
-          >
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-          
-          {isLoggedIn ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 mr-4">
-                <ShieldCheck size={16} className="text-blue-600" />
-                <select 
-                  value={userRole}
-                  onChange={(e) => setUserRole(e.target.value as any)}
-                  className="bg-transparent text-[10px] font-black uppercase outline-none cursor-pointer"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="supervisor">Supervisor</option>
-                  <option value="staff">Staff</option>
-                </select>
+        <nav className="flex-1 overflow-y-auto p-4 space-y-8">
+          {NAVIGATION_GROUPS.map((group) => (
+            <div key={group.id} className="space-y-2">
+              <h4 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                {group.label}
+              </h4>
+              <div className="space-y-1">
+                {group.items.map((itemId) => {
+                  const item = NAVIGATION_ITEMS.find(i => i.id === itemId);
+                  if (!item) return null;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id as any)}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold transition-all group ${
+                        activeTab === item.id 
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' 
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <item.icon size={18} className={activeTab === item.id ? 'text-blue-600' : 'group-hover:text-blue-600'} />
+                      <span className="flex-1 text-left text-sm">{item.label}</span>
+                      {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="hidden md:block text-right">
-                <p className="text-sm font-black">{user?.name}</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user?.email}</p>
-              </div>
-              {user?.picture ? (
-                <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full border-2 border-blue-600 p-0.5" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-black">
-                  {user?.name.charAt(0)}
-                </div>
-              )}
             </div>
-          ) : (
-            <button 
-              onClick={() => setShowLoginModal(true)}
-              className="bg-slate-900 dark:bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all"
-            >
-              Sign In
-            </button>
-          )}
-        </div>
-      </header>
+          ))}
+        </nav>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Hover Trigger */}
-      {!isSidebarOpen && (
-        <div 
-          className="fixed left-0 top-0 bottom-0 w-8 z-[100] group flex items-center"
-          onMouseEnter={() => setIsSidebarHovered(true)}
-        >
-          <div className="w-1.5 h-32 bg-blue-600/10 group-hover:bg-blue-600/40 rounded-r-full transition-all" />
-          
-          <AnimatePresence>
-            {isSidebarHovered && (
-              <motion.div
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -100, opacity: 0 }}
-                onMouseLeave={() => setIsSidebarHovered(false)}
-                className="absolute left-6 top-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-3xl shadow-2xl flex flex-col gap-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Navigation</span>
-                  <button 
-                    onClick={() => { setIsSidebarOpen(true); setIsSidebarHovered(false); }}
-                    className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg"
-                  >
-                    <Menu size={16} />
-                  </button>
-                </div>
-                <div className="h-px bg-slate-100 dark:bg-slate-800" />
-                {NAVIGATION_ITEMS.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => { setActiveTab(item.id as any); setIsSidebarHovered(false); }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                  >
-                    <item.icon size={18} />
-                    <span className="text-xs font-bold whitespace-nowrap">{item.label}</span>
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="p-6">
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Pro Account</p>
+            <p className="text-xs font-bold mb-3">Unlock unlimited processing.</p>
+            <button className="w-full bg-slate-900 dark:bg-blue-600 text-white py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all">Upgrade</button>
+          </div>
         </div>
-      )}
+      </aside>
 
-      {/* Sidebar */}
-        <AnimatePresence mode="wait">
-          {isSidebarOpen && isLoggedIn && (
+      {/* Mobile Sidebar (Drawer) */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150]"
+            />
             <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              className="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto hidden lg:block"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="lg:hidden fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[200] flex flex-col"
             >
-              <nav className="p-6 space-y-8">
+              <div className="p-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-600 text-white p-2 rounded-xl"><Plus size={20} /></div>
+                  <h1 className="text-xl font-black tracking-tighter">Sahihi</h1>
+                </div>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <nav className="flex-1 overflow-y-auto p-4 space-y-8">
                 {NAVIGATION_GROUPS.map((group) => (
                   <div key={group.id} className="space-y-2">
-                    <h4 className="px-5 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                    <h4 className="px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
                       {group.label}
                     </h4>
                     <div className="space-y-1">
@@ -557,8 +560,11 @@ const App: React.FC = () => {
                         return (
                           <button
                             key={item.id}
-                            onClick={() => setActiveTab(item.id as any)}
-                            className={`w-full flex items-center gap-4 px-5 py-3 rounded-xl font-bold transition-all group ${
+                            onClick={() => {
+                              setActiveTab(item.id as any);
+                              setIsSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold transition-all group ${
                               activeTab === item.id 
                                 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' 
                                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -566,7 +572,6 @@ const App: React.FC = () => {
                           >
                             <item.icon size={18} className={activeTab === item.id ? 'text-blue-600' : 'group-hover:text-blue-600'} />
                             <span className="flex-1 text-left text-sm">{item.label}</span>
-                            {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
                           </button>
                         );
                       })}
@@ -574,32 +579,65 @@ const App: React.FC = () => {
                   </div>
                 ))}
               </nav>
-              
-              <div className="p-6 mt-10">
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Pro Account</p>
-                  <p className="text-sm font-bold mb-4">Unlock unlimited multi-page processing and custom templates.</p>
-                  <button className="w-full bg-slate-900 dark:bg-blue-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all">Upgrade Now</button>
-                </div>
-              </div>
             </motion.aside>
-          )}
-        </AnimatePresence>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* Mobile Drawer Overlay */}
-        <AnimatePresence>
-          {!isSidebarOpen && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90]"
-            />
-          )}
-        </AnimatePresence>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Bar */}
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-50 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+              <Menu size={20} />
+            </button>
+            <div className="hidden md:flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+              <LayoutDashboard size={14} />
+              <span>Dashboard</span>
+              <ChevronRight size={14} />
+              <span className="text-slate-900 dark:text-white capitalize">{activeTab.replace('-', ' ')}</span>
+            </div>
+          </div>
 
-        {/* Main Content Area */}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+              <Search size={14} className="text-slate-400 mr-2" />
+              <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-xs font-bold w-32 lg:w-48" />
+            </div>
+
+            <button 
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-500 dark:text-slate-400"
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            
+            {isLoggedIn ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:block text-right">
+                  <p className="text-xs font-black">{user?.name}</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{userRole}</p>
+                </div>
+                {user?.picture ? (
+                  <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-lg border-2 border-blue-600 p-0.5" />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs">
+                    {user?.name.charAt(0)}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowLoginModal(true)}
+                className="bg-slate-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </header>
+
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-4 md:p-8">
           <AnimatePresence mode="wait">
             <motion.div
@@ -611,157 +649,159 @@ const App: React.FC = () => {
               className="h-full"
             >
               {activeTab === 'home' && (
-                <div className="max-w-7xl mx-auto space-y-20">
-                  {/* Hero Section - Calendly Style */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center py-12">
-                    <div className="space-y-10">
-                      <h1 className="text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] text-slate-900 dark:text-white">
-                        Easy <span className="text-blue-600">authority</span> ahead.
-                      </h1>
-                      <p className="text-2xl text-slate-500 font-medium leading-relaxed max-w-xl">
-                        Join 20,000+ Kenyan professionals who easily manage stamps, signatures, and documents with the #1 digital authority tool.
-                      </p>
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <button onClick={handleGoogleLogin} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all active:scale-95">
-                          <Globe size={24} /> Sign up with Google
-                        </button>
-                        <button className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-slate-800 transition-all active:scale-95">
-                          <Monitor size={24} /> Sign up with Microsoft
-                        </button>
-                      </div>
-                      <p className="text-sm text-slate-400 font-bold">
-                        OR <button className="text-blue-600 hover:underline">Sign up free with email.</button> No credit card required.
-                      </p>
+                <div className="max-w-7xl mx-auto space-y-24">
+                  {/* World-Class SaaS Hero Section */}
+                  <div className="relative py-24 overflow-hidden rounded-[64px] bg-slate-900 text-white">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
+                    <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
+                      <div className="absolute top-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px]" />
+                      <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-400 rounded-full blur-[120px]" />
                     </div>
+                    
+                    <div className="relative z-10 px-12 md:px-24 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                      <div className="space-y-10">
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full"
+                        >
+                          <Sparkles size={18} className="text-blue-400" />
+                          <span className="text-xs font-black uppercase tracking-widest text-blue-400">The Ultimate SaaS OS</span>
+                        </motion.div>
+                        
+                        <motion.h1 
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-7xl md:text-9xl font-black tracking-tighter leading-[0.8] mb-8"
+                        >
+                          Infinite Control. <br />
+                          <span className="text-blue-500">One Platform.</span>
+                        </motion.h1>
+                        
+                        <motion.p 
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 }}
+                          className="text-xl md:text-2xl text-slate-400 font-medium leading-relaxed max-w-xl"
+                        >
+                          The professional operating system for modern firms. From digital authority to enterprise operations, manage everything in one place.
+                        </motion.p>
+                        
+                        <motion.div 
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                          className="flex flex-col sm:flex-row gap-6 pt-6"
+                        >
+                          <button 
+                            onClick={() => setActiveTab('dashboard')} 
+                            className="bg-blue-600 text-white px-12 py-6 rounded-[32px] font-black text-xl flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-500/30 transition-all active:scale-95"
+                          >
+                            Launch Workspace <ArrowRight size={28} />
+                          </button>
+                          <button 
+                            onClick={() => setActiveTab('templates')} 
+                            className="bg-white/10 backdrop-blur-xl text-white border border-white/20 px-12 py-6 rounded-[32px] font-black text-xl flex items-center justify-center gap-3 hover:bg-white/20 transition-all active:scale-95"
+                          >
+                            Explore Features
+                          </button>
+                        </motion.div>
+                      </div>
 
-                    <div className="relative">
-                      {/* Rotating Feature Card */}
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-[48px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] border border-slate-100 p-10 relative z-10"
-                      >
-                        <div className="flex items-center justify-between mb-10">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white">
-                              <Plus size={24} />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-xl">FreeStamps KE</h3>
-                              <p className="text-slate-400 font-bold text-sm">Enterprise Solution</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <div className="w-2 h-2 rounded-full bg-slate-200"></div>
-                            <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                            <div className="w-2 h-2 rounded-full bg-slate-200"></div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                          <div className="space-y-6">
-                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400">
-                              <User size={32} />
-                            </div>
-                            <div>
-                              <h4 className="font-black text-lg">Feature Spotlight</h4>
-                              <p className="text-slate-500 font-medium">Digital Authority Management</p>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
-                                <motion.div 
-                                  animate={{ x: ['-100%', '100%'] }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                  className="h-full w-1/2 bg-blue-600"
-                                />
-                              </div>
-                              <div className="h-2 w-2/3 bg-slate-50 rounded-full"></div>
-                              <div className="h-2 w-1/2 bg-slate-50 rounded-full"></div>
-                            </div>
-                          </div>
-
-                          <div className="bg-slate-50 rounded-3xl p-6 flex flex-col items-center justify-center text-center space-y-4">
-                            <FeatureRotator />
-                          </div>
-                        </div>
-                      </motion.div>
-
-                      {/* Decorative Background Elements */}
-                      <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl -z-10"></div>
-                      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl -z-10"></div>
+                      <div className="hidden lg:block relative">
+                        <FeatureRotator />
+                      </div>
                     </div>
                   </div>
 
-                  <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-20 border-t border-slate-100 dark:border-slate-800">
-                    <div>
-                      <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-2">Welcome Back, <span className="text-blue-600">{user?.name || 'Counsel'}</span></h2>
-                      <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Manage your firm's digital authority from one central dashboard.</p>
-                    </div>
-                    <div className="flex gap-4">
-                      <button onClick={() => setActiveTab('stamp-studio')} className="bg-blue-600 text-white px-8 py-4 rounded-[2rem] font-black shadow-xl shadow-blue-200 dark:shadow-none hover:bg-blue-700 transition-all flex items-center gap-3">
-                        <PenTool size={20} /> Create New Stamp
-                      </button>
-                    </div>
-                  </header>
-
-                  {/* Feature Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {[
-                      { id: 'stamp-studio', label: 'Stamp Studio', desc: 'Design high-precision vector rubber stamps for legal and corporate use.', icon: PenTool, color: 'blue' },
-                      { id: 'esign', label: 'Sign Center', desc: 'Collect legally-binding digital signatures with full audit trails.', icon: CheckCircle2, color: 'emerald' },
-                    ].map((feature) => (
-                      <button
-                        key={feature.id}
-                        onClick={() => setActiveTab(feature.id as any)}
-                        className="group bg-white dark:bg-slate-900 p-10 rounded-[48px] border border-slate-100 dark:border-slate-800 text-left hover:shadow-2xl hover:shadow-blue-100 dark:hover:shadow-none transition-all hover:-translate-y-2"
-                      >
-                        <div className={`w-16 h-16 rounded-[24px] bg-${feature.color}-50 dark:bg-${feature.color}-900/20 flex items-center justify-center text-${feature.color}-600 mb-8 group-hover:scale-110 transition-transform`}>
-                          <feature.icon size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black mb-4 tracking-tight">{feature.label}</h3>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-8">{feature.desc}</p>
-                        <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest">
-                          Try Feature <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Recent Activity / Stats */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-slate-900 text-white p-12 rounded-[56px] relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform">
-                        <ShieldCheck size={200} />
+                  {/* Feature Grid Section */}
+                  <section className="px-4">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+                      <div>
+                        <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">Enterprise Modules</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium text-xl">Every tool your business needs, integrated into a single high-performance interface.</p>
                       </div>
-                      <h3 className="text-3xl font-black mb-6 tracking-tight">Enterprise Security</h3>
-                      <p className="text-slate-400 text-lg font-medium mb-10 max-w-md">All documents are processed client-side. Your firm's data never leaves your device, ensuring absolute confidentiality.</p>
-                      <div className="flex gap-8">
-                        <div>
-                          <p className="text-4xl font-black text-blue-400 mb-1">AES-256</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Encryption</p>
-                        </div>
-                        <div className="w-px h-12 bg-slate-800"></div>
-                        <div>
-                          <p className="text-4xl font-black text-blue-400 mb-1">LSK</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Compliant</p>
+                      <div className="flex gap-3">
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-6 py-4 rounded-3xl border border-slate-200 dark:border-slate-700">
+                          <Search size={20} className="text-slate-400 mr-3" />
+                          <input type="text" placeholder="Search modules..." className="bg-transparent border-none outline-none font-bold text-sm w-48" />
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white dark:bg-slate-900 p-12 rounded-[56px] border border-slate-100 dark:border-slate-800">
-                      <h3 className="text-2xl font-black mb-8 tracking-tight">Quick Stats</h3>
-                      <div className="space-y-8">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {NAVIGATION_ITEMS.filter(item => item.id !== 'home' && item.id !== 'dashboard').map((item, i) => (
+                        <motion.button
+                          key={item.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          onClick={() => setActiveTab(item.id as any)}
+                          className="group bg-white dark:bg-slate-900 p-12 rounded-[56px] border border-slate-100 dark:border-slate-800 text-left hover:border-blue-400 hover:shadow-2xl transition-all relative overflow-hidden"
+                        >
+                          <div className="relative z-10">
+                            <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[28px] flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all mb-8 shadow-sm">
+                              <item.icon size={36} />
+                            </div>
+                            <h3 className="text-3xl font-black mb-4 tracking-tight group-hover:text-blue-600 transition-colors">{item.label}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-10">
+                              {item.id === 'booking' ? 'Professional diary and client scheduling system with automated reminders.' : 
+                               item.id === 'qr-tracker' ? 'GPS-verified personnel and asset tracking with real-time verification.' :
+                               item.id === 'finance-center' ? 'Invoicing, accounts sync, and tax compliance for modern firms.' :
+                               item.id === 'editor-suite' ? 'Cloud-based Word and Spreadsheet editors for seamless collaboration.' :
+                               item.id === 'esign' ? 'Legally binding digital signature center with full audit trails.' :
+                               item.id === 'stamp-studio' ? 'Precision vector rubber stamp designer for corporate authority.' :
+                               item.id === 'reminders' ? 'Smart notification system for deadlines and critical tasks.' :
+                               'Advanced enterprise module for modern business operations and productivity.'}
+                            </p>
+                            <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest">
+                              Launch App <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
+                            </div>
+                          </div>
+                          <div className="absolute -right-8 -bottom-8 opacity-0 group-hover:opacity-5 transition-all">
+                            <item.icon size={160} />
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Trust Section */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <div className="lg:col-span-2 bg-slate-900 text-white p-16 rounded-[64px] relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-16 opacity-10 group-hover:scale-110 transition-transform">
+                        <ShieldCheck size={240} />
+                      </div>
+                      <h3 className="text-4xl font-black mb-8 tracking-tight">Enterprise Security</h3>
+                      <p className="text-slate-400 text-xl font-medium mb-12 max-w-lg leading-relaxed">All documents are processed client-side. Your firm's data never leaves your device, ensuring absolute confidentiality and LSK compliance.</p>
+                      <div className="flex gap-12">
+                        <div>
+                          <p className="text-5xl font-black text-blue-400 mb-2">AES-256</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Encryption Standard</p>
+                        </div>
+                        <div className="w-px h-16 bg-slate-800"></div>
+                        <div>
+                          <p className="text-5xl font-black text-blue-400 mb-2">LSK</p>
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Regulatory Compliant</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-900 p-16 rounded-[64px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                      <h3 className="text-3xl font-black mb-10 tracking-tight">System Health</h3>
+                      <div className="space-y-10">
                         {[
-                          { label: 'Stamps Created', value: '12', icon: PenTool },
-                          { label: 'Docs Signed', value: '48', icon: CheckCircle2 },
+                          { label: 'Cloud Sync', value: 'Active', icon: Cloud, color: 'text-emerald-500' },
+                          { label: 'Security Scan', value: 'Passed', icon: ShieldCheck, color: 'text-blue-500' },
+                          { label: 'Uptime', value: '99.9%', icon: Zap, color: 'text-amber-500' },
                         ].map((stat, i) => (
                           <div key={i} className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                                <stat.icon size={18} />
+                            <div className="flex items-center gap-5">
+                              <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${stat.color}`}>
+                                <stat.icon size={24} />
                               </div>
-                              <p className="font-bold text-slate-600 dark:text-slate-400">{stat.label}</p>
+                              <p className="font-black text-lg text-slate-600 dark:text-slate-400">{stat.label}</p>
                             </div>
-                            <p className="text-2xl font-black">{stat.value}</p>
+                            <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
                           </div>
                         ))}
                       </div>
@@ -769,6 +809,8 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
 
               {activeTab === 'stamp-studio' && (
                 <div className="max-w-7xl mx-auto h-full flex flex-col">
@@ -889,7 +931,11 @@ const App: React.FC = () => {
                 />
               )}
               {activeTab === 'booking' && <BookingSystem />}
+              {activeTab === 'reminders' && <Reminders />}
               {activeTab === 'comm-center' && <CommunicationCenter />}
+              {activeTab === 'qr-tracker' && <QRTracker />}
+              {activeTab === 'finance-center' && <FinanceCenter />}
+              {activeTab === 'editor-suite' && <EditorSuite />}
               {activeTab === 'doc-gen' && <DocumentArchitect />}
               {activeTab === 'presentation' && <PresentationGenerator />}
               {activeTab === 'templates' && (
@@ -951,123 +997,28 @@ const App: React.FC = () => {
           <div className="fixed -left-[9999px] -top-[9999px] invisible pointer-events-none">
             <SVGPreview config={stampConfig} ref={svgRef} />
           </div>
+
+          {/* Footer */}
+          <footer className="bg-white dark:bg-slate-950 text-slate-400 py-12 border-t border-slate-100 dark:border-slate-900">
+            <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-600 text-white p-1.5 rounded-lg"><Plus size={16} /></div>
+                <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">Sahihi</h3>
+              </div>
+              <p className="font-black text-[10px] uppercase tracking-widest text-slate-500">© 2024 JijiTechy Innovations. LSK Standards Applied.</p>
+              <div className="flex gap-6">
+                 <Twitter size={18} className="hover:text-blue-400 cursor-pointer transition-colors" />
+                 <Linkedin size={18} className="hover:text-blue-600 cursor-pointer transition-colors" />
+                 <Github size={18} className="hover:text-white cursor-pointer transition-colors" />
+              </div>
+            </div>
+          </footer>
         </main>
       </div>
 
       {/* Login Modal */}
       <AnimatePresence>
         {showLoginModal && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowLoginModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 p-10 overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-8">
-                <button onClick={() => setShowLoginModal(false)} className="text-slate-400 hover:text-slate-600">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="text-center mb-10">
-                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-blue-200">
-                  <ShieldCheck size={32} />
-                </div>
-                <h2 className="text-3xl font-black tracking-tighter mb-2">{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
-                <p className="text-slate-500 font-medium">{isSignUp ? 'Join the FreeStamps KE workspace today.' : 'Enter your credentials to access your dashboard.'}</p>
-              </div>
-
-              <form onSubmit={handleDemoLogin} className="space-y-6">
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
-                        type="text" 
-                        required
-                        placeholder="John Doe"
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
-                      type="email" 
-                      required
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder="tinga@gmail.com"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
-                      type="password" 
-                      required
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="••••"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-4 focus:ring-blue-500/10 font-bold"
-                    />
-                  </div>
-                </div>
-
-                {loginError && (
-                  <p className="text-red-500 text-xs font-bold text-center">{loginError}</p>
-                )}
-
-                <button 
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all active:scale-95"
-                >
-                  {isSignUp ? 'Sign Up' : 'Sign In'}
-                </button>
-              </form>
-
-              <div className="mt-8 pt-8 border-t border-slate-50 dark:border-slate-800 text-center">
-                <p className="text-slate-400 text-sm font-medium">
-                  {isSignUp ? 'Already have an account?' : "Don't have an account?"} <button onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 font-bold">{isSignUp ? 'Sign In' : 'Sign up free'}</button>
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-slate-950 text-slate-400 py-12 border-t border-slate-100 dark:border-slate-900">
-        <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 text-white p-1.5 rounded-lg"><Plus size={16} /></div>
-            <h3 className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">Sahihi</h3>
-          </div>
-          <p className="font-black text-[10px] uppercase tracking-widest text-slate-500">© 2024 JijiTechy Innovations. LSK Standards Applied.</p>
-          <div className="flex gap-6">
-             <Twitter size={18} className="hover:text-blue-400 cursor-pointer transition-colors" />
-             <Linkedin size={18} className="hover:text-blue-600 cursor-pointer transition-colors" />
-             <Github size={18} className="hover:text-white cursor-pointer transition-colors" />
-          </div>
-        </div>
-      </footer>
-      {showLoginModal && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -1131,6 +1082,7 @@ const App: React.FC = () => {
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
 
       {showPaymentModal && (
         <PaymentModal 
@@ -1143,6 +1095,111 @@ const App: React.FC = () => {
           }} 
         />
       )}
+    </div>
+  );
+};
+
+const Dashboard: React.FC<{ setActiveTab: (tab: any) => void }> = ({ setActiveTab }) => {
+  return (
+    <div className="space-y-12 py-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-4xl font-black tracking-tighter">Enterprise Dashboard</h2>
+          <p className="text-slate-500 font-medium">Welcome back, Tinga. Here is your firm's overview.</p>
+        </div>
+        <div className="flex gap-3">
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg shadow-blue-100">
+            <Plus size={18} /> New Project
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {[
+          { label: 'Active Tasks', value: '24', icon: ListTodo, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Pending Bookings', value: '8', icon: CalendarDays, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Unread Mail', value: '12', icon: MessageSquare, color: 'text-orange-600', bg: 'bg-orange-50' },
+          { label: 'Revenue (MTD)', value: 'KES 450K', icon: Receipt, color: 'text-rose-600', bg: 'bg-rose-50' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className={`${stat.bg} ${stat.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-6`}>
+              <stat.icon size={24} />
+            </div>
+            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{stat.label}</p>
+            <p className="text-3xl font-black tracking-tighter">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+          <div className="bg-white dark:bg-slate-900 p-10 rounded-[56px] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between mb-10">
+              <h3 className="text-2xl font-black tracking-tight">Recent Activity</h3>
+              <button className="text-xs font-black text-blue-600 uppercase tracking-widest">View All</button>
+            </div>
+            <div className="space-y-6">
+              {[
+                { title: 'New Signature Request', desc: 'Acme Corp sent a contract for signing.', time: '2m ago', icon: CheckCircle2, color: 'text-emerald-600' },
+                { title: 'Appointment Confirmed', desc: 'Legal consultation with John Doe.', time: '1h ago', icon: CalendarDays, color: 'text-blue-600' },
+                { title: 'QR Scan Verified', desc: 'Sarah Wambui checked in at Mombasa Port.', time: '3h ago', icon: QrCode, color: 'text-orange-600' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center gap-6">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.color} bg-white dark:bg-slate-900 shadow-sm`}>
+                      <item.icon size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-slate-900 dark:text-white">{item.title}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{item.desc}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 space-y-8">
+          <div className="bg-slate-900 text-white p-10 rounded-[56px] shadow-2xl relative overflow-hidden">
+            <h3 className="text-2xl font-black tracking-tight mb-6 relative z-10">Quick Launch</h3>
+            <div className="grid grid-cols-2 gap-4 relative z-10">
+              <button onClick={() => setActiveTab('stamp-studio')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
+                <PenTool className="mx-auto mb-2 text-blue-400" size={24} />
+                <span className="text-[10px] font-black uppercase">Stamp</span>
+              </button>
+              <button onClick={() => setActiveTab('esign')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
+                <CheckCircle2 className="mx-auto mb-2 text-emerald-400" size={24} />
+                <span className="text-[10px] font-black uppercase">Sign</span>
+              </button>
+              <button onClick={() => setActiveTab('qr-tracker')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
+                <QrCode className="mx-auto mb-2 text-orange-400" size={24} />
+                <span className="text-[10px] font-black uppercase">Track</span>
+              </button>
+              <button onClick={() => setActiveTab('finance-center')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
+                <Receipt className="mx-auto mb-2 text-rose-400" size={24} />
+                <span className="text-[10px] font-black uppercase">Finance</span>
+              </button>
+            </div>
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl" />
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 p-10 rounded-[56px] border border-slate-100 dark:border-slate-800 shadow-sm">
+            <h3 className="text-xl font-black mb-6">Upcoming</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800">
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">In 30 mins</p>
+                <p className="text-sm font-bold">Board Meeting</p>
+              </div>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tomorrow</p>
+                <p className="text-sm font-bold">VAT Filing Deadline</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
