@@ -31,10 +31,6 @@ interface DigitalSignCenterProps {
   pendingStampFieldId?: string | null;
   onClearPendingField?: () => void;
   isActive?: boolean;
-  usageCount: number;
-  hasPaid: boolean;
-  setUsageCount: React.Dispatch<React.SetStateAction<number>>;
-  setShowPaymentModal: (show: boolean) => void;
 }
 
 const SIGNATURE_FONTS = [
@@ -257,11 +253,7 @@ export default function DigitalSignCenter({
   onOpenStudio, 
   pendingStampFieldId, 
   onClearPendingField, 
-  isActive,
-  usageCount,
-  hasPaid,
-  setUsageCount,
-  setShowPaymentModal
+  isActive
 }: DigitalSignCenterProps) {
   const [view, setView] = useState<'dashboard' | 'create' | 'signer-view'>('dashboard');
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
@@ -369,10 +361,6 @@ export default function DigitalSignCenter({
   };
 
   const handleSendEnvelope = () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (!activeEnvelope) return;
     setIsLoadingDoc(true);
     setProcessingStatus('Distributing Documents...');
@@ -382,16 +370,11 @@ export default function DigitalSignCenter({
       setEnvelopes(prev => prev.map(e => e.id === activeEnvelope.id ? { ...activeEnvelope, status: 'sent' } : e));
       setIsLoadingDoc(false);
       setShowToast({ message: 'Documents dispatched to all signers', type: 'success' });
-      setUsageCount(prev => prev + 1);
       setView('dashboard');
     }, 2000);
   };
 
   const downloadDocument = async (envelope: Envelope): Promise<boolean> => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return false;
-    }
     setIsLoadingDoc(true);
     setProcessingStatus('Finalizing Document...');
     try {
@@ -507,7 +490,6 @@ export default function DigitalSignCenter({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setUsageCount(prev => prev + 1);
       setShowToast({ message: 'Document downloaded successfully', type: 'success' });
       return true;
     } catch (err) {
@@ -799,10 +781,6 @@ export default function DigitalSignCenter({
   };
 
   const handleSend = () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     const envelope: Envelope = {
       ...newEnv as Envelope,
       id: `env-${Date.now()}`,
@@ -819,7 +797,6 @@ export default function DigitalSignCenter({
       }]
     };
     setEnvelopes([envelope, ...envelopes]);
-    setUsageCount(prev => prev + 1);
     setView('dashboard');
     setCurrentStep(1);
   };

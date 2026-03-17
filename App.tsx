@@ -1,81 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Plus, 
-  Layers, 
-  Download, 
-  Trash2, 
-  Settings, 
-  CreditCard, 
   ChevronLeft,
   Image as ImageIcon,
   CheckCircle2,
-  HelpCircle,
   Menu,
   X,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
-  Zap,
-  Star,
-  Copy,
-  Files,
-  ArrowDown,
   Camera,
-  ArrowBigDown,
   User,
-  // Added missing Users icon import
-  Users,
-  BookOpen,
-  FolderOpen,
-  LogOut,
-  Mail,
-  Lock,
-  Smartphone,
-  Info,
   PenTool,
-  Award,
-  Globe,
-  Monitor,
-  MousePointerClick,
-  CheckCircle,
-  MessageSquare,
   Twitter,
   Linkedin,
   Github,
   FileText,
-  Check,
   Wrench,
-  FileCode,
-  CalendarDays,
-  FileSpreadsheet,
   LayoutDashboard,
-  Clock,
-  Bell,
-  Search,
-  MoreVertical,
-  History,
-  TrendingUp,
-  Receipt,
-  Briefcase,
-  Briefcase as ListTodo,
-  BarChart3,
-  ClipboardList,
-  Layout,
   Sun,
   Moon,
   ChevronRight,
-  Home,
-  QrCode,
-  FileType,
-  File as FileIcon,
-  Loader2,
-  Cloud,
-  Megaphone,
+  Search,
   HardDrive,
-  UserPlus
+  Loader2,
+  FileType,
+  FileIcon,
+  Layers,
+  QrCode,
+  Share2,
+  MessageSquare,
+  Mail,
+  Send,
+  Smartphone,
+  Globe,
+  Zap,
+  MessageCircle
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { StampConfig, StampTemplate, StampShape } from './types';
 import { DEFAULT_CONFIG, TEMPLATES } from './constants';
 import SVGPreview from './components/SVGPreview';
@@ -83,35 +44,17 @@ import TemplateLibrary from './components/TemplateLibrary';
 import EditorControls from './components/EditorControls';
 import DigitalSignCenter from './components/DigitalSignCenter';
 import PDFTools from './components/PDFTools';
-import BookingSystem from './components/BookingSystem';
-import DocumentArchitect from './components/DocumentArchitect';
-import PresentationGenerator from './components/PresentationGenerator';
-import CommunicationCenter from './components/CommunicationCenter';
 import StampApplier from './components/StampApplier';
-import WorkspaceSuite from './components/WorkspaceSuite';
-import Reminders from './components/Reminders';
+import QRTracker from './components/QRTracker';
+import SocialHub from './components/SocialHub';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
-
-import QRTracker from './components/QRTracker';
-import FinanceCenter from './components/FinanceCenter';
-import EditorSuite from './components/EditorSuite';
-import HRHub from './components/HRHub';
-import EnterpriseDrive from './components/EnterpriseDrive';
-import EnterpriseChat from './components/EnterpriseChat';
-import Announcements from './components/Announcements';
-import MarketingHub from './components/MarketingHub';
 
 const NAVIGATION_GROUPS = [
   {
     id: 'apps',
     label: 'Core Workspace',
-    items: ['home', 'dashboard', 'workspace-dashboard', 'announcements', 'marketing-hub', 'comm-center', 'chat', 'booking', 'reminders']
-  },
-  {
-    id: 'hr',
-    label: 'HR & Talent',
-    items: ['hr-hub', 'qr-tracker', 'time', 'workload', 'company']
+    items: ['dashboard']
   },
   {
     id: 'authority',
@@ -121,152 +64,32 @@ const NAVIGATION_GROUPS = [
   {
     id: 'productivity',
     label: 'Productivity Suite',
-    items: ['drive', 'editor-suite', 'pdf-forge', 'doc-gen', 'presentation', 'templates']
+    items: ['pdf-forge', 'templates']
   },
   {
-    id: 'ops',
-    label: 'Operations & Tracking',
-    items: ['tasks', 'gantt', 'whiteboard', 'forms', 'automation']
-  },
-  {
-    id: 'finance',
-    label: 'Finance & Accounts',
-    items: ['finance-center']
+    id: 'management',
+    label: 'Enterprise Management',
+    items: ['qr-tracker', 'social-hub']
   }
 ];
 
 const NAVIGATION_ITEMS = [
-  { id: 'home', label: 'Portal Home', icon: Home },
   { id: 'dashboard', label: 'SaaS Dashboard', icon: LayoutDashboard },
-  { id: 'workspace-dashboard', label: 'Workspace Hub', icon: Briefcase },
-  { id: 'announcements', label: 'Announcements', icon: Megaphone },
-  { id: 'marketing-hub', label: 'Marketing Hub', icon: Globe },
-  { id: 'comm-center', label: 'Mail Center', icon: Mail },
-  { id: 'chat', label: 'Enterprise Chat', icon: MessageSquare },
-  { id: 'booking', label: 'Appointments', icon: CalendarDays },
-  { id: 'reminders', label: 'Reminders', icon: Bell },
-  { id: 'hr-hub', label: 'HR Hub', icon: UserPlus },
-  { id: 'drive', label: 'Enterprise Drive', icon: HardDrive },
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
   { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
   { id: 'apply-stamp', label: 'Stamp Applier', icon: FileText },
   { id: 'convert', label: 'AI Scan', icon: Camera },
-  { id: 'editor-suite', label: 'Editor Suite', icon: FileCode },
-  { id: 'pdf-forge', label: 'PDF Forge', icon: Wrench },
-  { id: 'doc-gen', label: 'Doc Architect', icon: FileCode },
-  { id: 'presentation', label: 'Presentation', icon: Monitor },
-  { id: 'templates', label: 'Templates', icon: BookOpen },
-  { id: 'qr-tracker', label: 'QR & GPS Tracking', icon: QrCode },
-  { id: 'tasks', label: 'Task Board', icon: ListTodo },
-  { id: 'gantt', label: 'Gantt Chart', icon: BarChart3 },
-  { id: 'time', label: 'Time Tracking', icon: Clock },
-  { id: 'whiteboard', label: 'Whiteboard', icon: Layout },
-  { id: 'finance-center', label: 'Finance Hub', icon: Receipt },
-  { id: 'forms', label: 'Smart Forms', icon: ClipboardList },
-  { id: 'automation', label: 'Automations', icon: Zap },
-  { id: 'workload', label: 'Workload', icon: TrendingUp },
-  { id: 'company', label: 'Company', icon: Users },
+  { id: 'pdf-forge', label: 'PDF Editor', icon: Wrench },
+  { id: 'templates', label: 'Templates', icon: FileText },
+  { id: 'qr-tracker', label: 'QR Tracker', icon: QrCode },
+  { id: 'social-hub', label: 'Social Hub', icon: Share2 },
 ];
 
-const BLOG_POSTS = [
-  { 
-    id: 1, 
-    title: 'Digital Signatures and Rubber Stamps in Kenyan Law: The Definitive 2024 Guide', 
-    date: 'Jan 15, 2024', 
-    icon: <ShieldCheck size={24} />,
-    content: `
-      ### The Evolution of Kenyan Business Law
-      In the heart of Nairobi's growing tech hub, the legal landscape is shifting. The Business Laws (Amendment) Act has revolutionized how we perceive "authority." No longer is a heavy metal press or a messy rubber stamp the only way to authenticate a document. We are entering the era of the "Verified Digital Impression."
-
-      ### Understanding the Legal Framework
-      Section 83G of the Kenya Information and Communications Act (KICA) is clear: an electronic signature or digital authentication cannot be denied legal effect solely because it is digital. However, for Advocates and Notaries, the Law Society of Kenya (LSK) maintains a high bar. A digital stamp is more than just a picture; it is a representation of professional standing.
-
-      ### Why Vector (SVG) Matters for Official Use
-      Most "free" tools generate blurry PNG files. In a court of law or when filing at the Business Registration Service (BRS), clarity is non-negotiable. Vector stamps (SVG) are mathematically defined. This means they remain razor-sharp whether they are on a mobile screen or printed on an A0-sized architectural plan. FreeStamps KE focuses exclusively on high-precision SVG output to ensure Kenyan professionals are never turned away due to "pixelated" credentials.
-
-      ### Corporate Governance and Digital Seals
-      The 2015 Companies Act was a turning point. It removed the mandatory requirement for a common seal for many private companies. Today, a digital impression paired with an authorized signature is sufficient for most board resolutions. However, having a professionally designed digital seal adds a layer of "Corporate Gravity" to your documents that standard text simply cannot provide.
-
-      ### Security in the Age of AI
-      As AI becomes more sophisticated, so do forgeries. FreeStamps KE recommends a "Layered Authentication" approach:
-      1. Use a High-Resolution Custom Stamp.
-      2. Pair it with a handwritten digital signature (using our multi-page signing tool).
-      3. Secure the final document with a cryptographic hash.
-      
-      ### The Practical Future
-      From e-filing in the Kenyan Judiciary to remote contract signing in Mombasa, the tools we build today define the speed of our economy tomorrow. FreeStamps KE is proud to be at the forefront of this digital transition.
-    `
-  },
-  { 
-    id: 2, 
-    title: 'LSK & Notary Standards: Dimensions, Wording, and Color Protocols', 
-    date: 'Feb 02, 2024', 
-    icon: <BookOpen size={24} />,
-    content: `
-      ### Precision is the Profession
-      For a Kenyan Advocate, their stamp is their "Sword of Office." The Judiciary's e-filing system is notoriously picky about stamp impressions. This article details the exact technical specifications required for your digital tools to pass the "Registrar's Test."
-
-      ### Dimensions and Ratios
-      The standard "Round" Advocate stamp is typically 40mm to 42mm in diameter. In the digital world, this translates to roughly 400px to 600px in SVG viewbox units. Our templates are hard-coded to maintain these ratios, ensuring that when you "place" a stamp on a document using our multi-page tool, the scale is physically accurate.
-
-      ### Wording: The "Commissioner for Oaths" Requirement
-      Many practitioners forget the specific line required for the date of admission or the P.105 designation. A stamp that says "Michael Kamau Advocate" is fine, but one that includes "Commissioner for Oaths & Notary Public" alongside a clear P.O. Box and Firm Name is authoritative.
-
-      ### The Color Protocol of Kenyan Institutions
-      While most business stamps are Royal Blue (#0000FF), the Kenyan Judiciary has historically favored specific shades of Black or Deep Blue for certified copies. "PAID" and "URGENT" stamps should almost always be Crimson Red (#991b1b). Using the wrong color can lead to psychological friction during document review.
-
-      ### Multi-Page Processing: A Game Changer for Large Firms
-      Imagine having to certify 500 pages of a bank mortgage application. Doing this manually with a physical stamp takes hours. Our multi-page stamping & signing engine can process those 500 pages in under 30 seconds. This isn't just a tool; it's an efficiency multiplier for modern legal firms.
-    `
-  }
-];
-
-const RESOURCES = [
-  { id: 1, name: 'LSK Standard Layout Guide', type: 'Technical PDF', size: '2.4 MB' },
-  { id: 2, name: 'Business Registration Service (BRS) Stamp Specs', type: 'Official Doc', size: '1.1 MB' },
-  { id: 3, name: 'Digital Security Whitepaper for Kenyan Firms', type: 'Legal PDF', size: '3.8 MB' },
-  { id: 4, name: 'High-Resolution Vector Logo Pack', type: 'Asset Bundle', size: '15 MB' }
-];
-
-const FeatureRotator = () => {
-  const [index, setIndex] = useState(0);
-  const features = [
-    { icon: PenTool, label: 'Stamp Studio', desc: 'Vector-perfect rubber stamps.', color: 'text-blue-600' },
-    { icon: CheckCircle2, label: 'Sign Center', desc: 'Legally-binding e-signatures.', color: 'text-emerald-600' },
-    { icon: QrCode, label: 'QR Tracking', desc: 'GPS-verified personnel tracking.', color: 'text-orange-600' },
-    { icon: Receipt, label: 'Finance Hub', icon2: FileSpreadsheet, label2: 'Editor Suite', desc: 'Invoicing & cloud document editors.', color: 'text-rose-600' },
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % features.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const feature = features[index];
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        className="flex flex-col items-center"
-      >
-        <div className={`w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center ${feature.color} mb-4`}>
-          <feature.icon size={40} />
-        </div>
-        <h4 className="font-black text-xl mb-1">{feature.label}</h4>
-        <p className="text-slate-400 font-bold text-sm">{feature.desc}</p>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+const BLOG_POSTS = [];
+const RESOURCES = [];
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'home' | 'dashboard' | 'pdf-forge' | 'booking' | 'reminders' | 'doc-gen' | 'convert' | 'apply-stamp' | 'workspace-dashboard' | 'presentation' | 'templates' | 'comm-center' | 'tasks' | 'gantt' | 'time' | 'whiteboard' | 'forms' | 'automation' | 'workload' | 'company' | 'qr-tracker' | 'finance-center' | 'editor-suite' | 'hr-hub' | 'drive' | 'chat' | 'announcements' | 'marketing-hub'>('home');
+  const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub'>('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -278,13 +101,38 @@ const App: React.FC = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
-  const [usageCount, setUsageCount] = useState<number>(0);
-  const [hasPaid, setHasPaid] = useState<boolean>(false);
-  const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [customTemplates, setCustomTemplates] = useState<StampTemplate[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    const savedTemplates = localStorage.getItem('custom_stamp_templates');
+    if (savedTemplates) {
+      try {
+        setCustomTemplates(JSON.parse(savedTemplates));
+      } catch (e) {
+        console.error("Failed to load custom templates", e);
+      }
+    }
+  }, []);
+
+  const handleSaveTemplate = () => {
+    if (!isLoggedIn) return;
+    
+    const newTemplate: StampTemplate = {
+      id: `custom-${Date.now()}`,
+      name: `Custom ${stampConfig.primaryText || 'Stamp'}`,
+      category: 'Custom',
+      ...stampConfig
+    };
+
+    const updatedTemplates = [...customTemplates, newTemplate];
+    setCustomTemplates(updatedTemplates);
+    localStorage.setItem('custom_stamp_templates', JSON.stringify(updatedTemplates));
+    alert("Template saved successfully!");
+  };
 
   useEffect(() => {
     if (activeTab === 'stamp-studio' || activeTab === 'apply-stamp') {
@@ -379,10 +227,6 @@ const App: React.FC = () => {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     const file = event.target.files?.[0];
     if (!file) return;
     setActiveTab('convert');
@@ -406,11 +250,6 @@ const App: React.FC = () => {
   };
 
   const downloadStamp = async (format: 'svg' | 'png' | 'pdf', transparent: boolean = true) => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
-
     if (!svgRef.current) return;
 
     const fileName = `stamp_${stampConfig.primaryText.toLowerCase().replace(/\s+/g, '_')}`;
@@ -424,7 +263,6 @@ const App: React.FC = () => {
       link.download = `${fileName}.svg`;
       link.click();
       URL.revokeObjectURL(url);
-      setUsageCount(prev => prev + 1);
     } else if (format === 'png') {
       const svgData = new XMLSerializer().serializeToString(svgRef.current);
       const canvas = document.createElement('canvas');
@@ -451,7 +289,6 @@ const App: React.FC = () => {
           link.click();
         }
         URL.revokeObjectURL(url);
-        setUsageCount(prev => prev + 1);
       };
       img.src = url;
     } else if (format === 'pdf') {
@@ -480,7 +317,6 @@ const App: React.FC = () => {
           
           pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 2000, 2000);
           pdf.save(`${fileName}.pdf`);
-          setUsageCount(prev => prev + 1);
         }
         URL.revokeObjectURL(url);
       };
@@ -492,7 +328,7 @@ const App: React.FC = () => {
     <div className={`h-screen flex overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Persistent Desktop Sidebar */}
       <aside className="hidden lg:flex w-72 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[100]">
-        <div className="p-6 flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('home')}>
+        <div className="p-6 flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
           <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={24} /></div>
           <h1 className="text-2xl font-black tracking-tighter">Sahihi</h1>
         </div>
@@ -666,170 +502,6 @@ const App: React.FC = () => {
               transition={{ duration: 0.2 }}
               className="h-full"
             >
-              {activeTab === 'home' && (
-                <div className="max-w-7xl mx-auto space-y-24">
-                  {/* World-Class SaaS Hero Section */}
-                  <div className="relative py-24 overflow-hidden rounded-[64px] bg-slate-900 text-white">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-                    <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-                      <div className="absolute top-20 right-20 w-96 h-96 bg-blue-400 rounded-full blur-[120px]" />
-                      <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-400 rounded-full blur-[120px]" />
-                    </div>
-                    
-                    <div className="relative z-10 px-12 md:px-24 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                      <div className="space-y-10">
-                        <motion.div
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full"
-                        >
-                          <Sparkles size={18} className="text-blue-400" />
-                          <span className="text-xs font-black uppercase tracking-widest text-blue-400">The Ultimate SaaS OS</span>
-                        </motion.div>
-                        
-                        <motion.h1 
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-7xl md:text-9xl font-black tracking-tighter leading-[0.8] mb-8"
-                        >
-                          Infinite Control. <br />
-                          <span className="text-blue-500">One Platform.</span>
-                        </motion.h1>
-                        
-                        <motion.p 
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1 }}
-                          className="text-xl md:text-2xl text-slate-400 font-medium leading-relaxed max-w-xl"
-                        >
-                          The professional operating system for modern firms. From digital authority to enterprise operations, manage everything in one place.
-                        </motion.p>
-                        
-                        <motion.div 
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                          className="flex flex-col sm:flex-row gap-6 pt-6"
-                        >
-                          <button 
-                            onClick={() => setActiveTab('dashboard')} 
-                            className="bg-blue-600 text-white px-12 py-6 rounded-[32px] font-black text-xl flex items-center justify-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-500/30 transition-all active:scale-95"
-                          >
-                            Launch Workspace <ArrowRight size={28} />
-                          </button>
-                          <button 
-                            onClick={() => setActiveTab('templates')} 
-                            className="bg-white/10 backdrop-blur-xl text-white border border-white/20 px-12 py-6 rounded-[32px] font-black text-xl flex items-center justify-center gap-3 hover:bg-white/20 transition-all active:scale-95"
-                          >
-                            Explore Features
-                          </button>
-                        </motion.div>
-                      </div>
-
-                      <div className="hidden lg:block relative">
-                        <FeatureRotator />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Feature Grid Section */}
-                  <section className="px-4">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
-                      <div>
-                        <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">Enterprise Modules</h2>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium text-xl">Every tool your business needs, integrated into a single high-performance interface.</p>
-                      </div>
-                      <div className="flex gap-3">
-                        <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-6 py-4 rounded-3xl border border-slate-200 dark:border-slate-700">
-                          <Search size={20} className="text-slate-400 mr-3" />
-                          <input type="text" placeholder="Search modules..." className="bg-transparent border-none outline-none font-bold text-sm w-48" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                      {NAVIGATION_ITEMS.filter(item => item.id !== 'home' && item.id !== 'dashboard').map((item, i) => (
-                        <motion.button
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => setActiveTab(item.id as any)}
-                          className="group bg-white dark:bg-slate-900 p-12 rounded-[56px] border border-slate-100 dark:border-slate-800 text-left hover:border-blue-400 hover:shadow-2xl transition-all relative overflow-hidden"
-                        >
-                          <div className="relative z-10">
-                            <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[28px] flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all mb-8 shadow-sm">
-                              <item.icon size={36} />
-                            </div>
-                            <h3 className="text-3xl font-black mb-4 tracking-tight group-hover:text-blue-600 transition-colors">{item.label}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-10">
-                              {item.id === 'booking' ? 'Professional diary and client scheduling system with automated reminders.' : 
-                               item.id === 'qr-tracker' ? 'GPS-verified personnel and asset tracking with real-time verification.' :
-                               item.id === 'finance-center' ? 'Invoicing, accounts sync, and tax compliance for modern firms.' :
-                               item.id === 'editor-suite' ? 'Cloud-based Word and Spreadsheet editors for seamless collaboration.' :
-                               item.id === 'esign' ? 'Legally binding digital signature center with full audit trails.' :
-                               item.id === 'stamp-studio' ? 'Precision vector rubber stamp designer for corporate authority.' :
-                               item.id === 'reminders' ? 'Smart notification system for deadlines and critical tasks.' :
-                               'Advanced enterprise module for modern business operations and productivity.'}
-                            </p>
-                            <div className="flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-widest">
-                              Launch App <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-                            </div>
-                          </div>
-                          <div className="absolute -right-8 -bottom-8 opacity-0 group-hover:opacity-5 transition-all">
-                            <item.icon size={160} />
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </section>
-
-                  {/* Trust Section */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div className="lg:col-span-2 bg-slate-900 text-white p-16 rounded-[64px] relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-16 opacity-10 group-hover:scale-110 transition-transform">
-                        <ShieldCheck size={240} />
-                      </div>
-                      <h3 className="text-4xl font-black mb-8 tracking-tight">Enterprise Security</h3>
-                      <p className="text-slate-400 text-xl font-medium mb-12 max-w-lg leading-relaxed">All documents are processed client-side. Your firm's data never leaves your device, ensuring absolute confidentiality and LSK compliance.</p>
-                      <div className="flex gap-12">
-                        <div>
-                          <p className="text-5xl font-black text-blue-400 mb-2">AES-256</p>
-                          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Encryption Standard</p>
-                        </div>
-                        <div className="w-px h-16 bg-slate-800"></div>
-                        <div>
-                          <p className="text-5xl font-black text-blue-400 mb-2">LSK</p>
-                          <p className="text-xs font-black uppercase tracking-widest text-slate-500">Regulatory Compliant</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-16 rounded-[64px] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-center">
-                      <h3 className="text-3xl font-black mb-10 tracking-tight">System Health</h3>
-                      <div className="space-y-10">
-                        {[
-                          { label: 'Cloud Sync', value: 'Active', icon: Cloud, color: 'text-emerald-500' },
-                          { label: 'Security Scan', value: 'Passed', icon: ShieldCheck, color: 'text-blue-500' },
-                          { label: 'Uptime', value: '99.9%', icon: Zap, color: 'text-amber-500' },
-                        ].map((stat, i) => (
-                          <div key={i} className="flex items-center justify-between">
-                            <div className="flex items-center gap-5">
-                              <div className={`w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${stat.color}`}>
-                                <stat.icon size={24} />
-                              </div>
-                              <p className="font-black text-lg text-slate-600 dark:text-slate-400">{stat.label}</p>
-                            </div>
-                            <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'dashboard' && <Dashboard setActiveTab={setActiveTab} />}
-
               {activeTab === 'stamp-studio' && (
                 <div className="max-w-7xl mx-auto h-full flex flex-col">
                   <div className="flex items-center justify-between mb-8">
@@ -837,7 +509,7 @@ const App: React.FC = () => {
                       <h2 className="text-4xl font-black tracking-tighter">Stamp Studio</h2>
                       <p className="text-slate-500 dark:text-slate-400 font-medium">Design your professional vector impression.</p>
                     </div>
-                    <button onClick={() => setActiveTab('home')} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+                    <button onClick={() => setActiveTab('dashboard')} className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
                       <X size={24} />
                     </button>
                   </div>
@@ -847,6 +519,8 @@ const App: React.FC = () => {
                       <EditorControls 
                         config={stampConfig} 
                         onChange={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))} 
+                        isLoggedIn={isLoggedIn}
+                        onSaveTemplate={handleSaveTemplate}
                       />
                     </div>
                     <div className="lg:col-span-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[56px] border border-slate-100 dark:border-slate-800 p-12 shadow-sm relative group">
@@ -855,7 +529,11 @@ const App: React.FC = () => {
                         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">High Res</div>
                       </div>
                       <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
-                        <SVGPreview config={stampConfig} ref={svgRef} />
+                        <SVGPreview 
+                          config={stampConfig} 
+                          ref={svgRef} 
+                          onUpdateConfig={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))}
+                        />
                       </div>
                       <div className="mt-12 w-full max-w-md space-y-4">
                         <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700">
@@ -923,6 +601,103 @@ const App: React.FC = () => {
                 </div>
               )}
 
+              {activeTab === 'dashboard' && (
+                <div className="space-y-8">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <h2 className="text-4xl font-black tracking-tighter">Sahihi Dashboard</h2>
+                      <p className="text-slate-500 font-medium">Welcome back, {user?.name || 'Partner'}. Here's your firm's overview.</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => setActiveTab('pdf-forge')}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                      >
+                        <Wrench size={18} /> PDF Editor
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                      { label: 'Total Stamps', value: '1,284', icon: PenTool, color: 'text-blue-600', bg: 'bg-blue-50' },
+                      { label: 'Signed Docs', value: '856', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                      { label: 'Active Users', value: '42', icon: User, color: 'text-orange-600', bg: 'bg-orange-50' },
+                      { label: 'Storage Used', value: '12.4 GB', icon: HardDrive, color: 'text-purple-600', bg: 'bg-purple-50' },
+                    ].map((stat, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
+                            <stat.icon size={24} />
+                          </div>
+                          <span className="text-emerald-500 text-xs font-black">+12%</span>
+                        </div>
+                        <p className="text-slate-500 text-sm font-bold mb-1">{stat.label}</p>
+                        <h3 className="text-2xl font-black tracking-tight">{stat.value}</h3>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                      <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xl font-black tracking-tight">Usage Analytics</h3>
+                        <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm font-bold">
+                          <option>Last 7 Days</option>
+                          <option>Last 30 Days</option>
+                        </select>
+                      </div>
+                      <div className="h-64 flex items-end justify-between gap-2">
+                        {[45, 65, 35, 85, 55, 75, 95].map((h, i) => (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                            <motion.div 
+                              initial={{ height: 0 }}
+                              animate={{ height: `${h}%` }}
+                              className="w-full bg-blue-600 rounded-t-xl"
+                            />
+                            <span className="text-[10px] font-black text-slate-400">Day {i+1}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                      <h3 className="text-xl font-black tracking-tight mb-6">Quick Actions</h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: 'New Stamp', icon: Plus, color: 'bg-blue-50 text-blue-600', tab: 'stamp-studio' },
+                          { label: 'Sign PDF', icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-600', tab: 'esign' },
+                          { label: 'Apply Stamp', icon: FileText, color: 'bg-orange-50 text-orange-600', tab: 'apply-stamp' },
+                          { label: 'PDF Editor', icon: Wrench, color: 'bg-purple-50 text-purple-600', tab: 'pdf-forge' },
+                          { label: 'QR Tracker', icon: QrCode, color: 'bg-indigo-50 text-indigo-600', tab: 'qr-tracker' },
+                          { label: 'Social Hub', icon: Share2, color: 'bg-pink-50 text-pink-600', tab: 'social-hub' },
+                        ].map((action, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setActiveTab(action.tab as any)}
+                            className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`p-3 rounded-xl ${action.color}`}>
+                                <action.icon size={20} />
+                              </div>
+                              <span className="font-black text-sm">{action.label}</span>
+                            </div>
+                            <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-900 transition-all" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'esign' && (
                 <DigitalSignCenter 
                   stampConfig={stampConfig} 
@@ -934,52 +709,32 @@ const App: React.FC = () => {
                   pendingStampFieldId={pendingStampFieldId}
                   onClearPendingField={() => setPendingStampFieldId(null)}
                   isActive={activeTab === 'esign'}
-                  usageCount={usageCount}
-                  hasPaid={hasPaid}
-                  setUsageCount={setUsageCount}
-                  setShowPaymentModal={setShowPaymentModal}
                 />
               )}
               {activeTab === 'pdf-forge' && (
-                <PDFTools 
-                  usageCount={usageCount}
-                  hasPaid={hasPaid}
-                  setUsageCount={setUsageCount}
-                  setShowPaymentModal={setShowPaymentModal}
-                />
+                <PDFTools />
               )}
-              {activeTab === 'booking' && <BookingSystem />}
-              {activeTab === 'reminders' && <Reminders />}
-              {activeTab === 'hr-hub' && <HRHub />}
-              {activeTab === 'drive' && <EnterpriseDrive />}
-              {activeTab === 'chat' && <EnterpriseChat />}
-              {activeTab === 'announcements' && <Announcements />}
-              {activeTab === 'marketing-hub' && <MarketingHub />}
-              {activeTab === 'comm-center' && <CommunicationCenter />}
-              {activeTab === 'qr-tracker' && <QRTracker />}
-              {activeTab === 'finance-center' && <FinanceCenter />}
-              {activeTab === 'editor-suite' && <EditorSuite />}
-              {activeTab === 'doc-gen' && <DocumentArchitect />}
-              {activeTab === 'presentation' && <PresentationGenerator />}
+              {activeTab === 'qr-tracker' && (
+                <QRTracker />
+              )}
+              {activeTab === 'social-hub' && (
+                <SocialHub />
+              )}
               {activeTab === 'templates' && (
                 <div className="max-w-7xl mx-auto py-12">
                   <h2 className="text-4xl font-black mb-2 tracking-tight">Authentic Templates</h2>
                   <p className="text-slate-500 dark:text-slate-400 font-medium mb-12">Professionally captured from real Kenyan rubber stamp samples.</p>
-                  <TemplateLibrary onSelect={handleTemplateSelect} />
+                  <TemplateLibrary 
+                    onSelect={handleTemplateSelect} 
+                    customTemplates={customTemplates}
+                  />
                 </div>
               )}
               {activeTab === 'apply-stamp' && (
                 <StampApplier 
                   config={stampConfig} 
                   svgRef={svgRef} 
-                  usageCount={usageCount}
-                  hasPaid={hasPaid}
-                  setUsageCount={setUsageCount}
-                  setShowPaymentModal={setShowPaymentModal}
                 />
-              )}
-              {['workspace-dashboard', 'tasks', 'gantt', 'time', 'whiteboard', 'forms', 'automation', 'workload', 'company'].includes(activeTab) && (
-                <WorkspaceSuite activeTab={activeTab === 'workspace-dashboard' ? 'home' : activeTab} />
               )}
               {activeTab === 'convert' && (
                 <div className="max-w-4xl mx-auto py-12 text-center">
@@ -1105,223 +860,9 @@ const App: React.FC = () => {
           </motion.div>
         </div>
       )}
-      </AnimatePresence>
-
-      {showPaymentModal && (
-        <PaymentModal 
-          isLoggedIn={isLoggedIn}
-          setShowLoginModal={setShowLoginModal}
-          onClose={() => setShowPaymentModal(false)} 
-          onSuccess={() => {
-            setHasPaid(true);
-            setShowPaymentModal(false);
-          }} 
-        />
-      )}
-    </div>
-  );
-};
-
-const Dashboard: React.FC<{ setActiveTab: (tab: any) => void }> = ({ setActiveTab }) => {
-  return (
-    <div className="space-y-12 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-4xl font-black tracking-tighter">Enterprise Dashboard</h2>
-          <p className="text-slate-500 font-medium">Welcome back, Tinga. Here is your firm's overview.</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg shadow-blue-100">
-            <Plus size={18} /> New Project
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {[
-          { label: 'Active Tasks', value: '24', icon: ListTodo, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Pending Bookings', value: '8', icon: CalendarDays, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Unread Mail', value: '12', icon: MessageSquare, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Revenue (MTD)', value: 'KES 450K', icon: Receipt, color: 'text-rose-600', bg: 'bg-rose-50' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className={`${stat.bg} ${stat.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-6`}>
-              <stat.icon size={24} />
-            </div>
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">{stat.label}</p>
-            <p className="text-3xl font-black tracking-tighter">{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-[56px] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between mb-10">
-              <h3 className="text-2xl font-black tracking-tight">Recent Activity</h3>
-              <button className="text-xs font-black text-blue-600 uppercase tracking-widest">View All</button>
-            </div>
-            <div className="space-y-6">
-              {[
-                { title: 'New Signature Request', desc: 'Acme Corp sent a contract for signing.', time: '2m ago', icon: CheckCircle2, color: 'text-emerald-600' },
-                { title: 'Appointment Confirmed', desc: 'Legal consultation with John Doe.', time: '1h ago', icon: CalendarDays, color: 'text-blue-600' },
-                { title: 'QR Scan Verified', desc: 'Sarah Wambui checked in at Mombasa Port.', time: '3h ago', icon: QrCode, color: 'text-orange-600' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700">
-                  <div className="flex items-center gap-6">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${item.color} bg-white dark:bg-slate-900 shadow-sm`}>
-                      <item.icon size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-900 dark:text-white">{item.title}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{item.desc}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 space-y-8">
-          <div className="bg-slate-900 text-white p-10 rounded-[56px] shadow-2xl relative overflow-hidden">
-            <h3 className="text-2xl font-black tracking-tight mb-6 relative z-10">Quick Launch</h3>
-            <div className="grid grid-cols-2 gap-4 relative z-10">
-              <button onClick={() => setActiveTab('stamp-studio')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
-                <PenTool className="mx-auto mb-2 text-blue-400" size={24} />
-                <span className="text-[10px] font-black uppercase">Stamp</span>
-              </button>
-              <button onClick={() => setActiveTab('esign')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
-                <CheckCircle2 className="mx-auto mb-2 text-emerald-400" size={24} />
-                <span className="text-[10px] font-black uppercase">Sign</span>
-              </button>
-              <button onClick={() => setActiveTab('qr-tracker')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
-                <QrCode className="mx-auto mb-2 text-orange-400" size={24} />
-                <span className="text-[10px] font-black uppercase">Track</span>
-              </button>
-              <button onClick={() => setActiveTab('finance-center')} className="p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 hover:bg-white/20 transition-all text-center">
-                <Receipt className="mx-auto mb-2 text-rose-400" size={24} />
-                <span className="text-[10px] font-black uppercase">Finance</span>
-              </button>
-            </div>
-            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl" />
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-[56px] border border-slate-100 dark:border-slate-800 shadow-sm">
-            <h3 className="text-xl font-black mb-6">Upcoming</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800">
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">In 30 mins</p>
-                <p className="text-sm font-bold">Board Meeting</p>
-              </div>
-              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tomorrow</p>
-                <p className="text-sm font-bold">VAT Filing Deadline</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const PaymentModal: React.FC<{ 
-  isLoggedIn: boolean,
-  setShowLoginModal: (show: boolean) => void,
-  onClose: () => void, 
-  onSuccess: () => void 
-}> = ({ isLoggedIn, setShowLoginModal, onClose, onSuccess }) => {
-  const [method, setMethod] = useState<'mpesa' | 'card' | 'skrill'>('mpesa');
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handlePay = () => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return;
-    }
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      onSuccess();
-    }, 2000);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl z-[500] flex items-center justify-center p-6">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[48px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
-      >
-        <div className="p-12 space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-4xl font-black tracking-tighter">Premium Access</h3>
-              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2">Unlock all features of Sahihi</p>
-            </div>
-            <button onClick={onClose} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"><X size={24} /></button>
-          </div>
-
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-3xl border border-blue-100 dark:border-blue-800 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Total Amount</p>
-              <p className="text-3xl font-black text-blue-900 dark:text-blue-100">KES 2,500</p>
-            </div>
-            <div className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Lifetime Access</div>
-          </div>
-
-          <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Select Payment Method</label>
-            <div className="grid grid-cols-3 gap-4">
-              <button 
-                onClick={() => setMethod('mpesa')}
-                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'mpesa' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
-              >
-                <Smartphone className={method === 'mpesa' ? 'text-green-600' : 'text-slate-400'} size={24} />
-                <span className="text-[10px] font-black uppercase">M-Pesa</span>
-              </button>
-              <button 
-                onClick={() => setMethod('card')}
-                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'card' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
-              >
-                <CreditCard className={method === 'card' ? 'text-blue-600' : 'text-slate-400'} size={24} />
-                <span className="text-[10px] font-black uppercase">Card</span>
-              </button>
-              <button 
-                onClick={() => setMethod('skrill')}
-                className={`p-6 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${method === 'skrill' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'}`}
-              >
-                <Globe className={method === 'skrill' ? 'text-purple-600' : 'text-slate-400'} size={24} />
-                <span className="text-[10px] font-black uppercase">Skrill</span>
-              </button>
-            </div>
-          </div>
-
-          {method === 'mpesa' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">M-Pesa Phone Number</label>
-              <input 
-                type="text" 
-                placeholder="07XX XXX XXX" 
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-green-500/10 font-bold"
-              />
-            </div>
-          )}
-
-          <button 
-            onClick={handlePay}
-            disabled={isProcessing}
-            className="w-full bg-slate-900 dark:bg-blue-600 text-white py-6 rounded-3xl font-black text-xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50"
-          >
-            {isProcessing ? <Loader2 className="animate-spin" size={24} /> : <ShieldCheck size={24} />}
-            {isProcessing ? 'Processing...' : `Pay with ${method.toUpperCase()}`}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
+    </AnimatePresence>
+  </div>
+);
 };
 
 export default App;

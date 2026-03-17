@@ -46,19 +46,9 @@ interface EditElement {
   isItalic?: boolean;
 }
 
-interface PDFToolsProps {
-  usageCount: number;
-  hasPaid: boolean;
-  setUsageCount: React.Dispatch<React.SetStateAction<number>>;
-  setShowPaymentModal: (show: boolean) => void;
-}
+interface PDFToolsProps {}
 
-export default function PDFTools({
-  usageCount,
-  hasPaid,
-  setUsageCount,
-  setShowPaymentModal
-}: PDFToolsProps) {
+export default function PDFTools({}: PDFToolsProps) {
   const [activeTool, setActiveTool] = useState<ToolType>('none');
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -135,10 +125,6 @@ export default function PDFTools({
   };
 
   const processMerge = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length < 2) return;
     setIsProcessing(true);
     setStatus('Merging Documents...');
@@ -152,7 +138,6 @@ export default function PDFTools({
       }
       const pdfBytes = await mergedPdf.save();
       downloadBlob(pdfBytes, 'merged_document.pdf');
-      setUsageCount(prev => prev + 1);
       setStatus('Merge Complete!');
     } catch (err) {
       console.error(err);
@@ -163,10 +148,6 @@ export default function PDFTools({
   };
 
   const processWatermark = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Applying Watermark...');
@@ -192,7 +173,6 @@ export default function PDFTools({
 
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `watermarked_${f.name}`);
-      setUsageCount(prev => prev + 1);
       setStatus('Watermark Applied!');
     } catch (err) {
       console.error(err);
@@ -203,10 +183,6 @@ export default function PDFTools({
   };
 
   const processUnlock = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Unlocking PDF...');
@@ -216,7 +192,6 @@ export default function PDFTools({
       const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `unlocked_${f.name}`);
-      setUsageCount(prev => prev + 1);
       setStatus('PDF Unlocked!');
     } catch (err) {
       console.error(err);
@@ -227,10 +202,6 @@ export default function PDFTools({
   };
 
   const processCompress = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Compressing PDF...');
@@ -245,7 +216,6 @@ export default function PDFTools({
         updateFieldAppearances: false
       });
       downloadBlob(pdfBytes, `compressed_${f.name}`);
-      setUsageCount(prev => prev + 1);
       setStatus('Compression Complete!');
     } catch (err) {
       console.error(err);
@@ -256,10 +226,6 @@ export default function PDFTools({
   };
 
   const processWordToPdf = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Converting Word to PDF...');
@@ -273,7 +239,6 @@ export default function PDFTools({
       await pdf.html(html, {
         callback: (doc) => {
           doc.save(`converted_${f.name.replace('.docx', '.pdf')}`);
-          setUsageCount(prev => prev + 1);
         },
         x: 15,
         y: 15,
@@ -290,10 +255,6 @@ export default function PDFTools({
   };
 
   const processPdfToWord = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Extracting Text for Word...');
@@ -316,7 +277,6 @@ export default function PDFTools({
       link.href = url;
       link.download = `${f.name.replace('.pdf', '.doc')}`;
       link.click();
-      setUsageCount(prev => prev + 1);
       setStatus('Text Extracted!');
     } catch (err) {
       console.error(err);
@@ -327,10 +287,6 @@ export default function PDFTools({
   };
 
   const processEdit = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Saving Edits...');
@@ -366,6 +322,25 @@ export default function PDFTools({
             font: selectedFont,
             color: rgb(r, g, b),
           });
+        } else if (el.type === 'image') {
+          try {
+            const imageBytes = await fetch(el.content).then(res => res.arrayBuffer());
+            let pdfImage;
+            if (el.content.includes('image/png')) {
+              pdfImage = await pdfDoc.embedPng(imageBytes);
+            } else {
+              pdfImage = await pdfDoc.embedJpg(imageBytes);
+            }
+            
+            page.drawImage(pdfImage, {
+              x: (el.x / 100) * width,
+              y: height - (el.y / 100) * height - (el.height || 100),
+              width: el.width || 100,
+              height: el.height || 100,
+            });
+          } catch (err) {
+            console.error("Error embedding image:", err);
+          }
         } else if (el.type === 'whiteout') {
           page.drawRectangle({
             x: (el.x / 100) * width,
@@ -379,7 +354,6 @@ export default function PDFTools({
 
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `edited_${f.name}`);
-      setUsageCount(prev => prev + 1);
       setStatus('Edits Saved!');
     } catch (err) {
       console.error(err);
@@ -392,10 +366,6 @@ export default function PDFTools({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const processSplitSort = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Processing Pages...');
@@ -406,7 +376,6 @@ export default function PDFTools({
       
       const pdfBytes = await pdfDoc.save();
       downloadBlob(pdfBytes, `sorted_${f.name}`);
-      setUsageCount(prev => prev + 1);
       setStatus('Pages Sorted!');
     } catch (err) {
       console.error(err);
@@ -417,10 +386,6 @@ export default function PDFTools({
   };
 
   const deletePage = async (pageIndex: number) => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (files.length === 0) return;
     setIsProcessing(true);
     setStatus('Deleting Page...');
@@ -464,11 +429,69 @@ export default function PDFTools({
         setCurrentPage(Math.max(0, pages - 1));
       }
 
-      setUsageCount(prev => prev + 1);
       setStatus('Page Deleted!');
     } catch (err) {
       console.error(err);
       setStatus('Error deleting page');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const movePage = async (fromIndex: number, toIndex: number) => {
+    if (files.length === 0 || toIndex < 0 || toIndex >= (files[0].pages || 0)) return;
+    setIsProcessing(true);
+    setStatus('Reordering Pages...');
+    try {
+      const f = files[0];
+      const bytes = await f.file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(bytes);
+      
+      // Create a new document to reorder pages
+      const newPdfDoc = await PDFDocument.create();
+      const indices = Array.from({ length: pdfDoc.getPageCount() }, (_, i) => i);
+      
+      // Move the index
+      const [movedIndex] = indices.splice(fromIndex, 1);
+      indices.splice(toIndex, 0, movedIndex);
+      
+      const copiedPages = await newPdfDoc.copyPages(pdfDoc, indices);
+      copiedPages.forEach(page => newPdfDoc.addPage(page));
+      
+      const pdfBytes = await newPdfDoc.save();
+      const newFile = new File([pdfBytes], f.name, { type: 'application/pdf' });
+      
+      // Refresh previews
+      const id = f.id;
+      const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      const pages = pdf.numPages;
+      const previews: string[] = [];
+      for (let i = 1; i <= pages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 0.5 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        await page.render({ canvasContext: context!, viewport }).promise;
+        previews.push(canvas.toDataURL());
+      }
+
+      setFiles(prev => prev.map(item => item.id === id ? {
+        ...item,
+        file: newFile,
+        pages,
+        previewUrls: previews
+      } : item));
+      
+      if (activeTool === 'edit') {
+        setPagePreviews(previews);
+      }
+      
+      setStatus('Pages Reordered!');
+    } catch (err) {
+      console.error(err);
+      setStatus('Error reordering pages');
     } finally {
       setIsProcessing(false);
     }
@@ -510,6 +533,26 @@ export default function PDFTools({
     };
     setEditElements([...editElements, newEl]);
     setSelectedElementId(newEl.id);
+  };
+
+  const addImageElement = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      const newEl: EditElement = {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'image',
+        page: currentPage,
+        x: 50,
+        y: 50,
+        content,
+        width: 150,
+        height: 150
+      };
+      setEditElements([...editElements, newEl]);
+      setSelectedElementId(newEl.id);
+    };
+    reader.readAsDataURL(file);
   };
 
   const addWhiteoutElement = (x = 50, y = 50) => {
@@ -673,6 +716,7 @@ export default function PDFTools({
                         {pagePreviews.map((url, idx) => (
                           <motion.div 
                             key={idx}
+                            layout
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             className="relative group"
@@ -683,12 +727,33 @@ export default function PDFTools({
                             <div className="absolute top-2 left-2 bg-slate-900/80 text-white text-[10px] font-black px-2 py-1 rounded-md backdrop-blur-sm">
                               PAGE {idx + 1}
                             </div>
-                            <button 
-                              onClick={() => deletePage(idx)}
-                              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => deletePage(idx)}
+                                className="p-2 bg-red-500 text-white rounded-xl shadow-lg hover:bg-red-600"
+                                title="Delete Page"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                              <div className="flex flex-col gap-1">
+                                <button 
+                                  onClick={() => movePage(idx, idx - 1)}
+                                  disabled={idx === 0}
+                                  className="p-2 bg-white text-slate-600 rounded-xl shadow-lg hover:bg-slate-50 disabled:opacity-50"
+                                  title="Move Up"
+                                >
+                                  <Maximize2 size={14} className="rotate-180" />
+                                </button>
+                                <button 
+                                  onClick={() => movePage(idx, idx + 1)}
+                                  disabled={idx === pagePreviews.length - 1}
+                                  className="p-2 bg-white text-slate-600 rounded-xl shadow-lg hover:bg-slate-50 disabled:opacity-50"
+                                  title="Move Down"
+                                >
+                                  <Maximize2 size={14} />
+                                </button>
+                              </div>
+                            </div>
                           </motion.div>
                         ))}
                       </div>
@@ -711,6 +776,18 @@ export default function PDFTools({
                            >
                              <Scissors size={18} /> Whiteout / Erase
                            </button>
+                           <label className="w-full py-4 bg-white border border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all cursor-pointer">
+                             <ImageIcon size={18} /> Add Image
+                             <input 
+                               type="file" 
+                               accept="image/*" 
+                               className="hidden" 
+                               onChange={(e) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) addImageElement(file);
+                               }}
+                             />
+                           </label>
                         </div>
 
                         <div className="bg-slate-50 p-8 rounded-[40px] border border-slate-100">
@@ -747,16 +824,33 @@ export default function PDFTools({
                              >
                                <div className="flex items-center gap-2">
                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Size</span>
-                                 <select 
-                                   value={editElements.find(el => el.id === selectedElementId)?.fontSize || 14}
-                                   onChange={(e) => {
-                                     const size = parseInt(e.target.value);
-                                     setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, fontSize: size } : el));
-                                   }}
-                                   className="bg-slate-50 border-none rounded-lg px-2 py-1 text-xs font-bold outline-none"
-                                 >
-                                   {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map(s => <option key={s} value={s}>{s}px</option>)}
-                                 </select>
+                                 <div className="flex items-center bg-slate-50 rounded-xl p-1">
+                                   <button 
+                                     onClick={() => {
+                                       setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, fontSize: Math.max(8, (el.fontSize || 14) - 2) } : el));
+                                     }}
+                                     className="p-1 hover:bg-white rounded-lg transition-colors"
+                                   >
+                                     <Minimize2 size={14} />
+                                   </button>
+                                   <input 
+                                     type="number"
+                                     value={editElements.find(el => el.id === selectedElementId)?.fontSize || 14}
+                                     onChange={(e) => {
+                                       const size = parseInt(e.target.value);
+                                       setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, fontSize: size } : el));
+                                     }}
+                                     className="w-10 bg-transparent border-none text-center text-xs font-bold outline-none"
+                                   />
+                                   <button 
+                                     onClick={() => {
+                                       setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, fontSize: Math.min(100, (el.fontSize || 14) + 2) } : el));
+                                     }}
+                                     className="p-1 hover:bg-white rounded-lg transition-colors"
+                                   >
+                                     <Plus size={14} />
+                                   </button>
+                                 </div>
                                </div>
                                {editElements.find(el => el.id === selectedElementId)?.type === 'text' && (
                                  <>
@@ -775,26 +869,57 @@ export default function PDFTools({
                                    </button>
                                  </>
                                )}
+                               {editElements.find(el => el.id === selectedElementId)?.type === 'image' && (
+                                 <>
+                                   <div className="w-px h-6 bg-slate-100"></div>
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">W</span>
+                                     <div className="flex items-center bg-slate-50 rounded-xl p-1">
+                                       <input 
+                                         type="number" 
+                                         value={editElements.find(el => el.id === selectedElementId)?.width || 150}
+                                         onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, width: parseInt(e.target.value) } : el))}
+                                         className="w-12 bg-transparent border-none text-center text-xs font-bold outline-none"
+                                       />
+                                     </div>
+                                   </div>
+                                   <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">H</span>
+                                     <div className="flex items-center bg-slate-50 rounded-xl p-1">
+                                       <input 
+                                         type="number" 
+                                         value={editElements.find(el => el.id === selectedElementId)?.height || 150}
+                                         onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, height: parseInt(e.target.value) } : el))}
+                                         className="w-12 bg-transparent border-none text-center text-xs font-bold outline-none"
+                                       />
+                                     </div>
+                                   </div>
+                                 </>
+                               )}
                                {editElements.find(el => el.id === selectedElementId)?.type === 'whiteout' && (
                                  <>
                                    <div className="w-px h-6 bg-slate-100"></div>
                                    <div className="flex items-center gap-2">
                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">W</span>
-                                     <input 
-                                       type="number" 
-                                       value={editElements.find(el => el.id === selectedElementId)?.width || 100}
-                                       onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, width: parseInt(e.target.value) } : el))}
-                                       className="w-12 bg-slate-50 border-none rounded-lg px-2 py-1 text-xs font-bold outline-none"
-                                     />
+                                     <div className="flex items-center bg-slate-50 rounded-xl p-1">
+                                       <input 
+                                         type="number" 
+                                         value={editElements.find(el => el.id === selectedElementId)?.width || 100}
+                                         onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, width: parseInt(e.target.value) } : el))}
+                                         className="w-12 bg-transparent border-none text-center text-xs font-bold outline-none"
+                                       />
+                                     </div>
                                    </div>
                                    <div className="flex items-center gap-2">
                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">H</span>
-                                     <input 
-                                       type="number" 
-                                       value={editElements.find(el => el.id === selectedElementId)?.height || 20}
-                                       onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, height: parseInt(e.target.value) } : el))}
-                                       className="w-12 bg-slate-50 border-none rounded-lg px-2 py-1 text-xs font-bold outline-none"
-                                     />
+                                     <div className="flex items-center bg-slate-50 rounded-xl p-1">
+                                       <input 
+                                         type="number" 
+                                         value={editElements.find(el => el.id === selectedElementId)?.height || 20}
+                                         onChange={(e) => setEditElements(prev => prev.map(el => el.id === selectedElementId ? { ...el, height: parseInt(e.target.value) } : el))}
+                                         className="w-12 bg-transparent border-none text-center text-xs font-bold outline-none"
+                                       />
+                                     </div>
                                    </div>
                                  </>
                                )}
@@ -848,16 +973,18 @@ export default function PDFTools({
                                    onDragEnd={(_, info) => {
                                       if (containerRef.current) {
                                         const rect = containerRef.current.getBoundingClientRect();
-                                        const newX = ((el.x / 100) * rect.width + info.offset.x) / rect.width * 100;
-                                        const newY = ((el.y / 100) * rect.height + info.offset.y) / rect.height * 100;
+                                        const newX = ((info.point.x - rect.left) / rect.width) * 100;
+                                        const newY = ((info.point.y - rect.top) / rect.height) * 100;
                                         
                                         setEditElements(prev => prev.map(item => 
                                           item.id === el.id ? { ...item, x: Math.max(0, Math.min(100, newX)), y: Math.max(0, Math.min(100, newY)) } : item
                                         ));
                                       }
                                    }}
-                                   className={`absolute p-2 cursor-move group ${selectedElementId === el.id ? 'ring-2 ring-blue-500 rounded-lg' : ''}`}
-                                   style={{ left: `${el.x}%`, top: `${el.y}%` }}
+                                    dragConstraints={containerRef}
+                                    dragElastic={0}
+                                    className={`absolute p-2 cursor-move group z-10 ${selectedElementId === el.id ? 'ring-2 ring-blue-500 rounded-lg bg-blue-50/10' : ''}`}
+                                    style={{ left: `${el.x}%`, top: `${el.y}%`, transform: 'translate(-50%, -50%)' }}
                                    onClick={(e) => { e.stopPropagation(); setSelectedElementId(el.id); }}
                                  >
                                     <div className="bg-transparent border-none outline-none min-w-[50px]">

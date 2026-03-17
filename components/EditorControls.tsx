@@ -91,9 +91,11 @@ interface EditorControlsProps {
   config: StampConfig;
   onChange: (updates: Partial<StampConfig>) => void;
   onBulkRun?: () => void;
+  onSaveTemplate?: () => void;
+  isLoggedIn?: boolean;
 }
 
-const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBulkRun }) => {
+const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBulkRun, onSaveTemplate, isLoggedIn }) => {
   const [showSignPad, setShowSignPad] = React.useState(false);
 
   const addCustomElement = (type: 'image' | 'text') => {
@@ -306,11 +308,73 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
       <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <PenTool size={14} /> Status Text (Overlay)
+        </h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            {['APPROVED', 'RECEIVED', 'PAID', 'URGENT', 'COPY', 'VOID'].map(status => (
+              <button
+                key={status}
+                onClick={() => onChange({ statusText: status })}
+                className={`px-2 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border ${
+                  config.statusText === status 
+                    ? 'bg-blue-600 text-white border-blue-600' 
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-500'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-2">
+            <input 
+              type="text"
+              value={config.statusText}
+              onChange={(e) => onChange({ statusText: e.target.value.toUpperCase() })}
+              placeholder="CUSTOM STATUS"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-black italic"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Font</label>
+                <select 
+                  value={config.statusFontFamily || config.fontFamily}
+                  onChange={(e) => onChange({ statusFontFamily: e.target.value })}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-[10px] outline-none"
+                >
+                  {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Size</label>
+                <input 
+                  type="number"
+                  value={config.statusFontSize || 40}
+                  onChange={(e) => onChange({ statusFontSize: parseInt(e.target.value) })}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-[10px] outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
            <Type size={14} /> Text Content & Styling
         </h3>
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Main Header</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Main Header</label>
+              <select 
+                value={config.primaryFontFamily || config.fontFamily}
+                onChange={(e) => onChange({ primaryFontFamily: e.target.value })}
+                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+              >
+                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+              </select>
+            </div>
             <input 
               type="text"
               value={config.primaryText}
@@ -320,7 +384,16 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Sub Header (Bottom)</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Sub Header (Bottom)</label>
+              <select 
+                value={config.secondaryFontFamily || config.fontFamily}
+                onChange={(e) => onChange({ secondaryFontFamily: e.target.value })}
+                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+              >
+                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+              </select>
+            </div>
             <input 
               type="text"
               value={config.secondaryText}
@@ -333,7 +406,16 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inner Text Customization</h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
+                  <select 
+                    value={config.innerTopFontFamily || config.fontFamily}
+                    onChange={(e) => onChange({ innerTopFontFamily: e.target.value })}
+                    className="text-[8px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+                  >
+                    {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                  </select>
+                </div>
                 <input 
                   type="text"
                   value={config.innerTopText}
@@ -342,7 +424,16 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
+                  <select 
+                    value={config.innerBottomFontFamily || config.fontFamily}
+                    onChange={(e) => onChange({ innerBottomFontFamily: e.target.value })}
+                    className="text-[8px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+                  >
+                    {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                  </select>
+                </div>
                 <input 
                   type="text"
                   value={config.innerBottomText}
@@ -393,6 +484,13 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text (Primary)</label>
               <div className="flex items-center gap-2">
+                <select 
+                  value={config.centerFontFamily || config.fontFamily}
+                  onChange={(e) => onChange({ centerFontFamily: e.target.value })}
+                  className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+                >
+                  {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
                 <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl cursor-pointer relative group border border-blue-100 dark:border-blue-800 hover:bg-blue-100 transition-all">
                   <Calendar size={14} className="text-blue-600" />
                   <span className="text-[10px] font-black uppercase text-blue-600">Pick Date</span>
@@ -428,7 +526,16 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-500 uppercase">Center Sub-Text (Date Line)</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold text-slate-500 uppercase">Center Sub-Text (Date Line)</label>
+              <select 
+                value={config.centerSubFontFamily || config.fontFamily}
+                onChange={(e) => onChange({ centerSubFontFamily: e.target.value })}
+                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+              >
+                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+              </select>
+            </div>
             <input 
               type="text"
               value={config.centerSubText}
@@ -654,12 +761,21 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               
               <div className="space-y-2">
                 {el.type === 'text' ? (
-                  <input 
-                    type="text"
-                    value={el.content}
-                    onChange={(e) => updateCustomElement(el.id, { content: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="text"
+                      value={el.content}
+                      onChange={(e) => updateCustomElement(el.id, { content: e.target.value.toUpperCase() })}
+                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none"
+                    />
+                    <select 
+                      value={el.fontFamily || config.fontFamily}
+                      onChange={(e) => updateCustomElement(el.id, { fontFamily: e.target.value })}
+                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-1 py-1 text-[10px] outline-none"
+                    >
+                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                    </select>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <img src={el.content} className="w-8 h-8 rounded-md object-cover border border-slate-200" alt="Preview" />
@@ -803,6 +919,20 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             onCancel={() => setShowSignPad(false)}
           />
         </div>
+      )}
+
+      {onSaveTemplate && (
+        <button 
+          onClick={onSaveTemplate}
+          disabled={!isLoggedIn}
+          className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-xs ${
+            isLoggedIn 
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-100 dark:shadow-none' 
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          <Save size={14} /> {isLoggedIn ? 'Save as Template' : 'Login to Save Template'}
+        </button>
       )}
     </div>
   );

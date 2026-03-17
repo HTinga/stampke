@@ -240,7 +240,31 @@ export const DEFAULT_CONFIG: StampConfig = {
   embeddedSignatureUrl: null,
   showEmbeddedSignature: false,
   customElements: [],
-  previewBg: 'default'
+  previewBg: 'default',
+  primaryFontFamily: 'Crimson Pro',
+  secondaryFontFamily: 'Crimson Pro',
+  innerTopFontFamily: 'Crimson Pro',
+  innerBottomFontFamily: 'Crimson Pro',
+  centerFontFamily: 'Crimson Pro',
+  centerSubFontFamily: 'Crimson Pro',
+  primaryXOffset: 0,
+  primaryYOffset: 0,
+  secondaryXOffset: 0,
+  secondaryYOffset: 0,
+  innerTopXOffset: 0,
+  innerTopYOffset: 0,
+  innerBottomXOffset: 0,
+  innerBottomYOffset: 0,
+  centerXOffset: 0,
+  centerYOffset: 0,
+  centerSubXOffset: 0,
+  centerSubYOffset: 0,
+  statusText: '',
+  statusFontSize: 40,
+  statusFontFamily: 'Inter',
+  statusX: 0,
+  statusY: 0,
+  statusRotation: -15
 };
 
 export const COLORS = [

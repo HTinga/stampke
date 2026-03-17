@@ -13,10 +13,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 interface StampApplierProps {
   config: StampConfig;
   svgRef: React.RefObject<SVGSVGElement | null>;
-  usageCount: number;
-  hasPaid: boolean;
-  setUsageCount: React.Dispatch<React.SetStateAction<number>>;
-  setShowPaymentModal: (show: boolean) => void;
 }
 
 interface PlacedStamp {
@@ -29,11 +25,7 @@ interface PlacedStamp {
 
 const StampApplier: React.FC<StampApplierProps> = ({ 
   config, 
-  svgRef,
-  usageCount,
-  hasPaid,
-  setUsageCount,
-  setShowPaymentModal
+  svgRef
 }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
@@ -169,10 +161,6 @@ const StampApplier: React.FC<StampApplierProps> = ({
   };
 
   const applyAndDownload = async () => {
-    if (usageCount >= 1 && !hasPaid) {
-      setShowPaymentModal(true);
-      return;
-    }
     if (!pdfFile || placedStamps.length === 0) return;
     setIsProcessing(true);
 
@@ -214,7 +202,6 @@ const StampApplier: React.FC<StampApplierProps> = ({
       link.download = `stamped_${pdfFile.name}`;
       link.click();
       URL.revokeObjectURL(url);
-      setUsageCount(prev => prev + 1);
     } catch (error) {
       console.error('Error applying stamps:', error);
       alert('Failed to apply stamps. Please try again.');

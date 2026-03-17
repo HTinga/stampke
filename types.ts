@@ -15,7 +15,7 @@ export enum BorderStyle {
 export interface StampTemplate {
   id: string;
   name: string;
-  category: 'Business' | 'Official' | 'Legal' | 'Financial';
+  category: 'Business' | 'Official' | 'Legal' | 'Financial' | 'Custom';
   shape: StampShape;
   primaryText: string;
   secondaryText?: string;
@@ -75,6 +75,30 @@ export interface StampConfig {
   logoUrl: string | null;
   embeddedSignatureUrl: string | null;
   showEmbeddedSignature: boolean;
+  statusText: string;
+  statusFontSize: number;
+  statusFontFamily: string;
+  statusX: number;
+  statusY: number;
+  statusRotation: number;
+  primaryFontFamily: string;
+  secondaryFontFamily: string;
+  innerTopFontFamily: string;
+  innerBottomFontFamily: string;
+  centerFontFamily: string;
+  centerSubFontFamily: string;
+  primaryXOffset: number;
+  primaryYOffset: number;
+  secondaryXOffset: number;
+  secondaryYOffset: number;
+  innerTopXOffset: number;
+  innerTopYOffset: number;
+  innerBottomXOffset: number;
+  innerBottomYOffset: number;
+  centerXOffset: number;
+  centerYOffset: number;
+  centerSubXOffset: number;
+  centerSubYOffset: number;
   customElements: CustomElement[];
   previewBg: 'default' | 'transparent' | 'white' | 'paper';
 }
@@ -91,6 +115,7 @@ export interface CustomElement {
   scale?: number;
   isBlackAndWhite?: boolean;
   contrast?: number;
+  fontFamily?: string;
 }
 
 export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'custom';
