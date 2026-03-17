@@ -1,0 +1,23 @@
+
+.tiptap-editor-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.tiptap-content-area {
+  background: white;
+}
+
+.tiptap-content-area .ProseMirror {
+  outline: none;
+  min-height: 150px;
+}
+
+.tiptap-content-area .ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.tiptap-content-area .ProseMirror:focus {
+  outline: none;
+}
