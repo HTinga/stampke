@@ -45,9 +45,10 @@ import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
 import TiptapEditor from './TiptapEditor';
 import { MainToolbar } from './MainToolbar';
-import { PageToolbar } from './PageToolbar';
 import { OutlinePanel } from './PDFViewer/OutlinePanel';
 import { ThumbnailPanel } from './PDFViewer/ThumbnailPanel';
+import StampStudio from './StampStudio';
+import { SignaturePad } from './DigitalSignCenter';
 import { 
   useUIStore, 
   useSearchStore, 
@@ -56,6 +57,7 @@ import {
   useFormStore, 
   useEditingStore, 
   useHistoryStore,
+  useStampStore,
   Annotation,
   EditingMode,
   ZoomMode,
@@ -148,6 +150,9 @@ export default function PDFTools() {
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<'pages' | 'edit' | 'actions'>('pages');
   const [isDetectingText, setIsDetectingText] = useState(false);
+  const [showStampStudio, setShowStampStudio] = useState(false);
+  const [showSignCenter, setShowSignCenter] = useState(false);
+  const { config: stampConfig } = useStampStore();
   const [editingTextBlock, setEditingTextBlock] = useState<TextBlock | null>(null);
   const [tiptapContent, setTiptapContent] = useState('');
   const [activePanel, setActivePanel] = useState<'outline' | 'thumbnails'>('thumbnails');
@@ -307,11 +312,13 @@ export default function PDFTools() {
         height: 200,
         content
       };
-      setEditElements(prev => [...prev, newElement]);
+      const newElements = [...editElements, newElement];
+      setEditElements(newElements);
+      pushState(pdfData!, fileName, 'Insert Image', newElements);
       setSelectedElementId(newElement.id);
     };
     reader.readAsDataURL(file);
-  }, [currentPage]);
+  }, [currentPage, editElements, pdfData, fileName, pushState]);
 
   const handleApplyRedactions = useCallback(async () => {
     if (!pdfData) return;
@@ -536,6 +543,36 @@ export default function PDFTools() {
     return () => clearTimeout(timeoutId);
   }, [query, pdfDoc, numPages, setResults]);
 
+  const handleUndo = useCallback(() => {
+    if (!canUndoHistory() || undoRedoInProgress) return;
+    setUndoRedoInProgress(true);
+    try {
+      const state = undoHistory();
+      if (state) {
+        setPdfData(state.data);
+        if (state.editElements) setEditElements(state.editElements);
+        loadPDFDocument(state.data).then(setPdfDoc);
+      }
+    } finally {
+      setUndoRedoInProgress(false);
+    }
+  }, [undoHistory, canUndoHistory, undoRedoInProgress, setUndoRedoInProgress]);
+
+  const handleRedo = useCallback(() => {
+    if (!canRedoHistory() || undoRedoInProgress) return;
+    setUndoRedoInProgress(true);
+    try {
+      const state = redoHistory();
+      if (state) {
+        setPdfData(state.data);
+        if (state.editElements) setEditElements(state.editElements);
+        loadPDFDocument(state.data).then(setPdfDoc);
+      }
+    } finally {
+      setUndoRedoInProgress(false);
+    }
+  }, [redoHistory, canRedoHistory, undoRedoInProgress, setUndoRedoInProgress]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -556,8 +593,8 @@ export default function PDFTools() {
             break;
           case 'z':
             event.preventDefault();
-            if (event.shiftKey) redoHistory();
-            else undoHistory();
+            if (event.shiftKey) handleRedo();
+            else handleUndo();
             break;
           case 'f':
             event.preventDefault();
@@ -583,13 +620,22 @@ export default function PDFTools() {
           case 'i':
             imageInputRef.current?.click();
             break;
+          case 'Delete':
+          case 'Backspace':
+            if (selectedElementId) {
+              const newElements = editElements.filter(item => item.id !== selectedElementId);
+              setEditElements(newElements);
+              pushState(pdfData!, fileName, 'Delete Element', newElements);
+              setSelectedElementId(null);
+            }
+            break;
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [numPages, setCurrentPage, toggleSearch, undoHistory, redoHistory, setCurrentTool, handleExport]);
+  }, [numPages, setCurrentPage, toggleSearch, handleUndo, handleRedo, setCurrentTool, handleExport, selectedElementId, editElements, pdfData, fileName, pushState]);
 
   const handleMerge = useCallback(async () => {
     const input = document.createElement('input');
@@ -650,22 +696,6 @@ export default function PDFTools() {
     input.click();
   }, [pdfData, fileName, pushState]);
 
-  const handleUndo = useCallback(() => {
-    const state = undoHistory();
-    if (state) {
-      setPdfData(state.data);
-      loadPDFDocument(state.data).then(setPdfDoc);
-    }
-  }, [undoHistory]);
-
-  const handleRedo = useCallback(() => {
-    const state = redoHistory();
-    if (state) {
-      setPdfData(state.data);
-      loadPDFDocument(state.data).then(setPdfDoc);
-    }
-  }, [redoHistory]);
-
   const handleInsertImageFromToolbar = useCallback((images: any[]) => {
     if (images.length === 0) return;
     const img = images[0];
@@ -679,9 +709,11 @@ export default function PDFTools() {
       height: 200,
       content: img.imageData
     };
-    setEditElements(prev => [...prev, newElement]);
+    const newElements = [...editElements, newElement];
+    setEditElements(newElements);
+    pushState(pdfData!, fileName, 'Insert Image', newElements);
     setSelectedElementId(newElement.id);
-  }, [currentPage]);
+  }, [currentPage, editElements, pdfData, fileName, pushState]);
 
   const handleResetForm = useCallback(() => {
     resetForm();
@@ -722,7 +754,7 @@ export default function PDFTools() {
 
   const handleTextFormatChange = useCallback((newStyle: Partial<TextStyle>) => {
     if (selectedElementId) {
-      setEditElements(prev => prev.map(el => {
+      const newElements = editElements.map(el => {
         if (el.id === selectedElementId) {
           const updatedEl = { ...el, ...newStyle };
           // If backgroundColor is provided, also update boxStyle for consistency
@@ -735,51 +767,15 @@ export default function PDFTools() {
           return updatedEl;
         }
         return el;
-      }));
+      });
+      setEditElements(newElements);
+      pushState(pdfData!, fileName, 'Format Text', newElements);
     }
-  }, [selectedElementId]);
+  }, [selectedElementId, editElements, pdfData, fileName, pushState]);
 
   const selectedElement = editElements.find(el => el.id === selectedElementId);
 
   // UI Components
-  if (!pdfData) {
-    return (
-      <div 
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 transition-colors duration-200 [&.drag-over]:bg-blue-50"
-      >
-        <div className="max-w-md w-full text-center space-y-8">
-          <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 rotate-3">
-            <FileText size={48} className="text-white" />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
-            <p className="text-slate-500 font-medium text-lg leading-relaxed">
-              Professional PDF editing, annotation, and manipulation. All in your browser.
-            </p>
-          </div>
-          <div className="pt-4">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileSelect} 
-              accept=".pdf" 
-              className="hidden" 
-            />
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full bg-blue-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
-            >
-              <Plus size={24} /> Select PDF File
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div 
       onDrop={handleDrop}
@@ -832,34 +828,89 @@ export default function PDFTools() {
         onResetForm={handleResetForm}
         onApplyRedactions={handleApplyRedactions}
         onInsertImage={handleInsertImageFromToolbar}
+        onInsertStamp={() => setShowStampStudio(true)}
+        onSignDocument={() => setShowSignCenter(true)}
       />
 
-      {!!pdfDoc && (
-        <PageToolbar
-          currentPage={currentPage}
-          totalPages={numPages}
-          selectedPages={selectedPages}
-          onRotatePages={handleRotatePages}
-          onDeletePages={handleDeletePages}
-          onInsertBlankPage={handleInsertBlankPage}
-          onInsertFromFile={handleInsertFromFile}
-          onMerge={handleMerge}
-          onSplit={handleSplit}
-          onExport={handleExport}
-          hasDocument={!!pdfDoc}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={canUndoHistory()}
-          canRedo={canRedoHistory()}
-          undoActionName={getUndoActionName()}
-          redoActionName={getRedoActionName()}
-          onResetToOriginal={handleResetToOriginal}
-          onCloseDocument={handleCloseDocument}
-          canResetToOriginal={!!getOriginalDocument()}
-        />
-      )}
-
       <div className="flex-1 flex overflow-hidden">
+        {!pdfData ? (
+          <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-8">
+            <div className="max-w-md w-full text-center space-y-8">
+              <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 rotate-3">
+                <FileText size={48} className="text-white" />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
+                <p className="text-slate-500 font-medium text-lg leading-relaxed">
+                  Professional PDF editing, annotation, and manipulation. All in your browser.
+                </p>
+              </div>
+              <div className="pt-4">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileSelect} 
+                  accept=".pdf" 
+                  className="hidden" 
+                />
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full bg-blue-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
+                >
+                  <Plus size={24} /> Select PDF File
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Sidebar */}
+        <AnimatePresence>
+          {sidebarOpen && !!pdfDoc && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 300, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="bg-white border-r border-slate-200 flex flex-col overflow-hidden z-20 shadow-xl"
+            >
+              <div className="flex items-center p-4 border-b border-slate-100 bg-slate-50/50 gap-2">
+                <button
+                  onClick={() => setActivePanel('thumbnails')}
+                  title="Thumbnails"
+                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
+                    activePanel === 'thumbnails' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Layers size={18} />
+                </button>
+                <button
+                  onClick={() => setActivePanel('outline')}
+                  title="Outline"
+                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
+                    activePanel === 'outline' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <FileText size={18} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                {activePanel === 'thumbnails' ? (
+                  <ThumbnailPanel 
+                    document={pdfDoc!} 
+                    currentPage={currentPage}
+                    onPageSelect={(page) => setCurrentPage(page)}
+                  />
+                ) : (
+                  <OutlinePanel 
+                    document={pdfDoc!}
+                    onPageSelect={(page) => setCurrentPage(page)}
+                  />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex-1 relative overflow-auto bg-slate-200 p-8 flex justify-center items-start">
           <AnimatePresence>
             {searchOpen && (
@@ -905,7 +956,9 @@ export default function PDFTools() {
                     fontSize: 12,
                     color: '#000000'
                   };
-                  setEditElements(prev => [...prev, newElement]);
+                  const newElements = [...editElements, newElement];
+                  setEditElements(newElements);
+                  pushState(pdfData!, fileName, 'Add Text', newElements);
                   setSelectedElementId(newElement.id);
                   setCurrentTool('select');
                 }
@@ -992,11 +1045,13 @@ export default function PDFTools() {
                 onDragEnd={(_, info) => {
                   const rect = containerRef.current?.getBoundingClientRect();
                   if (rect) {
-                    setEditElements(prev => prev.map(item => 
+                    const newElements = editElements.map(item => 
                       item.id === el.id 
                         ? { ...item, x: item.x + info.offset.x / zoom, y: item.y + info.offset.y / zoom }
                         : item
-                    ));
+                    );
+                    setEditElements(newElements);
+                    pushState(pdfData!, fileName, 'Move Element', newElements);
                   }
                 }}
                 onClick={(e) => {
@@ -1015,7 +1070,9 @@ export default function PDFTools() {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditElements(prev => prev.filter(item => item.id !== el.id));
+                        const newElements = editElements.filter(item => item.id !== el.id);
+                        setEditElements(newElements);
+                        pushState(pdfData!, fileName, 'Delete Element', newElements);
                         setSelectedElementId(null);
                       }}
                       className="p-1.5 hover:bg-red-50 text-red-500 rounded transition-colors"
@@ -1176,7 +1233,9 @@ export default function PDFTools() {
                             }
                           };
 
-                          setEditElements(prev => [...prev, whiteout, newText]);
+                          const newElements = [...editElements, whiteout, newText];
+                          setEditElements(newElements);
+                          pushState(pdfData!, fileName, 'Edit Text', newElements);
                           setEditingTextBlock(null);
                         }
                       }}
@@ -1190,6 +1249,8 @@ export default function PDFTools() {
             )}
           </AnimatePresence>
         </div>
+        </>
+        )}
       </div>
 
       <input 
@@ -1202,6 +1263,72 @@ export default function PDFTools() {
         accept="image/*" 
         className="hidden" 
       />
+
+      {/* Stamp Studio Modal */}
+      {showStampStudio && (
+        <StampStudio 
+          onClose={() => setShowStampStudio(false)} 
+          onApply={(svgData) => {
+            const newElement: EditElement = {
+              id: Math.random().toString(36).substr(2, 9),
+              type: 'image',
+              page: currentPage,
+              x: 50,
+              y: 50,
+              width: 200,
+              height: 200,
+              content: svgData
+            };
+            const newElements = [...editElements, newElement];
+            setEditElements(newElements);
+            pushState(pdfData!, fileName, 'Insert Stamp', newElements);
+            setSelectedElementId(newElement.id);
+            setShowStampStudio(false);
+          }}
+        />
+      )}
+
+      {/* Digital Sign Center Modal */}
+      {showSignCenter && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-800">
+            <div className="px-6 py-4 border-bottom border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">Digital Signature Center</h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Capture and apply your professional signature</p>
+              </div>
+              <button 
+                onClick={() => setShowSignCenter(false)}
+                className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-zinc-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <SignaturePad 
+                onSave={(signature) => {
+                  const newElement: EditElement = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    type: 'image',
+                    page: currentPage,
+                    x: 50,
+                    y: 50,
+                    width: 200,
+                    height: 100,
+                    content: signature
+                  };
+                  const newElements = [...editElements, newElement];
+                  setEditElements(newElements);
+                  pushState(pdfData!, fileName, 'Insert Signature', newElements);
+                  setSelectedElementId(newElement.id);
+                  setShowSignCenter(false);
+                }} 
+                onCancel={() => setShowSignCenter(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

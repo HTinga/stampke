@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { StampConfig } from '../types';
+import { DEFAULT_CONFIG } from '../constants';
 
 // UI Store
 export type ZoomMode = 'manual' | 'fit-page' | 'fit-width';
@@ -296,6 +298,7 @@ interface DocumentSnapshot {
   data: Uint8Array;
   fileName: string;
   actionName: string;
+  editElements?: any[];
 }
 
 interface HistoryState {
@@ -303,7 +306,7 @@ interface HistoryState {
   redoStack: DocumentSnapshot[];
   originalDocument: { data: Uint8Array, fileName: string } | null;
   undoRedoInProgress: boolean;
-  pushState: (data: Uint8Array, fileName: string, actionName: string) => void;
+  pushState: (data: Uint8Array, fileName: string, actionName: string, editElements?: any[]) => void;
   undo: () => DocumentSnapshot | null;
   redo: () => DocumentSnapshot | null;
   canUndo: () => boolean;
@@ -321,8 +324,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   redoStack: [],
   originalDocument: null,
   undoRedoInProgress: false,
-  pushState: (data, fileName, actionName) => set((state) => ({
-    undoStack: [...state.undoStack, { data, fileName, actionName }],
+  pushState: (data, fileName, actionName, editElements) => set((state) => ({
+    undoStack: [...state.undoStack, { data, fileName, actionName, editElements }],
     redoStack: []
   })),
   undo: () => {
@@ -359,4 +362,20 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   setOriginalDocument: (data, fileName) => set({ originalDocument: { data, fileName } }),
   getOriginalDocument: () => get().originalDocument,
   setUndoRedoInProgress: (undoRedoInProgress) => set({ undoRedoInProgress }),
+}));
+
+// Stamp Store
+interface StampState {
+  config: StampConfig;
+  setConfig: (updates: Partial<StampConfig> | ((prev: StampConfig) => Partial<StampConfig>)) => void;
+}
+
+export const useStampStore = create<StampState>((set) => ({
+  config: DEFAULT_CONFIG,
+  setConfig: (updates) => set((state) => ({ 
+    config: { 
+      ...state.config, 
+      ...(typeof updates === 'function' ? updates(state.config) : updates) 
+    } 
+  })),
 }));

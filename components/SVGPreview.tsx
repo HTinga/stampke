@@ -23,6 +23,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     statusX,
     statusY,
     statusRotation,
+    statusBold,
     primaryFontFamily,
     secondaryFontFamily,
     innerTopFontFamily,
@@ -68,10 +69,36 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     logoUrl,
     embeddedSignatureUrl,
     showEmbeddedSignature,
+    signatureX,
+    signatureY,
+    signatureScale,
+    doubleBorder,
+    doubleBorderOffset,
+    doubleBorderThickness,
+    primaryFontSize,
+    secondaryFontSize,
+    innerTopFontSize,
+    innerBottomFontSize,
+    centerFontSize,
+    centerSubFontSize,
+    statusFontSize: configStatusFontSize,
+    primaryBold,
+    secondaryBold,
+    innerTopBold,
+    innerBottomBold,
+    centerBold,
+    centerSubBold,
     customElements,
     previewBg,
     stretchX,
-    stretchY
+    stretchY,
+    primaryColor,
+    secondaryColor: configSecondaryColor,
+    innerTopColor,
+    innerBottomColor,
+    centerColor,
+    centerSubColor,
+    statusColor
   } = config;
 
   // Internal coordinate system to prevent clipping
@@ -93,16 +120,17 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
 
   const finalColors = getFinalColors();
 
-  const [dragging, setDragging] = React.useState<{ id: string, type: 'custom' | 'primary' | 'secondary' | 'innerTop' | 'innerBottom' | 'center' | 'centerSub' | 'status' } | null>(null);
+  const [dragging, setDragging] = React.useState<{ 
+    id: string, 
+    type: 'custom' | 'primary' | 'secondary' | 'innerTop' | 'innerBottom' | 'center' | 'centerSub' | 'status' | 'signature',
+    offsetX: number,
+    offsetY: number
+  } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent, type: any, id?: string) => {
     if (!onUpdateConfig) return;
+    e.preventDefault();
     e.stopPropagation();
-    setDragging({ id: id || '', type });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!dragging || !onUpdateConfig) return;
     
     const svg = (ref as any).current;
     if (!svg) return;
@@ -113,27 +141,95 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
     const x = (e.clientX - CTM.e) / CTM.a;
     const y = (e.clientY - CTM.f) / CTM.d;
 
-    if (dragging.type === 'custom') {
-      onUpdateConfig({
-        customElements: config.customElements.map(el => 
-          el.id === dragging.id ? { ...el, x, y } : el
-        )
-      });
+    let initialX = x;
+    let initialY = y;
+
+    if (type === 'custom') {
+      const el = config.customElements.find(e => e.id === id);
+      initialX = el?.x ?? x;
+      initialY = el?.y ?? y;
+    } else if (type === 'status') {
+      initialX = config.statusX ?? cx;
+      initialY = config.statusY ?? cy;
+    } else if (type === 'signature') {
+      initialX = config.signatureX + cx;
+      initialY = config.signatureY + cy;
     } else {
-      const fieldX = `${dragging.type}XOffset` as keyof StampConfig;
-      const fieldY = `${dragging.type}YOffset` as keyof StampConfig;
-      
-      // For status text, we use statusX and statusY directly
-      if (dragging.type === 'status') {
-        onUpdateConfig({ statusX: x, statusY: y });
-      } else {
-        // For others, we store as offset from their default position
-        // This is a bit tricky because default positions are calculated during render
-        // Let's just store absolute x,y for now if possible, or relative to center
-        onUpdateConfig({ [fieldX]: x - cx, [fieldY]: y - cy } as any);
-      }
+      const fieldX = `${type}XOffset` as keyof StampConfig;
+      const fieldY = `${type}YOffset` as keyof StampConfig;
+      initialX = ((config[fieldX] as number) ?? 0) + cx;
+      initialY = ((config[fieldY] as number) ?? 0) + cy;
     }
+
+    setDragging({ 
+      id: id || '', 
+      type,
+      offsetX: x - initialX,
+      offsetY: y - initialY
+    });
   };
+
+  React.useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!dragging || !onUpdateConfig) return;
+      
+      const svg = (ref as any).current;
+      if (!svg) return;
+      
+      const CTM = svg.getScreenCTM();
+      if (!CTM) return;
+      
+      const mouseX = (e.clientX - CTM.e) / CTM.a;
+      const mouseY = (e.clientY - CTM.f) / CTM.d;
+
+      const x = mouseX - dragging.offsetX;
+      const y = mouseY - dragging.offsetY;
+
+      if (dragging.type === 'custom') {
+        const el = config.customElements.find(e => e.id === dragging.id);
+        const newX = config.lockDragAxis === 'vertical' ? (el?.x ?? x) : x;
+        const newY = config.lockDragAxis === 'horizontal' ? (el?.y ?? y) : y;
+        onUpdateConfig({
+          customElements: config.customElements.map(el => 
+            el.id === dragging.id ? { ...el, x: newX, y: newY } : el
+          )
+        });
+      } else {
+        const fieldX = `${dragging.type}XOffset` as keyof StampConfig;
+        const fieldY = `${dragging.type}YOffset` as keyof StampConfig;
+        
+        if (dragging.type === 'status') {
+          const newX = config.lockDragAxis === 'vertical' ? (config.statusX ?? x) : x;
+          const newY = config.lockDragAxis === 'horizontal' ? (config.statusY ?? y) : y;
+          onUpdateConfig({ statusX: newX, statusY: newY });
+        } else if (dragging.type === 'signature') {
+          const newX = config.lockDragAxis === 'vertical' ? (config.signatureX + cx) : (x);
+          const newY = config.lockDragAxis === 'horizontal' ? (config.signatureY + cy) : (y);
+          onUpdateConfig({ signatureX: newX - cx, signatureY: newY - cy });
+        } else {
+          const currentX = ((config[fieldX] as number) ?? 0) + cx;
+          const currentY = ((config[fieldY] as number) ?? 0) + cy;
+          const newX = config.lockDragAxis === 'vertical' ? currentX : x;
+          const newY = config.lockDragAxis === 'horizontal' ? currentY : y;
+          onUpdateConfig({ [fieldX]: newX - cx, [fieldY]: newY - cy } as any);
+        }
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setDragging(null);
+    };
+
+    if (dragging) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [dragging, config, onUpdateConfig, cx, cy]);
 
   const handleMouseUp = () => {
     setDragging(null);
@@ -168,6 +264,13 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
       strokeDasharray: 'none'
     };
 
+    const doubleBorderProps = {
+      ...commonProps,
+      stroke: config.doubleBorderColor || finalColors.border,
+      strokeWidth: doubleBorderThickness || borderWidth * 0.5,
+      strokeDasharray: (config.doubleBorderStyle || BorderStyle.SINGLE) === BorderStyle.DASHED ? '10,10' : 'none'
+    };
+
     switch (shape) {
       case StampShape.ROUND:
         return (
@@ -176,8 +279,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             {showInnerLine && (
               <circle cx={cx} cy={cy} r={borderR - innerLineOffset} {...innerLineProps} />
             )}
-            {borderStyle === BorderStyle.DOUBLE && (
-              <circle cx={cx} cy={cy} r={borderR - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
+            {doubleBorder && (
+              <circle cx={cx} cy={cy} r={borderR + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10) : -(doubleBorderOffset || 10))} {...doubleBorderProps} />
             )}
           </>
         );
@@ -190,8 +293,8 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             {showInnerLine && (
               <ellipse cx={cx} cy={cy} rx={orx - innerLineOffset} ry={ory - innerLineOffset} {...innerLineProps} />
             )}
-            {borderStyle === BorderStyle.DOUBLE && (
-              <ellipse cx={cx} cy={cy} rx={orx - borderWidth - 6} ry={ory - borderWidth - 6} {...commonProps} strokeWidth={borderWidth * 0.7} />
+            {doubleBorder && (
+              <ellipse cx={cx} cy={cy} rx={orx + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10) : -(doubleBorderOffset || 10))} ry={ory + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10) : -(doubleBorderOffset || 10))} {...doubleBorderProps} />
             )}
           </>
         );
@@ -204,8 +307,15 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             {showInnerLine && (
               <rect x={cx - rw/2 + innerLineOffset} y={cy - rh/2 + innerLineOffset} width={rw - innerLineOffset*2} height={rh - innerLineOffset*2} rx={2} {...innerLineProps} />
             )}
-            {borderStyle === BorderStyle.DOUBLE && (
-               <rect x={cx - rw/2 + 6} y={cy - rh/2 + 6} width={rw - 12} height={rh - 12} rx={2} {...commonProps} strokeWidth={borderWidth * 0.5} />
+            {doubleBorder && (
+               <rect 
+                 x={cx - rw/2 + (config.doubleBorderIsOuter ? -(doubleBorderOffset || 10) : (doubleBorderOffset || 10))} 
+                 y={cy - rh/2 + (config.doubleBorderIsOuter ? -(doubleBorderOffset || 10) : (doubleBorderOffset || 10))} 
+                 width={rw + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10)*2 : -(doubleBorderOffset || 10)*2)} 
+                 height={rh + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10)*2 : -(doubleBorderOffset || 10)*2)} 
+                 rx={2} 
+                 {...doubleBorderProps} 
+               />
             )}
           </>
         );
@@ -217,14 +327,24 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             {showInnerLine && (
               <rect x={cx - sSize / 2 + innerLineOffset} y={cy - sSize / 2 + innerLineOffset} width={sSize - innerLineOffset*2} height={sSize - innerLineOffset*2} rx={2} {...innerLineProps} />
             )}
+            {doubleBorder && (
+               <rect 
+                 x={cx - sSize / 2 + (config.doubleBorderIsOuter ? -(doubleBorderOffset || 10) : (doubleBorderOffset || 10))} 
+                 y={cy - sSize / 2 + (config.doubleBorderIsOuter ? -(doubleBorderOffset || 10) : (doubleBorderOffset || 10))} 
+                 width={sSize + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10)*2 : -(doubleBorderOffset || 10)*2)} 
+                 height={sSize + (config.doubleBorderIsOuter ? (doubleBorderOffset || 10)*2 : -(doubleBorderOffset || 10)*2)} 
+                 rx={2} 
+                 {...doubleBorderProps} 
+               />
+            )}
             <text 
               x={cx + (primaryXOffset || 0)} 
               y={cy - sSize/2 + 40 + (primaryYOffset || 0)} 
-              fill={finalColors.border} 
+              fill={primaryColor || finalColors.border} 
               textAnchor="middle" 
               onMouseDown={(e) => handleMouseDown(e, 'primary')}
-              style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${fontSize * 0.8}px`, cursor: 'move' }} 
-              textLength={primaryText.length * fontSize * 0.5 * letterStretch} 
+              style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${primaryFontSize || fontSize * 0.8}px`, fontWeight: primaryBold ? 'bold' : 'normal', cursor: 'move' }} 
+              textLength={primaryText.length * (primaryFontSize || fontSize * 0.8) * 0.6 * letterStretch} 
               lengthAdjust="spacingAndGlyphs"
             >
               {primaryText}
@@ -233,10 +353,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               <text 
                 x={cx + (innerTopXOffset || 0)} 
                 y={cy - sSize/2 + 65 + (innerTopYOffset || 0)} 
-                fill={finalColors.border} 
+                fill={innerTopColor || finalColors.border} 
                 textAnchor="middle" 
                 onMouseDown={(e) => handleMouseDown(e, 'innerTop')}
-                style={{ ...textBaseStyle, fontFamily: innerTopFontFamily || fontFamily, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal', cursor: 'move' }}
+                style={{ ...textBaseStyle, fontFamily: innerTopFontFamily || fontFamily, fontSize: `${innerTopFontSize || fontSize * 0.55}px`, fontWeight: innerTopBold ? 'bold' : 'normal', cursor: 'move' }}
               >
                 {innerTopText}
               </text>
@@ -254,11 +374,11 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               )}
               <text 
                 x={0} 
-                y={fontSize * 0.2} 
-                fill={finalColors.secondary} 
+                y={(centerFontSize || fontSize * 1.5) * 0.2} 
+                fill={centerColor || finalColors.secondary} 
                 textAnchor="middle" 
                 onMouseDown={(e) => handleMouseDown(e, 'center')}
-                style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${fontSize * 1.5}px`, cursor: 'move' }}
+                style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${centerFontSize || fontSize * 1.5}px`, fontWeight: centerBold ? 'bold' : 'normal', cursor: 'move' }}
               >
                 {centerText}
               </text>
@@ -267,10 +387,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               <text 
                 x={cx + (innerBottomXOffset || 0)} 
                 y={cy + sSize/2 - 45 + (innerBottomYOffset || 0)} 
-                fill={finalColors.border} 
+                fill={innerBottomColor || finalColors.border} 
                 textAnchor="middle" 
                 onMouseDown={(e) => handleMouseDown(e, 'innerBottom')}
-                style={{ ...textBaseStyle, fontFamily: innerBottomFontFamily || fontFamily, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal', cursor: 'move' }}
+                style={{ ...textBaseStyle, fontFamily: innerBottomFontFamily || fontFamily, fontSize: `${innerBottomFontSize || fontSize * 0.55}px`, fontWeight: innerBottomBold ? 'bold' : 'normal', cursor: 'move' }}
               >
                 {innerBottomText}
               </text>
@@ -278,10 +398,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             <text 
               x={cx + (secondaryXOffset || 0)} 
               y={cy + sSize/2 - 25 + (secondaryYOffset || 0)} 
-              fill={finalColors.border} 
+              fill={secondaryColor || finalColors.border} 
               textAnchor="middle" 
               onMouseDown={(e) => handleMouseDown(e, 'secondary')}
-              style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${fontSize * 0.6}px`, fontWeight: 'normal', cursor: 'move' }}
+              style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${secondaryFontSize || fontSize * 0.6}px`, fontWeight: secondaryBold ? 'bold' : 'normal', cursor: 'move' }}
             >
               {secondaryText}
             </text>
@@ -310,10 +430,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </defs>
           
           <text 
-            fill={finalColors.border} 
+            fill={primaryColor || finalColors.border} 
             onMouseDown={(e) => handleMouseDown(e, 'primary')}
-            style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${fontSize}px`, cursor: 'move' }} 
-            textLength={primaryText.length * fontSize * 0.6 * letterStretch} 
+            style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${primaryFontSize || fontSize}px`, fontWeight: primaryBold ? 'bold' : 'normal', cursor: 'move' }} 
+            textLength={primaryText.length * (primaryFontSize || fontSize) * 0.6 * letterStretch} 
             lengthAdjust="spacingAndGlyphs"
             transform={`translate(${primaryXOffset || 0}, ${primaryYOffset || 0})`}
           >
@@ -322,10 +442,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             </textPath>
           </text>
           <text 
-            fill={finalColors.border} 
+            fill={secondaryColor || finalColors.border} 
             onMouseDown={(e) => handleMouseDown(e, 'secondary')}
-            style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${fontSize * 0.75}px`, cursor: 'move' }} 
-            textLength={secondaryText.length * fontSize * 0.45 * letterStretch} 
+            style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${secondaryFontSize || fontSize * 0.75}px`, fontWeight: secondaryBold ? 'bold' : 'normal', cursor: 'move' }} 
+            textLength={secondaryText.length * (secondaryFontSize || fontSize * 0.75) * 0.45 * letterStretch} 
             lengthAdjust="spacingAndGlyphs"
             transform={`translate(${secondaryXOffset || 0}, ${secondaryYOffset || 0})`}
           >
@@ -336,12 +456,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           
           {innerTopText && (
             <text 
-              fill={innerTextColor || finalColors.border} 
+              fill={innerTopColor || innerTextColor || finalColors.border} 
               onMouseDown={(e) => handleMouseDown(e, 'innerTop')}
               style={{ 
                 ...textBaseStyle, 
                 fontFamily: innerTopFontFamily || fontFamily,
-                fontSize: `${innerTextSize || fontSize * 0.55}px`, 
+                fontSize: `${innerTopFontSize || innerTextSize || fontSize * 0.55}px`, 
                 fontWeight: 'normal',
                 opacity: innerTextIntensity ?? 1,
                 cursor: 'move'
@@ -355,13 +475,13 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           )}
           {innerBottomText && (
             <text 
-              fill={innerTextColor || finalColors.border} 
+              fill={innerBottomColor || innerTextColor || finalColors.border} 
               onMouseDown={(e) => handleMouseDown(e, 'innerBottom')}
               style={{ 
                 ...textBaseStyle, 
                 fontFamily: innerBottomFontFamily || fontFamily,
-                fontSize: `${innerTextSize || fontSize * 0.55}px`, 
-                fontWeight: 'normal',
+                fontSize: `${innerBottomFontSize || innerTextSize || fontSize * 0.55}px`, 
+                fontWeight: innerBottomBold ? 'bold' : 'normal',
                 opacity: innerTextIntensity ?? 1,
                 cursor: 'move'
               }}
@@ -410,33 +530,33 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
                 {showDateLine && (
                   <text 
                     x={0} 
-                    y={-fontSize * 0.8} 
-                    fill={finalColors.secondary} 
+                    y={-(centerSubFontSize || fontSize * 0.8)} 
+                    fill={centerSubColor || finalColors.secondary} 
                     textAnchor="middle" 
                     onMouseDown={(e) => handleMouseDown(e, 'centerSub')}
-                    style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${fontSize * 0.7}px`, cursor: 'move' }}
+                    style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${centerSubFontSize || fontSize * 0.7}px`, fontWeight: centerSubBold ? 'bold' : 'normal', cursor: 'move' }}
                   >
                     {centerSubText || 'DATE: .................'}
                   </text>
                 )}
                 <text 
                   x={0} 
-                  y={fontSize * 0.2} 
-                  fill={finalColors.secondary} 
+                  y={(centerFontSize || fontSize * 1.1) * 0.2} 
+                  fill={centerColor || finalColors.secondary} 
                   textAnchor="middle" 
                   onMouseDown={(e) => handleMouseDown(e, 'center')}
-                  style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${fontSize * 1.1}px`, cursor: 'move' }}
+                  style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${centerFontSize || fontSize * 1.1}px`, fontWeight: centerBold ? 'bold' : 'normal', cursor: 'move' }}
                 >
                   {centerText}
                 </text>
                 {!showDateLine && centerSubText && (
                   <text 
                     x={0} 
-                    y={fontSize * 1.1} 
-                    fill={finalColors.border} 
+                    y={centerSubFontSize || fontSize * 1.1} 
+                    fill={centerSubColor || finalColors.border} 
                     textAnchor="middle" 
                     onMouseDown={(e) => handleMouseDown(e, 'centerSub')}
-                    style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${fontSize * 0.8}px`, fontWeight: 'normal', cursor: 'move' }}
+                    style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${centerSubFontSize || fontSize * 0.8}px`, fontWeight: centerSubBold ? 'bold' : 'normal', cursor: 'move' }}
                   >
                     {centerSubText}
                   </text>
@@ -446,11 +566,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
                   {showEmbeddedSignature && embeddedSignatureUrl && (
                     <image 
                       href={embeddedSignatureUrl} 
-                      x={-fontSize * 2.5} 
-                      y={fontSize * 0.5} 
-                      width={fontSize * 5} 
-                      height={fontSize * 2.5} 
-                      style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)" }} 
+                      x={(signatureX || 0) - (fontSize * 2.5 * (signatureScale || 1))} 
+                      y={(signatureY || 0) + (fontSize * 0.5)} 
+                      width={fontSize * 5 * (signatureScale || 1)} 
+                      height={fontSize * 2.5 * (signatureScale || 1)} 
+                      onMouseDown={(e) => handleMouseDown(e, 'signature')}
+                      style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)", cursor: 'move' }} 
                     />
                   )}
                   <text x={0} y={fontSize * 2.4} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.5}px` }}>
@@ -470,11 +591,11 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         <text 
           x={cx + (primaryXOffset || 0)} 
           y={cy - rh/2 + 40 + (primaryYOffset || 0)} 
-          fill={finalColors.border} 
+          fill={primaryColor || finalColors.border} 
           textAnchor="middle" 
           onMouseDown={(e) => handleMouseDown(e, 'primary')}
-          style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${fontSize * 0.8}px`, cursor: 'move' }} 
-          textLength={primaryText.length * fontSize * 0.5 * letterStretch} 
+          style={{ ...textBaseStyle, fontFamily: primaryFontFamily || fontFamily, fontSize: `${primaryFontSize || fontSize * 0.8}px`, fontWeight: primaryBold ? 'bold' : 'normal', cursor: 'move' }} 
+          textLength={primaryText.length * (primaryFontSize || fontSize * 0.8) * 0.5 * letterStretch} 
           lengthAdjust="spacingAndGlyphs"
         >
           {primaryText}
@@ -484,10 +605,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           <text 
             x={cx + (innerTopXOffset || 0)} 
             y={cy - rh/2 + 65 + (innerTopYOffset || 0)} 
-            fill={finalColors.border} 
+            fill={innerTopColor || finalColors.border} 
             textAnchor="middle" 
             onMouseDown={(e) => handleMouseDown(e, 'innerTop')}
-            style={{ ...textBaseStyle, fontFamily: innerTopFontFamily || fontFamily, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal', cursor: 'move' }}
+            style={{ ...textBaseStyle, fontFamily: innerTopFontFamily || fontFamily, fontSize: `${innerTopFontSize || fontSize * 0.55}px`, fontWeight: innerTopBold ? 'bold' : 'normal', cursor: 'move' }}
           >
             {innerTopText}
           </text>
@@ -506,11 +627,11 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           )}
           <text 
             x={0} 
-            y={fontSize * 0.2} 
-            fill={finalColors.secondary} 
+            y={(centerFontSize || fontSize * 1.5) * 0.2} 
+            fill={centerColor || finalColors.secondary} 
             textAnchor="middle" 
             onMouseDown={(e) => handleMouseDown(e, 'center')}
-            style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${fontSize * 1.5}px`, cursor: 'move' }}
+            style={{ ...textBaseStyle, fontFamily: centerFontFamily || fontFamily, fontSize: `${centerFontSize || fontSize * 1.5}px`, fontWeight: centerBold ? 'bold' : 'normal', cursor: 'move' }}
           >
             {centerText}
           </text>
@@ -519,11 +640,11 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         {(centerSubText || showDateLine) && (
           <text 
             x={cx + (centerSubXOffset || 0)} 
-            y={cy + fontSize * 1.2 + (centerSubYOffset || 0)} 
-            fill={finalColors.secondary} 
+            y={cy + (centerSubFontSize || fontSize * 1.2) + (centerSubYOffset || 0)} 
+            fill={centerSubColor || finalColors.secondary} 
             textAnchor="middle" 
             onMouseDown={(e) => handleMouseDown(e, 'centerSub')}
-            style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${fontSize}px`, cursor: 'move' }}
+            style={{ ...textBaseStyle, fontFamily: centerSubFontFamily || fontFamily, fontSize: `${centerSubFontSize || fontSize}px`, fontWeight: centerSubBold ? 'bold' : 'normal', cursor: 'move' }}
           >
             {centerSubText || 'DATE: ........................'}
           </text>
@@ -534,11 +655,12 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             {showEmbeddedSignature && embeddedSignatureUrl && (
               <image 
                 href={embeddedSignatureUrl} 
-                x={cx - (fontSize * 3.5)} 
-                y={cy + rh/2 - 90} 
-                width={fontSize * 7} 
-                height={fontSize * 3.5} 
-                style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)" }} 
+                x={cx + (signatureX || 0) - (fontSize * 3.5 * (signatureScale || 1))} 
+                y={cy + (signatureY || 0) + rh/2 - 90} 
+                width={fontSize * 7 * (signatureScale || 1)} 
+                height={fontSize * 3.5 * (signatureScale || 1)} 
+                onMouseDown={(e) => handleMouseDown(e, 'signature')}
+                style={{ opacity: 0.85, filter: "grayscale(1) contrast(1.2)", cursor: 'move' }} 
               />
             )}
             <text x={cx} y={cy + rh/2 - 50} fill={finalColors.border} textAnchor="middle" style={{ ...textBaseStyle, fontSize: `${fontSize * 0.65}px` }}>
@@ -551,10 +673,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           <text 
             x={cx + (innerBottomXOffset || 0)} 
             y={cy + rh/2 - 45 + (innerBottomYOffset || 0)} 
-            fill={finalColors.border} 
+            fill={innerBottomColor || finalColors.border} 
             textAnchor="middle" 
             onMouseDown={(e) => handleMouseDown(e, 'innerBottom')}
-            style={{ ...textBaseStyle, fontFamily: innerBottomFontFamily || fontFamily, fontSize: `${fontSize * 0.55}px`, fontWeight: 'normal', cursor: 'move' }}
+            style={{ ...textBaseStyle, fontFamily: innerBottomFontFamily || fontFamily, fontSize: `${innerBottomFontSize || fontSize * 0.55}px`, fontWeight: innerBottomBold ? 'bold' : 'normal', cursor: 'move' }}
           >
             {innerBottomText}
           </text>
@@ -563,10 +685,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         <text 
           x={cx + (secondaryXOffset || 0)} 
           y={cy + rh/2 - 25 + (secondaryYOffset || 0)} 
-          fill={finalColors.border} 
+          fill={secondaryColor || finalColors.border} 
           textAnchor="middle" 
           onMouseDown={(e) => handleMouseDown(e, 'secondary')}
-          style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${fontSize * 0.6}px`, fontWeight: 'normal', cursor: 'move' }}
+          style={{ ...textBaseStyle, fontFamily: secondaryFontFamily || fontFamily, fontSize: `${secondaryFontSize || fontSize * 0.6}px`, fontWeight: secondaryBold ? 'bold' : 'normal', cursor: 'move' }}
         >
           {secondaryText}
         </text>
@@ -587,6 +709,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
             height={el.height || 50}
             transform={`rotate(${el.rotation || 0}, ${el.x + (el.width || 50)/2}, ${el.y + (el.height || 50)/2}) scale(${el.scale || 1})`}
             style={{ 
+              opacity: el.opacity ?? 1,
               filter: el.isBlackAndWhite 
                 ? `grayscale(1) contrast(${el.contrast || 1.5}) ${wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)"}` 
                 : `contrast(${el.contrast || 1}) ${wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)"}` 
@@ -594,25 +717,63 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           />
         );
       }
-      return (
-        <text
-          key={el.id}
-          x={el.x}
-          y={el.y}
-          fill={finalColors.border}
-          onMouseDown={(e) => handleMouseDown(e, 'custom', el.id)}
-          style={{ 
-            fontFamily: el.fontFamily || fontFamily, 
-            fontSize: `${fontSize * (el.scale || 1)}px`, 
-            fontWeight: 'bold',
-            filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)",
-            cursor: 'move'
-          }}
-          transform={`rotate(${el.rotation || 0}, ${el.x}, ${el.y})`}
-        >
-          {el.content}
-        </text>
-      );
+      if (el.type === 'text') {
+        const elementColor = el.color || finalColors.border;
+        if (el.isCurved) {
+          const radius = el.curveRadius || 100;
+          const pathId = `path-${el.id}`;
+          // Create a circular path centered at (el.x, el.y)
+          // We'll use a simple arc for the text path
+          const pathData = `M ${el.x - radius},${el.y} A ${radius},${radius} 0 0 1 ${el.x + radius},${el.y}`;
+          
+          return (
+            <g key={el.id}>
+              <defs>
+                <path id={pathId} d={pathData} />
+              </defs>
+              <text
+                fill={elementColor}
+                onMouseDown={(e) => handleMouseDown(e, 'custom', el.id)}
+                style={{ 
+                  fontFamily: el.fontFamily || fontFamily, 
+                  fontSize: `${fontSize * (el.scale || 1)}px`, 
+                  fontWeight: 'bold',
+                  opacity: el.opacity ?? 1,
+                  filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)",
+                  cursor: 'move'
+                }}
+                transform={`rotate(${el.rotation || 0}, ${el.x}, ${el.y})`}
+              >
+                <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
+                  {el.content}
+                </textPath>
+              </text>
+            </g>
+          );
+        }
+
+        return (
+          <text
+            key={el.id}
+            x={el.x}
+            y={el.y}
+            fill={elementColor}
+            onMouseDown={(e) => handleMouseDown(e, 'custom', el.id)}
+            style={{ 
+              fontFamily: el.fontFamily || fontFamily, 
+              fontSize: `${fontSize * (el.scale || 1)}px`, 
+              fontWeight: 'bold',
+              opacity: el.opacity ?? 1,
+              filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)",
+              cursor: 'move'
+            }}
+            transform={`rotate(${el.rotation || 0}, ${el.x}, ${el.y})`}
+          >
+            {el.content}
+          </text>
+        );
+      }
+      return null;
     });
   };
 
@@ -634,6 +795,15 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
+            <filter id="shadowFilter" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow 
+                dx={config.shadowOffsetX || 2} 
+                dy={config.shadowOffsetY || 2} 
+                stdDeviation={config.shadowBlur || 5} 
+                floodColor={config.shadowColor || '#000000'} 
+                floodOpacity="0.5" 
+              />
+            </filter>
             <filter id="distressFilter" x="-20%" y="-20%" width="140%" height="140%">
               <feTurbulence type="fractalNoise" baseFrequency={0.05 + distressLevel * 0.5} numOctaves="3" seed="5" result="noise" />
               <feDisplacementMap in="SourceGraphic" in2="noise" scale={2 + distressLevel * 15} />
@@ -651,7 +821,10 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
           </defs>
           
           {/* Apply stretch transform to the entire stamp content */}
-          <g transform={`translate(${cx}, ${cy}) scale(${stretchX || 1}, ${stretchY || 1}) translate(${-cx}, ${-cy})`} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+          <g 
+            transform={`translate(${cx}, ${cy}) scale(${stretchX || 1}, ${stretchY || 1}) translate(${-cx}, ${-cy})`} 
+            style={{ filter: config.showShadow ? 'url(#shadowFilter)' : 'none' }}
+          >
             {renderShape()}
             {renderText()}
             {renderCustomElements()}
@@ -659,21 +832,21 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
               <text
                 x={statusX || cx}
                 y={statusY || cy}
-                fill={finalColors.border}
+                fill={statusColor || finalColors.border}
                 onMouseDown={(e) => handleMouseDown(e, 'status')}
                 style={{
                   fontFamily: statusFontFamily || fontFamily,
-                  fontSize: `${statusFontSize || 40}px`,
-                  fontWeight: 'black',
+                  fontSize: `${configStatusFontSize || statusFontSize || 40}px`,
+                  fontWeight: statusBold ? '900' : 'normal',
                   textTransform: 'uppercase',
-                  opacity: 0.4,
+                  opacity: 0.8,
                   cursor: 'move',
-                  fontStyle: 'italic',
+                  fontStyle: 'normal',
                   filter: wetInk ? "url(#wetInkFilter)" : "url(#distressFilter)"
                 }}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                transform={`rotate(${statusRotation || -15}, ${statusX || cx}, ${statusY || cy})`}
+                transform={`rotate(${statusRotation || 0}, ${statusX || cx}, ${statusY || cy})`}
               >
                 {statusText}
               </text>

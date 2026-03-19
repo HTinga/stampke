@@ -108,7 +108,10 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       width: type === 'image' ? 100 : undefined,
       height: type === 'image' ? 100 : undefined,
       rotation: 0,
-      scale: 1
+      scale: 1,
+      opacity: 1,
+      isCurved: false,
+      curveRadius: 100
     };
     onChange({ customElements: [...(config.customElements || []), newEl] });
   };
@@ -157,7 +160,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <select 
               value={config.fontFamily}
               onChange={(e) => onChange({ fontFamily: e.target.value })}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500"
             >
               {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
             </select>
@@ -167,7 +170,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <select 
               value={config.shape}
               onChange={(e) => onChange({ shape: e.target.value as StampShape })}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={StampShape.ROUND}>Round</option>
               <option value={StampShape.OVAL}>Oval</option>
@@ -180,13 +183,26 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Stamp Size</label>
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Base Font Size</label>
               <span className="text-[10px] font-bold text-slate-400">{config.fontSize}px</span>
             </div>
             <input 
               type="range" min="10" max="60" step="1"
               value={config.fontSize}
               onChange={(e) => onChange({ fontSize: parseInt(e.target.value) })}
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Letter Spacing</label>
+              <span className="text-[10px] font-bold text-slate-400">{config.letterSpacing || 0}px</span>
+            </div>
+            <input 
+              type="range" min="-5" max="20" step="0.5"
+              value={config.letterSpacing || 0}
+              onChange={(e) => onChange({ letterSpacing: parseFloat(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
           </div>
@@ -252,6 +268,30 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           </div>
 
           <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Border Style</label>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+              <button
+                onClick={() => onChange({ borderStyle: BorderStyle.SINGLE })}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.borderStyle === BorderStyle.SINGLE || !config.borderStyle ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+              >
+                Solid
+              </button>
+              <button
+                onClick={() => onChange({ borderStyle: BorderStyle.DASHED })}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.borderStyle === BorderStyle.DASHED ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+              >
+                Dashed
+              </button>
+              <button
+                onClick={() => onChange({ borderStyle: BorderStyle.DOTTED })}
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.borderStyle === BorderStyle.DOTTED ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+              >
+                Dotted
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
             <div className="flex justify-between">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Border Offset</label>
               <span className="text-[10px] font-bold text-slate-400">{config.borderOffset}px</span>
@@ -262,6 +302,90 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               onChange={(e) => onChange({ borderOffset: parseInt(e.target.value) })}
               className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+          </div>
+
+          {/* Double Border Controls */}
+          <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Double Border</label>
+              <input 
+                type="checkbox" 
+                checked={config.doubleBorder} 
+                onChange={(e) => onChange({ doubleBorder: e.target.checked })}
+                className="w-4 h-4 rounded text-blue-600 border-slate-300"
+              />
+            </div>
+            {config.doubleBorder && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Outer Border</label>
+                  <input 
+                    type="checkbox" 
+                    checked={config.doubleBorderIsOuter} 
+                    onChange={(e) => onChange({ doubleBorderIsOuter: e.target.checked })}
+                    className="w-3 h-3 rounded text-blue-600 border-slate-300"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <label className="text-[10px] font-bold text-slate-500">Offset</label>
+                      <span className="text-[10px] font-bold text-slate-400">{config.doubleBorderOffset}px</span>
+                    </div>
+                    <input 
+                      type="range" min="2" max="20" step="1"
+                      value={config.doubleBorderOffset}
+                      onChange={(e) => onChange({ doubleBorderOffset: parseInt(e.target.value) })}
+                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <label className="text-[10px] font-bold text-slate-500">Thickness</label>
+                      <span className="text-[10px] font-bold text-slate-400">{config.doubleBorderThickness}px</span>
+                    </div>
+                    <input 
+                      type="range" min="0.5" max="10" step="0.5"
+                      value={config.doubleBorderThickness}
+                      onChange={(e) => onChange({ doubleBorderThickness: parseFloat(e.target.value) })}
+                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500">Color</label>
+                    <div className="flex gap-1 flex-wrap">
+                      {COLORS.map(color => (
+                        <button
+                          key={color.value}
+                          onClick={() => onChange({ doubleBorderColor: color.value })}
+                          className={`w-4 h-4 rounded-full border transition-all ${config.doubleBorderColor === color.value ? 'border-blue-600 scale-110' : 'border-transparent'}`}
+                          style={{ backgroundColor: color.value }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500">Style</label>
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md">
+                      <button
+                        onClick={() => onChange({ doubleBorderStyle: BorderStyle.SINGLE })}
+                        className={`flex-1 py-0.5 text-[9px] font-bold rounded transition-all ${config.doubleBorderStyle === BorderStyle.SINGLE ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+                      >
+                        Solid
+                      </button>
+                      <button
+                        onClick={() => onChange({ doubleBorderStyle: BorderStyle.DASHED })}
+                        className={`flex-1 py-0.5 text-[9px] font-bold rounded transition-all ${config.doubleBorderStyle === BorderStyle.DASHED ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+                      >
+                        Dash
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-3">
@@ -327,32 +451,50 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             ))}
           </div>
           <div className="space-y-2">
-            <input 
-              type="text"
-              value={config.statusText}
-              onChange={(e) => onChange({ statusText: e.target.value.toUpperCase() })}
-              placeholder="CUSTOM STATUS"
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-black italic"
-            />
+            <div className="flex items-center gap-2">
+              <input 
+                type="text"
+                value={config.statusText}
+                onChange={(e) => onChange({ statusText: e.target.value.toUpperCase() })}
+                placeholder="CUSTOM STATUS"
+                className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500 font-black italic"
+              />
+              <input 
+                type="color" 
+                value={config.statusColor || config.borderColor}
+                onChange={(e) => onChange({ statusColor: e.target.value })}
+                className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200"
+                title="Status Color"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Font</label>
                 <select 
                   value={config.statusFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ statusFontFamily: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-[10px] outline-none"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] text-black outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Size</label>
-                <input 
-                  type="number"
-                  value={config.statusFontSize || 40}
-                  onChange={(e) => onChange({ statusFontSize: parseInt(e.target.value) })}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-[10px] outline-none"
-                />
+                <div className="flex items-center gap-1">
+                  <input 
+                    type="number"
+                    value={config.statusFontSize || 40}
+                    onChange={(e) => onChange({ statusFontSize: parseInt(e.target.value) })}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-[10px] text-black outline-none"
+                  />
+                  <button
+                    onClick={() => onChange({ statusBold: !config.statusBold })}
+                    className={`p-1 rounded ${config.statusBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                    title="Bold"
+                  >
+                    <b className="text-[10px] font-serif">B</b>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -367,38 +509,88 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Main Header</label>
-              <select 
-                value={config.primaryFontFamily || config.fontFamily}
-                onChange={(e) => onChange({ primaryFontFamily: e.target.value })}
-                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
-              >
-                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-              </select>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="color" 
+                  value={config.primaryColor || config.borderColor}
+                  onChange={(e) => onChange({ primaryColor: e.target.value })}
+                  className="w-6 h-6 rounded cursor-pointer border border-slate-200"
+                  title="Text Color"
+                />
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">Size</span>
+                  <input 
+                    type="number"
+                    value={config.primaryFontSize || config.fontSize}
+                    onChange={(e) => onChange({ primaryFontSize: parseInt(e.target.value) })}
+                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => onChange({ primaryBold: !config.primaryBold })}
+                  className={`p-1 rounded ${config.primaryBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                  title="Bold"
+                >
+                  <b className="text-[10px] font-serif">B</b>
+                </button>
+                <select 
+                  value={config.primaryFontFamily || config.fontFamily}
+                  onChange={(e) => onChange({ primaryFontFamily: e.target.value })}
+                  className="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
+                >
+                  {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
+              </div>
             </div>
             <input 
               type="text"
               value={config.primaryText}
               onChange={(e) => onChange({ primaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Sub Header (Bottom)</label>
-              <select 
-                value={config.secondaryFontFamily || config.fontFamily}
-                onChange={(e) => onChange({ secondaryFontFamily: e.target.value })}
-                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
-              >
-                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-              </select>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="color" 
+                  value={config.secondaryColor || config.borderColor}
+                  onChange={(e) => onChange({ secondaryColor: e.target.value })}
+                  className="w-6 h-6 rounded cursor-pointer border border-slate-200"
+                  title="Text Color"
+                />
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">Size</span>
+                  <input 
+                    type="number"
+                    value={config.secondaryFontSize || Math.round(config.fontSize * 0.75)}
+                    onChange={(e) => onChange({ secondaryFontSize: parseInt(e.target.value) })}
+                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => onChange({ secondaryBold: !config.secondaryBold })}
+                  className={`p-1 rounded ${config.secondaryBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                  title="Bold"
+                >
+                  <b className="text-[10px] font-serif">B</b>
+                </button>
+                <select 
+                  value={config.secondaryFontFamily || config.fontFamily}
+                  onChange={(e) => onChange({ secondaryFontFamily: e.target.value })}
+                  className="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
+                >
+                  {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
+              </div>
             </div>
             <input 
               type="text"
               value={config.secondaryText}
               onChange={(e) => onChange({ secondaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
           </div>
 
@@ -408,37 +600,81 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
-                  <select 
-                    value={config.innerTopFontFamily || config.fontFamily}
-                    onChange={(e) => onChange({ innerTopFontFamily: e.target.value })}
-                    className="text-[8px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
-                  >
-                    {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-                  </select>
+                  <div className="flex items-center gap-1">
+                    <input 
+                      type="color" 
+                      value={config.innerTopColor || config.innerTextColor || config.borderColor}
+                      onChange={(e) => onChange({ innerTopColor: e.target.value })}
+                      className="w-4 h-4 rounded cursor-pointer border border-slate-200"
+                      title="Text Color"
+                    />
+                    <input 
+                      type="number"
+                      value={config.innerTopFontSize || config.innerTextSize || Math.round(config.fontSize * 0.55)}
+                      onChange={(e) => onChange({ innerTopFontSize: parseInt(e.target.value) })}
+                      className="w-6 bg-transparent text-[8px] font-bold outline-none border-b border-slate-200"
+                    />
+                    <button
+                      onClick={() => onChange({ innerTopBold: !config.innerTopBold })}
+                      className={`p-0.5 rounded ${config.innerTopBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                      title="Bold"
+                    >
+                      <b className="text-[8px] font-serif">B</b>
+                    </button>
+                    <select 
+                      value={config.innerTopFontFamily || config.fontFamily}
+                      onChange={(e) => onChange({ innerTopFontFamily: e.target.value })}
+                      className="text-[8px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
+                    >
+                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                    </select>
+                  </div>
                 </div>
                 <input 
                   type="text"
                   value={config.innerTopText}
                   onChange={(e) => onChange({ innerTopText: e.target.value.toUpperCase() })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-black outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Bottom</label>
-                  <select 
-                    value={config.innerBottomFontFamily || config.fontFamily}
-                    onChange={(e) => onChange({ innerBottomFontFamily: e.target.value })}
-                    className="text-[8px] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
-                  >
-                    {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-                  </select>
+                  <div className="flex items-center gap-1">
+                    <input 
+                      type="color" 
+                      value={config.innerBottomColor || config.innerTextColor || config.borderColor}
+                      onChange={(e) => onChange({ innerBottomColor: e.target.value })}
+                      className="w-4 h-4 rounded cursor-pointer border border-slate-200"
+                      title="Text Color"
+                    />
+                    <input 
+                      type="number"
+                      value={config.innerBottomFontSize || config.innerTextSize || Math.round(config.fontSize * 0.55)}
+                      onChange={(e) => onChange({ innerBottomFontSize: parseInt(e.target.value) })}
+                      className="w-6 bg-transparent text-[8px] font-bold outline-none border-b border-slate-200"
+                    />
+                    <button
+                      onClick={() => onChange({ innerBottomBold: !config.innerBottomBold })}
+                      className={`p-0.5 rounded ${config.innerBottomBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                      title="Bold"
+                    >
+                      <b className="text-[8px] font-serif">B</b>
+                    </button>
+                    <select 
+                      value={config.innerBottomFontFamily || config.fontFamily}
+                      onChange={(e) => onChange({ innerBottomFontFamily: e.target.value })}
+                      className="text-[8px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
+                    >
+                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                    </select>
+                  </div>
                 </div>
                 <input 
                   type="text"
                   value={config.innerBottomText}
                   onChange={(e) => onChange({ innerBottomText: e.target.value.toUpperCase() })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-black outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -484,10 +720,33 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <div className="flex justify-between items-center mb-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Center Text (Primary)</label>
               <div className="flex items-center gap-2">
+                <input 
+                  type="color" 
+                  value={config.centerColor || config.secondaryColor || config.borderColor}
+                  onChange={(e) => onChange({ centerColor: e.target.value })}
+                  className="w-6 h-6 rounded cursor-pointer border border-slate-200"
+                  title="Text Color"
+                />
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">Size</span>
+                  <input 
+                    type="number"
+                    value={config.centerFontSize || Math.round(config.fontSize * 1.1)}
+                    onChange={(e) => onChange({ centerFontSize: parseInt(e.target.value) })}
+                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => onChange({ centerBold: !config.centerBold })}
+                  className={`p-1 rounded ${config.centerBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                  title="Bold"
+                >
+                  <b className="text-[10px] font-serif">B</b>
+                </button>
                 <select 
                   value={config.centerFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ centerFontFamily: e.target.value })}
-                  className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
+                  className="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
@@ -521,27 +780,52 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               value={config.centerText}
               onChange={(e) => onChange({ centerText: e.target.value.toUpperCase() })}
               placeholder="CENTER TEXT"
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500 font-bold"
             />
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-[10px] font-bold text-slate-500 uppercase">Center Sub-Text (Date Line)</label>
-              <select 
-                value={config.centerSubFontFamily || config.fontFamily}
-                onChange={(e) => onChange({ centerSubFontFamily: e.target.value })}
-                className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 outline-none"
-              >
-                {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-              </select>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="color" 
+                  value={config.centerSubColor || config.secondaryColor || config.borderColor}
+                  onChange={(e) => onChange({ centerSubColor: e.target.value })}
+                  className="w-6 h-6 rounded cursor-pointer border border-slate-200"
+                  title="Text Color"
+                />
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[8px] font-bold text-slate-400 uppercase">Size</span>
+                  <input 
+                    type="number"
+                    value={config.centerSubFontSize || Math.round(config.fontSize * 0.8)}
+                    onChange={(e) => onChange({ centerSubFontSize: parseInt(e.target.value) })}
+                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => onChange({ centerSubBold: !config.centerSubBold })}
+                  className={`p-1 rounded ${config.centerSubBold ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}
+                  title="Bold"
+                >
+                  <b className="text-[10px] font-serif">B</b>
+                </button>
+                <select 
+                  value={config.centerSubFontFamily || config.fontFamily}
+                  onChange={(e) => onChange({ centerSubFontFamily: e.target.value })}
+                  className="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 text-black outline-none"
+                >
+                  {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                </select>
+              </div>
             </div>
             <input 
               type="text"
               value={config.centerSubText}
               onChange={(e) => onChange({ centerSubText: e.target.value.toUpperCase() })}
               placeholder="DATE LINE TEXT"
-              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-blue-500 font-bold"
             />
           </div>
         </div>
@@ -603,6 +887,246 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                 />
               </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+           <Zap size={14} /> Shadow & Depth
+        </h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-bold">Enable Shadow</span>
+            <input 
+              type="checkbox" 
+              checked={config.showShadow || false} 
+              onChange={(e) => onChange({ showShadow: e.target.checked })}
+              className="w-4 h-4 rounded text-blue-600 border-slate-300"
+            />
+          </div>
+          {config.showShadow && (
+            <div className="space-y-3 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Color</label>
+                  <input 
+                    type="color" 
+                    value={config.shadowColor || '#000000'}
+                    onChange={(e) => onChange({ shadowColor: e.target.value })}
+                    className="w-full h-8 rounded-lg cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Blur</label>
+                  <input 
+                    type="range" min="0" max="20" step="1"
+                    value={config.shadowBlur || 5}
+                    onChange={(e) => onChange({ shadowBlur: parseInt(e.target.value) })}
+                    className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Offset X</label>
+                  <input 
+                    type="range" min="-20" max="20" step="1"
+                    value={config.shadowOffsetX || 2}
+                    onChange={(e) => onChange({ shadowOffsetX: parseInt(e.target.value) })}
+                    className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Offset Y</label>
+                  <input 
+                    type="range" min="-20" max="20" step="1"
+                    value={config.shadowOffsetY || 2}
+                    onChange={(e) => onChange({ shadowOffsetY: parseInt(e.target.value) })}
+                    className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+             <Plus size={14} /> Custom Elements
+          </h3>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => addCustomElement('text')}
+              className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
+              title="Add Text"
+            >
+              <Type size={14} />
+            </button>
+            <button 
+              onClick={() => addCustomElement('image')}
+              className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg hover:bg-blue-100 transition-all"
+              title="Add Image"
+            >
+              <ImageIcon size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {config.customElements.map((el) => (
+            <div key={el.id} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {el.type === 'text' ? <Type size={12} className="text-slate-400" /> : <ImageIcon size={12} className="text-slate-400" />}
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">{el.type} Element</span>
+                </div>
+                <button 
+                  onClick={() => removeCustomElement(el.id)}
+                  className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+
+              {el.type === 'text' ? (
+                <div className="space-y-2">
+                  <input 
+                    type="text"
+                    value={el.content}
+                    onChange={(e) => updateCustomElement(el.id, { content: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select 
+                      value={el.fontFamily || config.fontFamily}
+                      onChange={(e) => updateCustomElement(el.id, { fontFamily: e.target.value })}
+                      className="text-[10px] bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded px-1 py-1 outline-none"
+                    >
+                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+                    </select>
+                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">
+                      <span className="text-[8px] font-bold text-slate-400 uppercase">Scale</span>
+                      <input 
+                        type="number" step="0.1"
+                        value={el.scale || 1}
+                        onChange={(e) => updateCustomElement(el.id, { scale: parseFloat(e.target.value) })}
+                        className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        checked={el.isCurved || false} 
+                        onChange={(e) => updateCustomElement(el.id, { isCurved: e.target.checked })}
+                        className="w-3 h-3 rounded text-blue-600 border-slate-300"
+                      />
+                      <span className="text-[9px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors uppercase">Curved Text</span>
+                    </label>
+                    {el.isCurved && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <label className="text-[9px] font-bold text-slate-500 uppercase">Curve Radius</label>
+                          <span className="text-[9px] font-bold text-slate-400">{el.curveRadius || 100}px</span>
+                        </div>
+                        <input 
+                          type="range" min="20" max="300" step="1"
+                          value={el.curveRadius || 100}
+                          onChange={(e) => updateCustomElement(el.id, { curveRadius: parseInt(e.target.value) })}
+                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <input 
+                        type="file" accept="image/*"
+                        onChange={(e) => handleImageUpload(el.id, e)}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <div className="bg-slate-50 dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg py-2 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500">
+                        <ImageIcon size={12} /> Replace Image
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">
+                      <span className="text-[8px] font-bold text-slate-400 uppercase">Scale</span>
+                      <input 
+                        type="number" step="0.1"
+                        value={el.scale || 1}
+                        onChange={(e) => updateCustomElement(el.id, { scale: parseFloat(e.target.value) })}
+                        className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase">B&W Filter</label>
+                    <input 
+                      type="checkbox" 
+                      checked={el.isBlackAndWhite || false}
+                      onChange={(e) => updateCustomElement(el.id, { isBlackAndWhite: e.target.checked })}
+                      className="w-3 h-3 rounded text-blue-600"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase">Rotation</label>
+                    <span className="text-[9px] font-bold text-slate-400">{el.rotation || 0}°</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="360" step="1"
+                    value={el.rotation || 0}
+                    onChange={(e) => updateCustomElement(el.id, { rotation: parseInt(e.target.value) })}
+                    className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase">Opacity</label>
+                    <span className="text-[9px] font-bold text-slate-400">{Math.round((el.opacity || 1) * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0.1" max="1" step="0.05"
+                    value={el.opacity || 1}
+                    onChange={(e) => updateCustomElement(el.id, { opacity: parseFloat(e.target.value) })}
+                    className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <label className="text-[9px] font-bold text-slate-500 uppercase">Custom Color</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="color" 
+                    value={el.color || config.borderColor}
+                    onChange={(e) => updateCustomElement(el.id, { color: e.target.value })}
+                    className="w-6 h-6 rounded-md cursor-pointer border-none p-0"
+                  />
+                  <button 
+                    onClick={() => updateCustomElement(el.id, { color: undefined })}
+                    className="text-[8px] font-bold text-blue-600 uppercase hover:underline"
+                  >
+                    Reset to Stamp Color
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {config.customElements.length === 0 && (
+            <div className="text-center py-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">No custom elements added</p>
             </div>
           )}
         </div>
@@ -708,14 +1232,49 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
               )}
               {config.showEmbeddedSignature && config.embeddedSignatureUrl && (
-                <div className="relative group">
-                  <img src={config.embeddedSignatureUrl} className="w-full h-16 object-contain bg-white dark:bg-slate-900 rounded-xl border border-blue-100 dark:border-blue-800 p-2" alt="Signature" />
-                  <button 
-                    onClick={() => onChange({ embeddedSignatureUrl: null })}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <X size={10} />
-                  </button>
+                <div className="space-y-3">
+                  <div className="relative group">
+                    <img src={config.embeddedSignatureUrl} className="w-full h-16 object-contain bg-white dark:bg-slate-900 rounded-xl border border-blue-100 dark:border-blue-800 p-2" alt="Signature" />
+                    <button 
+                      onClick={() => onChange({ embeddedSignatureUrl: null })}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">X Off</label>
+                      <input 
+                        type="number"
+                        value={config.signatureX}
+                        onChange={(e) => onChange({ signatureX: parseInt(e.target.value) })}
+                        className="w-full bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] text-black outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Y Off</label>
+                      <input 
+                        type="number"
+                        value={config.signatureY}
+                        onChange={(e) => onChange({ signatureY: parseInt(e.target.value) })}
+                        className="w-full bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] text-black outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Scale</label>
+                      <span className="text-[8px] font-bold text-slate-400">{config.signatureScale.toFixed(2)}x</span>
+                    </div>
+                    <input 
+                      type="range" min="0.1" max="3" step="0.05"
+                      value={config.signatureScale}
+                      onChange={(e) => onChange({ signatureScale: parseFloat(e.target.value) })}
+                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -723,141 +1282,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
         </div>
       </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Plus size={14} /> Custom Elements
-          </h3>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => addCustomElement('text')}
-              className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-blue-50 text-blue-600 transition-all"
-              title="Add Text"
-            >
-              <Type size={14} />
-            </button>
-            <button 
-              onClick={() => addCustomElement('image')}
-              className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-all"
-              title="Add Image"
-            >
-              <ImageIcon size={14} />
-            </button>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          {config.customElements?.map((el) => (
-            <div key={el.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {el.type === 'image' ? <ImageIcon size={14} className="text-emerald-600" /> : <Type size={14} className="text-blue-600" />}
-                  <span className="text-[10px] font-black uppercase text-slate-400">{el.type}</span>
-                </div>
-                <button onClick={() => removeCustomElement(el.id)} className="text-red-500 hover:text-red-600">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                {el.type === 'text' ? (
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="text"
-                      value={el.content}
-                      onChange={(e) => updateCustomElement(el.id, { content: e.target.value.toUpperCase() })}
-                      className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none"
-                    />
-                    <select 
-                      value={el.fontFamily || config.fontFamily}
-                      onChange={(e) => updateCustomElement(el.id, { fontFamily: e.target.value })}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-1 py-1 text-[10px] outline-none"
-                    >
-                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <img src={el.content} className="w-8 h-8 rounded-md object-cover border border-slate-200" alt="Preview" />
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(el.id, e)}
-                      className="text-[10px] text-slate-500"
-                    />
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">Scale</label>
-                    <input 
-                      type="range" min="0.1" max="3" step="0.1"
-                      value={el.scale || 1}
-                      onChange={(e) => updateCustomElement(el.id, { scale: parseFloat(e.target.value) })}
-                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">Rotation</label>
-                    <input 
-                      type="range" min="0" max="360" step="1"
-                      value={el.rotation || 0}
-                      onChange={(e) => updateCustomElement(el.id, { rotation: parseInt(e.target.value) })}
-                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-                </div>
-                {el.type === 'image' && (
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        checked={el.isBlackAndWhite} 
-                        onChange={(e) => updateCustomElement(el.id, { isBlackAndWhite: e.target.checked })}
-                        className="w-3 h-3 rounded text-blue-600 border-slate-300"
-                      />
-                      <span className="text-[10px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors uppercase">Black & White Mode</span>
-                    </label>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <label className="text-[10px] font-bold text-slate-500">Contrast (BG Removal)</label>
-                        <span className="text-[10px] font-bold text-slate-400">{el.contrast || 1}x</span>
-                      </div>
-                      <input 
-                        type="range" min="1" max="10" step="0.5"
-                        value={el.contrast || 1}
-                        onChange={(e) => updateCustomElement(el.id, { contrast: parseFloat(e.target.value) })}
-                        className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">X Position</label>
-                    <input 
-                      type="range" min="0" max="600" step="1"
-                      value={el.x}
-                      onChange={(e) => updateCustomElement(el.id, { x: parseInt(e.target.value) })}
-                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500">Y Position</label>
-                    <input 
-                      type="range" min="0" max="600" step="1"
-                      value={el.y}
-                      onChange={(e) => updateCustomElement(el.id, { y: parseInt(e.target.value) })}
-                      className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {!config.isVintage && (
         <section className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
@@ -920,6 +1345,30 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           />
         </div>
       )}
+
+      <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-3">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Drag Axis Lock</label>
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+          <button
+            onClick={() => onChange({ lockDragAxis: 'none' })}
+            className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.lockDragAxis === 'none' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+          >
+            Free
+          </button>
+          <button
+            onClick={() => onChange({ lockDragAxis: 'horizontal' })}
+            className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.lockDragAxis === 'horizontal' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+          >
+            Horizontal
+          </button>
+          <button
+            onClick={() => onChange({ lockDragAxis: 'vertical' })}
+            className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${config.lockDragAxis === 'vertical' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500'}`}
+          >
+            Vertical
+          </button>
+        </div>
+      </div>
 
       {onSaveTemplate && (
         <button 

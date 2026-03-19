@@ -37,7 +37,7 @@ const SIGNATURE_FONTS = [
   { name: 'Formal', family: "'Alex Brush', cursive" }
 ];
 
-const SignaturePad: React.FC<{ 
+export const SignaturePad: React.FC<{ 
   onSave: (url: string) => void, 
   onCancel: () => void,
   title?: string

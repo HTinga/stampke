@@ -33,6 +33,23 @@ export interface StampTemplate {
   showInnerLine?: boolean;
   innerLineOffset?: number;
   wetInk?: boolean;
+  doubleBorder?: boolean;
+  doubleBorderOffset?: number;
+  doubleBorderThickness?: number;
+  doubleBorderIsOuter?: boolean;
+  primaryFontSize?: number;
+  secondaryFontSize?: number;
+  innerTopFontSize?: number;
+  innerBottomFontSize?: number;
+  centerFontSize?: number;
+  centerSubFontSize?: number;
+  primaryBold?: boolean;
+  secondaryBold?: boolean;
+  innerTopBold?: boolean;
+  innerBottomBold?: boolean;
+  centerBold?: boolean;
+  centerSubBold?: boolean;
+  statusBold?: boolean;
 }
 
 export interface StampConfig {
@@ -47,7 +64,6 @@ export interface StampConfig {
   letterSpacing: number;
   letterStretch: number;
   borderColor: string;
-  secondaryColor: string;
   borderWidth: number;
   borderOffset: number;
   borderStyle: BorderStyle;
@@ -87,6 +103,13 @@ export interface StampConfig {
   innerBottomFontFamily: string;
   centerFontFamily: string;
   centerSubFontFamily: string;
+  primaryColor: string;
+  secondaryColor: string;
+  innerTopColor: string;
+  innerBottomColor: string;
+  centerColor: string;
+  centerSubColor: string;
+  statusColor: string;
   primaryXOffset: number;
   primaryYOffset: number;
   secondaryXOffset: number;
@@ -101,6 +124,34 @@ export interface StampConfig {
   centerSubYOffset: number;
   customElements: CustomElement[];
   previewBg: 'default' | 'transparent' | 'white' | 'paper';
+  doubleBorder: boolean;
+  doubleBorderOffset: number;
+  doubleBorderThickness: number;
+  doubleBorderIsOuter: boolean;
+  primaryFontSize: number;
+  secondaryFontSize: number;
+  innerTopFontSize: number;
+  innerBottomFontSize: number;
+  centerFontSize: number;
+  centerSubFontSize: number;
+  primaryBold: boolean;
+  secondaryBold: boolean;
+  innerTopBold: boolean;
+  innerBottomBold: boolean;
+  centerBold: boolean;
+  centerSubBold: boolean;
+  statusBold: boolean;
+  signatureX: number;
+  signatureY: number;
+  signatureScale: number;
+  lockDragAxis: 'none' | 'horizontal' | 'vertical';
+  doubleBorderColor?: string;
+  doubleBorderStyle?: BorderStyle;
+  showShadow?: boolean;
+  shadowColor?: string;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
 }
 
 export interface CustomElement {
@@ -116,6 +167,10 @@ export interface CustomElement {
   isBlackAndWhite?: boolean;
   contrast?: number;
   fontFamily?: string;
+  opacity?: number;
+  isCurved?: boolean;
+  curveRadius?: number;
+  color?: string;
 }
 
 export type StampPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center' | 'custom';

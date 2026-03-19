@@ -49,6 +49,7 @@ import QRTracker from './components/QRTracker';
 import SocialHub from './components/SocialHub';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
+import { useStampStore } from './src/store';
 
 const NAVIGATION_GROUPS = [
   {
@@ -91,7 +92,7 @@ const RESOURCES = [];
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub'>('dashboard');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [stampConfig, setStampConfig] = useState<StampConfig>(DEFAULT_CONFIG);
+  const { config: stampConfig, setConfig: setStampConfig } = useStampStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
