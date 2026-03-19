@@ -57,13 +57,10 @@
 
 .main-toolbar {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  flex-direction: column;
   background-color: var(--gray-2);
   border-bottom: 1px solid var(--gray-6);
   flex-shrink: 0;
-  height: 56px;
   position: relative;
   z-index: 100;
 }
@@ -88,15 +85,17 @@
 .toolbar-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 0.8rem;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: transparent;
   color: var(--gray-11);
   cursor: pointer;
   font-size: 0.875rem;
-  transition: background-color 0.15s, color 0.15s;
+  transition: all 0.15s;
+  min-height: 40px;
 }
 
 .toolbar-btn:hover:not(:disabled) {

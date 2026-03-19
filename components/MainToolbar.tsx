@@ -12,7 +12,6 @@ import {
   FileText, 
   Settings, 
   X, 
-  Download, 
   ChevronLeft, 
   ChevronRight,
   Type,
@@ -256,7 +255,7 @@ export function MainToolbar({
       </div>
 
       {/* Toolbar Actions */}
-      <div className="flex items-center h-14 px-4 gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center h-20 px-4 gap-2 overflow-x-auto no-scrollbar">
         {/* Common Actions (Always Visible) */}
         <div className="flex items-center gap-1 pr-2 border-r border-slate-100">
           <button className="toolbar-btn icon-only" onClick={() => fileInputRef.current?.click()} title="Open File">
@@ -292,7 +291,7 @@ export function MainToolbar({
           {activeTab === 'home' && (
             <>
               <button 
-                className={`toolbar-btn icon-only ${currentTool === 'select' ? 'active' : ''}`}
+                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'select' ? 'active' : ''}`}
                 onClick={() => handleToolClick('select')}
                 disabled={!hasDocument}
                 title="Select Tool"
@@ -300,155 +299,177 @@ export function MainToolbar({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 4L10 22L13 13L22 10L4 4Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
+                <span className="text-[10px] font-bold">Select</span>
               </button>
               <button 
-                className={`toolbar-btn icon-only ${currentTool === 'highlight' ? 'active' : ''}`}
+                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'highlight' ? 'active' : ''}`}
                 onClick={() => handleToolClick('highlight')}
                 disabled={!hasDocument}
                 title="Highlight Tool"
               >
                 <div className="w-4 h-4 bg-yellow-300 rounded-sm border border-gray-400" />
+                <span className="text-[10px] font-bold">Highlight</span>
               </button>
               <button 
-                className={`toolbar-btn icon-only ${currentTool === 'text' ? 'active' : ''}`}
+                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'text' ? 'active' : ''}`}
                 onClick={() => handleToolClick('text')}
                 disabled={!hasDocument}
                 title="Text Tool"
               >
                 <Type size={18} />
+                <span className="text-[10px] font-bold">Text</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={() => onRotatePages([currentPage], 90)} disabled={!hasDocument} title="Rotate Clockwise 90°">
-                <RotateCw size={18} />
-              </button>
-              <button className="toolbar-btn icon-only" onClick={() => onRotatePages([currentPage], -90)} disabled={!hasDocument} title="Rotate Counter-Clockwise 90°">
-                <RotateCcw size={18} />
-              </button>
-              <button className="toolbar-btn icon-only" onClick={() => onRotatePages([currentPage], 180)} disabled={!hasDocument} title="Rotate 180°">
-                <RefreshCw size={18} className="rotate-180" />
-              </button>
-              <button className="toolbar-btn icon-only" onClick={() => onDeletePages([currentPage])} disabled={!hasDocument || totalPages <= 1} title="Delete Page">
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-1">
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onRotatePages([currentPage], 90)} disabled={!hasDocument} title="Rotate Clockwise 90°">
+                    <RotateCw size={16} />
+                  </button>
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onRotatePages([currentPage], -90)} disabled={!hasDocument} title="Rotate Counter-Clockwise 90°">
+                    <RotateCcw size={16} />
+                  </button>
+                </div>
+                <span className="text-[10px] font-bold text-center">Rotate</span>
+              </div>
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onDeletePages([currentPage])} disabled={!hasDocument || totalPages <= 1} title="Delete Page">
                 <Trash2 size={18} />
+                <span className="text-[10px] font-bold">Delete</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={onResetToOriginal} disabled={!canResetToOriginal} title="Reset to Original">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onResetToOriginal} disabled={!canResetToOriginal} title="Reset to Original">
                 <RefreshCw size={18} />
+                <span className="text-[10px] font-bold">Reset</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={() => onSaveAsTemplate?.('New Template')} disabled={!hasDocument} title="Save as Template">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onSaveAsTemplate?.('New Template')} disabled={!hasDocument} title="Save as Template">
                 <Save size={18} />
+                <span className="text-[10px] font-bold">Template</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
                 <Stamp size={18} />
+                <span className="text-[10px] font-bold">Stamp</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
                 <Pen size={18} />
+                <span className="text-[10px] font-bold">Sign</span>
               </button>
             </>
           )}
 
           {activeTab === 'insert' && (
             <>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 <div className="flex gap-1">
-                  <button className="toolbar-btn icon-only h-7 w-7" onClick={() => onInsertBlankPage(currentPage)} disabled={!hasDocument} title="Insert Blank Page Before">
-                    <Plus size={14} className="mr-0.5" /> <ChevronLeft size={10} />
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onInsertBlankPage(currentPage)} disabled={!hasDocument} title="Insert Blank Page Before">
+                    <ChevronLeft size={14} />
                   </button>
-                  <button className="toolbar-btn icon-only h-7 w-7" onClick={() => onInsertBlankPage(currentPage + 1)} disabled={!hasDocument} title="Insert Blank Page After">
-                    <Plus size={14} className="mr-0.5" /> <ChevronRight size={10} />
-                  </button>
-                  <button className="toolbar-btn icon-only h-7 w-7" onClick={() => onInsertBlankPage(0)} disabled={!hasDocument} title="Insert Blank Page At End">
-                    <Plus size={14} className="mr-0.5" /> <Maximize size={10} />
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onInsertBlankPage(currentPage + 1)} disabled={!hasDocument} title="Insert Blank Page After">
+                    <ChevronRight size={14} />
                   </button>
                 </div>
-                <span className="text-[8px] font-black text-slate-400 uppercase text-center">Blank Page</span>
+                <span className="text-[10px] font-bold text-center">Blank Page</span>
               </div>
               <div className="toolbar-divider" />
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 <div className="flex gap-1">
-                  <button className="toolbar-btn icon-only h-7 w-7" onClick={() => {
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => {
                     setPendingInsertPosition(currentPage);
                     insertFileInputRef.current?.click();
                   }} disabled={!hasDocument} title="Insert From File Before">
-                    <Files size={14} className="mr-0.5" /> <ChevronLeft size={10} />
+                    <ChevronLeft size={14} />
                   </button>
-                  <button className="toolbar-btn icon-only h-7 w-7" onClick={() => {
+                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => {
                     setPendingInsertPosition(currentPage + 1);
                     insertFileInputRef.current?.click();
                   }} disabled={!hasDocument} title="Insert From File After">
-                    <Files size={14} className="mr-0.5" /> <ChevronRight size={10} />
+                    <ChevronRight size={14} />
                   </button>
                 </div>
-                <span className="text-[8px] font-black text-slate-400 uppercase text-center">From File</span>
+                <span className="text-[10px] font-bold text-center">From File</span>
               </div>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={() => imageInputRef.current?.click()} disabled={!hasDocument} title="Insert Image">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => imageInputRef.current?.click()} disabled={!hasDocument} title="Insert Image">
                 <ImageIcon size={18} />
+                <span className="text-[10px] font-bold">Image</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
                 <Stamp size={18} />
+                <span className="text-[10px] font-bold">Stamp</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
                 <Pen size={18} />
+                <span className="text-[10px] font-bold">Sign</span>
               </button>
             </>
           )}
 
           {activeTab === 'layout' && (
             <>
-              <button className="toolbar-btn icon-only" onClick={onMerge} disabled={!hasDocument} title="Merge PDFs">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onMerge} disabled={!hasDocument} title="Merge PDFs">
                 <Layers size={18} />
+                <span className="text-[10px] font-bold">Merge</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={onSplit} disabled={!hasDocument} title="Split PDF">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onSplit} disabled={!hasDocument} title="Split PDF">
                 <Scissors size={18} />
+                <span className="text-[10px] font-bold">Split</span>
               </button>
             </>
           )}
 
           {activeTab === 'review' && (
             <>
-              <button className="toolbar-btn icon-only" onClick={onApplyRedactions} disabled={!hasDocument} title="Apply Redactions">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onApplyRedactions} disabled={!hasDocument} title="Apply Redactions">
                 <Eraser size={18} />
+                <span className="text-[10px] font-bold">Redact</span>
               </button>
             </>
           )}
 
           {activeTab === 'form' && (
             <>
-              <button className="toolbar-btn icon-only" onClick={onFlattenForm} disabled={!hasDocument} title="Flatten Form">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onFlattenForm} disabled={!hasDocument} title="Flatten Form">
                 <Zap size={18} />
+                <span className="text-[10px] font-bold">Flatten</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={onResetForm} disabled={!hasDocument} title="Reset Form">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onResetForm} disabled={!hasDocument} title="Reset Form">
                 <RefreshCw size={18} />
+                <span className="text-[10px] font-bold">Reset</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={() => onExportFormData?.('json')} disabled={!hasDocument} title="Export Form Data (JSON)">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('json')} disabled={!hasDocument} title="Export Form Data (JSON)">
                 <FileCode size={18} />
+                <span className="text-[10px] font-bold">JSON</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={() => onExportFormData?.('fdf')} disabled={!hasDocument} title="Export Form Data (FDF)">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('fdf')} disabled={!hasDocument} title="Export Form Data (FDF)">
                 <FileText size={18} />
+                <span className="text-[10px] font-bold">FDF</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={() => onExportFormData?.('xfdf')} disabled={!hasDocument} title="Export Form Data (XFDF)">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('xfdf')} disabled={!hasDocument} title="Export Form Data (XFDF)">
                 <FileUp size={18} className="rotate-180" />
+                <span className="text-[10px] font-bold">XFDF</span>
               </button>
-              <button className="toolbar-btn icon-only" onClick={onImportFormData} disabled={!hasDocument} title="Import Form Data">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onImportFormData} disabled={!hasDocument} title="Import Form Data">
                 <FileUp size={18} />
+                <span className="text-[10px] font-bold">Import</span>
               </button>
             </>
           )}
 
           {activeTab === 'view' && (
             <>
-              <button className={`toolbar-btn icon-only ${viewMode === 'single' ? 'active' : ''}`} onClick={() => onSetViewMode('single')} disabled={!hasDocument} title="Single Page View">
+              <button className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${viewMode === 'single' ? 'active' : ''}`} onClick={() => onSetViewMode('single')} disabled={!hasDocument} title="Single Page View">
                 <File size={18} />
+                <span className="text-[10px] font-bold">Single</span>
               </button>
-              <button className={`toolbar-btn icon-only ${viewMode === 'continuous' ? 'active' : ''}`} onClick={() => onSetViewMode('continuous')} disabled={!hasDocument} title="Continuous View">
+              <button className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${viewMode === 'continuous' ? 'active' : ''}`} onClick={() => onSetViewMode('continuous')} disabled={!hasDocument} title="Continuous View">
                 <Columns size={18} />
+                <span className="text-[10px] font-bold">Scroll</span>
               </button>
               <div className="toolbar-divider" />
-              <button className="toolbar-btn icon-only" onClick={onZoomOut} disabled={!hasDocument} title="Zoom Out">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onZoomOut} disabled={!hasDocument} title="Zoom Out">
                 <ZoomOut size={18} />
+                <span className="text-[10px] font-bold">Out</span>
               </button>
               <select 
                 value={zoomMode === 'manual' ? zoom : zoomMode} 
@@ -458,15 +479,16 @@ export function MainToolbar({
                   else if (val === 'fit-width') onFitToWidth();
                   else onSetZoom(parseFloat(val));
                 }}
-                className="zoom-select h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-bold outline-none"
+                className="zoom-select h-10 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-bold outline-none"
                 disabled={!hasDocument}
               >
                 <option value="fit-page">Fit Page</option>
                 <option value="fit-width">Fit Width</option>
                 {ZOOM_PRESETS.map(p => <option key={p} value={p}>{Math.round(p * 100)}%</option>)}
               </select>
-              <button className="toolbar-btn icon-only" onClick={onZoomIn} disabled={!hasDocument} title="Zoom In">
+              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onZoomIn} disabled={!hasDocument} title="Zoom In">
                 <ZoomIn size={18} />
+                <span className="text-[10px] font-bold">In</span>
               </button>
             </>
           )}
