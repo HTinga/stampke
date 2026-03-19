@@ -41,9 +41,14 @@ const FontSize = Extension.create({
   },
 });
 
+import { TextStyle as CustomTextStyle } from '../src/annotations/types';
+
 interface TiptapEditorProps {
   content: string;
   onChange: (html: string) => void;
+  isEditable?: boolean;
+  textStyle?: CustomTextStyle;
+  scale?: number;
 }
 
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({ content, onChange }) => {

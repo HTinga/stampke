@@ -1,0 +1,128 @@
+.drawing-annotation-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.drawing-annotation-layer.drawing-mode {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.annotation-canvas {
+  display: block;
+}
+
+/* Cursor styles for different tools */
+.drawing-annotation-layer[data-tool="select"] {
+  cursor: default;
+}
+
+.drawing-annotation-layer[data-tool="highlight"],
+.drawing-annotation-layer[data-tool="underline"],
+.drawing-annotation-layer[data-tool="strikeout"] {
+  cursor: text;
+}
+
+.drawing-annotation-layer[data-tool="ink"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E") 0 24, crosshair;
+}
+
+.drawing-annotation-layer[data-tool="rectangle"],
+.drawing-annotation-layer[data-tool="ellipse"] {
+  cursor: crosshair;
+}
+
+.drawing-annotation-layer[data-tool="line"],
+.drawing-annotation-layer[data-tool="arrow"] {
+  cursor: crosshair;
+}
+
+.drawing-annotation-layer[data-tool="sticky-note"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFD700' stroke='%23000' d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E") 0 24, crosshair;
+}
+
+.drawing-annotation-layer[data-tool="stamp"] {
+  cursor: copy;
+}
+
+.drawing-annotation-layer[data-tool="freetext"] {
+  cursor: text;
+}
+
+/* Pan mode - allow events to pass through for scrolling */
+.drawing-annotation-layer.pan-mode {
+  pointer-events: none;
+  cursor: grab;
+}
+
+.drawing-annotation-layer.pan-mode:active {
+  cursor: grabbing;
+}
+
+/* Drag-and-drop styles */
+.drawing-annotation-layer.drag-over {
+  pointer-events: auto;
+}
+
+.image-drop-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 102, 255, 0.15);
+  border: 3px dashed #0066ff;
+  border-radius: 8px;
+  z-index: 1000;
+  pointer-events: none;
+  animation: dropZonePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dropZonePulse {
+  0%, 100% {
+    background: rgba(0, 102, 255, 0.15);
+  }
+  50% {
+    background: rgba(0, 102, 255, 0.25);
+  }
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 32px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.drop-zone-content .drop-icon {
+  font-size: 48px;
+}
+
+.drop-zone-content .drop-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Properties panel overlay */
+.properties-panel-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+}

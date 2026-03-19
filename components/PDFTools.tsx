@@ -42,9 +42,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TextFormatToolbar } from './TextFormatToolbar';
 import * as PDFLib from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
 import TiptapEditor from './TiptapEditor';
 import { MainToolbar } from './MainToolbar';
 import { PageToolbar } from './PageToolbar';
+import { OutlinePanel } from './PDFViewer/OutlinePanel';
+import { ThumbnailPanel } from './PDFViewer/ThumbnailPanel';
 import { 
   useUIStore, 
   useSearchStore, 
@@ -86,8 +89,7 @@ import {
 } from '../src/utils/pdfUtils';
 
 // Set up PDF.js worker
-const pdfjsVersion = (pdfjsLib as any).version || '3.11.174';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface EditElement {
   id: string;
@@ -125,7 +127,7 @@ export default function PDFTools() {
     setZoomMode,
     setViewMode
   } = useUIStore();
-  const { query, results, currentResultIndex, setQuery, setResults, nextResult, prevResult, clearSearch } = useSearchStore();
+  const { query, results, currentResultIndex, setQuery, setResults, nextResult, previousResult, clearSearch } = useSearchStore();
   const { annotations, addAnnotation, deleteAnnotation, updateAnnotation, currentTool, setCurrentTool, selectedAnnotationId, selectAnnotation, getAllAnnotations } = useAnnotationStore();
   const { push: pushAnnotationHistory, undo: undoAnnotation, redo: redoAnnotation, canUndo: canUndoAnnotation, canRedo: canRedoAnnotation } = useAnnotationHistoryStore();
   const { fields, setFields, resetToOriginal: resetForm, clearForm } = useFormStore();
@@ -148,29 +150,35 @@ export default function PDFTools() {
   const [isDetectingText, setIsDetectingText] = useState(false);
   const [editingTextBlock, setEditingTextBlock] = useState<TextBlock | null>(null);
   const [tiptapContent, setTiptapContent] = useState('');
+  const [activePanel, setActivePanel] = useState<'outline' | 'thumbnails'>('thumbnails');
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Load PDF
   const loadFromFile = useCallback(async (file: File) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const data = new Uint8Array(arrayBuffer);
-    setPdfData(data);
-    setFileName(file.name);
-    setOriginalDocument(data, file.name);
-    
-    const loadingTask = pdfjsLib.getDocument({ data });
-    const pdf = await loadingTask.promise;
-    setPdfDoc(pdf);
-    setNumPages(pdf.numPages);
-    setCurrentPage(1);
-    
-    // Clear state
-    setEditElements([]);
-    clearForm();
-    clearSearch();
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const data = new Uint8Array(arrayBuffer);
+      setPdfData(data);
+      setFileName(file.name);
+      setOriginalDocument(data, file.name);
+      
+      const pdf = await loadPDFDocument(data);
+      setPdfDoc(pdf);
+      setNumPages(pdf.numPages);
+      setCurrentPage(1);
+      
+      // Clear state
+      setEditElements([]);
+      clearForm();
+      clearSearch();
+    } catch (error) {
+      console.error('Failed to load PDF:', error);
+      // You could add a toast or alert here
+    }
   }, [setOriginalDocument, clearForm, clearSearch]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,12 +221,16 @@ export default function PDFTools() {
 
       if (context) {
         await page.render({ canvasContext: context, viewport }).promise;
-        const container = containerRef.current;
+        const container = canvasContainerRef.current;
         if (container) {
           container.innerHTML = '';
           container.appendChild(canvas);
           container.style.width = `${viewport.width}px`;
           container.style.height = `${viewport.height}px`;
+        }
+        if (containerRef.current) {
+          containerRef.current.style.width = `${viewport.width}px`;
+          containerRef.current.style.height = `${viewport.height}px`;
         }
       }
     } catch (error) {
@@ -312,8 +324,7 @@ export default function PDFTools() {
     setPdfData(newData);
     pushState(newData, fileName, 'Apply Redactions');
     
-    const loadingTask = pdfjsLib.getDocument({ data: newData });
-    const newPdf = await loadingTask.promise;
+    const newPdf = await loadPDFDocument(newData);
     setPdfDoc(newPdf);
   }, [pdfData, fileName, pushState]);
 
@@ -328,8 +339,7 @@ export default function PDFTools() {
     setPdfData(newData);
     pushState(newData, fileName, 'Flatten Form');
     
-    const loadingTask = pdfjsLib.getDocument({ data: newData });
-    const newPdf = await loadingTask.promise;
+    const newPdf = await loadPDFDocument(newData);
     setPdfDoc(newPdf);
   }, [pdfData, fileName, pushState]);
 
@@ -338,7 +348,7 @@ export default function PDFTools() {
     if (original) {
       setPdfData(original.data);
       setFileName(original.fileName);
-      pdfjsLib.getDocument({ data: original.data }).promise.then(setPdfDoc);
+      loadPDFDocument(original.data).then(setPdfDoc);
       setEditElements([]);
       clearForm();
       clearSearch();
@@ -581,275 +591,6 @@ export default function PDFTools() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [numPages, setCurrentPage, toggleSearch, undoHistory, redoHistory, setCurrentTool, handleExport]);
 
-  // UI Components
-  const Sidebar = () => (
-    <motion.div 
-      initial={false}
-      animate={{ width: sidebarOpen ? 320 : 0 }}
-      className="bg-white border-r border-slate-200 overflow-hidden flex flex-col"
-    >
-      <div className="p-4 border-b border-slate-100 flex gap-2">
-        <button 
-          onClick={() => setActiveTab('pages')}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'pages' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          Pages
-        </button>
-        <button 
-          onClick={() => setActiveTab('edit')}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'edit' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          Edit
-        </button>
-        <button 
-          onClick={() => setActiveTab('actions')}
-          className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'actions' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
-        >
-          Actions
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'pages' && (
-          <div className="grid grid-cols-2 gap-4">
-            {Array.from({ length: numPages }, (_, i) => i + 1).map(pNum => (
-              <div 
-                key={pNum}
-                onClick={() => setCurrentPage(pNum)}
-                className={`relative aspect-[3/4] bg-slate-100 rounded-lg border-2 cursor-pointer transition-all ${currentPage === pNum ? 'border-blue-500 shadow-md' : 'border-transparent hover:border-slate-300'}`}
-              >
-                <div className="absolute top-2 left-2 bg-white/80 backdrop-blur px-2 py-1 rounded text-[10px] font-bold">
-                  {pNum}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {activeTab === 'edit' && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Content Tools</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <button 
-                  onClick={() => {
-                    const newElement: EditElement = {
-                      id: Math.random().toString(36).substr(2, 9),
-                      type: 'text',
-                      page: currentPage,
-                      x: 100,
-                      y: 100,
-                      width: 200,
-                      height: 50,
-                      content: 'New Text Block',
-                      fontSize: 14,
-                      color: 'rgba(0, 0, 0, 1)',
-                      boxStyle: {
-                        padding: 5
-                      }
-                    };
-                    setEditElements(prev => [...prev, newElement]);
-                    setSelectedElementId(newElement.id);
-                  }}
-                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold"
-                >
-                  <Type size={16} /> Text
-                </button>
-                <button 
-                  onClick={() => imageInputRef.current?.click()}
-                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold"
-                >
-                  <ImageIcon size={16} /> Image
-                </button>
-                <button className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold">
-                  <Square size={16} /> Whiteout
-                </button>
-                <button className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold">
-                  <Eraser size={16} /> Redact
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100">
-              <button 
-                onClick={async () => {
-                  const newData = await saveEditedPdf();
-                  if (newData) {
-                    setPdfData(newData);
-                    pushState(newData, fileName, 'Apply All Edits');
-                    const newPdf = await loadPDFDocument(newData);
-                    setPdfDoc(newPdf);
-                    setEditElements([]);
-                  }
-                }}
-                disabled={editElements.length === 0}
-                className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-30 flex items-center justify-center gap-2"
-              >
-                <Save size={18} /> Apply All Edits
-              </button>
-              <p className="mt-2 text-[10px] text-slate-400 font-bold text-center uppercase tracking-widest">
-                Permanently merge edits into PDF
-              </p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'actions' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Page Actions</h4>
-              <button 
-                onClick={handleInsertBlankPage}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-blue-50 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:text-blue-600">
-                    <Plus size={18} />
-                  </div>
-                  <span className="text-sm font-bold">Insert Blank Page</span>
-                </div>
-              </button>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button 
-                  onClick={() => handleRotatePages([currentPage], 90)}
-                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold"
-                >
-                  <RotateCw size={16} /> Rotate 90°
-                </button>
-                <button 
-                  onClick={() => handleRotatePages([currentPage], -90)}
-                  className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all text-sm font-bold"
-                >
-                  <RotateCcw size={16} /> Rotate -90°
-                </button>
-              </div>
-
-              <button 
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.pdf';
-                  input.multiple = true;
-                  input.onchange = async (e) => {
-                    const files = (e.target as HTMLInputElement).files;
-                    if (files && files.length > 0 && pdfData) {
-                      const buffers = [pdfData.buffer];
-                      for (let i = 0; i < files.length; i++) {
-                        buffers.push(await files[i].arrayBuffer());
-                      }
-                      const merged = await mergePDFs(buffers);
-                      setPdfData(merged);
-                      pushState(merged, fileName, 'Merge PDFs');
-                      const newPdf = await loadPDFDocument(merged);
-                      setPdfDoc(newPdf);
-                      setNumPages(newPdf.numPages);
-                    }
-                  };
-                  input.click();
-                }}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-blue-50 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:text-blue-600">
-                    <Layers size={18} />
-                  </div>
-                  <span className="text-sm font-bold">Merge with other PDFs</span>
-                </div>
-              </button>
-
-              <button 
-                onClick={async () => {
-                  if (!pdfData) return;
-                  const splitResults = await splitPDF(pdfData.buffer, { mode: 'every-n-pages', everyN: 1 });
-                  // For now, just download the first split page as a demo
-                  if (splitResults.length > 0) {
-                    await downloadPDF(splitResults[0], `split_page_1.pdf`);
-                  }
-                }}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-blue-50 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:text-blue-600">
-                    <FileUp size={18} />
-                  </div>
-                  <span className="text-sm font-bold">Split into Pages</span>
-                </div>
-              </button>
-
-              <button 
-                onClick={() => handleDeletePages([currentPage])}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-red-50 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm group-hover:text-red-600">
-                    <Trash2 size={18} />
-                  </div>
-                  <span className="text-sm font-bold text-red-600">Delete Current Page</span>
-                </div>
-              </button>
-            </div>
-
-
-
-            <div className="space-y-2 pt-4 border-t border-slate-100">
-              <button 
-                onClick={handleResetToOriginal}
-                className="w-full flex items-center gap-3 p-3 text-slate-500 hover:text-blue-600 transition-all text-sm font-bold"
-              >
-                <RefreshCw size={16} /> Reset to Original
-              </button>
-              <button 
-                onClick={handleCloseDocument}
-                className="w-full flex items-center gap-3 p-3 text-slate-500 hover:text-red-600 transition-all text-sm font-bold"
-              >
-                <X size={16} /> Close Document
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  if (!pdfData) {
-    return (
-      <div 
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 transition-colors duration-200 [&.drag-over]:bg-blue-50"
-      >
-        <div className="max-w-md w-full text-center space-y-8">
-          <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 rotate-3">
-            <FileText size={48} className="text-white" />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
-            <p className="text-slate-500 font-medium text-lg leading-relaxed">
-              Professional PDF editing, annotation, and manipulation. All in your browser.
-            </p>
-          </div>
-          <div className="pt-4">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileSelect} 
-              accept=".pdf" 
-              className="hidden" 
-            />
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full bg-blue-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
-            >
-              <Plus size={24} /> Select PDF File
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleMerge = useCallback(async () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -858,7 +599,7 @@ export default function PDFTools() {
     input.onchange = async (e) => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0 && pdfData) {
-        const buffers = [pdfData.buffer];
+        const buffers: (ArrayBuffer | Uint8Array)[] = [pdfData];
         for (let i = 0; i < files.length; i++) {
           buffers.push(await files[i].arrayBuffer());
         }
@@ -876,7 +617,7 @@ export default function PDFTools() {
   const handleSplit = useCallback(async () => {
     if (!pdfData) return;
     try {
-      const splitResults = await splitPDF(pdfData.buffer, { mode: 'every-n-pages', everyN: 1 });
+      const splitResults = await splitPDF(pdfData, { mode: 'every-n-pages', everyN: 1 });
       if (splitResults.length > 0) {
         await downloadPDF(splitResults[0], `split_page_1.pdf`);
       }
@@ -885,11 +626,35 @@ export default function PDFTools() {
     }
   }, [pdfData]);
 
+  const handleInsertFromFile = useCallback(async (position: number) => {
+    if (!pdfData) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const updatedPdf = await insertPagesFromPDF(pdfData, buffer, position);
+          setPdfData(updatedPdf);
+          pushState(updatedPdf, fileName, 'Insert PDF');
+          const newDoc = await loadPDFDocument(updatedPdf);
+          setPdfDoc(newDoc);
+          setNumPages(newDoc.numPages);
+        } catch (err) {
+          console.error('Failed to insert PDF:', err);
+        }
+      }
+    };
+    input.click();
+  }, [pdfData, fileName, pushState]);
+
   const handleUndo = useCallback(() => {
     const state = undoHistory();
     if (state) {
       setPdfData(state.data);
-      pdfjsLib.getDocument({ data: state.data }).promise.then(setPdfDoc);
+      loadPDFDocument(state.data).then(setPdfDoc);
     }
   }, [undoHistory]);
 
@@ -897,7 +662,7 @@ export default function PDFTools() {
     const state = redoHistory();
     if (state) {
       setPdfData(state.data);
-      pdfjsLib.getDocument({ data: state.data }).promise.then(setPdfDoc);
+      loadPDFDocument(state.data).then(setPdfDoc);
     }
   }, [redoHistory]);
 
@@ -976,6 +741,45 @@ export default function PDFTools() {
 
   const selectedElement = editElements.find(el => el.id === selectedElementId);
 
+  // UI Components
+  if (!pdfData) {
+    return (
+      <div 
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 transition-colors duration-200 [&.drag-over]:bg-blue-50"
+      >
+        <div className="max-w-md w-full text-center space-y-8">
+          <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-200 rotate-3">
+            <FileText size={48} className="text-white" />
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
+            <p className="text-slate-500 font-medium text-lg leading-relaxed">
+              Professional PDF editing, annotation, and manipulation. All in your browser.
+            </p>
+          </div>
+          <div className="pt-4">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileSelect} 
+              accept=".pdf" 
+              className="hidden" 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full bg-blue-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3"
+            >
+              <Plus size={24} /> Select PDF File
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       onDrop={handleDrop}
@@ -1006,7 +810,7 @@ export default function PDFTools() {
         onRotatePages={handleRotatePages}
         onDeletePages={handleDeletePages}
         onInsertBlankPage={handleInsertBlankPage}
-        onInsertFromFile={() => {}} // TODO: Implement insert from file
+        onInsertFromFile={handleInsertFromFile}
         onMerge={handleMerge}
         onSplit={handleSplit}
         hasDocument={!!pdfDoc}
@@ -1038,7 +842,7 @@ export default function PDFTools() {
           onRotatePages={handleRotatePages}
           onDeletePages={handleDeletePages}
           onInsertBlankPage={handleInsertBlankPage}
-          onInsertFromFile={() => {}} // TODO: Implement insert from file
+          onInsertFromFile={handleInsertFromFile}
           onMerge={handleMerge}
           onSplit={handleSplit}
           onExport={handleExport}
@@ -1056,8 +860,6 @@ export default function PDFTools() {
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        
         <div className="flex-1 relative overflow-auto bg-slate-200 p-8 flex justify-center items-start">
           <AnimatePresence>
             {searchOpen && (
@@ -1110,6 +912,9 @@ export default function PDFTools() {
               }
             }}
           >
+            {/* Dedicated container for the PDF canvas to avoid React NotFoundError */}
+            <div ref={canvasContainerRef} className="absolute inset-0 pointer-events-none" />
+
             {/* Text Formatting Toolbar */}
             <AnimatePresence>
               {selectedElement && selectedElement.type === 'text' && (

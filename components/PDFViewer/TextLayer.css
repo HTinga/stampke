@@ -1,0 +1,53 @@
+.text-layer-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+}
+
+.text-layer-container > span {
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  color: transparent;
+}
+
+/* Selection styles */
+.text-layer-container ::selection {
+  background: rgba(0, 100, 255, 0.3);
+  color: transparent;
+}
+
+.text-layer-container ::-moz-selection {
+  background: rgba(0, 100, 255, 0.3);
+  color: transparent;
+}
+
+/* Search highlight styles */
+.text-layer-container .highlight {
+  background-color: rgba(255, 255, 0, 0.4);
+  border-radius: 2px;
+  box-shadow: 0 0 1px rgba(255, 255, 0, 0.8);
+}
+
+.text-layer-container .highlight.active {
+  background-color: rgba(255, 150, 0, 0.6);
+  box-shadow: 0 0 2px rgba(255, 150, 0, 0.9);
+  z-index: 1;
+}
+
+/* Ensure highlights don't interfere with selection */
+.text-layer-container .highlight::selection {
+  background: transparent;
+}
+
+.text-layer-container .highlight::-moz-selection {
+  background: transparent;
+}

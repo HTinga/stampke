@@ -1,0 +1,114 @@
+.redaction-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.redaction-layer.redaction-mode {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.redaction-area {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.redaction-area.pending {
+  border: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.redaction-area.pending:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.redaction-area.pending.selected {
+  border: 2px solid #dc2626;
+  background: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.redaction-area.applied {
+  background: #000000;
+  border: none;
+}
+
+.redaction-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 2px;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.redaction-area.pending:hover .redaction-label,
+.redaction-area.pending.selected .redaction-label {
+  opacity: 1;
+}
+
+.redaction-controls {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 4px;
+  z-index: 10;
+}
+
+.redaction-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.redaction-btn.apply {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.redaction-btn.apply:hover {
+  background: #fecaca;
+}
+
+.redaction-btn.delete {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.redaction-btn.delete:hover {
+  background: #e5e7eb;
+}
+
+.redaction-drawing {
+  position: absolute;
+  border: 2px dashed #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  pointer-events: none;
+}

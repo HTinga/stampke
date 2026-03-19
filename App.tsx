@@ -276,18 +276,27 @@ const App: React.FC = () => {
       const url = URL.createObjectURL(svgBlob);
 
       img.onload = () => {
-        if (ctx) {
-          if (!transparent) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        try {
+          if (ctx) {
+            if (!transparent) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx.drawImage(img, 0, 0, 2000, 2000);
+            const pngUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = `${fileName}.png`;
+            link.click();
           }
-          ctx.drawImage(img, 0, 0, 2000, 2000);
-          const pngUrl = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.href = pngUrl;
-          link.download = `${fileName}.png`;
-          link.click();
+        } catch (err) {
+          console.error('Error generating PNG:', err);
+        } finally {
+          URL.revokeObjectURL(url);
         }
+      };
+      img.onerror = (err) => {
+        console.error('Error loading image for PNG:', err);
         URL.revokeObjectURL(url);
       };
       img.src = url;
@@ -304,20 +313,29 @@ const App: React.FC = () => {
       const url = URL.createObjectURL(svgBlob);
 
       img.onload = () => {
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, 2000, 2000);
-          
-          const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'px',
-            format: [2000, 2000]
-          });
-          
-          pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 2000, 2000);
-          pdf.save(`${fileName}.pdf`);
+        try {
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, 2000, 2000);
+            
+            const pdf = new jsPDF({
+              orientation: 'portrait',
+              unit: 'px',
+              format: [2000, 2000]
+            });
+            
+            pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, 2000, 2000);
+            pdf.save(`${fileName}.pdf`);
+          }
+        } catch (err) {
+          console.error('Error generating PDF:', err);
+        } finally {
+          URL.revokeObjectURL(url);
         }
+      };
+      img.onerror = (err) => {
+        console.error('Error loading image for PDF:', err);
         URL.revokeObjectURL(url);
       };
       img.src = url;

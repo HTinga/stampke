@@ -3,6 +3,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+// Polyfill global for libraries that expect it
+if (typeof window !== 'undefined' && typeof (window as any).global === 'undefined') {
+  (window as any).global = window;
+}
+
 // Fix for "Cannot set property fetch of #<Window> which has only a getter"
 if (typeof window !== 'undefined') {
   try {

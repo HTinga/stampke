@@ -11,19 +11,16 @@ import SVGPreview from './SVGPreview';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
 import { PDFDocument, rgb } from 'pdf-lib';
+import { loadPDFDocument } from '../src/utils/pdfUtils';
+import mammoth from 'mammoth';
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // @ts-ignore
-if (typeof window !== 'undefined' && 'pdfjsLib' in window) {
-  // @ts-ignore
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-} else {
-  // @ts-ignore
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-}
-
-// @ts-ignore
-const loadMammoth = () => import('https://esm.sh/mammoth@1.6.0');
+const loadMammoth = async () => mammoth;
 
 interface DigitalSignCenterProps {
   stampConfig: StampConfig;
@@ -601,8 +598,7 @@ export default function DigitalSignCenter({
       // Now render pages to images for tagging
       setProcessingStatus('Rendering Document Pages...');
       // Use a slice to prevent detachment of the original buffer if pdfjs transfers it to a worker
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
-      const pdf = await loadingTask.promise;
+      const pdf = await loadPDFDocument(pdfData.slice());
       const pagePreviews: string[] = [];
 
       for (let i = 1; i <= pdf.numPages; i++) {

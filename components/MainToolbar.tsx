@@ -43,7 +43,7 @@ import {
   useUIStore
 } from '../src/store';
 
-interface PendingImageData {
+export interface PendingImageData {
   imageData: string;
   originalWidth: number;
   originalHeight: number;

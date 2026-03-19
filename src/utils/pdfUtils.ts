@@ -1,10 +1,10 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
 import { PDFDocument, degrees, rgb, StandardFonts } from 'pdf-lib';
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
 
 // Configure PDF.js worker
-const pdfjsVersion = (pdfjsLib as any).version || '3.11.174';
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export { pdfjsLib };
 
@@ -252,7 +252,9 @@ export async function loadPDFDocument(
   try {
     const loadingTask = typeof source === 'string' 
       ? pdfjsLib.getDocument(source)
-      : pdfjsLib.getDocument({ data: source });
+      : pdfjsLib.getDocument({ 
+          data: source instanceof Uint8Array ? source.slice() : new Uint8Array(source).slice() 
+        });
     return await loadingTask.promise;
   } catch (error) {
     throw new PDFLoadError(
@@ -324,7 +326,7 @@ export async function getPage(
 // pdf-lib Utilities
 // ============================================================================
 
-export async function mergePDFs(files: ArrayBuffer[]): Promise<Uint8Array> {
+export async function mergePDFs(files: (ArrayBuffer | Uint8Array)[]): Promise<Uint8Array> {
   const mergedPdf = await PDFDocument.create();
 
   for (const file of files) {
@@ -337,7 +339,7 @@ export async function mergePDFs(files: ArrayBuffer[]): Promise<Uint8Array> {
 }
 
 export async function splitPDF(
-  source: ArrayBuffer,
+  source: ArrayBuffer | Uint8Array,
   options: SplitOptions
 ): Promise<Uint8Array[]> {
   const sourcePdf = await PDFDocument.load(source);
@@ -385,7 +387,7 @@ export async function splitPDF(
 }
 
 export async function reorderPages(
-  source: ArrayBuffer,
+  source: ArrayBuffer | Uint8Array,
   newOrder: number[]
 ): Promise<Uint8Array> {
   const sourcePdf = await PDFDocument.load(source);
@@ -399,7 +401,7 @@ export async function reorderPages(
 }
 
 export async function rotatePages(
-  source: ArrayBuffer,
+  source: ArrayBuffer | Uint8Array,
   pageNumbers: number[],
   rotationDegrees: 90 | 180 | 270 | -90
 ): Promise<Uint8Array> {
@@ -419,7 +421,7 @@ export async function rotatePages(
 }
 
 export async function deletePages(
-  source: ArrayBuffer,
+  source: ArrayBuffer | Uint8Array,
   pageNumbers: number[]
 ): Promise<Uint8Array> {
   const sourcePdf = await PDFDocument.load(source);
@@ -446,7 +448,7 @@ export async function deletePages(
 }
 
 export async function insertBlankPages(
-  source: ArrayBuffer,
+  source: ArrayBuffer | Uint8Array,
   options: InsertOptions
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(source);
@@ -468,8 +470,8 @@ export async function insertBlankPages(
 }
 
 export async function insertPagesFromPDF(
-  targetSource: ArrayBuffer,
-  insertSource: ArrayBuffer,
+  targetSource: ArrayBuffer | Uint8Array,
+  insertSource: ArrayBuffer | Uint8Array,
   position: number,
   pageNumbers?: number[]
 ): Promise<Uint8Array> {
@@ -749,7 +751,7 @@ export function findImageAtPoint(images: PDFImage[], x: number, y: number): PDFI
 // ============================================================================
 
 export async function applyRedactions(
-  pdfBytes: ArrayBuffer,
+  pdfBytes: ArrayBuffer | Uint8Array,
   redactions: RedactionArea[]
 ): Promise<{ success: boolean; appliedCount: number; modifiedPdf: Uint8Array | null; errors: string[] }> {
   const errors: string[] = [];
@@ -1022,4 +1024,22 @@ export function rotatePoint(x: number, y: number, centerX: number, centerY: numb
     x: centerX + (dx * cos - dy * sin),
     y: centerY + (dx * sin + dy * cos),
   };
+}
+
+export async function searchDocument(document: PDFDocumentProxy, query: string, options: { caseSensitive: boolean, wholeWord: boolean }) {
+  const results = [];
+  for (let i = 1; i <= document.numPages; i++) {
+    const page = await document.getPage(i);
+    const textContent = await page.getTextContent();
+    const text = (textContent.items as any[]).map((item: any) => item.str).join(' ');
+    
+    const flags = options.caseSensitive ? '' : 'i';
+    const regex = new RegExp(options.wholeWord ? `\\b${query}\\b` : query, flags);
+    
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      results.push({ pageNumber: i, text: text.substring(match.index, match.index + 20), index: match.index });
+    }
+  }
+  return results;
 }

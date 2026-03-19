@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 
 // UI Store
@@ -36,10 +35,14 @@ interface SearchState {
   query: string;
   results: any[];
   currentResultIndex: number;
+  isSearching: boolean;
+  options: { caseSensitive: boolean; wholeWord: boolean };
   setQuery: (query: string) => void;
   setResults: (results: any[]) => void;
+  setIsSearching: (isSearching: boolean) => void;
+  setOptions: (options: Partial<{ caseSensitive: boolean; wholeWord: boolean }>) => void;
   nextResult: () => void;
-  prevResult: () => void;
+  previousResult: () => void;
   clearSearch: () => void;
   getCurrentResult: () => any;
 }
@@ -48,15 +51,19 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   query: '',
   results: [],
   currentResultIndex: -1,
+  isSearching: false,
+  options: { caseSensitive: false, wholeWord: false },
   setQuery: (query) => set({ query }),
   setResults: (results) => set({ results, currentResultIndex: results.length > 0 ? 0 : -1 }),
+  setIsSearching: (isSearching) => set({ isSearching }),
+  setOptions: (options) => set((state) => ({ options: { ...state.options, ...options } })),
   nextResult: () => set((state) => ({
     currentResultIndex: state.results.length > 0 ? (state.currentResultIndex + 1) % state.results.length : -1
   })),
-  prevResult: () => set((state) => ({
+  previousResult: () => set((state) => ({
     currentResultIndex: state.results.length > 0 ? (state.currentResultIndex - 1 + state.results.length) % state.results.length : -1
   })),
-  clearSearch: () => set({ query: '', results: [], currentResultIndex: -1 }),
+  clearSearch: () => set({ query: '', results: [], currentResultIndex: -1, isSearching: false }),
   getCurrentResult: () => {
     const { results, currentResultIndex } = get();
     return currentResultIndex >= 0 ? { ...results[currentResultIndex], index: currentResultIndex } : null;
@@ -64,7 +71,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 }));
 
 // Annotation Store
-export type AnnotationTool = 'select' | 'text' | 'image' | 'drawing' | 'highlight' | 'stamp' | 'signature' | 'shape' | 'eraser';
+export type AnnotationTool = 'select' | 'text' | 'image' | 'drawing' | 'highlight' | 'stamp' | 'signature' | 'shape' | 'eraser' | 'ink' | 'rectangle' | 'ellipse' | 'line' | 'arrow' | 'pan';
 
 export interface Annotation {
   id: string;
@@ -87,6 +94,7 @@ interface AnnotationState {
   annotations: Record<string, Annotation>;
   addAnnotation: (annotation: Annotation) => void;
   deleteAnnotation: (id: string) => void;
+  removeAnnotation: (id: string) => void;
   updateAnnotation: (id: string, updates: Partial<Annotation>) => void;
   currentTool: AnnotationTool;
   setCurrentTool: (tool: AnnotationTool) => void;
@@ -105,6 +113,10 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => ({
     annotations: { ...state.annotations, [annotation.id]: annotation }
   })),
   deleteAnnotation: (id) => set((state) => {
+    const { [id]: _, ...rest } = state.annotations;
+    return { annotations: rest };
+  }),
+  removeAnnotation: (id) => set((state) => {
     const { [id]: _, ...rest } = state.annotations;
     return { annotations: rest };
   }),
@@ -150,6 +162,8 @@ interface AnnotationHistoryState {
   canRedo: () => boolean;
   clear: () => void;
   push: (entry: HistoryEntry) => void;
+  recordUpdate: (annotation: Annotation, previousState: Annotation) => void;
+  recordDelete: (annotation: Annotation) => void;
 }
 
 export const useAnnotationHistoryStore = create<AnnotationHistoryState>((set, get) => ({
@@ -182,6 +196,14 @@ export const useAnnotationHistoryStore = create<AnnotationHistoryState>((set, ge
     undoStack: [...state.undoStack, entry],
     redoStack: []
   })),
+  recordUpdate: (annotation, previousState) => set((state) => ({
+    undoStack: [...state.undoStack, { type: 'update', annotation, previousState }],
+    redoStack: []
+  })),
+  recordDelete: (annotation) => set((state) => ({
+    undoStack: [...state.undoStack, { type: 'delete', annotation }],
+    redoStack: []
+  })),
 }));
 
 // Form Store
@@ -189,9 +211,12 @@ interface FormState {
   fields: any[];
   isFormPDF: boolean;
   isDirty: boolean;
+  activeFieldId: string | null;
   setFields: (fields: any[]) => void;
   setIsFormPDF: (isFormPDF: boolean) => void;
   setIsDirty: (isDirty: boolean) => void;
+  setFieldValue: (id: string, value: any) => void;
+  setActiveField: (id: string | null) => void;
   resetToOriginal: () => void;
   clearForm: () => void;
 }
@@ -200,9 +225,15 @@ export const useFormStore = create<FormState>((set) => ({
   fields: [],
   isFormPDF: false,
   isDirty: false,
+  activeFieldId: null,
   setFields: (fields) => set({ fields, isDirty: true }),
   setIsFormPDF: (isFormPDF) => set({ isFormPDF }),
   setIsDirty: (isDirty) => set({ isDirty }),
+  setFieldValue: (id, value) => set((state) => ({
+    fields: state.fields.map(f => f.name === id ? { ...f, value } : f),
+    isDirty: true
+  })),
+  setActiveField: (id) => set({ activeFieldId: id }),
   resetToOriginal: () => set({ isDirty: false }),
   clearForm: () => set({ fields: [], isFormPDF: false, isDirty: false }),
 }));
@@ -210,22 +241,54 @@ export const useFormStore = create<FormState>((set) => ({
 // Editing Store
 export type EditingMode = 'none' | 'text' | 'image' | 'redact';
 
+import { TextBlock, TextEditOperation, PDFImage, RedactionArea } from './editing/types';
+
+// ...
+
 interface EditingState {
   mode: EditingMode;
-  redactions: any[];
+  redactions: RedactionArea[];
+  images: Map<number, PDFImage[]>;
+  textBlocks: Map<number, TextBlock[]>;
+  selectedImageId: string | null;
+  selectedBlockId: string | null;
   setMode: (mode: EditingMode) => void;
   markRedactionApplied: (id: string) => void;
   hasChanges: () => boolean;
+  setImages: (pageNumber: number, images: PDFImage[]) => void;
+  selectImage: (id: string | null) => void;
+  addImageEdit: (edit: any) => void;
+  addRedaction: (redaction: RedactionArea) => void;
+  removeRedaction: (id: string) => void;
+  setTextBlocks: (pageNumber: number, blocks: TextBlock[]) => void;
+  selectBlock: (id: string | null) => void;
+  addTextEdit: (edit: TextEditOperation) => void;
 }
 
 export const useEditingStore = create<EditingState>((set, get) => ({
   mode: 'none',
   redactions: [],
+  images: new Map(),
+  textBlocks: new Map(),
+  selectedImageId: null,
+  selectedBlockId: null,
   setMode: (mode) => set({ mode }),
   markRedactionApplied: (id) => set((state) => ({
     redactions: state.redactions.map(r => r.id === id ? { ...r, applied: true } : r)
   })),
-  hasChanges: () => get().redactions.length > 0 || get().mode !== 'none',
+  hasChanges: () => get().redactions.length > 0 || get().mode !== 'none' || get().images.size > 0 || get().textBlocks.size > 0,
+  setImages: (pageNumber, images) => set((state) => ({
+    images: new Map(state.images).set(pageNumber, images)
+  })),
+  selectImage: (id) => set({ selectedImageId: id }),
+  addImageEdit: (edit) => {}, // Implement if needed
+  addRedaction: (redaction) => set((state) => ({ redactions: [...state.redactions, redaction] })),
+  removeRedaction: (id) => set((state) => ({ redactions: state.redactions.filter(r => r.id !== id) })),
+  setTextBlocks: (pageNumber, blocks) => set((state) => ({
+    textBlocks: new Map(state.textBlocks).set(pageNumber, blocks)
+  })),
+  selectBlock: (id) => set({ selectedBlockId: id }),
+  addTextEdit: (edit) => {}, // Implement if needed
 }));
 
 // History Store
