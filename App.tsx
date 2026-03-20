@@ -43,9 +43,11 @@ import SVGPreview from './components/SVGPreview';
 import TemplateLibrary from './components/TemplateLibrary';
 import EditorControls from './components/EditorControls';
 import DigitalSignCenter from './components/DigitalSignCenter';
+import DocuSealSignCenter from './components/esign/DocuSealSignCenter';
 import PDFTools from './components/PDFTools';
 import StampApplier from './components/StampApplier';
 import QRTracker from './components/QRTracker';
+import EmployeeQRTracker from './components/hr/EmployeeQRTracker';
 import SocialHub from './components/SocialHub';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -718,7 +720,7 @@ const App: React.FC = () => {
               )}
 
               {activeTab === 'esign' && (
-                <DigitalSignCenter 
+                <DocuSealSignCenter 
                   stampConfig={stampConfig} 
                   onOpenStudio={(fieldId) => {
                     setOpenedFromSignCenter(true);
@@ -734,7 +736,7 @@ const App: React.FC = () => {
                 <PDFTools />
               )}
               {activeTab === 'qr-tracker' && (
-                <QRTracker />
+                <EmployeeQRTracker />
               )}
               {activeTab === 'social-hub' && (
                 <SocialHub />
