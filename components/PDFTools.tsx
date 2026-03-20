@@ -43,7 +43,6 @@ import { TextFormatToolbar } from './TextFormatToolbar';
 import * as PDFLib from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
-import TiptapEditor from './TiptapEditor';
 import { MainToolbar } from './MainToolbar';
 import { OutlinePanel } from './PDFViewer/OutlinePanel';
 import { ThumbnailPanel } from './PDFViewer/ThumbnailPanel';
@@ -153,10 +152,8 @@ export default function PDFTools() {
   const [showStampStudio, setShowStampStudio] = useState(false);
   const [showSignCenter, setShowSignCenter] = useState(false);
   const { config: stampConfig } = useStampStore();
-  const [editingTextBlock, setEditingTextBlock] = useState<TextBlock | null>(null);
   const [inlineEditingBlockId, setInlineEditingBlockId] = useState<string | null>(null);
   const [inlineEditContent, setInlineEditContent] = useState<string>('');
-  const [tiptapContent, setTiptapContent] = useState('');
   const [activePanel, setActivePanel] = useState<'outline' | 'thumbnails'>('thumbnails');
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1238,107 +1235,6 @@ export default function PDFTools() {
             ))}
           </div>
 
-          {/* Text Block Editor Modal */}
-          <AnimatePresence>
-            {editingTextBlock && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col"
-                >
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-600 rounded-xl text-white">
-                        <Type size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-black tracking-tight">Edit PDF Text</h3>
-                        <p className="text-xs text-slate-500 font-bold">Rich text editing with Tiptap</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setEditingTextBlock(null)}
-                      className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-
-                  <div className="p-6 flex-1">
-                    <TiptapEditor 
-                      content={tiptapContent} 
-                      onChange={setTiptapContent} 
-                    />
-                    <div className="mt-4 p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
-                      <Zap size={18} className="text-amber-600 shrink-0" />
-                      <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                        Editing existing PDF text will hide the original text and place a new text layer on top. 
-                        Formatting may vary slightly from the original document.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
-                    <button
-                      onClick={() => setEditingTextBlock(null)}
-                      className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (editingTextBlock) {
-                          // 1. Add whiteout to hide original text
-                          const whiteout: EditElement = {
-                            id: `whiteout-${editingTextBlock.id}`,
-                            type: 'whiteout',
-                            page: currentPage,
-                            x: editingTextBlock.rect.x,
-                            y: editingTextBlock.rect.y,
-                            width: editingTextBlock.rect.width,
-                            height: editingTextBlock.rect.height
-                          };
-
-                          // 2. Add new rich text element
-                          const newText: EditElement = {
-                            id: `edit-${editingTextBlock.id}`,
-                            type: 'text',
-                            page: currentPage,
-                            x: editingTextBlock.rect.x,
-                            y: editingTextBlock.rect.y,
-                            width: editingTextBlock.rect.width,
-                            height: editingTextBlock.rect.height,
-                            content: tiptapContent,
-                            richText: parseTipTapHTML(tiptapContent),
-                            fontSize: editingTextBlock.style.fontSize,
-                            color: editingTextBlock.style.fontColor || 'rgba(0,0,0,1)',
-                            boxStyle: {
-                              padding: 0
-                            }
-                          };
-
-                          const newElements = [...editElements, whiteout, newText];
-                          setEditElements(newElements);
-                          pushState(pdfData!, fileName, 'Edit Text', newElements);
-                          setEditingTextBlock(null);
-                        }
-                      }}
-                      className="px-8 py-2.5 bg-blue-600 text-white rounded-xl font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-                    >
-                      Apply Changes
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
         </>
         )}
