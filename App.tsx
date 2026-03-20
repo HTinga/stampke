@@ -46,7 +46,7 @@ const NAVIGATION_ITEMS = [
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('landing');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const { config: stampConfig, setConfig: setStampConfig } = useStampStore();
   const appStats = useAppStats();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -239,14 +239,14 @@ const App: React.FC = () => {
           {showLoginModal && (
             <div className="fixed inset-0 bg-[#020b18]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="bg-white w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                className="bg-[#041628] w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-[#0e3a72]">
                 <div className="p-16 space-y-10">
                   <div className="text-center">
                     <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6">
                       <ShieldCheck size={32} />
                     </div>
                     <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                    <p className="text-slate-500 dark:text-[#7ab3e8] font-medium text-base">
+                    <p className="text-[#365874] dark:text-[#7ab3e8] font-medium text-base">
                       {isSignUp ? 'Create your professional digital authority account.' : 'Sign in to your workspace.'}
                     </p>
                   </div>
@@ -285,7 +285,7 @@ const App: React.FC = () => {
 
   // ─── APP SHELL ────────────────────────────────────────────────────────────
   return (
-    <div className={`h-screen flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#020b18] text-[#eaf3fd]' : 'bg-[#f0f6ff] text-[#041628]'}`}>
+    <div className={`h-screen flex overflow-hidden transition-colors duration-300 bg-[#020b18] text-[#eaf3fd]`}>
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-60 flex-col bg-[#041628] border-r border-[#0e3a72] z-[100] flex-shrink-0">
@@ -303,7 +303,7 @@ const App: React.FC = () => {
                 return (
                   <button key={item.id} onClick={() => nav(item.id as ActiveTab)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${
-                      activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-slate-500 dark:text-[#7ab3e8] hover:bg-slate-50 dark:hover:bg-slate-800'
+                      activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-[#7ab3e8] hover:bg-[#062040]'
                     }`}>
                     <item.icon size={15} />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -349,7 +349,7 @@ const App: React.FC = () => {
                       if (!item) return null;
                       return (
                         <button key={item.id} onClick={() => { nav(item.id as ActiveTab); setIsSidebarOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-slate-500 dark:text-[#7ab3e8] hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-[#7ab3e8] hover:bg-[#062040]'}`}>
                           <item.icon size={15} /><span className="flex-1 text-left">{item.label}</span>
                         </button>
                       );
@@ -365,7 +365,7 @@ const App: React.FC = () => {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="h-14 border-b border-[#0e3a72] bg-[#041628]/95 backdrop-blur-xl z-50 px-5 flex items-center justify-between flex-shrink-0">
+        <header className="h-14 border-b border-[#0e3a72] bg-[#020b18]/98 backdrop-blur-xl z-50 px-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-[#0e3a72] rounded-lg"><Menu size={18} /></button>
             <div className="hidden md:flex items-center gap-2 text-[#7ab3e8] font-bold text-[10px] uppercase tracking-widest">
@@ -402,8 +402,8 @@ const App: React.FC = () => {
         </header>
 
         {/* Page */}
-        <main className="flex-1 overflow-y-auto bg-[#f0f6ff]">
-          <div className="p-5 md:p-8">
+        <main className="flex-1 overflow-y-auto bg-[#020b18]">
+          <div className="p-5 md:p-8 min-h-full">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
 
@@ -423,24 +423,24 @@ const App: React.FC = () => {
                           </div>
                           <h2 className="text-3xl font-black tracking-tighter">Stamp Studio</h2>
                         </div>
-                        <p className={`text-sm font-medium ml-11 ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Design your professional vector stamp with real-time preview</p>
+                        <p className={`text-sm font-medium ml-11 text-[#7ab3e8]`}>Design your professional vector stamp with real-time preview</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black text-[#eaf3fd] border ${isDark ? 'bg-slate-800 border-slate-700 text-[#7ab3e8]' : 'bg-[#f0f6ff] border-[#c5d8ef] text-slate-500'}`}>
+                        <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black text-[#eaf3fd] border bg-[#062040] border-[#134589] text-[#7ab3e8]`}>
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           Vector SVG · 2K PNG · PDF
                         </div>
-                        <button onClick={() => nav('dashboard')} className={`p-2 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-[#7ab3e8]' : 'hover:bg-slate-100 text-[#7ab3e8]'}`}><X size={20} /></button>
+                        <button onClick={() => nav('dashboard')} className={`p-2 rounded-xl transition-all hover:bg-[#062040] text-[#7ab3e8]`}><X size={20} /></button>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                       {/* Controls */}
                       <div className="lg:col-span-4">
-                        <div className={`rounded-3xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`}>
-                          <div className={`px-5 py-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-50 bg-slate-50/80'}`}>
+                        <div className={`rounded-3xl border overflow-hidden bg-[#041628] border-[#0e3a72]`}>
+                          <div className={`px-5 py-4 border-b border-[#0e3a72]`}>
                             <h3 className="text-sm font-black">Stamp Configuration</h3>
-                            <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Customize every detail</p>
+                            <p className={`text-xs mt-0.5 text-[#365874]`}>Customize every detail</p>
                           </div>
                           <div className="p-4 overflow-y-auto max-h-[calc(100vh-260px)]">
                             <EditorControls config={stampConfig} onChange={(u) => setStampConfig(prev => ({ ...prev, ...u }))} isLoggedIn={isLoggedIn} onSaveTemplate={handleSaveTemplate} />
@@ -451,13 +451,13 @@ const App: React.FC = () => {
                       {/* Preview + Actions */}
                       <div className="lg:col-span-8 flex flex-col gap-5">
                         {/* Canvas */}
-                        <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`} style={{minHeight:'380px'}}>
+                        <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 bg-[#041628] border-[#0e3a72]`} style={{minHeight:'380px'}}>
                           <div className="absolute top-4 left-4 flex gap-2">
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-blue-50 text-[#134589] border-blue-100'}`}>Vector SVG</span>
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-slate-800 text-[#7ab3e8] border-slate-700' : 'bg-slate-50 text-[#7ab3e8] border-slate-100'}`}>High Resolution</span>
+                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-[#062040] text-[#4d93d9] border-[#0e3a72]`}>Vector SVG</span>
+                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-[#062040] text-[#7ab3e8] border-[#134589]`}>High Resolution</span>
                           </div>
                           <div className="w-full max-w-xs aspect-square flex items-center justify-center relative">
-                            <div className={`absolute inset-0 rounded-3xl border-2 border-dashed ${isDark ? 'border-slate-700' : 'border-slate-200'}`} />
+                            <div className={`absolute inset-0 rounded-3xl border-2 border-dashed border-[#134589]`} />
                             <div className="relative z-10 p-8 w-full h-full flex items-center justify-center">
                               <SVGPreview config={stampConfig} ref={svgRef} onUpdateConfig={(u) => setStampConfig(prev => ({ ...prev, ...u }))} />
                             </div>
@@ -465,12 +465,12 @@ const App: React.FC = () => {
                         </div>
 
                         {/* Download */}
-                        <div className={`rounded-2xl border p-5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`}>
+                        <div className={`rounded-2xl border p-5 bg-[#041628] border-[#0e3a72]`}>
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Export Stamp</h4>
+                            <h4 className={`text-[10px] font-black uppercase tracking-widest text-[#365874]`}>Export Stamp</h4>
                             <div className="flex items-center gap-1.5">
                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>Ready</span>
+                              <span className={`text-[9px] font-black uppercase tracking-widest text-[#224260]`}>Ready</span>
                             </div>
                           </div>
                           <div className="grid grid-cols-3 gap-3">
@@ -480,10 +480,10 @@ const App: React.FC = () => {
                               { format: 'pdf' as const, Icon: FileIcon, label: 'PDF', desc: 'Print', hover: 'hover:border-orange-400 text-orange-600' },
                             ].map(({ format, Icon, label, desc, hover }) => (
                               <button key={format} onClick={() => downloadStamp(format)}
-                                className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all group ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-transparent'} ${hover}`}>
+                                className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all group bg-[#062040] border-[#134589] ${hover}`}>
                                 <Icon size={22} className="group-hover:scale-110 transition-transform" />
                                 <span className="text-[11px] font-black uppercase">{label}</span>
-                                <span className={`text-[9px] font-bold ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>{desc}</span>
+                                <span className={`text-[9px] font-bold text-[#224260]`}>{desc}</span>
                               </button>
                             ))}
                           </div>
@@ -496,12 +496,12 @@ const App: React.FC = () => {
                             <FileText size={18} /> Apply to PDF
                           </button>
                           <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp designed`); setOpenedFromSignCenter(true); nav('esign'); }}
-                            className={`flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 shadow-lg ${isDark ? 'bg-slate-800 border border-slate-700 text-white hover:bg-slate-700' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                            className={`flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-[#062040] border border-[#134589] text-white hover:bg-[#0a2d5a]`}>
                             <Layers size={18} className="text-blue-400" /> Bulk Stamp
                           </button>
                         </div>
                         <button onClick={() => nav('convert')}
-                          className={`w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 border-2 ${isDark ? 'bg-slate-800/50 border-slate-700 text-white hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                          className={`w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 border-2 bg-[#062040]/50 border-[#134589] text-white hover:bg-[#062040]`}>
                           <Camera size={18} className="text-[#134589]" /> AI Scan & Vectorize Existing Stamp
                         </button>
                         {openedFromSignCenter && (
@@ -524,7 +524,7 @@ const App: React.FC = () => {
                 {activeTab === 'templates' && (
                   <div className="max-w-7xl mx-auto py-8">
                     <h2 className="text-3xl font-black tracking-tighter mb-1">Authentic Templates</h2>
-                    <p className={`font-medium mb-10 ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Professionally captured from real Kenyan rubber stamp samples.</p>
+                    <p className={`font-medium mb-10 text-[#7ab3e8]`}>Professionally captured from real Kenyan rubber stamp samples.</p>
                     <TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} />
                   </div>
                 )}
@@ -535,15 +535,15 @@ const App: React.FC = () => {
                       <Camera size={40} />
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">AI Stamp Digitizer</h2>
-                    <p className={`text-lg font-medium mb-12 max-w-lg mx-auto ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Photograph your old rubber stamp — our AI recreates it as a perfect digital vector in seconds.</p>
+                    <p className={`text-lg font-medium mb-12 max-w-lg mx-auto text-[#7ab3e8]`}>Photograph your old rubber stamp — our AI recreates it as a perfect digital vector in seconds.</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <label className={`group relative rounded-3xl border-4 border-dashed p-12 text-center hover:border-blue-400 transition-all cursor-pointer ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
+                      <label className={`group relative rounded-3xl border-4 border-dashed p-12 text-center hover:border-blue-400 transition-all cursor-pointer bg-[#041628] border-[#134589]`}>
                         <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                        <ImageIcon size={40} className={`mx-auto mb-4 transition-colors group-hover:text-blue-500 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
+                        <ImageIcon size={40} className={`mx-auto mb-4 transition-colors group-hover:text-blue-500 text-[#224260]`} />
                         <p className="text-xl font-black mb-1">Upload Photo</p>
-                        <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Select from gallery</p>
+                        <p className={`text-xs font-bold uppercase tracking-widest text-[#365874]`}>Select from gallery</p>
                       </label>
-                      <label className="group relative bg-[#041628] dark:bg-slate-800 text-white rounded-3xl p-12 text-center cursor-pointer overflow-hidden border-4 border-transparent hover:border-blue-500 transition-all">
+                      <label className="group relative bg-[#041628] dark:bg-[#062040] text-white rounded-3xl p-12 text-center cursor-pointer overflow-hidden border-4 border-transparent hover:border-blue-500 transition-all">
                         <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <Camera size={40} className="mx-auto text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
                         <p className="text-xl font-black mb-1">Live Camera</p>
@@ -563,13 +563,13 @@ const App: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <footer className={`border-t py-8 px-6 mt-12 ${isDark ? 'bg-[#020b18] border-[#0e3a72]' : 'bg-[#f0f6ff] border-[#c5d8ef]'}`}>
+          <footer className={`border-t py-8 px-6 mt-12 bg-[#020b18] border-[#0e3a72]`}>
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="bg-[#134589] text-white p-1.5 rounded-lg"><Plus size={14} /></div>
                 <span className="font-black text-base tracking-tighter">Tomo</span>
               </div>
-              <p className={`font-black text-[9px] uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>© 2024 JijiTechy Innovations · LSK Standards Applied</p>
+              <p className={`font-black text-[9px] uppercase tracking-widest text-[#224260]`}>© 2024 JijiTechy Innovations · LSK Standards Applied</p>
               <div className="flex gap-4">
                 <Twitter size={16} className="text-[#7ab3e8] hover:text-blue-400 cursor-pointer transition-colors" />
                 <Linkedin size={16} className="text-[#7ab3e8] hover:text-[#134589] cursor-pointer transition-colors" />
@@ -585,12 +585,12 @@ const App: React.FC = () => {
         {showLoginModal && (
           <div className="fixed inset-0 bg-[#020b18]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-white w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+              className="bg-[#041628] w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-[#0e3a72]">
               <div className="p-16 space-y-10">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6"><ShieldCheck size={32} /></div>
                   <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                  <p className="text-slate-500 dark:text-[#7ab3e8] font-medium">{isSignUp ? 'Create your account.' : 'Sign in to your workspace.'}</p>
+                  <p className="text-[#365874] dark:text-[#7ab3e8] font-medium">{isSignUp ? 'Create your account.' : 'Sign in to your workspace.'}</p>
                 </div>
                 <form onSubmit={handleDemoLogin} className="space-y-5">
                   <div className="space-y-2">
