@@ -499,7 +499,7 @@ export function MainToolbar({
                     <span className="text-[10px] font-bold">Dropdown</span>
                   </button>
                   <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('signature')} disabled={!hasDocument} title="Signature Field">
-                    <PenTool size={18} />
+                    <Pen size={18} />
                     <span className="text-[10px] font-bold">Signature</span>
                   </button>
                   <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('stamp')} disabled={!hasDocument} title="Stamp Field">

@@ -4,7 +4,7 @@ import {
   Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
   Eraser, MousePointer2, Loader2, Stamp, Image as ImageIcon, 
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
-  FileDown, Share2, Mail, Edit3, Check, Layers, Layout, ChevronLeft
+  FileDown, Share2, Mail, Edit3, Check, Layers, Layout, ChevronLeft, Settings
 } from 'lucide-react';
 import { Envelope, SignField, FieldType, BulkDocument, StampConfig, SignerInfo } from '../../types';
 import DocuSealDashboard from './DocuSealDashboard';

@@ -3,7 +3,7 @@ import {
   QrCode, MapPin, Users, Calendar, CheckCircle, 
   Clock, Shield, AlertTriangle, ChevronRight, 
   Download, Filter, Search, MoreVertical, Map as MapIcon,
-  UserCheck, UserX, Activity
+  UserCheck, UserX, Activity, Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
