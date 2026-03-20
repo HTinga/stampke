@@ -154,7 +154,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
            <Layout size={14} /> Typography & Shape
         </h3>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Font Family</label>
             <select 
@@ -220,7 +220,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="flex justify-between">
                 <label className="text-[10px] font-bold text-slate-500">Stretch X</label>
@@ -326,7 +326,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     className="w-3 h-3 rounded text-blue-600 border-slate-300"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <div className="flex justify-between">
                       <label className="text-[10px] font-bold text-slate-500">Offset</label>
@@ -352,7 +352,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500">Color</label>
                     <div className="flex gap-1 flex-wrap">
@@ -435,7 +435,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
            <PenTool size={14} /> Status Text (Overlay)
         </h3>
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {['APPROVED', 'RECEIVED', 'PAID', 'URGENT', 'COPY', 'VOID'].map(status => (
               <button
                 key={status}
@@ -467,7 +467,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 title="Status Color"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Font</label>
                 <select 
@@ -596,7 +596,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl space-y-4">
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inner Text Customization</h4>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Inner Top</label>
@@ -908,7 +908,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           </div>
           {config.showShadow && (
             <div className="space-y-3 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Color</label>
                   <input 
@@ -928,7 +928,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">Offset X</label>
                   <input 
@@ -1000,7 +1000,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     onChange={(e) => updateCustomElement(el.id, { content: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <select 
                       value={el.fontFamily || config.fontFamily}
                       onChange={(e) => updateCustomElement(el.id, { fontFamily: e.target.value })}
@@ -1079,7 +1079,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <label className="text-[9px] font-bold text-slate-500 uppercase">Rotation</label>
@@ -1150,7 +1150,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
               <input 
                 type="checkbox" 
@@ -1171,7 +1171,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             </label>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="flex items-center gap-2 p-3 bg-white dark:bg-slate-900 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-slate-700">
               <input 
                 type="checkbox" 
@@ -1243,7 +1243,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     </button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <label className="text-[8px] font-bold text-slate-500 uppercase">X Off</label>
                       <input 
@@ -1289,7 +1289,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
              <Eye size={14} /> Preview Background
           </h3>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
               { id: 'default', label: 'Default', icon: MousePointer },
               { id: 'white', label: 'White', icon: ImageIcon },

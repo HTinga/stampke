@@ -791,7 +791,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
         <svg
           ref={ref}
           viewBox={viewBox}
-          className="w-full h-full max-w-[500px] transition-all duration-300 drop-shadow-sm"
+          className="w-full h-full max-w-full md:max-w-[500px] transition-all duration-300 drop-shadow-sm"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>

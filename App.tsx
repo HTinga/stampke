@@ -533,8 +533,8 @@ const App: React.FC = () => {
                     </button>
                   </div>
                   
-                  <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    <div className="lg:col-span-4 space-y-8 overflow-y-auto pr-4">
+                  <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
+                    <div className="lg:col-span-4 space-y-6 md:space-y-8 overflow-y-auto px-4 md:pr-4">
                       <EditorControls 
                         config={stampConfig} 
                         onChange={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))} 
@@ -542,22 +542,22 @@ const App: React.FC = () => {
                         onSaveTemplate={handleSaveTemplate}
                       />
                     </div>
-                    <div className="lg:col-span-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-[56px] border border-slate-100 dark:border-slate-800 p-12 shadow-sm relative group">
-                      <div className="absolute top-8 left-8 flex gap-3">
+                    <div className="lg:col-span-8 flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl md:rounded-[56px] border border-slate-100 dark:border-slate-800 p-6 md:p-12 shadow-sm relative group">
+                      <div className="absolute top-4 left-4 md:top-8 md:left-8 flex gap-3">
                         <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">Vector SVG</div>
                         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">High Res</div>
                       </div>
-                      <div className="relative z-10 w-full max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 group-hover:border-blue-400 transition-all">
+                      <div className="relative z-10 w-full max-w-full md:max-w-md aspect-square flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-3xl md:rounded-[48px] border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 md:p-12 group-hover:border-blue-400 transition-all">
                         <SVGPreview 
                           config={stampConfig} 
                           ref={svgRef} 
                           onUpdateConfig={(updates) => setStampConfig(prev => ({ ...prev, ...updates }))}
                         />
                       </div>
-                      <div className="mt-12 w-full max-w-md space-y-4">
+                      <div className="mt-8 md:mt-12 w-full max-w-full md:max-w-md space-y-4">
                         <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[32px] border border-slate-100 dark:border-slate-700">
                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Download Options</h4>
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <button 
                               onClick={() => downloadStamp('svg')}
                               className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-400 transition-all group"
@@ -760,16 +760,16 @@ const App: React.FC = () => {
                   <div className="bg-blue-600 text-white w-24 h-24 rounded-[36px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-blue-200">
                     <Camera size={48} />
                   </div>
-                  <h2 className="text-5xl font-black tracking-tighter mb-6">AI Stamp Digitize</h2>
+                  <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-6">AI Stamp Digitize</h2>
                   <p className="text-xl text-slate-500 dark:text-slate-400 font-medium mb-12">Capture a photo of your old rubber stamp to recreate it digitally.</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="bg-white dark:bg-slate-900 border-4 border-dashed border-slate-100 dark:border-slate-800 rounded-[48px] p-16 text-center group hover:border-blue-400 transition-all cursor-pointer relative">
+                    <div className="bg-white dark:bg-slate-900 border-4 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl md:rounded-[48px] p-8 md:p-16 text-center group hover:border-blue-400 transition-all cursor-pointer relative">
                       <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                       <ImageIcon size={48} className="mx-auto text-slate-200 mb-4 group-hover:text-blue-500 transition-all" />
                       <p className="text-2xl font-black">Upload Photo</p>
                       <p className="text-sm text-slate-400 mt-2 font-bold uppercase tracking-widest">Select from gallery</p>
                     </div>
-                    <div className="bg-slate-900 text-white rounded-[48px] p-16 text-center group hover:border-blue-500 transition-all cursor-pointer relative overflow-hidden">
+                    <div className="bg-slate-900 text-white rounded-3xl md:rounded-[48px] p-8 md:p-16 text-center group hover:border-blue-500 transition-all cursor-pointer relative overflow-hidden">
                       <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                       <Camera size={48} className="mx-auto text-blue-500 mb-4 group-hover:scale-125 transition-transform" />
                       <p className="text-2xl font-black">Live Camera</p>

@@ -154,6 +154,8 @@ export default function PDFTools() {
   const [showSignCenter, setShowSignCenter] = useState(false);
   const { config: stampConfig } = useStampStore();
   const [editingTextBlock, setEditingTextBlock] = useState<TextBlock | null>(null);
+  const [inlineEditingBlockId, setInlineEditingBlockId] = useState<string | null>(null);
+  const [inlineEditContent, setInlineEditContent] = useState<string>('');
   const [tiptapContent, setTiptapContent] = useState('');
   const [activePanel, setActivePanel] = useState<'outline' | 'thumbnails'>('thumbnails');
 
@@ -256,6 +258,44 @@ export default function PDFTools() {
       setIsDetectingText(false);
     }
   }, [pdfDoc]);
+
+  const handleSaveInlineEdit = useCallback((block: TextBlock) => {
+    if (!pdfData || !inlineEditContent.trim()) {
+      setInlineEditingBlockId(null);
+      return;
+    }
+
+    // Create whiteout to hide original text
+    const whiteout: EditElement = {
+      id: `whiteout-${block.id}`,
+      type: 'whiteout',
+      page: currentPage,
+      x: block.rect.x,
+      y: block.rect.y,
+      width: block.rect.width,
+      height: block.rect.height
+    };
+
+    // Create new text element
+    const newText: EditElement = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      page: currentPage,
+      x: block.rect.x,
+      y: block.rect.y,
+      width: block.rect.width,
+      height: block.rect.height,
+      content: inlineEditContent,
+      fontSize: 12,
+      fontFamily: 'Arial, sans-serif',
+      color: '#000000'
+    };
+
+    const newElements = [...editElements, whiteout, newText];
+    setEditElements(newElements);
+    pushState(pdfData, fileName, 'Edit Text', newElements);
+    setInlineEditingBlockId(null);
+  }, [pdfData, currentPage, editElements, fileName, pushState, inlineEditContent]);
 
   // Rendering
   useEffect(() => {
@@ -1007,33 +1047,84 @@ export default function PDFTools() {
             )}
             {/* Text Block Overlays (for editing existing text) */}
             {textBlocks.map(block => (
-              <div
-                key={block.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingTextBlock(block);
-                  setTiptapContent(segmentsToTipTapHTML(block.lines.flatMap(l => l.items.map(i => ({
-                    text: i.str,
-                    style: {
-                      fontSize: i.fontSize,
-                      fontFamily: i.fontName,
-                      color: 'rgba(0,0,0,1)'
-                    }
-                  })))));
-                }}
-                className="absolute border border-transparent hover:border-blue-400 hover:bg-blue-400/10 cursor-text transition-all group"
-                style={{
-                  left: block.rect.x * zoom,
-                  top: block.rect.y * zoom,
-                  width: block.rect.width * zoom,
-                  height: block.rect.height * zoom,
-                  zIndex: 5
-                }}
-              >
-                <div className="hidden group-hover:flex absolute -top-6 left-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded shadow-lg whitespace-nowrap items-center gap-1">
-                  <Type size={10} /> Edit Text
-                </div>
-              </div>
+              <React.Fragment key={block.id}>
+                {/* Inline Editor */}
+                {inlineEditingBlockId === block.id ? (
+                  <div
+                    className="absolute border-2 border-blue-500 bg-white shadow-xl rounded z-50"
+                    style={{
+                      left: block.rect.x * zoom,
+                      top: block.rect.y * zoom,
+                      width: Math.max(block.rect.width * zoom, 200),
+                      minHeight: Math.max(block.rect.height * zoom, 60),
+                      zIndex: 100
+                    }}
+                  >
+                    <div className="p-2 flex flex-col h-full">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-blue-600">Editing Text</span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleSaveInlineEdit(block)}
+                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setInlineEditingBlockId(null)}
+                            className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                      <textarea
+                        value={inlineEditContent}
+                        onChange={(e) => setInlineEditContent(e.target.value)}
+                        className="flex-1 w-full p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            handleSaveInlineEdit(block);
+                          }
+                          if (e.key === 'Escape') {
+                            setInlineEditingBlockId(null);
+                          }
+                        }}
+                      />
+                      <div className="mt-2 text-xs text-gray-500">
+                        Press Ctrl+Enter to save, Esc to cancel
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Normal text block overlay */
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Start inline editing instead of opening modal
+                      setInlineEditingBlockId(block.id);
+                      // Extract text from block
+                      const blockText = block.lines.map(line => 
+                        line.items.map(item => item.str).join('')
+                      ).join('\n');
+                      setInlineEditContent(blockText);
+                    }}
+                    className="absolute border border-transparent hover:border-blue-400 hover:bg-blue-400/10 cursor-text transition-all group"
+                    style={{
+                      left: block.rect.x * zoom,
+                      top: block.rect.y * zoom,
+                      width: block.rect.width * zoom,
+                      height: block.rect.height * zoom,
+                      zIndex: 5
+                    }}
+                  >
+                    <div className="hidden group-hover:flex absolute -top-6 left-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded shadow-lg whitespace-nowrap items-center gap-1">
+                      <Type size={10} /> Edit Text
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
 
             {/* Edit Elements */}
