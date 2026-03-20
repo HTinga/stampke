@@ -151,26 +151,26 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       )}
       
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Layout size={14} /> Typography & Shape
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Font Family</label>
+            <label className="text-xs font-bold text-white">Font Family</label>
             <select 
               value={config.fontFamily}
               onChange={(e) => onChange({ fontFamily: e.target.value })}
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb]"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb]"
             >
               {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Shape</label>
+            <label className="text-xs font-bold text-white">Shape</label>
             <select 
               value={config.shape}
               onChange={(e) => onChange({ shape: e.target.value as StampShape })}
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb]"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb]"
             >
               <option value={StampShape.ROUND}>Round</option>
               <option value={StampShape.OVAL}>Oval</option>
@@ -183,8 +183,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Base Font Size</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{config.fontSize}px</span>
+              <label className="text-xs font-bold text-white">Base Font Size</label>
+              <span className="text-[10px] font-bold text-white">{config.fontSize}px</span>
             </div>
             <input 
               type="range" min="10" max="60" step="1"
@@ -196,8 +196,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Letter Spacing</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{config.letterSpacing || 0}px</span>
+              <label className="text-xs font-bold text-white">Letter Spacing</label>
+              <span className="text-[10px] font-bold text-white">{config.letterSpacing || 0}px</span>
             </div>
             <input 
               type="range" min="-5" max="20" step="0.5"
@@ -209,8 +209,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Letter Stretch</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{Math.round(config.letterStretch * 100)}%</span>
+              <label className="text-xs font-bold text-white">Letter Stretch</label>
+              <span className="text-[10px] font-bold text-white">{Math.round(config.letterStretch * 100)}%</span>
             </div>
             <input 
               type="range" min="0.5" max="2" step="0.05"
@@ -223,8 +223,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <div className="flex justify-between">
-                <label className="text-[10px] font-bold text-[#8b949e]">Stretch X</label>
-                <span className="text-[10px] font-bold text-[#8b949e]">{Math.round((config.stretchX || 1) * 100)}%</span>
+                <label className="text-[10px] font-bold text-white">Stretch X</label>
+                <span className="text-[10px] font-bold text-white">{Math.round((config.stretchX || 1) * 100)}%</span>
               </div>
               <input 
                 type="range" min="0.5" max="2" step="0.05"
@@ -235,8 +235,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             </div>
             <div className="space-y-1">
               <div className="flex justify-between">
-                <label className="text-[10px] font-bold text-[#8b949e]">Stretch Y</label>
-                <span className="text-[10px] font-bold text-[#8b949e]">{Math.round((config.stretchY || 1) * 100)}%</span>
+                <label className="text-[10px] font-bold text-white">Stretch Y</label>
+                <span className="text-[10px] font-bold text-white">{Math.round((config.stretchY || 1) * 100)}%</span>
               </div>
               <input 
                 type="range" min="0.5" max="2" step="0.05"
@@ -250,14 +250,14 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Sliders size={14} /> Border & Layout
         </h3>
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Border Thickness</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{config.borderWidth}px</span>
+              <label className="text-xs font-bold text-white">Border Thickness</label>
+              <span className="text-[10px] font-bold text-white">{config.borderWidth}px</span>
             </div>
             <input 
               type="range" min="1" max="15" step="0.5"
@@ -268,7 +268,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Border Style</label>
+            <label className="text-xs font-bold text-white">Border Style</label>
             <div className="flex bg-[#21262d] dark:bg-[#21262d] p-1 rounded-lg">
               <button
                 onClick={() => onChange({ borderStyle: BorderStyle.SINGLE })}
@@ -293,8 +293,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Border Offset</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{config.borderOffset}px</span>
+              <label className="text-xs font-bold text-white">Border Offset</label>
+              <span className="text-[10px] font-bold text-white">{config.borderOffset}px</span>
             </div>
             <input 
               type="range" min="-20" max="50" step="1"
@@ -307,7 +307,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           {/* Double Border Controls */}
           <div className="p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Double Border</label>
+              <label className="text-[10px] font-black text-white uppercase tracking-widest">Double Border</label>
               <input 
                 type="checkbox" 
                 checked={config.doubleBorder} 
@@ -318,7 +318,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             {config.doubleBorder && (
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Outer Border</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Outer Border</label>
                   <input 
                     type="checkbox" 
                     checked={config.doubleBorderIsOuter} 
@@ -329,8 +329,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <div className="flex justify-between">
-                      <label className="text-[10px] font-bold text-[#8b949e]">Offset</label>
-                      <span className="text-[10px] font-bold text-[#8b949e]">{config.doubleBorderOffset}px</span>
+                      <label className="text-[10px] font-bold text-white">Offset</label>
+                      <span className="text-[10px] font-bold text-white">{config.doubleBorderOffset}px</span>
                     </div>
                     <input 
                       type="range" min="2" max="20" step="1"
@@ -341,8 +341,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between">
-                      <label className="text-[10px] font-bold text-[#8b949e]">Thickness</label>
-                      <span className="text-[10px] font-bold text-[#8b949e]">{config.doubleBorderThickness}px</span>
+                      <label className="text-[10px] font-bold text-white">Thickness</label>
+                      <span className="text-[10px] font-bold text-white">{config.doubleBorderThickness}px</span>
                     </div>
                     <input 
                       type="range" min="0.5" max="10" step="0.5"
@@ -354,7 +354,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-[#8b949e]">Color</label>
+                    <label className="text-[10px] font-bold text-white">Color</label>
                     <div className="flex gap-1 flex-wrap">
                       {COLORS.map(color => (
                         <button
@@ -367,7 +367,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-[#8b949e]">Style</label>
+                    <label className="text-[10px] font-bold text-white">Style</label>
                     <div className="flex bg-[#21262d] dark:bg-[#21262d] p-0.5 rounded-md">
                       <button
                         onClick={() => onChange({ doubleBorderStyle: BorderStyle.SINGLE })}
@@ -390,7 +390,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Inner Line</label>
+              <label className="text-[10px] font-black text-white uppercase tracking-widest">Inner Line</label>
               <input 
                 type="checkbox" 
                 checked={config.showInnerLine} 
@@ -402,8 +402,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               <div className="space-y-3 pt-2">
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <label className="text-[10px] font-bold text-[#8b949e]">Offset</label>
-                    <span className="text-[10px] font-bold text-[#8b949e]">{config.innerLineOffset}px</span>
+                    <label className="text-[10px] font-bold text-white">Offset</label>
+                    <span className="text-[10px] font-bold text-white">{config.innerLineOffset}px</span>
                   </div>
                   <input 
                     type="range" min="5" max="50" step="1"
@@ -414,8 +414,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <label className="text-[10px] font-bold text-[#8b949e]">Thickness</label>
-                    <span className="text-[10px] font-bold text-[#8b949e]">{config.innerLineWidth}px</span>
+                    <label className="text-[10px] font-bold text-white">Thickness</label>
+                    <span className="text-[10px] font-bold text-white">{config.innerLineWidth}px</span>
                   </div>
                   <input 
                     type="range" min="0.5" max="10" step="0.5"
@@ -431,7 +431,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <PenTool size={14} /> Status Text (Overlay)
         </h3>
         <div className="space-y-4">
@@ -457,7 +457,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 value={config.statusText}
                 onChange={(e) => onChange({ statusText: e.target.value.toUpperCase() })}
                 placeholder="CUSTOM STATUS"
-                className="flex-1 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb] font-black italic"
+                className="flex-1 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb] font-black italic"
               />
               <input 
                 type="color" 
@@ -469,23 +469,23 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8b949e] uppercase">Font</label>
+                <label className="text-[10px] font-bold text-white uppercase">Font</label>
                 <select 
                   value={config.statusFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ statusFontFamily: e.target.value })}
-                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-[10px] text-black outline-none"
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-[10px] text-white font-bold outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-[#8b949e] uppercase">Size</label>
+                <label className="text-[10px] font-bold text-white uppercase">Size</label>
                 <div className="flex items-center gap-1">
                   <input 
                     type="number"
                     value={config.statusFontSize || 40}
                     onChange={(e) => onChange({ statusFontSize: parseInt(e.target.value) })}
-                    className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-[10px] text-black outline-none"
+                    className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-[10px] text-white font-bold outline-none"
                   />
                   <button
                     onClick={() => onChange({ statusBold: !config.statusBold })}
@@ -502,13 +502,13 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Type size={14} /> Text Content & Styling
         </h3>
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Main Header</label>
+              <label className="text-xs font-bold text-white">Main Header</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="color" 
@@ -518,7 +518,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   title="Text Color"
                 />
                 <div className="flex items-center gap-1 bg-[#21262d] dark:bg-[#21262d] px-1.5 py-0.5 rounded">
-                  <span className="text-[8px] font-bold text-[#8b949e] uppercase">Size</span>
+                  <span className="text-[8px] font-bold text-white uppercase">Size</span>
                   <input 
                     type="number"
                     value={config.primaryFontSize || config.fontSize}
@@ -536,7 +536,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 <select 
                   value={config.primaryFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ primaryFontFamily: e.target.value })}
-                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
@@ -546,13 +546,13 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               type="text"
               value={config.primaryText}
               onChange={(e) => onChange({ primaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb] font-medium"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb] font-medium"
             />
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Sub Header (Bottom)</label>
+              <label className="text-xs font-bold text-white">Sub Header (Bottom)</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="color" 
@@ -562,7 +562,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   title="Text Color"
                 />
                 <div className="flex items-center gap-1 bg-[#21262d] dark:bg-[#21262d] px-1.5 py-0.5 rounded">
-                  <span className="text-[8px] font-bold text-[#8b949e] uppercase">Size</span>
+                  <span className="text-[8px] font-bold text-white uppercase">Size</span>
                   <input 
                     type="number"
                     value={config.secondaryFontSize || Math.round(config.fontSize * 0.75)}
@@ -580,7 +580,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 <select 
                   value={config.secondaryFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ secondaryFontFamily: e.target.value })}
-                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
@@ -590,16 +590,16 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               type="text"
               value={config.secondaryText}
               onChange={(e) => onChange({ secondaryText: e.target.value.toUpperCase() })}
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb] font-medium"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb] font-medium"
             />
           </div>
 
           <div className="p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl space-y-4">
-            <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Inner Text Customization</h4>
+            <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Inner Text Customization</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Inner Top</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Inner Top</label>
                   <div className="flex items-center gap-1">
                     <input 
                       type="color" 
@@ -624,7 +624,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     <select 
                       value={config.innerTopFontFamily || config.fontFamily}
                       onChange={(e) => onChange({ innerTopFontFamily: e.target.value })}
-                      className="text-[8px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                      className="text-[8px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                     >
                       {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                     </select>
@@ -634,12 +634,12 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   type="text"
                   value={config.innerTopText}
                   onChange={(e) => onChange({ innerTopText: e.target.value.toUpperCase() })}
-                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-black outline-none focus:ring-2 focus:ring-[#1f6feb]"
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb]"
                 />
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Inner Bottom</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Inner Bottom</label>
                   <div className="flex items-center gap-1">
                     <input 
                       type="color" 
@@ -664,7 +664,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     <select 
                       value={config.innerBottomFontFamily || config.fontFamily}
                       onChange={(e) => onChange({ innerBottomFontFamily: e.target.value })}
-                      className="text-[8px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                      className="text-[8px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                     >
                       {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                     </select>
@@ -674,14 +674,14 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   type="text"
                   value={config.innerBottomText}
                   onChange={(e) => onChange({ innerBottomText: e.target.value.toUpperCase() })}
-                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-black outline-none focus:ring-2 focus:ring-[#1f6feb]"
+                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb]"
                 />
               </div>
             </div>
             
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Inner Text Color</label>
+                <label className="text-xs font-bold text-white">Inner Text Color</label>
                 <input 
                   type="color" 
                   value={config.innerTextColor || config.borderColor}
@@ -691,8 +691,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Inner Text Size</label>
-                  <span className="text-[10px] font-bold text-[#8b949e]">{config.innerTextSize}px</span>
+                  <label className="text-xs font-bold text-white">Inner Text Size</label>
+                  <span className="text-[10px] font-bold text-white">{config.innerTextSize}px</span>
                 </div>
                 <input 
                   type="range" min="8" max="40" step="1"
@@ -703,8 +703,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Inner Text Intensity</label>
-                  <span className="text-[10px] font-bold text-[#8b949e]">{Math.round((config.innerTextIntensity || 1) * 100)}%</span>
+                  <label className="text-xs font-bold text-white">Inner Text Intensity</label>
+                  <span className="text-[10px] font-bold text-white">{Math.round((config.innerTextIntensity || 1) * 100)}%</span>
                 </div>
                 <input 
                   type="range" min="0.1" max="1" step="0.05"
@@ -718,7 +718,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
           <div className="space-y-1">
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Center Text (Primary)</label>
+              <label className="text-xs font-bold text-white">Center Text (Primary)</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="color" 
@@ -728,7 +728,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   title="Text Color"
                 />
                 <div className="flex items-center gap-1 bg-[#21262d] dark:bg-[#21262d] px-1.5 py-0.5 rounded">
-                  <span className="text-[8px] font-bold text-[#8b949e] uppercase">Size</span>
+                  <span className="text-[8px] font-bold text-white uppercase">Size</span>
                   <input 
                     type="number"
                     value={config.centerFontSize || Math.round(config.fontSize * 1.1)}
@@ -746,7 +746,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 <select 
                   value={config.centerFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ centerFontFamily: e.target.value })}
-                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
@@ -780,13 +780,13 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               value={config.centerText}
               onChange={(e) => onChange({ centerText: e.target.value.toUpperCase() })}
               placeholder="CENTER TEXT"
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb] font-bold"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb] font-bold"
             />
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="text-[10px] font-bold text-[#8b949e] uppercase">Center Sub-Text (Date Line)</label>
+              <label className="text-[10px] font-bold text-white uppercase">Center Sub-Text (Date Line)</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="color" 
@@ -796,7 +796,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   title="Text Color"
                 />
                 <div className="flex items-center gap-1 bg-[#21262d] dark:bg-[#21262d] px-1.5 py-0.5 rounded">
-                  <span className="text-[8px] font-bold text-[#8b949e] uppercase">Size</span>
+                  <span className="text-[8px] font-bold text-white uppercase">Size</span>
                   <input 
                     type="number"
                     value={config.centerSubFontSize || Math.round(config.fontSize * 0.8)}
@@ -814,7 +814,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 <select 
                   value={config.centerSubFontFamily || config.fontFamily}
                   onChange={(e) => onChange({ centerSubFontFamily: e.target.value })}
-                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-black outline-none"
+                  className="text-[10px] bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-white font-bold outline-none"
                 >
                   {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                 </select>
@@ -825,14 +825,14 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               value={config.centerSubText}
               onChange={(e) => onChange({ centerSubText: e.target.value.toUpperCase() })}
               placeholder="DATE LINE TEXT"
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-[#1f6feb] font-bold"
+              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-sm text-white font-bold outline-none focus:ring-2 focus:ring-[#1f6feb] font-bold"
             />
           </div>
         </div>
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Star size={14} /> Embellishments & Stars
         </h3>
         <div className="space-y-4">
@@ -853,8 +853,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <div className="p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl space-y-4 border border-[#21262d] dark:border-[#30363d]">
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Star Count</label>
-                  <span className="text-[10px] font-bold text-[#8b949e]">{config.starCount || 2}</span>
+                  <label className="text-xs font-bold text-white">Star Count</label>
+                  <span className="text-[10px] font-bold text-white">{config.starCount || 2}</span>
                 </div>
                 <input 
                   type="range" min="1" max="10" step="1"
@@ -865,8 +865,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Star Size</label>
-                  <span className="text-[10px] font-bold text-[#8b949e]">{config.starSize || 20}px</span>
+                  <label className="text-xs font-bold text-white">Star Size</label>
+                  <span className="text-[10px] font-bold text-white">{config.starSize || 20}px</span>
                 </div>
                 <input 
                   type="range" min="5" max="50" step="1"
@@ -877,8 +877,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Star Offset (Alignment)</label>
-                  <span className="text-[10px] font-bold text-[#8b949e]">{config.starOffset || 0}px</span>
+                  <label className="text-xs font-bold text-white">Star Offset (Alignment)</label>
+                  <span className="text-[10px] font-bold text-white">{config.starOffset || 0}px</span>
                 </div>
                 <input 
                   type="range" min="-50" max="50" step="1"
@@ -893,7 +893,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Zap size={14} /> Shadow & Depth
         </h3>
         <div className="space-y-4">
@@ -910,7 +910,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
             <div className="space-y-3 pt-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Color</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Color</label>
                   <input 
                     type="color" 
                     value={config.shadowColor || '#000000'}
@@ -919,7 +919,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Blur</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Blur</label>
                   <input 
                     type="range" min="0" max="20" step="1"
                     value={config.shadowBlur || 5}
@@ -930,7 +930,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Offset X</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Offset X</label>
                   <input 
                     type="range" min="-20" max="20" step="1"
                     value={config.shadowOffsetX || 2}
@@ -939,7 +939,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8b949e] uppercase">Offset Y</label>
+                  <label className="text-[10px] font-bold text-white uppercase">Offset Y</label>
                   <input 
                     type="range" min="-20" max="20" step="1"
                     value={config.shadowOffsetY || 2}
@@ -955,7 +955,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
+          <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
              <Plus size={14} /> Custom Elements
           </h3>
           <div className="flex gap-2">
@@ -982,7 +982,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   {el.type === 'text' ? <Type size={12} className="text-[#8b949e]" /> : <ImageIcon size={12} className="text-[#8b949e]" />}
-                  <span className="text-[10px] font-bold text-[#8b949e] uppercase">{el.type} Element</span>
+                  <span className="text-[10px] font-bold text-white uppercase">{el.type} Element</span>
                 </div>
                 <button 
                   onClick={() => removeCustomElement(el.id)}
@@ -1009,7 +1009,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                       {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
                     </select>
                     <div className="flex items-center gap-1 bg-[#0d1117] dark:bg-[#21262d] px-2 py-1 rounded border border-[#21262d] dark:border-[#58a6ff]">
-                      <span className="text-[8px] font-bold text-[#8b949e] uppercase">Scale</span>
+                      <span className="text-[8px] font-bold text-white uppercase">Scale</span>
                       <input 
                         type="number" step="0.1"
                         value={el.scale || 1}
@@ -1031,8 +1031,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     {el.isCurved && (
                       <div className="space-y-1">
                         <div className="flex justify-between">
-                          <label className="text-[9px] font-bold text-[#8b949e] uppercase">Curve Radius</label>
-                          <span className="text-[9px] font-bold text-[#8b949e]">{el.curveRadius || 100}px</span>
+                          <label className="text-[9px] font-bold text-white uppercase">Curve Radius</label>
+                          <span className="text-[9px] font-bold text-white">{el.curveRadius || 100}px</span>
                         </div>
                         <input 
                           type="range" min="20" max="300" step="1"
@@ -1053,12 +1053,12 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                         onChange={(e) => handleImageUpload(el.id, e)}
                         className="absolute inset-0 opacity-0 cursor-pointer"
                       />
-                      <div className="bg-[#0d1117] dark:bg-[#21262d] border border-dashed border-[#30363d] dark:border-[#58a6ff] rounded-lg py-2 flex items-center justify-center gap-2 text-[10px] font-bold text-[#8b949e]">
+                      <div className="bg-[#0d1117] dark:bg-[#21262d] border border-dashed border-[#30363d] dark:border-[#58a6ff] rounded-lg py-2 flex items-center justify-center gap-2 text-[10px] font-bold text-white">
                         <ImageIcon size={12} /> Replace Image
                       </div>
                     </div>
                     <div className="flex items-center gap-1 bg-[#0d1117] dark:bg-[#21262d] px-2 py-1 rounded border border-[#21262d] dark:border-[#58a6ff]">
-                      <span className="text-[8px] font-bold text-[#8b949e] uppercase">Scale</span>
+                      <span className="text-[8px] font-bold text-white uppercase">Scale</span>
                       <input 
                         type="number" step="0.1"
                         value={el.scale || 1}
@@ -1068,7 +1068,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     </div>
                   </div>
                   <div className="flex items-center justify-between px-1">
-                    <label className="text-[9px] font-bold text-[#8b949e] uppercase">B&W Filter</label>
+                    <label className="text-[9px] font-bold text-white uppercase">B&W Filter</label>
                     <input 
                       type="checkbox" 
                       checked={el.isBlackAndWhite || false}
@@ -1082,8 +1082,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <label className="text-[9px] font-bold text-[#8b949e] uppercase">Rotation</label>
-                    <span className="text-[9px] font-bold text-[#8b949e]">{el.rotation || 0}°</span>
+                    <label className="text-[9px] font-bold text-white uppercase">Rotation</label>
+                    <span className="text-[9px] font-bold text-white">{el.rotation || 0}°</span>
                   </div>
                   <input 
                     type="range" min="0" max="360" step="1"
@@ -1094,8 +1094,8 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <label className="text-[9px] font-bold text-[#8b949e] uppercase">Opacity</label>
-                    <span className="text-[9px] font-bold text-[#8b949e]">{Math.round((el.opacity || 1) * 100)}%</span>
+                    <label className="text-[9px] font-bold text-white uppercase">Opacity</label>
+                    <span className="text-[9px] font-bold text-white">{Math.round((el.opacity || 1) * 100)}%</span>
                   </div>
                   <input 
                     type="range" min="0.1" max="1" step="0.05"
@@ -1106,7 +1106,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 </div>
               </div>
               <div className="space-y-1 pt-1 border-t border-[#21262d] dark:border-[#30363d]">
-                <label className="text-[9px] font-bold text-[#8b949e] uppercase">Custom Color</label>
+                <label className="text-[9px] font-bold text-white uppercase">Custom Color</label>
                 <div className="flex items-center gap-2">
                   <input 
                     type="color" 
@@ -1126,21 +1126,21 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
           ))}
           {config.customElements.length === 0 && (
             <div className="text-center py-6 border-2 border-dashed border-[#21262d] dark:border-[#30363d] rounded-2xl">
-              <p className="text-[10px] font-bold text-[#8b949e] uppercase">No custom elements added</p>
+              <p className="text-[10px] font-bold text-white uppercase">No custom elements added</p>
             </div>
           )}
         </div>
       </section>
 
       <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-        <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
            <Sliders size={14} /> Rubber Stamp Effects
         </h3>
         <div className="space-y-4">
           <div className="space-y-1">
             <div className="flex justify-between">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e]">Rustness / Distress</label>
-              <span className="text-[10px] font-bold text-[#8b949e]">{Math.round(config.distressLevel * 100)}%</span>
+              <label className="text-xs font-bold text-white">Rustness / Distress</label>
+              <span className="text-[10px] font-bold text-white">{Math.round(config.distressLevel * 100)}%</span>
             </div>
             <input 
               type="range" min="0" max="1" step="0.05"
@@ -1158,7 +1158,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 onChange={(e) => onChange({ isVintage: e.target.checked })}
                 className="w-4 h-4 rounded text-white border-[#aaccf2]"
               />
-              <span className="text-[10px] font-bold text-white dark:text-[#8b949e] uppercase">Vintage</span>
+              <span className="text-[10px] font-bold text-white uppercase">Vintage</span>
             </label>
             <label className="flex items-center gap-2 p-3 bg-[#161b22] dark:bg-[#161b22] rounded-xl cursor-pointer hover:bg-[#0d1117] dark:hover:bg-[#21262d] transition-all border border-[#30363d] dark:border-[#58a6ff]">
               <input 
@@ -1167,7 +1167,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 onChange={(e) => onChange({ wetInk: e.target.checked })}
                 className="w-4 h-4 rounded text-[#58a6ff] border-[#aaccf2]"
               />
-              <span className="text-[10px] font-bold text-white dark:text-[#8b949e] uppercase">Wet Ink</span>
+              <span className="text-[10px] font-bold text-white uppercase">Wet Ink</span>
             </label>
           </div>
 
@@ -1179,7 +1179,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 onChange={(e) => onChange({ showDateLine: e.target.checked })}
                 className="w-4 h-4 rounded text-[#58a6ff] border-[#aaccf2]"
               />
-              <span className="text-[10px] font-bold text-white dark:text-[#8b949e] uppercase">Date Line</span>
+              <span className="text-[10px] font-bold text-white uppercase">Date Line</span>
             </label>
             <label className="flex items-center gap-2 p-3 bg-[#161b22] dark:bg-[#161b22] rounded-xl cursor-pointer hover:bg-[#0d1117] dark:hover:bg-[#21262d] transition-all border border-[#30363d] dark:border-[#58a6ff]">
               <input 
@@ -1188,7 +1188,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                 onChange={(e) => onChange({ showSignatureLine: e.target.checked })}
                 className="w-4 h-4 rounded text-[#58a6ff] border-[#aaccf2]"
               />
-              <span className="text-[10px] font-bold text-white dark:text-[#8b949e] uppercase">Sign Line</span>
+              <span className="text-[10px] font-bold text-white uppercase">Sign Line</span>
             </label>
           </div>
 
@@ -1245,27 +1245,27 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[8px] font-bold text-[#8b949e] uppercase">X Off</label>
+                      <label className="text-[8px] font-bold text-white uppercase">X Off</label>
                       <input 
                         type="number"
                         value={config.signatureX}
                         onChange={(e) => onChange({ signatureX: parseInt(e.target.value) })}
-                        className="w-full bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-[10px] text-black outline-none"
+                        className="w-full bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-[10px] text-white font-bold outline-none"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[8px] font-bold text-[#8b949e] uppercase">Y Off</label>
+                      <label className="text-[8px] font-bold text-white uppercase">Y Off</label>
                       <input 
                         type="number"
                         value={config.signatureY}
                         onChange={(e) => onChange({ signatureY: parseInt(e.target.value) })}
-                        className="w-full bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-[10px] text-black outline-none"
+                        className="w-full bg-[#161b22] border border-[#30363d] rounded px-1 py-0.5 text-[10px] text-white font-bold outline-none"
                       />
                     </div>
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between">
-                      <label className="text-[8px] font-bold text-[#8b949e] uppercase">Scale</label>
+                      <label className="text-[8px] font-bold text-white uppercase">Scale</label>
                       <span className="text-[8px] font-bold text-[#8b949e]">{config.signatureScale.toFixed(2)}x</span>
                     </div>
                     <input 
@@ -1286,7 +1286,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
       {!config.isVintage && (
         <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
-          <h3 className="text-xs font-black text-[#8b949e] uppercase tracking-widest mb-4 flex items-center gap-2">
+          <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
              <Eye size={14} /> Preview Background
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1315,10 +1315,10 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
       {!config.isVintage && (
         <section>
-          <h3 className="text-xs font-bold text-[#8b949e] uppercase tracking-widest mb-4">Color Themes</h3>
+          <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-4">Color Themes</h3>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-medium text-[#e6edf3] dark:text-[#8b949e] block">Main Ink Color</label>
+              <label className="text-xs font-bold text-white block">Main Ink Color</label>
               <div className="flex flex-wrap gap-2">
                 {COLORS.map((c) => (
                   <button
@@ -1347,7 +1347,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
       )}
 
       <div className="p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl space-y-3">
-        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Drag Axis Lock</label>
+        <label className="text-[10px] font-black text-white uppercase tracking-widest">Drag Axis Lock</label>
         <div className="flex bg-[#21262d] dark:bg-[#21262d] p-1 rounded-lg">
           <button
             onClick={() => onChange({ lockDragAxis: 'none' })}

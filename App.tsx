@@ -60,6 +60,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<{name: string, email: string, picture?: string} | null>(null);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
+  const [openedFromPDFEditor, setOpenedFromPDFEditor] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<StampTemplate[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -438,19 +439,25 @@ const App: React.FC = () => {
                             <CheckCircle2 size={14} /> Return to Sign
                           </button>
                         )}
+                        {openedFromPDFEditor && (
+                          <button onClick={() => { nav('apply-stamp'); setOpenedFromPDFEditor(false); }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors">
+                            <CheckCircle2 size={14} /> Return to PDF Editor
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     {/* Studio Body — stacked on mobile, side-by-side on desktop */}
                     <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-                      {/* PREVIEW PANEL — top on mobile, right on desktop */}
-                      <div className="lg:order-2 flex-shrink-0 lg:w-[420px] xl:w-[480px] bg-[#0d1117] flex flex-col border-b lg:border-b-0 lg:border-l border-[#30363d]">
+                      {/* PREVIEW PANEL — top on mobile, right on desktop — ENLARGED */}
+                      <div className="lg:order-2 flex-1 lg:flex-none lg:w-[60%] xl:w-[65%] bg-[#0d1117] flex flex-col border-b lg:border-b-0 lg:border-l border-[#30363d]">
                         {/* Stamp canvas */}
-                        <div className="relative flex items-center justify-center p-6 lg:p-10 flex-shrink-0" style={{background:'radial-gradient(ellipse at center, #041628 0%, #020b18 70%)'}}>
+                        <div className="relative flex items-center justify-center p-8 lg:p-16 flex-1 flex-shrink-0" style={{background:'radial-gradient(ellipse at center, #041628 0%, #020b18 70%)'}}>
                           <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage:'radial-gradient(circle, #4d93d9 1px, transparent 1px)',backgroundSize:'28px 28px'}} />
-                          {/* Stamp preview — fixed size on mobile to keep it visible without scrolling */}
-                          <div className="relative w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 flex items-center justify-center">
+                          {/* Stamp preview — enlarged */}
+                          <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96 xl:w-[420px] xl:h-[420px] flex items-center justify-center">
                             <div className="absolute inset-0 rounded-3xl border border-dashed border-[#58a6ff]/40" />
                             <SVGPreview config={stampConfig} ref={svgRef} onUpdateConfig={(u) => setStampConfig(prev => ({ ...prev, ...u }))} />
                           </div>
@@ -500,10 +507,10 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* EDITOR PANEL — bottom on mobile, left on desktop, scrollable */}
-                      <div className="lg:order-1 flex-1 overflow-y-auto bg-[#0d1117]" style={{scrollbarWidth:'thin'}}>
-                        <div className="p-4 md:p-6 space-y-1">
-                          <div className="mb-4">
+                      {/* EDITOR PANEL — bottom on mobile, left on desktop, scrollable — REDUCED WIDTH */}
+                      <div className="lg:order-1 flex-shrink-0 lg:w-[40%] xl:w-[35%] overflow-y-auto bg-[#161b22]" style={{scrollbarWidth:'thin'}}>
+                        <div className="p-3 md:p-4 space-y-1">
+                          <div className="mb-3">
                             <h3 className="text-sm font-bold text-white">Stamp Configuration</h3>
                             <p className="text-xs text-[#8b949e]">Every change updates the preview instantly</p>
                           </div>
@@ -533,7 +540,7 @@ const App: React.FC = () => {
                     <TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} />
                   </div>
                 )}
-                {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} />}
+                {activeTab === 'apply-stamp' && <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); nav('stamp-studio'); }} />}
                 {activeTab === 'convert' && (
                   <div className="max-w-4xl mx-auto py-12 text-center">
                     <div className="bg-gradient-to-br from-pink-500 to-rose-600 text-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-pink-200 dark:shadow-none">

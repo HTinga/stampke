@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { StampConfig } from '../types';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjs from 'pdfjs-dist';
-import { Upload, Download, Trash2, CheckCircle2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move, MousePointer, RotateCcw } from 'lucide-react';
+import { Upload, Download, Trash2, CheckCircle2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move, MousePointer, RotateCcw, PenTool } from 'lucide-react';
 import SVGPreview from './SVGPreview';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -10,6 +10,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 interface StampApplierProps {
   config: StampConfig;
   svgRef: React.RefObject<SVGSVGElement | null>;
+  onGoToStudio?: () => void;
 }
 
 interface PlacedStamp {
@@ -20,7 +21,7 @@ interface PlacedStamp {
   page: number;
 }
 
-const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
+const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudio }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
@@ -261,13 +262,30 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
           <div className="w-56 md:w-64 flex-shrink-0 border-r border-[#30363d] bg-[#0d1117] flex flex-col overflow-hidden">
             {/* Stamp preview */}
             <div className="p-4 border-b border-[#30363d]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Current Stamp</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e]">Current Stamp</p>
+              </div>
               <div className="w-full aspect-square bg-[#161b22] border border-[#30363d] rounded-xl flex items-center justify-center overflow-hidden">
                 {stampUrl ? (
                   <img src={stampUrl} alt="stamp" className="w-4/5 h-4/5 object-contain" />
                 ) : (
                   <div className="text-[#0e3a72] text-xs">Loading…</div>
                 )}
+              </div>
+              {/* Edit / Create stamp buttons */}
+              <div className="mt-3 space-y-2">
+                <button
+                  onClick={onGoToStudio}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors"
+                >
+                  <PenTool size={13} /> Edit Stamp in Studio
+                </button>
+                <button
+                  onClick={onGoToStudio}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-[#161b22] border border-[#30363d] hover:border-[#58a6ff] text-[#58a6ff] rounded-xl text-xs font-bold transition-colors"
+                >
+                  <PenTool size={13} /> Create New Stamp
+                </button>
               </div>
             </div>
 
