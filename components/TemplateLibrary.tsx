@@ -1,80 +1,87 @@
-
 import React from 'react';
-import { TEMPLATES } from '../constants';
 import { StampTemplate } from '../types';
+import { PenTool, Plus } from 'lucide-react';
 
 interface TemplateLibraryProps {
   onSelect: (template: StampTemplate) => void;
   customTemplates?: StampTemplate[];
+  onCreateNew?: () => void;
 }
 
-const TemplateLibrary: React.FC<TemplateLibraryProps> = ({ onSelect, customTemplates = [] }) => {
-  const allTemplates = [...TEMPLATES, ...customTemplates];
+const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
+  onSelect,
+  customTemplates = [],
+  onCreateNew
+}) => {
+  if (customTemplates.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-20 h-20 bg-[#062040] border border-[#134589] rounded-3xl flex items-center justify-center mb-6">
+          <PenTool size={32} className="text-[#4d93d9]" />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">No saved templates yet</h3>
+        <p className="text-[#4d7291] text-sm max-w-xs mb-8">
+          Design a stamp in the Stamp Studio and save it as a template to find it here.
+        </p>
+        {onCreateNew && (
+          <button
+            onClick={onCreateNew}
+            className="flex items-center gap-2 px-6 py-3 bg-[#134589] text-white rounded-xl font-semibold hover:bg-[#1a5cad] transition-colors"
+          >
+            <Plus size={18} /> Create your first stamp
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-12">
-      {customTemplates.length > 0 && (
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-black tracking-tight text-[#041628] dark:text-white">Your Custom Templates</h2>
-            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">{customTemplates.length} Saved</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {customTemplates.map((tpl) => (
-              <button
-                key={tpl.id}
-                onClick={() => onSelect(tpl)}
-                className="flex flex-col text-left p-6 bg-white dark:bg-[#041628] border border-[#eaf2fc] dark:border-[#0e3a72] rounded-[32px] hover:border-blue-500 hover:shadow-2xl transition-all group relative overflow-hidden"
-              >
-                <div className="w-full aspect-square bg-[#f0f6ff] dark:bg-[#062040]/50 rounded-2xl mb-4 flex items-center justify-center border border-[#eaf2fc] dark:border-[#0e3a72] overflow-hidden relative">
-                   <div 
-                     className="w-24 h-24 rounded-full border-4 flex items-center justify-center text-[8px] font-black text-center p-2 uppercase tracking-tighter"
-                     style={{ borderColor: tpl.borderColor, color: tpl.borderColor }}
-                   >
-                     {tpl.primaryText.substring(0, 15)}...
-                   </div>
-                   <div className="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                     {tpl.shape}
-                   </div>
-                </div>
-                <h3 className="font-black text-[#041628] dark:text-white group-hover:text-blue-600 truncate w-full text-lg tracking-tight">{tpl.name}</h3>
-                <p className="text-[10px] text-[#4d7291] font-bold uppercase tracking-widest mt-1">{tpl.category}</p>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Your Templates</h2>
+          <p className="text-sm text-[#4d7291] mt-0.5">{customTemplates.length} saved design{customTemplates.length !== 1 ? 's' : ''}</p>
+        </div>
+        {onCreateNew && (
+          <button
+            onClick={onCreateNew}
+            className="flex items-center gap-2 px-4 py-2 bg-[#134589] text-white rounded-xl text-sm font-semibold hover:bg-[#1a5cad] transition-colors"
+          >
+            <Plus size={16} /> New Stamp
+          </button>
+        )}
+      </div>
 
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black tracking-tight text-[#041628] dark:text-white">Authentic Library</h2>
-          <span className="text-sm font-bold text-[#4d7291] uppercase tracking-widest">{TEMPLATES.length} Designs</span>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {TEMPLATES.map((tpl) => (
-            <button
-              key={tpl.id}
-              onClick={() => onSelect(tpl)}
-              className="flex flex-col text-left p-6 bg-white dark:bg-[#041628] border border-[#eaf2fc] dark:border-[#0e3a72] rounded-[32px] hover:border-blue-500 hover:shadow-2xl transition-all group relative overflow-hidden"
-            >
-              <div className="w-full aspect-square bg-[#f0f6ff] dark:bg-[#062040]/50 rounded-2xl mb-4 flex items-center justify-center border border-[#eaf2fc] dark:border-[#0e3a72] overflow-hidden relative">
-                 <div 
-                   className="w-24 h-24 rounded-full border-4 flex items-center justify-center text-[8px] font-black text-center p-2 uppercase tracking-tighter"
-                   style={{ borderColor: tpl.borderColor, color: tpl.borderColor }}
-                 >
-                   {tpl.primaryText.substring(0, 15)}...
-                 </div>
-                 <div className="absolute top-4 right-4 bg-[#c5d8ef] dark:bg-[#0a2d5a] text-[#224260] dark:text-[#7ab3e8] text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                   {tpl.shape}
-                 </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {customTemplates.map((tpl) => (
+          <button
+            key={tpl.id}
+            onClick={() => onSelect(tpl)}
+            className="flex flex-col text-left p-5 bg-[#041628] border border-[#0e3a72] rounded-2xl hover:border-[#134589] hover:bg-[#062040] transition-all group"
+          >
+            <div className="w-full aspect-square bg-[#020b18] rounded-xl mb-4 flex items-center justify-center border border-[#0e3a72] group-hover:border-[#134589] transition-colors overflow-hidden">
+              <div
+                className="flex items-center justify-center text-[8px] font-bold text-center p-3 uppercase tracking-tighter leading-tight"
+                style={{
+                  width: tpl.shape === 'ROUND' || tpl.shape === 'OVAL' ? '80px' : '90px',
+                  height: tpl.shape === 'ROUND' || tpl.shape === 'SQUARE' ? '80px' : '60px',
+                  borderRadius: tpl.shape === 'ROUND' || tpl.shape === 'OVAL' ? '50%' : '8px',
+                  border: `3px solid ${tpl.borderColor}`,
+                  color: tpl.borderColor,
+                }}
+              >
+                {tpl.primaryText.substring(0, 20)}
               </div>
-              <h3 className="font-black text-[#041628] dark:text-white group-hover:text-blue-600 truncate w-full text-lg tracking-tight">{tpl.name}</h3>
-              <p className="text-[10px] text-[#4d7291] font-bold uppercase tracking-widest mt-1">{tpl.category}</p>
-            </button>
-          ))}
-        </div>
-      </section>
+            </div>
+            <h3 className="font-semibold text-white text-sm truncate group-hover:text-[#4d93d9] transition-colors">{tpl.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-[#4d7291] capitalize">{tpl.category}</span>
+              <span className="w-1 h-1 rounded-full bg-[#134589]" />
+              <span className="text-[10px] text-[#4d7291] capitalize">{tpl.shape?.toLowerCase()}</span>
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

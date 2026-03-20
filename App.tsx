@@ -3,11 +3,11 @@ import {
   Plus, Image as ImageIcon, CheckCircle2, Menu, X, ArrowRight, ShieldCheck,
   Camera, User, PenTool, Twitter, Linkedin, Github, FileText, Wrench,
   LayoutDashboard, Sun, Moon, ChevronRight, Search, FileType, FileIcon,
-  Layers, QrCode, Share2, Sparkles
+  Layers, QrCode, Share2, Sparkles, Save
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { StampConfig, StampTemplate, StampShape } from './types';
-import { DEFAULT_CONFIG, TEMPLATES } from './constants';
+import { DEFAULT_CONFIG } from './constants';
 import SVGPreview from './components/SVGPreview';
 import TemplateLibrary from './components/TemplateLibrary';
 import EditorControls from './components/EditorControls';
@@ -402,7 +402,8 @@ const App: React.FC = () => {
         </header>
 
         {/* Page */}
-        <main className="flex-1 overflow-y-auto bg-[#020b18]">
+        <main className="flex-1 overflow-hidden bg-[#020b18] flex flex-col">
+          <div className="flex-1 overflow-y-auto">
           <div className="p-5 md:p-8 min-h-full">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
@@ -412,105 +413,109 @@ const App: React.FC = () => {
                   <Dashboard userName={user?.name} onNavigate={nav} theme={theme} />
                 )}
 
-                {/* STAMP STUDIO — Premium UI */}
+                {/* STAMP STUDIO — Premium Responsive UI */}
                 {activeTab === 'stamp-studio' && (
-                  <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 dark:shadow-none">
-                            <PenTool size={16} className="text-white" />
-                          </div>
-                          <h2 className="text-3xl font-black tracking-tighter">Stamp Studio</h2>
-                        </div>
-                        <p className={`text-sm font-medium ml-11 text-[#7ab3e8]`}>Design your professional vector stamp with real-time preview</p>
-                      </div>
+                  <div className="h-full flex flex-col -m-5 md:-m-8" style={{minHeight:'calc(100vh - 56px)'}}>
+                    {/* Studio Header */}
+                    <div className="flex items-center justify-between px-5 md:px-8 py-4 border-b border-[#0e3a72] bg-[#020b18] flex-shrink-0">
                       <div className="flex items-center gap-3">
-                        <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black text-[#eaf3fd] border bg-[#062040] border-[#134589] text-[#7ab3e8]`}>
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Vector SVG · 2K PNG · PDF
+                        <div className="w-9 h-9 bg-[#134589] rounded-xl flex items-center justify-center shadow-lg shadow-[#134589]/30">
+                          <PenTool size={17} className="text-white" />
                         </div>
-                        <button onClick={() => nav('dashboard')} className={`p-2 rounded-xl transition-all hover:bg-[#062040] text-[#7ab3e8]`}><X size={20} /></button>
+                        <div>
+                          <h2 className="text-base font-bold text-white leading-tight">Stamp Studio</h2>
+                          <p className="text-xs text-[#4d7291] hidden sm:block">Design · Export · Apply</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#041628] border border-[#134589] rounded-xl">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-[10px] font-bold text-[#4d93d9] uppercase tracking-widest">Live Preview</span>
+                        </div>
+                        {openedFromSignCenter && (
+                          <button onClick={() => { nav('esign'); setOpenedFromSignCenter(false); }}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors">
+                            <CheckCircle2 size={14} /> Return to Sign
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                      {/* Controls */}
-                      <div className="lg:col-span-4">
-                        <div className={`rounded-3xl border overflow-hidden bg-[#041628] border-[#0e3a72]`}>
-                          <div className={`px-5 py-4 border-b border-[#0e3a72]`}>
-                            <h3 className="text-sm font-black">Stamp Configuration</h3>
-                            <p className={`text-xs mt-0.5 text-[#365874]`}>Customize every detail</p>
-                          </div>
-                          <div className="p-4 overflow-y-auto max-h-[calc(100vh-260px)]">
-                            <EditorControls config={stampConfig} onChange={(u) => setStampConfig(prev => ({ ...prev, ...u }))} isLoggedIn={isLoggedIn} onSaveTemplate={handleSaveTemplate} />
-                          </div>
-                        </div>
-                      </div>
+                    {/* Studio Body — stacked on mobile, side-by-side on desktop */}
+                    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-                      {/* Preview + Actions */}
-                      <div className="lg:col-span-8 flex flex-col gap-5">
-                        {/* Canvas */}
-                        <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 bg-[#041628] border-[#0e3a72]`} style={{minHeight:'380px'}}>
-                          <div className="absolute top-4 left-4 flex gap-2">
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-[#062040] text-[#4d93d9] border-[#0e3a72]`}>Vector SVG</span>
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border bg-[#062040] text-[#7ab3e8] border-[#134589]`}>High Resolution</span>
-                          </div>
-                          <div className="w-full max-w-xs aspect-square flex items-center justify-center relative">
-                            <div className={`absolute inset-0 rounded-3xl border-2 border-dashed border-[#134589]`} />
-                            <div className="relative z-10 p-8 w-full h-full flex items-center justify-center">
-                              <SVGPreview config={stampConfig} ref={svgRef} onUpdateConfig={(u) => setStampConfig(prev => ({ ...prev, ...u }))} />
-                            </div>
+                      {/* PREVIEW PANEL — top on mobile, right on desktop */}
+                      <div className="lg:order-2 flex-shrink-0 lg:w-[420px] xl:w-[480px] bg-[#020b18] flex flex-col border-b lg:border-b-0 lg:border-l border-[#0e3a72]">
+                        {/* Stamp canvas */}
+                        <div className="relative flex items-center justify-center p-6 lg:p-10 flex-shrink-0" style={{background:'radial-gradient(ellipse at center, #041628 0%, #020b18 70%)'}}>
+                          <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage:'radial-gradient(circle, #4d93d9 1px, transparent 1px)',backgroundSize:'28px 28px'}} />
+                          {/* Stamp preview — fixed size on mobile to keep it visible without scrolling */}
+                          <div className="relative w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 flex items-center justify-center">
+                            <div className="absolute inset-0 rounded-3xl border border-dashed border-[#134589]/40" />
+                            <SVGPreview config={stampConfig} ref={svgRef} onUpdateConfig={(u) => setStampConfig(prev => ({ ...prev, ...u }))} />
                           </div>
                         </div>
 
-                        {/* Download */}
-                        <div className={`rounded-2xl border p-5 bg-[#041628] border-[#0e3a72]`}>
-                          <div className="flex items-center justify-between mb-4">
-                            <h4 className={`text-[10px] font-black uppercase tracking-widest text-[#365874]`}>Export Stamp</h4>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span className={`text-[9px] font-black uppercase tracking-widest text-[#224260]`}>Ready</span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
+                        {/* Export buttons */}
+                        <div className="px-5 pb-4 flex-shrink-0 border-t border-[#0e3a72] pt-4">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#4d7291] mb-3">Export As</p>
+                          <div className="grid grid-cols-3 gap-2">
                             {[
-                              { format: 'svg' as const, Icon: FileType, label: 'SVG', desc: 'Vector', hover: 'hover:border-blue-400 text-[#134589]' },
-                              { format: 'png' as const, Icon: ImageIcon, label: 'PNG', desc: '2000×2000', hover: 'hover:border-emerald-400 text-emerald-600' },
-                              { format: 'pdf' as const, Icon: FileIcon, label: 'PDF', desc: 'Print', hover: 'hover:border-orange-400 text-orange-600' },
-                            ].map(({ format, Icon, label, desc, hover }) => (
+                              { format: 'svg' as const, Icon: FileType,  label: 'SVG',  desc: 'Vector',    color: 'text-[#4d93d9] hover:bg-[#0a2d5a] hover:border-[#4d93d9]' },
+                              { format: 'png' as const, Icon: ImageIcon, label: 'PNG',  desc: '2000px',   color: 'text-emerald-400 hover:bg-emerald-900/30 hover:border-emerald-500' },
+                              { format: 'pdf' as const, Icon: FileIcon,  label: 'PDF',  desc: 'Print',    color: 'text-orange-400 hover:bg-orange-900/20 hover:border-orange-500' },
+                            ].map(({ format, Icon, label, desc, color }) => (
                               <button key={format} onClick={() => downloadStamp(format)}
-                                className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all group bg-[#062040] border-[#134589] ${hover}`}>
-                                <Icon size={22} className="group-hover:scale-110 transition-transform" />
-                                <span className="text-[11px] font-black uppercase">{label}</span>
-                                <span className={`text-[9px] font-bold text-[#224260]`}>{desc}</span>
+                                className={`flex flex-col items-center gap-1 py-3 rounded-xl border border-[#0e3a72] bg-[#041628] transition-all ${color} active:scale-95`}>
+                                <Icon size={18} />
+                                <span className="text-[11px] font-bold">{label}</span>
+                                <span className="text-[9px] text-[#365874]">{desc}</span>
                               </button>
                             ))}
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp designed`); nav('apply-stamp'); }}
-                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-6 rounded-2xl font-black text-sm transition-all shadow-lg shadow-emerald-100 dark:shadow-none hover:scale-[1.02] active:scale-95">
-                            <FileText size={18} /> Apply to PDF
+                        {/* Action buttons */}
+                        <div className="px-5 pb-5 flex-shrink-0 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp designed`); nav('apply-stamp'); }}
+                              className="flex items-center justify-center gap-1.5 bg-[#134589] hover:bg-[#1a5cad] text-white py-2.5 rounded-xl text-xs font-bold transition-colors">
+                              <FileText size={14} /> Apply to PDF
+                            </button>
+                            <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp designed`); setOpenedFromSignCenter(true); nav('esign'); }}
+                              className="flex items-center justify-center gap-1.5 bg-[#062040] border border-[#134589] hover:bg-[#0a2d5a] text-white py-2.5 rounded-xl text-xs font-bold transition-colors">
+                              <Layers size={14} className="text-[#4d93d9]" /> Toho Sign
+                            </button>
+                          </div>
+                          <button onClick={() => handleSaveTemplate()}
+                            disabled={!isLoggedIn}
+                            title={!isLoggedIn ? 'Sign in to save templates' : 'Save as template'}
+                            className="w-full flex items-center justify-center gap-1.5 bg-[#062040] border border-[#0e3a72] hover:border-[#134589] text-[#7ab3e8] py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-40">
+                            <Save size={14} /> {isLoggedIn ? 'Save Template' : 'Sign in to Save'}
                           </button>
-                          <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp designed`); setOpenedFromSignCenter(true); nav('esign'); }}
-                            className={`flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 shadow-lg bg-[#062040] border border-[#134589] text-white hover:bg-[#0a2d5a]`}>
-                            <Layers size={18} className="text-blue-400" /> Bulk Stamp
+                          <button onClick={() => nav('convert')}
+                            className="w-full flex items-center justify-center gap-1.5 border border-[#0e3a72] hover:border-[#134589] text-[#4d7291] hover:text-[#7ab3e8] py-2 rounded-xl text-xs font-medium transition-colors">
+                            <Camera size={13} /> AI Scan Existing Stamp
                           </button>
                         </div>
-                        <button onClick={() => nav('convert')}
-                          className={`w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 border-2 bg-[#062040]/50 border-[#134589] text-white hover:bg-[#062040]`}>
-                          <Camera size={18} className="text-[#134589]" /> AI Scan & Vectorize Existing Stamp
-                        </button>
-                        {openedFromSignCenter && (
-                          <button onClick={() => { nav('esign'); setOpenedFromSignCenter(false); }}
-                            className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-4 px-6 rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all active:scale-95">
-                            <CheckCircle2 size={18} /> Apply to Document & Return
-                          </button>
-                        )}
                       </div>
+
+                      {/* EDITOR PANEL — bottom on mobile, left on desktop, scrollable */}
+                      <div className="lg:order-1 flex-1 overflow-y-auto bg-[#020b18]" style={{scrollbarWidth:'thin'}}>
+                        <div className="p-4 md:p-6 space-y-1">
+                          <div className="mb-4">
+                            <h3 className="text-sm font-bold text-white">Stamp Configuration</h3>
+                            <p className="text-xs text-[#4d7291]">Every change updates the preview instantly</p>
+                          </div>
+                          <EditorControls
+                            config={stampConfig}
+                            onChange={(u) => setStampConfig(prev => ({ ...prev, ...u }))}
+                            isLoggedIn={isLoggedIn}
+                            onSaveTemplate={handleSaveTemplate}
+                          />
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 )}
