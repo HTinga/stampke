@@ -128,9 +128,9 @@ export default function PresentationGenerator() {
   };
 
   return (
-    <div className="flex h-screen bg-[#eaf2fc] overflow-hidden">
+    <div className="flex h-screen bg-[#21262d] overflow-hidden">
       {/* Canva-style Sidebar */}
-      <div className="w-20 bg-white border-r border-[#c5d8ef] flex flex-col items-center py-8 gap-8 z-20">
+      <div className="w-20 bg-[#161b22] border-r border-[#30363d] flex flex-col items-center py-8 gap-8 z-20">
         <div className="bg-indigo-600 text-white p-3 rounded-2xl shadow-lg shadow-indigo-200 mb-4">
           <Monitor size={24} />
         </div>
@@ -151,19 +151,19 @@ export default function PresentationGenerator() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="h-20 bg-white border-b border-[#c5d8ef] px-8 flex items-center justify-between z-10">
+        <header className="h-20 bg-[#161b22] border-b border-[#30363d] px-8 flex items-center justify-between z-10">
           <div className="flex items-center gap-4">
             <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600">
               <Presentation size={20} />
             </div>
-            <h2 className="text-xl font-black text-[#041628] tracking-tighter">Slide Architect</h2>
+            <h2 className="text-xl font-black text-white tracking-tighter">Slide Architect</h2>
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowPreview(true)} className="flex items-center gap-2 px-4 py-2 text-[#224260] font-bold hover:bg-[#f0f6ff] rounded-xl transition-all">
+            <button onClick={() => setShowPreview(true)} className="flex items-center gap-2 px-4 py-2 text-[#e6edf3] font-bold hover:bg-[#0d1117] rounded-xl transition-all">
               <Play size={18} /> Present
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-[#224260] font-bold hover:bg-[#f0f6ff] rounded-xl transition-all">
+            <button className="flex items-center gap-2 px-4 py-2 text-[#e6edf3] font-bold hover:bg-[#0d1117] rounded-xl transition-all">
               <Share2 size={18} /> Share
             </button>
             <button 
@@ -178,9 +178,9 @@ export default function PresentationGenerator() {
 
         <div className="flex-1 flex overflow-hidden">
           {/* Slide List (Filmstrip) */}
-          <div className="w-64 bg-white border-r border-[#c5d8ef] overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          <div className="w-64 bg-[#161b22] border-r border-[#30363d] overflow-y-auto p-6 space-y-4 custom-scrollbar">
             <div className="flex items-center justify-between mb-4 px-2">
-              <h3 className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Slides</h3>
+              <h3 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Slides</h3>
               <button onClick={addSlide} className="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all">
                 <Plus size={16} />
               </button>
@@ -192,17 +192,17 @@ export default function PresentationGenerator() {
                 className={`w-full aspect-video rounded-2xl border-2 transition-all p-4 text-left relative group cursor-pointer ${
                   activeSlideIndex === index 
                     ? 'border-indigo-600 bg-indigo-50/30 ring-4 ring-indigo-500/10' 
-                    : 'border-[#eaf2fc] bg-[#f0f6ff] hover:border-[#c5d8ef]'
+                    : 'border-[#21262d] bg-[#0d1117] hover:border-[#30363d]'
                 }`}
               >
-                <span className="absolute top-2 left-2 text-[10px] font-black text-[#7ab3e8]">{index + 1}</span>
-                <p className="text-[10px] font-black text-[#041628] truncate mt-2">{slide.title}</p>
-                <div className="mt-2 h-1 w-1/2 bg-[#c5d8ef] rounded-full"></div>
-                <div className="mt-1 h-1 w-1/3 bg-[#c5d8ef] rounded-full"></div>
+                <span className="absolute top-2 left-2 text-[10px] font-black text-[#8b949e]">{index + 1}</span>
+                <p className="text-[10px] font-black text-white truncate mt-2">{slide.title}</p>
+                <div className="mt-2 h-1 w-1/2 bg-[#30363d] rounded-full"></div>
+                <div className="mt-1 h-1 w-1/3 bg-[#30363d] rounded-full"></div>
                 
                 <button 
                   onClick={(e) => { e.stopPropagation(); removeSlide(index); }}
-                  className="absolute top-2 right-2 p-1 text-[#7ab3e8] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                  className="absolute top-2 right-2 p-1 text-[#8b949e] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -211,38 +211,38 @@ export default function PresentationGenerator() {
           </div>
 
           {/* Editor Canvas */}
-          <main className="flex-1 overflow-y-auto p-12 flex flex-col items-center bg-[#eaf2fc] custom-scrollbar">
-            <div className="w-full max-w-5xl aspect-video bg-white shadow-2xl rounded-sm p-20 flex flex-col justify-center relative group/canvas">
+          <main className="flex-1 overflow-y-auto p-12 flex flex-col items-center bg-[#21262d] custom-scrollbar">
+            <div className="w-full max-w-5xl aspect-video bg-[#161b22] shadow-2xl rounded-sm p-20 flex flex-col justify-center relative group/canvas">
               <input 
                 type="text"
                 value={slides[activeSlideIndex].title}
                 onChange={(e) => updateSlide({ title: e.target.value })}
-                className="text-6xl font-black text-[#041628] bg-transparent border-none outline-none placeholder:text-[#aaccf2] w-full mb-10 text-center"
+                className="text-6xl font-black text-white bg-transparent border-none outline-none placeholder:text-[#e6edf3] w-full mb-10 text-center"
                 placeholder="Slide Title"
               />
               <textarea 
                 value={slides[activeSlideIndex].content}
                 onChange={(e) => updateSlide({ content: e.target.value })}
-                className="text-2xl text-[#365874] bg-transparent border-none outline-none placeholder:text-[#aaccf2] w-full h-64 resize-none font-medium leading-relaxed text-center"
+                className="text-2xl text-[#8b949e] bg-transparent border-none outline-none placeholder:text-[#e6edf3] w-full h-64 resize-none font-medium leading-relaxed text-center"
                 placeholder="Start typing your corporate insights..."
               />
 
               {/* Slide Overlay Controls */}
               <div className="absolute top-8 right-8 flex gap-2 opacity-0 group-hover/canvas:opacity-100 transition-all">
-                <button className="p-3 bg-white border border-[#c5d8ef] rounded-xl shadow-sm hover:bg-[#f0f6ff]"><Layers size={18} /></button>
-                <button className="p-3 bg-white border border-[#c5d8ef] rounded-xl shadow-sm hover:bg-[#f0f6ff]"><Settings size={18} /></button>
+                <button className="p-3 bg-[#161b22] border border-[#30363d] rounded-xl shadow-sm hover:bg-[#0d1117]"><Layers size={18} /></button>
+                <button className="p-3 bg-[#161b22] border border-[#30363d] rounded-xl shadow-sm hover:bg-[#0d1117]"><Settings size={18} /></button>
               </div>
             </div>
 
             {/* Slide Properties (Floating) */}
             <div className="mt-12 flex gap-8">
-              <div className="bg-white px-8 py-4 rounded-3xl shadow-sm border border-[#c5d8ef] flex items-center gap-6">
+              <div className="bg-[#161b22] px-8 py-4 rounded-3xl shadow-sm border border-[#30363d] flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Layout</span>
+                  <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Layout</span>
                   <select 
                     value={slides[activeSlideIndex].type}
                     onChange={(e) => updateSlide({ type: e.target.value as any })}
-                    className="bg-[#f0f6ff] border-none rounded-xl py-2 px-4 text-xs font-bold outline-none"
+                    className="bg-[#0d1117] border-none rounded-xl py-2 px-4 text-xs font-bold outline-none"
                   >
                     <option value="title">Title</option>
                     <option value="content">Content</option>
@@ -250,9 +250,9 @@ export default function PresentationGenerator() {
                     <option value="image">Image</option>
                   </select>
                 </div>
-                <div className="w-px h-6 bg-[#c5d8ef]"></div>
+                <div className="w-px h-6 bg-[#30363d]"></div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Theme</span>
+                  <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Theme</span>
                   <button className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest">Corporate Minimal</button>
                 </div>
               </div>
@@ -268,19 +268,19 @@ export default function PresentationGenerator() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#020b18] z-[200] flex flex-col"
+            className="fixed inset-0 bg-[#0d1117] z-[200] flex flex-col"
           >
             <div className="p-8 flex justify-between items-center">
               <p className="text-white font-black tracking-tighter text-2xl">FreeStamps <span className="text-indigo-500">KE</span></p>
-              <button onClick={() => setShowPreview(false)} className="p-4 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all">
+              <button onClick={() => setShowPreview(false)} className="p-4 bg-[#161b22]/10 text-white rounded-2xl hover:bg-[#161b22]/20 transition-all">
                 <X size={24} />
               </button>
             </div>
             
             <div className="flex-1 flex items-center justify-center p-20">
-              <div className="w-full max-w-6xl aspect-video bg-white rounded-sm shadow-2xl p-20 flex flex-col justify-center">
-                <h2 className="text-7xl font-black text-[#041628] mb-10 text-center">{slides[activeSlideIndex].title}</h2>
-                <p className="text-3xl text-[#365874] font-medium leading-relaxed text-center">{slides[activeSlideIndex].content}</p>
+              <div className="w-full max-w-6xl aspect-video bg-[#161b22] rounded-sm shadow-2xl p-20 flex flex-col justify-center">
+                <h2 className="text-7xl font-black text-white mb-10 text-center">{slides[activeSlideIndex].title}</h2>
+                <p className="text-3xl text-[#8b949e] font-medium leading-relaxed text-center">{slides[activeSlideIndex].content}</p>
               </div>
             </div>
 
@@ -288,7 +288,7 @@ export default function PresentationGenerator() {
               <button 
                 disabled={activeSlideIndex === 0}
                 onClick={() => setActiveSlideIndex(prev => prev - 1)}
-                className="p-6 bg-white/10 text-white rounded-full hover:bg-white/20 disabled:opacity-20 transition-all"
+                className="p-6 bg-[#161b22]/10 text-white rounded-full hover:bg-[#161b22]/20 disabled:opacity-20 transition-all"
               >
                 <ChevronLeft size={32} />
               </button>
@@ -298,7 +298,7 @@ export default function PresentationGenerator() {
               <button 
                 disabled={activeSlideIndex === slides.length - 1}
                 onClick={() => setActiveSlideIndex(prev => prev + 1)}
-                className="p-6 bg-white/10 text-white rounded-full hover:bg-white/20 disabled:opacity-20 transition-all"
+                className="p-6 bg-[#161b22]/10 text-white rounded-full hover:bg-[#161b22]/20 disabled:opacity-20 transition-all"
               >
                 <ChevronRight size={32} />
               </button>
@@ -314,10 +314,10 @@ function SidebarItem({ icon, label, onClick }: { icon: React.ReactNode, label: s
   return (
     <button 
       onClick={onClick}
-      className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-indigo-50 text-[#4d7291] hover:text-indigo-600 transition-all"
+      className="group relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-indigo-50 text-[#8b949e] hover:text-indigo-600 transition-all"
     >
       {icon}
-      <span className="absolute left-full ml-4 px-3 py-1 bg-[#041628] text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap z-50">
+      <span className="absolute left-full ml-4 px-3 py-1 bg-[#161b22] text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all whitespace-nowrap z-50">
         {label}
       </span>
     </button>

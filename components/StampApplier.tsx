@@ -178,7 +178,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
   const selected = placedStamps.find(s => s.id === selectedId);
 
   return (
-    <div className="flex flex-col h-full bg-[#020b18] -m-5 md:-m-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
+    <div className="flex flex-col h-full bg-[#0d1117] -m-5 md:-m-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
 
       {/* Hidden SVG renderer */}
       <div className="fixed -left-[9999px] opacity-0 pointer-events-none">
@@ -186,51 +186,51 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
       </div>
 
       {/* ── Top bar ── */}
-      <div className="flex items-center gap-3 px-4 md:px-6 py-3 border-b border-[#0e3a72] bg-[#020b18] flex-shrink-0 flex-wrap">
+      <div className="flex items-center gap-3 px-4 md:px-6 py-3 border-b border-[#30363d] bg-[#0d1117] flex-shrink-0 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#134589] rounded-xl flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center">
             <Upload size={15} className="text-white" />
           </div>
           <div>
             <p className="text-sm font-bold text-white leading-tight">Stamp Applier</p>
-            <p className="text-[10px] text-[#4d7291]">{pdfFile ? pdfFile.name : 'Upload a PDF to begin'}</p>
+            <p className="text-[10px] text-[#8b949e]">{pdfFile ? pdfFile.name : 'Upload a PDF to begin'}</p>
           </div>
         </div>
 
         {pdfFile && (
           <>
             {/* Page navigation */}
-            <div className="flex items-center gap-1 bg-[#041628] border border-[#0e3a72] rounded-xl px-2 py-1">
+            <div className="flex items-center gap-1 bg-[#161b22] border border-[#30363d] rounded-xl px-2 py-1">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1}
-                className="p-1 disabled:opacity-30 hover:text-white text-[#7ab3e8] transition-colors">
+                className="p-1 disabled:opacity-30 hover:text-white text-[#8b949e] transition-colors">
                 <ChevronLeft size={15} />
               </button>
               <span className="text-xs font-bold text-white px-1">{currentPage} / {numPages}</span>
               <button onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} disabled={currentPage >= numPages}
-                className="p-1 disabled:opacity-30 hover:text-white text-[#7ab3e8] transition-colors">
+                className="p-1 disabled:opacity-30 hover:text-white text-[#8b949e] transition-colors">
                 <ChevronRight size={15} />
               </button>
             </div>
 
             {/* Zoom */}
-            <div className="flex items-center gap-1 bg-[#041628] border border-[#0e3a72] rounded-xl px-2 py-1">
-              <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} className="p-1 text-[#7ab3e8] hover:text-white">
+            <div className="flex items-center gap-1 bg-[#161b22] border border-[#30363d] rounded-xl px-2 py-1">
+              <button onClick={() => setZoom(z => Math.max(0.5, z - 0.25))} className="p-1 text-[#8b949e] hover:text-white">
                 <ZoomOut size={14} />
               </button>
               <span className="text-xs font-bold text-white px-1">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom(z => Math.min(2.5, z + 0.25))} className="p-1 text-[#7ab3e8] hover:text-white">
+              <button onClick={() => setZoom(z => Math.min(2.5, z + 0.25))} className="p-1 text-[#8b949e] hover:text-white">
                 <ZoomIn size={14} />
               </button>
             </div>
 
             {/* Mode toggle */}
-            <div className="flex bg-[#041628] border border-[#0e3a72] rounded-xl p-1 gap-1">
+            <div className="flex bg-[#161b22] border border-[#30363d] rounded-xl p-1 gap-1">
               <button onClick={() => setMode('place')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === 'place' ? 'bg-[#134589] text-white' : 'text-[#7ab3e8] hover:text-white'}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === 'place' ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white'}`}>
                 <MousePointer size={13} /> Place
               </button>
               <button onClick={() => setMode('select')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === 'select' ? 'bg-[#134589] text-white' : 'text-[#7ab3e8] hover:text-white'}`}>
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mode === 'select' ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white'}`}>
                 <Move size={13} /> Move
               </button>
             </div>
@@ -239,7 +239,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
 
         <div className="ml-auto flex items-center gap-2">
           {!pdfFile ? (
-            <label className="flex items-center gap-2 px-4 py-2 bg-[#134589] hover:bg-[#1a5cad] text-white rounded-xl text-sm font-bold cursor-pointer transition-colors">
+            <label className="flex items-center gap-2 px-4 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold cursor-pointer transition-colors">
               <Upload size={15} /> Select PDF
               <input type="file" accept="application/pdf" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             </label>
@@ -258,11 +258,11 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
 
         {/* Sidebar — stamp list + controls */}
         {pdfFile && (
-          <div className="w-56 md:w-64 flex-shrink-0 border-r border-[#0e3a72] bg-[#020b18] flex flex-col overflow-hidden">
+          <div className="w-56 md:w-64 flex-shrink-0 border-r border-[#30363d] bg-[#0d1117] flex flex-col overflow-hidden">
             {/* Stamp preview */}
-            <div className="p-4 border-b border-[#0e3a72]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#4d7291] mb-3">Current Stamp</p>
-              <div className="w-full aspect-square bg-[#041628] border border-[#0e3a72] rounded-xl flex items-center justify-center overflow-hidden">
+            <div className="p-4 border-b border-[#30363d]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Current Stamp</p>
+              <div className="w-full aspect-square bg-[#161b22] border border-[#30363d] rounded-xl flex items-center justify-center overflow-hidden">
                 {stampUrl ? (
                   <img src={stampUrl} alt="stamp" className="w-4/5 h-4/5 object-contain" />
                 ) : (
@@ -274,7 +274,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
             {/* Placed stamps list */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#4d7291]">Placed ({placedStamps.length})</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e]">Placed ({placedStamps.length})</p>
                 {placedStamps.length > 0 && (
                   <button onClick={() => { setPlacedStamps([]); setSelectedId(null); }}
                     className="text-[10px] text-red-400 hover:text-red-300 font-bold transition-colors">
@@ -284,25 +284,25 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
               </div>
 
               {placedStamps.length === 0 ? (
-                <div className="text-center py-6 border border-dashed border-[#0e3a72] rounded-xl">
+                <div className="text-center py-6 border border-dashed border-[#30363d] rounded-xl">
                   <MousePointer size={20} className="mx-auto text-[#0e3a72] mb-2" />
-                  <p className="text-[10px] text-[#365874] font-medium">
+                  <p className="text-[10px] text-[#8b949e] font-medium">
                     {mode === 'place' ? 'Click the document to place' : 'Switch to Place mode first'}
                   </p>
                 </div>
               ) : (
                 placedStamps.map((s, i) => (
                   <div key={s.id} onClick={() => { setSelectedId(s.id); setMode('select'); }}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all ${selectedId === s.id ? 'border-[#134589] bg-[#041628]' : 'border-[#0e3a72] bg-[#020b18] hover:border-[#134589]/50'}`}>
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${selectedId === s.id ? 'border-[#58a6ff] bg-[#161b22]' : 'border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]/50'}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#134589]/20 rounded-lg flex items-center justify-center">
-                          <span className="text-[9px] font-bold text-[#4d93d9]">S{i + 1}</span>
+                        <div className="w-6 h-6 bg-[#1f6feb]/20 rounded-lg flex items-center justify-center">
+                          <span className="text-[9px] font-bold text-[#58a6ff]">S{i + 1}</span>
                         </div>
                         <span className="text-xs font-semibold text-white">Page {s.page}</span>
                       </div>
                       <button onClick={e => { e.stopPropagation(); setPlacedStamps(ps => ps.filter(p => p.id !== s.id)); if (selectedId === s.id) setSelectedId(null); }}
-                        className="p-1 hover:text-red-400 text-[#4d7291] transition-colors">
+                        className="p-1 hover:text-red-400 text-[#8b949e] transition-colors">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -310,7 +310,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
                       <div className="mt-2.5 space-y-2">
                         <div>
                           <div className="flex justify-between mb-1">
-                            <span className="text-[10px] text-[#4d7291] font-medium">Size</span>
+                            <span className="text-[10px] text-[#8b949e] font-medium">Size</span>
                             <span className="text-[10px] font-bold text-white">{Math.round(s.size)}px</span>
                           </div>
                           <input type="range" min={40} max={400} value={s.size}
@@ -318,7 +318,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
                             className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
                             style={{ accentColor: '#134589' }} />
                         </div>
-                        <div className="grid grid-cols-2 gap-1.5 text-[10px] text-[#4d7291]">
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px] text-[#8b949e]">
                           <div>X: <span className="text-white font-bold">{Math.round(s.x)}</span></div>
                           <div>Y: <span className="text-white font-bold">{Math.round(s.y)}</span></div>
                         </div>
@@ -330,13 +330,13 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
             </div>
 
             {/* Tips */}
-            <div className="p-3 border-t border-[#0e3a72]">
-              <div className="bg-[#041628] rounded-xl p-3 border border-[#0e3a72]">
-                <div className="flex items-center gap-1.5 text-[#4d93d9] mb-1.5">
+            <div className="p-3 border-t border-[#30363d]">
+              <div className="bg-[#161b22] rounded-xl p-3 border border-[#30363d]">
+                <div className="flex items-center gap-1.5 text-[#58a6ff] mb-1.5">
                   <CheckCircle2 size={13} />
                   <span className="text-[10px] font-bold uppercase tracking-wider">Tip</span>
                 </div>
-                <p className="text-[10px] text-[#4d7291] leading-relaxed">
+                <p className="text-[10px] text-[#8b949e] leading-relaxed">
                   {mode === 'place'
                     ? 'Click anywhere on the document to place a stamp. Switch to Move mode to reposition.'
                     : 'Drag stamps to reposition. Use the size slider to resize. Click Place to add more.'}
@@ -347,17 +347,17 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
         )}
 
         {/* PDF canvas area */}
-        <div ref={wrapRef} className="flex-1 overflow-auto bg-[#041628] flex items-start justify-center p-6 md:p-10"
+        <div ref={wrapRef} className="flex-1 overflow-auto bg-[#161b22] flex items-start justify-center p-6 md:p-10"
           style={{ cursor: pdfFile ? (mode === 'place' ? 'crosshair' : 'default') : 'default' }}>
           {!pdfFile ? (
-            <label className="flex flex-col items-center justify-center w-full max-w-md aspect-[3/4] border-2 border-dashed border-[#0e3a72] hover:border-[#134589] rounded-3xl cursor-pointer transition-all group bg-[#020b18] hover:bg-[#041628]">
+            <label className="flex flex-col items-center justify-center w-full max-w-md aspect-[3/4] border-2 border-dashed border-[#30363d] hover:border-[#58a6ff] rounded-3xl cursor-pointer transition-all group bg-[#0d1117] hover:bg-[#161b22]">
               <input type="file" accept="application/pdf" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-              <div className="w-16 h-16 bg-[#041628] border border-[#134589] rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                <Upload size={28} className="text-[#4d93d9]" />
+              <div className="w-16 h-16 bg-[#161b22] border border-[#58a6ff] rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                <Upload size={28} className="text-[#58a6ff]" />
               </div>
               <p className="text-lg font-bold text-white mb-1">Drop PDF here</p>
-              <p className="text-sm text-[#4d7291]">or click to browse</p>
-              <p className="text-[11px] text-[#224260] mt-4">Supports PDF files only</p>
+              <p className="text-sm text-[#8b949e]">or click to browse</p>
+              <p className="text-[11px] text-[#e6edf3] mt-4">Supports PDF files only</p>
             </label>
           ) : (
             <div
@@ -401,7 +401,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
                         className="absolute -bottom-2 -right-2 w-5 h-5 bg-[#00c8ff] rounded-full cursor-se-resize z-30 flex items-center justify-center border-2 border-[#020b18]"
                         onMouseDown={e => { e.stopPropagation(); setResizing({ id: s.id, startX: e.clientX, startSize: s.size }); }}
                       >
-                        <div className="w-1.5 h-1.5 bg-[#020b18] rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-[#0d1117] rounded-full" />
                       </div>
                       {/* Delete button */}
                       <button
@@ -417,11 +417,11 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef }) => {
               ))}
 
               {/* Mode indicator */}
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#020b18]/80 backdrop-blur-sm rounded-xl border border-[#0e3a72] pointer-events-none">
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#0d1117]/80 backdrop-blur-sm rounded-xl border border-[#30363d] pointer-events-none">
                 {mode === 'place' ? (
                   <>
-                    <MousePointer size={12} className="text-[#4d93d9]" />
-                    <span className="text-[10px] font-bold text-[#4d93d9]">Click to place stamp</span>
+                    <MousePointer size={12} className="text-[#58a6ff]" />
+                    <span className="text-[10px] font-bold text-[#58a6ff]">Click to place stamp</span>
                   </>
                 ) : (
                   <>

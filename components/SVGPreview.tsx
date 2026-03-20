@@ -780,9 +780,9 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
   const getBgClass = () => {
     switch (previewBg) {
       case 'transparent': return 'bg-transparent';
-      case 'white': return 'bg-white';
+      case 'white': return 'bg-[#161b22]';
       case 'paper': return 'bg-[#fdfbf7]';
-      default: return 'bg-[#f0f6ff] dark:bg-[#062040]/50';
+      default: return 'bg-[#0d1117] dark:bg-[#21262d]/50';
     }
   };
 

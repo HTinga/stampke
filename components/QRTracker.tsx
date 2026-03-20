@@ -23,13 +23,13 @@ const QRTracker: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h2 className="text-4xl font-black tracking-tighter">QR & GPS Tracker</h2>
-          <p className="text-[#365874] font-medium">Real-time employee monitoring and location verification.</p>
+          <p className="text-[#8b949e] font-medium">Real-time employee monitoring and location verification.</p>
         </div>
         <div className="flex gap-3">
-          <button className="bg-[#134589] text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#0e3a72] transition-all shadow-lg shadow-[#c5d8ef]">
+          <button className="bg-[#1f6feb] text-white px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#30363d] transition-all shadow-lg shadow-[#c5d8ef]">
             <QrCode size={18} /> Generate New QR
           </button>
-          <button className="bg-white dark:bg-[#041628] border border-[#c5d8ef] dark:border-[#0e3a72] px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#f0f6ff] transition-all">
+          <button className="bg-[#161b22] dark:bg-[#161b22] border border-[#30363d] dark:border-[#30363d] px-6 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#0d1117] transition-all">
             <Download size={18} /> Export Reports
           </button>
         </div>
@@ -37,17 +37,17 @@ const QRTracker: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Active Now', value: '24', icon: User, color: 'text-[#134589]', bg: 'bg-[#eaf2fc]' },
+          { label: 'Active Now', value: '24', icon: User, color: 'text-[#58a6ff]', bg: 'bg-[#21262d]' },
           { label: 'Total Scans Today', value: '142', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
           { label: 'Avg. Response', value: '12m', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-[#041628] p-6 rounded-3xl border border-[#eaf2fc] dark:border-[#0e3a72] shadow-sm">
+          <div key={i} className="bg-[#161b22] dark:bg-[#161b22] p-6 rounded-3xl border border-[#21262d] dark:border-[#30363d] shadow-sm">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
                 <stat.icon size={24} />
               </div>
               <div>
-                <p className="text-[#365874] text-xs font-black uppercase tracking-widest">{stat.label}</p>
+                <p className="text-[#8b949e] text-xs font-black uppercase tracking-widest">{stat.label}</p>
                 <h3 className="text-2xl font-black tracking-tight">{stat.value}</h3>
               </div>
             </div>
@@ -55,19 +55,19 @@ const QRTracker: React.FC = () => {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-[#041628] rounded-[2.5rem] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-sm overflow-hidden">
-        <div className="flex border-b border-[#eaf2fc] dark:border-[#0e3a72]">
+      <div className="bg-[#161b22] dark:bg-[#161b22] rounded-[2.5rem] border border-[#21262d] dark:border-[#30363d] shadow-sm overflow-hidden">
+        <div className="flex border-b border-[#21262d] dark:border-[#30363d]">
           {['live', 'history', 'employees'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
               className={`px-8 py-6 font-black text-sm uppercase tracking-widest transition-all relative ${
-                activeTab === tab ? 'text-[#134589]' : 'text-[#4d7291] hover:text-[#224260]'
+                activeTab === tab ? 'text-[#58a6ff]' : 'text-[#8b949e] hover:text-[#e6edf3]'
               }`}
             >
               {tab}
               {activeTab === tab && (
-                <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-[#134589]" />
+                <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-[#1f6feb]" />
               )}
             </button>
           ))}
@@ -85,19 +85,19 @@ const QRTracker: React.FC = () => {
               </div>
               <div className="space-y-4">
                 {recentScans.map((scan) => (
-                  <div key={scan.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#f0f6ff] dark:bg-[#062040]/50 border border-[#eaf2fc] dark:border-[#0e3a72]">
+                  <div key={scan.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#0d1117] dark:bg-[#21262d]/50 border border-[#21262d] dark:border-[#30363d]">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white dark:bg-[#041628] rounded-xl flex items-center justify-center shadow-sm">
-                        <QrCode size={20} className="text-[#134589]" />
+                      <div className="w-12 h-12 bg-[#161b22] dark:bg-[#161b22] rounded-xl flex items-center justify-center shadow-sm">
+                        <QrCode size={20} className="text-[#58a6ff]" />
                       </div>
                       <div>
                         <p className="font-black text-sm">{scan.employee}</p>
-                        <p className="text-xs text-[#365874] font-bold">{scan.type} at {scan.location}</p>
+                        <p className="text-xs text-[#8b949e] font-bold">{scan.type} at {scan.location}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-black text-[#4d7291]">{scan.time}</p>
-                      <p className="text-[10px] font-mono text-[#1a5cad]">{scan.coordinates}</p>
+                      <p className="text-xs font-black text-[#8b949e]">{scan.time}</p>
+                      <p className="text-[10px] font-mono text-[#58a6ff]">{scan.coordinates}</p>
                     </div>
                   </div>
                 ))}
@@ -109,51 +109,51 @@ const QRTracker: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left border-b border-[#eaf2fc] dark:border-[#0e3a72]">
-                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#4d7291]">Employee</th>
-                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#4d7291]">Status</th>
-                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#4d7291]">Last Location</th>
-                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#4d7291]">Last Scan</th>
-                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#4d7291]">Device</th>
+                  <tr className="text-left border-b border-[#21262d] dark:border-[#30363d]">
+                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#8b949e]">Employee</th>
+                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#8b949e]">Status</th>
+                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#8b949e]">Last Location</th>
+                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#8b949e]">Last Scan</th>
+                    <th className="pb-4 font-black text-[10px] uppercase tracking-widest text-[#8b949e]">Device</th>
                     <th className="pb-4"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-[#0e3a72]/50">
+                <tbody className="divide-y divide-slate-50 dark:divide-[#30363d]/50">
                   {employees.map((emp) => (
-                    <tr key={emp.id} className="group hover:bg-[#f0f6ff]/50 dark:hover:bg-[#062040]/30 transition-all">
+                    <tr key={emp.id} className="group hover:bg-[#0d1117]/50 dark:hover:bg-[#21262d]/30 transition-all">
                       <td className="py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#eaf2fc] dark:bg-[#062040] rounded-full flex items-center justify-center font-black text-[#134589]">
+                          <div className="w-10 h-10 bg-[#21262d] dark:bg-[#21262d] rounded-full flex items-center justify-center font-black text-[#58a6ff]">
                             {emp.name.charAt(0)}
                           </div>
                           <div>
                             <p className="font-black text-sm">{emp.name}</p>
-                            <p className="text-xs text-[#365874] font-bold">{emp.role}</p>
+                            <p className="text-xs text-[#8b949e] font-bold">{emp.role}</p>
                           </div>
                         </div>
                       </td>
                       <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                          emp.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#f0f6ff] text-[#4d7291]'
+                          emp.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#0d1117] text-[#8b949e]'
                         }`}>
                           {emp.status}
                         </span>
                       </td>
                       <td className="py-4">
                         <div className="flex items-center gap-2 text-sm font-bold">
-                          <MapPin size={14} className="text-[#4d7291]" />
+                          <MapPin size={14} className="text-[#8b949e]" />
                           {emp.location}
                         </div>
                       </td>
-                      <td className="py-4 text-sm font-bold text-[#365874]">{emp.lastScan}</td>
+                      <td className="py-4 text-sm font-bold text-[#8b949e]">{emp.lastScan}</td>
                       <td className="py-4">
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#4d7291]">
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#8b949e]">
                           <Smartphone size={14} />
                           {emp.battery}
                         </div>
                       </td>
                       <td className="py-4 text-right">
-                        <button className="p-2 hover:bg-white dark:hover:bg-[#0a2d5a] rounded-lg transition-all text-[#4d7291] hover:text-[#041628]">
+                        <button className="p-2 hover:bg-[#161b22] dark:hover:bg-[#30363d] rounded-lg transition-all text-[#8b949e] hover:text-white">
                           <MoreVertical size={18} />
                         </button>
                       </td>

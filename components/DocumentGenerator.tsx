@@ -364,7 +364,7 @@ export default function DocumentGenerator() {
   };
 
   const templates = [
-    { id: 'invoice', name: 'Professional Invoice', icon: Receipt, color: 'bg-[#134589]', desc: 'Generate high-precision invoices with tax calculations.' },
+    { id: 'invoice', name: 'Professional Invoice', icon: Receipt, color: 'bg-[#1f6feb]', desc: 'Generate high-precision invoices with tax calculations.' },
     { id: 'letterhead', name: 'Official Letterhead', icon: Mail, color: 'bg-indigo-500', desc: 'Create branded corporate letters and formal notices.' },
     { id: 'contract', name: 'Legal Contract', icon: FileText, color: 'bg-emerald-500', desc: 'Standardized agreements for services and employment.' },
     { id: 'accounting', name: 'Accounting Log', icon: TrendingUp, color: 'bg-rose-500', desc: 'Track firm expenses, revenue, and petty cash logs.' },
@@ -449,7 +449,7 @@ export default function DocumentGenerator() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#eaf2fc] text-[#134589] rounded-full text-xs font-black uppercase tracking-widest mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#21262d] text-[#58a6ff] rounded-full text-xs font-black uppercase tracking-widest mb-6"
           >
             <Zap size={14} /> Smart Document Engine
           </motion.div>
@@ -457,15 +457,15 @@ export default function DocumentGenerator() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-black text-[#041628] tracking-tighter mb-6"
+            className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6"
           >
-            Document <span className="text-[#134589]">Architect.</span>
+            Document <span className="text-[#58a6ff]">Architect.</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-[#365874] max-w-2xl mx-auto font-medium"
+            className="text-xl text-[#8b949e] max-w-2xl mx-auto font-medium"
           >
             Generate, track, and manage your firm's essential paperwork with automated precision.
           </motion.p>
@@ -474,27 +474,27 @@ export default function DocumentGenerator() {
         {activeType === 'none' ? (
           <div className="space-y-12">
             {/* Search & Filter Bar */}
-            <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-white p-8 rounded-[40px] border border-[#eaf2fc] shadow-sm">
+            <div className="flex flex-col md:flex-row gap-6 items-center justify-between bg-[#161b22] p-8 rounded-[40px] border border-[#21262d] shadow-sm">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#4d7291]" size={20} />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[#8b949e]" size={20} />
                 <input 
                   type="text"
                   placeholder="Search templates (e.g. 'Lease', 'NDA', 'Invoice')..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 pl-16 pr-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                  className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 pl-16 pr-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                 />
               </div>
               <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
-                <Filter size={18} className="text-[#4d7291] shrink-0" />
+                <Filter size={18} className="text-[#8b949e] shrink-0" />
                 {categories.map(cat => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shrink-0 ${
                       selectedCategory === cat 
-                        ? 'bg-[#134589] text-white shadow-lg shadow-[#aaccf2]' 
-                        : 'bg-[#f0f6ff] text-[#365874] hover:bg-[#eaf2fc]'
+                        ? 'bg-[#1f6feb] text-white shadow-lg shadow-black' 
+                        : 'bg-[#0d1117] text-[#8b949e] hover:bg-[#21262d]'
                     }`}
                   >
                     {cat}
@@ -512,46 +512,46 @@ export default function DocumentGenerator() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.05 }}
                   onClick={() => setActiveType(t.id)}
-                  className="group bg-white p-8 rounded-[40px] border border-[#eaf2fc] shadow-sm hover:shadow-2xl hover:border-[#d4e6f9] transition-all cursor-pointer relative overflow-hidden"
+                  className="group bg-[#161b22] p-8 rounded-[40px] border border-[#21262d] shadow-sm hover:shadow-2xl hover:border-[#d4e6f9] transition-all cursor-pointer relative overflow-hidden"
                 >
                   <div className={`${t.color} w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
                     <t.icon size={28} />
                   </div>
                   <div className="mb-2">
-                    <span className="text-[9px] font-black text-[#134589] uppercase tracking-widest bg-[#eaf2fc] px-2 py-1 rounded-md">{t.category}</span>
+                    <span className="text-[9px] font-black text-[#58a6ff] uppercase tracking-widest bg-[#21262d] px-2 py-1 rounded-md">{t.category}</span>
                   </div>
-                  <h3 className="text-lg font-black text-[#041628] mb-2 tracking-tight">{t.name}</h3>
-                  <p className="text-[#365874] font-medium text-xs leading-relaxed line-clamp-2">{t.desc}</p>
-                  <div className="mt-6 flex items-center text-[#134589] font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  <h3 className="text-lg font-black text-white mb-2 tracking-tight">{t.name}</h3>
+                  <p className="text-[#8b949e] font-medium text-xs leading-relaxed line-clamp-2">{t.desc}</p>
+                  <div className="mt-6 flex items-center text-[#58a6ff] font-black text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                     Use Template <ChevronRight size={14} className="ml-1" />
                   </div>
                   <div className={`absolute -right-12 -bottom-12 w-48 h-48 ${t.color} opacity-[0.03] rounded-full group-hover:scale-150 transition-transform duration-700`}></div>
                 </motion.div>
               ))}
               {filteredTemplates.length === 0 && (
-                <div className="col-span-full py-20 text-center bg-white rounded-[40px] border border-dashed border-[#c5d8ef]">
-                  <p className="text-[#4d7291] font-bold uppercase text-sm tracking-widest">No templates found matching your search</p>
-                  <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="mt-4 text-[#134589] font-black text-xs uppercase tracking-widest hover:underline">Clear Filters</button>
+                <div className="col-span-full py-20 text-center bg-[#161b22] rounded-[40px] border border-dashed border-[#30363d]">
+                  <p className="text-[#8b949e] font-bold uppercase text-sm tracking-widest">No templates found matching your search</p>
+                  <button onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }} className="mt-4 text-[#58a6ff] font-black text-xs uppercase tracking-widest hover:underline">Clear Filters</button>
                 </div>
               )}
             </div>
 
             {/* History Section */}
-            <div className="bg-white p-12 rounded-[64px] border border-[#eaf2fc] shadow-xl">
+            <div className="bg-[#161b22] p-12 rounded-[64px] border border-[#21262d] shadow-xl">
               <div className="flex items-center justify-between mb-12">
                 <div className="flex items-center gap-4">
-                  <div className="bg-[#041628] text-white p-4 rounded-2xl">
+                  <div className="bg-[#161b22] text-white p-4 rounded-2xl">
                     <History size={24} />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-black text-[#041628] tracking-tight">Recent Activity</h3>
-                    <p className="text-[#4d7291] font-bold uppercase text-[10px] tracking-widest">Track your document usage</p>
+                    <h3 className="text-3xl font-black text-white tracking-tight">Recent Activity</h3>
+                    <p className="text-[#8b949e] font-bold uppercase text-[10px] tracking-widest">Track your document usage</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                   <div className="bg-[#f0f6ff] px-6 py-3 rounded-2xl border border-[#eaf2fc] flex items-center gap-3">
-                      <TrendingUp size={18} className="text-[#134589]" />
-                      <span className="text-sm font-black text-[#041628]">{history.length} Docs Generated</span>
+                   <div className="bg-[#0d1117] px-6 py-3 rounded-2xl border border-[#21262d] flex items-center gap-3">
+                      <TrendingUp size={18} className="text-[#58a6ff]" />
+                      <span className="text-sm font-black text-white">{history.length} Docs Generated</span>
                    </div>
                 </div>
               </div>
@@ -560,35 +560,35 @@ export default function DocumentGenerator() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left border-b border-[#f0f6ff]">
-                      <th className="pb-6 text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Document</th>
-                      <th className="pb-6 text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Recipient</th>
-                      <th className="pb-6 text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Date</th>
-                      <th className="pb-6 text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Amount</th>
-                      <th className="pb-6 text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Status</th>
+                      <th className="pb-6 text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Document</th>
+                      <th className="pb-6 text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Recipient</th>
+                      <th className="pb-6 text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Date</th>
+                      <th className="pb-6 text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Amount</th>
+                      <th className="pb-6 text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Status</th>
                       <th className="pb-6"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {history.length > 0 ? history.map((doc) => (
-                      <tr key={doc.id} className="group hover:bg-[#f0f6ff]/50 transition-colors">
+                      <tr key={doc.id} className="group hover:bg-[#0d1117]/50 transition-colors">
                         <td className="py-6">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-[#eaf2fc] text-[#134589] rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-[#21262d] text-[#58a6ff] rounded-xl flex items-center justify-center">
                               {doc.type === 'invoice' ? <Receipt size={18} /> : <Mail size={18} />}
                             </div>
-                            <span className="font-black text-[#041628]">{doc.title}</span>
+                            <span className="font-black text-white">{doc.title}</span>
                           </div>
                         </td>
-                        <td className="py-6 text-[#365874] font-bold text-sm">{doc.recipient}</td>
-                        <td className="py-6 text-[#365874] font-bold text-sm">{doc.date}</td>
-                        <td className="py-6 font-black text-[#041628]">{doc.amount || '-'}</td>
+                        <td className="py-6 text-[#8b949e] font-bold text-sm">{doc.recipient}</td>
+                        <td className="py-6 text-[#8b949e] font-bold text-sm">{doc.date}</td>
+                        <td className="py-6 font-black text-white">{doc.amount || '-'}</td>
                         <td className="py-6">
                           <span className="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full">
                             {doc.status}
                           </span>
                         </td>
                         <td className="py-6 text-right">
-                          <button className="p-2 text-[#7ab3e8] hover:text-[#041628] transition-colors">
+                          <button className="p-2 text-[#8b949e] hover:text-white transition-colors">
                             <Download size={20} />
                           </button>
                         </td>
@@ -596,7 +596,7 @@ export default function DocumentGenerator() {
                     )) : (
                       <tr>
                         <td colSpan={6} className="py-20 text-center">
-                          <p className="text-[#4d7291] font-bold uppercase text-xs tracking-widest">No documents generated yet</p>
+                          <p className="text-[#8b949e] font-bold uppercase text-xs tracking-widest">No documents generated yet</p>
                         </td>
                       </tr>
                     )}
@@ -610,35 +610,35 @@ export default function DocumentGenerator() {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-[64px] border border-[#eaf2fc] shadow-2xl overflow-hidden"
+            className="bg-[#161b22] rounded-[64px] border border-[#21262d] shadow-2xl overflow-hidden"
           >
-            <div className="p-8 md:p-12 border-b border-[#f0f6ff] flex items-center justify-between bg-[#f0f6ff]/50">
+            <div className="p-8 md:p-12 border-b border-[#f0f6ff] flex items-center justify-between bg-[#0d1117]/50">
               <div className="flex items-center gap-6">
                 <button 
                   onClick={() => setActiveType('none')}
-                  className="p-4 bg-white rounded-2xl shadow-sm hover:bg-[#eaf2fc] transition-all"
+                  className="p-4 bg-[#161b22] rounded-2xl shadow-sm hover:bg-[#21262d] transition-all"
                 >
                   <ChevronRight size={24} className="rotate-180" />
                 </button>
                 <div>
-                  <h2 className="text-3xl font-black text-[#041628] tracking-tighter">
+                  <h2 className="text-3xl font-black text-white tracking-tighter">
                     {DOCUMENT_TEMPLATES.find(t => t.id === activeType)?.name}
                   </h2>
-                  <p className="text-[#4d7291] font-bold uppercase text-[10px] tracking-widest mt-1">
+                  <p className="text-[#8b949e] font-bold uppercase text-[10px] tracking-widest mt-1">
                     Configure your document details
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button onClick={() => insertElement('table')} className="p-4 bg-white text-[#224260] rounded-2xl shadow-sm hover:bg-[#eaf2fc] transition-all" title="Insert Table">
+                <button onClick={() => insertElement('table')} className="p-4 bg-[#161b22] text-[#e6edf3] rounded-2xl shadow-sm hover:bg-[#21262d] transition-all" title="Insert Table">
                   <Table size={20} />
                 </button>
-                <button onClick={() => insertElement('image')} className="p-4 bg-white text-[#224260] rounded-2xl shadow-sm hover:bg-[#eaf2fc] transition-all" title="Insert Image">
+                <button onClick={() => insertElement('image')} className="p-4 bg-[#161b22] text-[#e6edf3] rounded-2xl shadow-sm hover:bg-[#21262d] transition-all" title="Insert Image">
                   <ImageIcon size={20} />
                 </button>
                 <button 
                   onClick={getGenerateFunction()}
-                  className="bg-[#134589] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#0e3a72] shadow-xl shadow-[#c5d8ef] transition-all active:scale-95"
+                  className="bg-[#1f6feb] text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#30363d] shadow-xl shadow-[#c5d8ef] transition-all active:scale-95"
                 >
                   <Download size={18} /> Generate A4 PDF
                 </button>
@@ -649,53 +649,53 @@ export default function DocumentGenerator() {
               {/* Form Side */}
               <div className="p-12 md:p-16 border-r border-[#f0f6ff] space-y-12 max-h-[800px] overflow-y-auto">
                 <div className="space-y-8">
-                  <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                  <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                     <Briefcase size={14} /> Sender Information
                   </h4>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Company Name</label>
+                      <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Company Name</label>
                       <input 
                         type="text" 
                         value={formData.senderName}
                         onChange={e => setFormData({...formData, senderName: e.target.value})}
-                        className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                        className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Email</label>
+                      <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Email</label>
                       <input 
                         type="email" 
                         value={formData.senderEmail}
                         onChange={e => setFormData({...formData, senderEmail: e.target.value})}
-                        className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                        className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-8">
-                  <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                  <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                     <User size={14} /> Recipient Information
                   </h4>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Client Name</label>
+                      <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Client Name</label>
                       <input 
                         type="text" 
                         value={formData.clientName}
                         onChange={e => setFormData({...formData, clientName: e.target.value})}
                         placeholder="e.g. Acme Corp"
-                        className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                        className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Address</label>
+                      <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Address</label>
                       <textarea 
                         value={formData.clientAddress}
                         onChange={e => setFormData({...formData, clientAddress: e.target.value})}
                         placeholder="Nairobi, Kenya"
-                        className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold h-24"
+                        className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold h-24"
                       />
                     </div>
                   </div>
@@ -703,9 +703,9 @@ export default function DocumentGenerator() {
 
                 {activeType === 'invoice' && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center justify-between">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center justify-between">
                       <span className="flex items-center gap-2"><Layout size={14} /> Line Items</span>
-                      <button onClick={addItem} className="text-[#134589] hover:text-blue-700 flex items-center gap-1">
+                      <button onClick={addItem} className="text-[#58a6ff] hover:text-blue-700 flex items-center gap-1">
                         <Plus size={14} /> Add Item
                       </button>
                     </h4>
@@ -713,7 +713,7 @@ export default function DocumentGenerator() {
                       {formData.items.map((item, idx) => (
                         <div key={idx} className="grid grid-cols-12 gap-4 items-end">
                           <div className="col-span-6 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Description</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Description</label>
                             <input 
                               type="text" 
                               value={item.desc}
@@ -722,11 +722,11 @@ export default function DocumentGenerator() {
                                 newItems[idx].desc = e.target.value;
                                 setFormData({...formData, items: newItems});
                               }}
-                              className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                              className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                             />
                           </div>
                           <div className="col-span-2 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Qty</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Qty</label>
                             <input 
                               type="number" 
                               value={item.qty}
@@ -735,11 +735,11 @@ export default function DocumentGenerator() {
                                 newItems[idx].qty = parseInt(e.target.value) || 0;
                                 setFormData({...formData, items: newItems});
                               }}
-                              className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                              className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                             />
                           </div>
                           <div className="col-span-3 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Price</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Price</label>
                             <input 
                               type="number" 
                               value={item.price}
@@ -748,11 +748,11 @@ export default function DocumentGenerator() {
                                 newItems[idx].price = parseFloat(e.target.value) || 0;
                                 setFormData({...formData, items: newItems});
                               }}
-                              className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                              className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                             />
                           </div>
                           <div className="col-span-1 pb-3">
-                            <button onClick={() => removeItem(idx)} className="text-[#7ab3e8] hover:text-red-500 transition-colors">
+                            <button onClick={() => removeItem(idx)} className="text-[#8b949e] hover:text-red-500 transition-colors">
                               <Trash2 size={18} />
                             </button>
                           </div>
@@ -764,27 +764,27 @@ export default function DocumentGenerator() {
 
                 {activeType === 'letterhead' && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                       <FileText size={14} /> Letter Content
                     </h4>
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Subject Line</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Subject Line</label>
                         <input 
                           type="text" 
                           value={formData.letterSubject}
                           onChange={e => setFormData({...formData, letterSubject: e.target.value})}
                           placeholder="RE: Service Agreement"
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Body</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Body</label>
                         <textarea 
                           value={formData.letterContent}
                           onChange={e => setFormData({...formData, letterContent: e.target.value})}
                           placeholder="Write your letter here..."
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold h-64"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold h-64"
                         />
                       </div>
                     </div>
@@ -793,29 +793,29 @@ export default function DocumentGenerator() {
 
                 {activeType === 'accounting' && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center justify-between">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center justify-between">
                       <span className="flex items-center gap-2"><Layout size={14} /> Log Entries</span>
                       <button 
                         onClick={() => setFormData({...formData, accountingEntries: [...formData.accountingEntries, { date: new Date().toISOString().split('T')[0], desc: '', category: 'Expense', amount: 0 }]})}
-                        className="text-[#134589] hover:text-blue-700 flex items-center gap-1"
+                        className="text-[#58a6ff] hover:text-blue-700 flex items-center gap-1"
                       >
                         <Plus size={14} /> Add Entry
                       </button>
                     </h4>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Period</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Period</label>
                         <input 
                           type="text" 
                           value={formData.accountingPeriod}
                           onChange={e => setFormData({...formData, accountingPeriod: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                         />
                       </div>
                       {formData.accountingEntries.map((entry, idx) => (
-                        <div key={idx} className="grid grid-cols-12 gap-4 items-end bg-[#f0f6ff] p-4 rounded-2xl">
+                        <div key={idx} className="grid grid-cols-12 gap-4 items-end bg-[#0d1117] p-4 rounded-2xl">
                           <div className="col-span-4 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest">Description</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest">Description</label>
                             <input 
                               type="text" 
                               value={entry.desc}
@@ -824,11 +824,11 @@ export default function DocumentGenerator() {
                                 newEntries[idx].desc = e.target.value;
                                 setFormData({...formData, accountingEntries: newEntries});
                               }}
-                              className="w-full bg-white border border-[#eaf2fc] rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                              className="w-full bg-[#161b22] border border-[#21262d] rounded-xl py-2 px-3 outline-none font-bold text-xs"
                             />
                           </div>
                           <div className="col-span-3 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest">Category</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest">Category</label>
                             <select 
                               value={entry.category}
                               onChange={e => {
@@ -836,7 +836,7 @@ export default function DocumentGenerator() {
                                 newEntries[idx].category = e.target.value;
                                 setFormData({...formData, accountingEntries: newEntries});
                               }}
-                              className="w-full bg-white border border-[#eaf2fc] rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                              className="w-full bg-[#161b22] border border-[#21262d] rounded-xl py-2 px-3 outline-none font-bold text-xs"
                             >
                               <option>Expense</option>
                               <option>Revenue</option>
@@ -844,7 +844,7 @@ export default function DocumentGenerator() {
                             </select>
                           </div>
                           <div className="col-span-4 space-y-2">
-                            <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest">Amount</label>
+                            <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest">Amount</label>
                             <input 
                               type="number" 
                               value={entry.amount}
@@ -853,13 +853,13 @@ export default function DocumentGenerator() {
                                 newEntries[idx].amount = parseFloat(e.target.value) || 0;
                                 setFormData({...formData, accountingEntries: newEntries});
                               }}
-                              className="w-full bg-white border border-[#eaf2fc] rounded-xl py-2 px-3 outline-none font-bold text-xs"
+                              className="w-full bg-[#161b22] border border-[#21262d] rounded-xl py-2 px-3 outline-none font-bold text-xs"
                             />
                           </div>
                           <div className="col-span-1 pb-1">
                             <button 
                               onClick={() => setFormData({...formData, accountingEntries: formData.accountingEntries.filter((_, i) => i !== idx)})}
-                              className="text-[#7ab3e8] hover:text-red-500 transition-colors"
+                              className="text-[#8b949e] hover:text-red-500 transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -872,34 +872,34 @@ export default function DocumentGenerator() {
 
                 {activeType === 'minutes' && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                       <FileCode size={14} /> Meeting Details
                     </h4>
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Meeting Title</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Meeting Title</label>
                         <input 
                           type="text" 
                           value={formData.minutesMeetingTitle}
                           onChange={e => setFormData({...formData, minutesMeetingTitle: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Attendees</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Attendees</label>
                         <input 
                           type="text" 
                           value={formData.minutesAttendees}
                           onChange={e => setFormData({...formData, minutesAttendees: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Action Items</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Action Items</label>
                         <textarea 
                           value={formData.minutesActionItems}
                           onChange={e => setFormData({...formData, minutesActionItems: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold h-48"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold h-48"
                         />
                       </div>
                     </div>
@@ -908,25 +908,25 @@ export default function DocumentGenerator() {
 
                 {activeType === 'contract' && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                       <FileText size={14} /> Contract Terms
                     </h4>
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Contract Title</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Contract Title</label>
                         <input 
                           type="text" 
                           value={formData.contractTitle}
                           onChange={e => setFormData({...formData, contractTitle: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">Terms & Conditions</label>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Terms & Conditions</label>
                         <textarea 
                           value={formData.contractTerms}
                           onChange={e => setFormData({...formData, contractTerms: e.target.value})}
-                          className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold h-96"
+                          className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold h-96"
                         />
                       </div>
                     </div>
@@ -935,16 +935,16 @@ export default function DocumentGenerator() {
 
                 {activeTemplate && !['invoice', 'letterhead', 'accounting', 'minutes', 'contract'].includes(activeType) && (
                   <div className="space-y-8">
-                    <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+                    <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
                       <Settings size={14} /> Document Details
                     </h4>
                     <div className="space-y-6">
                       {activeTemplate.fields.map(field => {
                         if (field === 'items') return (
                           <div key={field} className="space-y-8">
-                            <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest flex items-center justify-between">
+                            <h4 className="text-xs font-black text-[#8b949e] uppercase tracking-widest flex items-center justify-between">
                               <span className="flex items-center gap-2"><Layout size={14} /> Line Items</span>
-                              <button onClick={addItem} className="text-[#134589] hover:text-blue-700 flex items-center gap-1">
+                              <button onClick={addItem} className="text-[#58a6ff] hover:text-blue-700 flex items-center gap-1">
                                 <Plus size={14} /> Add Item
                               </button>
                             </h4>
@@ -952,7 +952,7 @@ export default function DocumentGenerator() {
                               {formData.items.map((item: any, idx: number) => (
                                 <div key={idx} className="grid grid-cols-12 gap-4 items-end">
                                   <div className="col-span-6 space-y-2">
-                                    <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Description</label>
+                                    <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Description</label>
                                     <input 
                                       type="text" 
                                       value={item.desc}
@@ -961,11 +961,11 @@ export default function DocumentGenerator() {
                                         newItems[idx].desc = e.target.value;
                                         setFormData({...formData, items: newItems});
                                       }}
-                                      className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                                      className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                                     />
                                   </div>
                                   <div className="col-span-2 space-y-2">
-                                    <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Qty</label>
+                                    <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Qty</label>
                                     <input 
                                       type="number" 
                                       value={item.qty}
@@ -974,11 +974,11 @@ export default function DocumentGenerator() {
                                         newItems[idx].qty = parseInt(e.target.value) || 0;
                                         setFormData({...formData, items: newItems});
                                       }}
-                                      className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                                      className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                                     />
                                   </div>
                                   <div className="col-span-3 space-y-2">
-                                    <label className="text-[9px] font-black text-[#7ab3e8] uppercase tracking-widest ml-1">Price</label>
+                                    <label className="text-[9px] font-black text-[#8b949e] uppercase tracking-widest ml-1">Price</label>
                                     <input 
                                       type="number" 
                                       value={item.price}
@@ -987,11 +987,11 @@ export default function DocumentGenerator() {
                                         newItems[idx].price = parseFloat(e.target.value) || 0;
                                         setFormData({...formData, items: newItems});
                                       }}
-                                      className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold text-sm"
+                                      className="w-full bg-[#0d1117] border border-[#21262d] rounded-xl py-3 px-4 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-sm"
                                     />
                                   </div>
                                   <div className="col-span-1 pb-3">
-                                    <button onClick={() => removeItem(idx)} className="text-[#7ab3e8] hover:text-red-500 transition-colors">
+                                    <button onClick={() => removeItem(idx)} className="text-[#8b949e] hover:text-red-500 transition-colors">
                                       <Trash2 size={18} />
                                     </button>
                                   </div>
@@ -1004,19 +1004,19 @@ export default function DocumentGenerator() {
                         const isLongText = ['content', 'terms', 'details', 'statement', 'rules', 'scopeOfWork', 'executiveSummary', 'findings', 'description', 'reason', 'feedback'].includes(field);
                         return (
                           <div key={field} className="space-y-2">
-                            <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest ml-1">{label}</label>
+                            <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest ml-1">{label}</label>
                             {isLongText ? (
                               <textarea 
                                 value={formData[field] || ''}
                                 onChange={e => setFormData({...formData, [field]: e.target.value})}
-                                className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold h-32"
+                                className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold h-32"
                               />
                             ) : (
                               <input 
                                 type={['amount', 'total', 'salary', 'interestRate', 'rating'].includes(field) ? 'number' : 'text'}
                                 value={formData[field] || ''}
                                 onChange={e => setFormData({...formData, [field]: e.target.value})}
-                                className="w-full bg-[#f0f6ff] border border-[#eaf2fc] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                                className="w-full bg-[#0d1117] border border-[#21262d] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                               />
                             )}
                           </div>
@@ -1028,75 +1028,75 @@ export default function DocumentGenerator() {
               </div>
 
               {/* Preview Side */}
-              <div className="p-12 md:p-16 bg-[#f0f6ff] flex items-center justify-center group">
-                <div className="w-full max-w-[500px] aspect-[1/1.41] bg-white shadow-2xl rounded-sm p-10 flex flex-col relative overflow-hidden">
+              <div className="p-12 md:p-16 bg-[#0d1117] flex items-center justify-center group">
+                <div className="w-full max-w-[500px] aspect-[1/1.41] bg-[#161b22] shadow-2xl rounded-sm p-10 flex flex-col relative overflow-hidden">
                   {/* Branded Header */}
                   <div className="flex justify-between items-start mb-12">
                     <div>
-                      <h5 className="font-black text-[#041628] text-lg">{formData.senderName}</h5>
-                      <p className="text-[8px] text-[#4d7291] font-bold uppercase tracking-widest">{formData.senderAddress}</p>
+                      <h5 className="font-black text-white text-lg">{formData.senderName}</h5>
+                      <p className="text-[8px] text-[#8b949e] font-bold uppercase tracking-widest">{formData.senderAddress}</p>
                     </div>
                     <div className="text-right">
-                      <h5 className="font-black text-[#134589] text-xl uppercase tracking-tighter">
+                      <h5 className="font-black text-[#58a6ff] text-xl uppercase tracking-tighter">
                         {activeType === 'invoice' ? 'Invoice' : 'Official'}
                       </h5>
-                      <p className="text-[8px] text-[#4d7291] font-bold uppercase tracking-widest">{formData.date}</p>
+                      <p className="text-[8px] text-[#8b949e] font-bold uppercase tracking-widest">{formData.date}</p>
                     </div>
                   </div>
 
                   {/* Content Preview */}
                   <div className="flex-1 overflow-y-auto pr-2">
                     <div className="mb-8">
-                      <p className="text-[8px] font-black text-[#7ab3e8] uppercase tracking-widest mb-1">Bill To:</p>
-                      <h6 className="text-[10px] font-black text-[#041628]">{formData.clientName || formData.recipient || formData.employeeName || formData.studentName || 'Recipient Name'}</h6>
-                      <p className="text-[8px] text-[#4d7291] font-medium">{formData.clientAddress || formData.propertyAddress || 'Address details...'}</p>
+                      <p className="text-[8px] font-black text-[#8b949e] uppercase tracking-widest mb-1">Bill To:</p>
+                      <h6 className="text-[10px] font-black text-white">{formData.clientName || formData.recipient || formData.employeeName || formData.studentName || 'Recipient Name'}</h6>
+                      <p className="text-[8px] text-[#8b949e] font-medium">{formData.clientAddress || formData.propertyAddress || 'Address details...'}</p>
                     </div>
 
                     {activeType === 'invoice' ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-12 border-b border-[#eaf2fc] pb-2">
-                          <span className="col-span-8 text-[8px] font-black text-[#7ab3e8] uppercase tracking-widest">Description</span>
-                          <span className="col-span-4 text-[8px] font-black text-[#7ab3e8] uppercase tracking-widest text-right">Total</span>
+                        <div className="grid grid-cols-12 border-b border-[#21262d] pb-2">
+                          <span className="col-span-8 text-[8px] font-black text-[#8b949e] uppercase tracking-widest">Description</span>
+                          <span className="col-span-4 text-[8px] font-black text-[#8b949e] uppercase tracking-widest text-right">Total</span>
                         </div>
                         {formData.items.map((item: any, i: number) => (
                           <div key={i} className="grid grid-cols-12 text-[10px]">
-                            <span className="col-span-8 font-bold text-[#0a2d5a]">{item.desc || 'Item description'}</span>
-                            <span className="col-span-4 font-black text-[#041628] text-right">KES {(item.qty * item.price).toFixed(2)}</span>
+                            <span className="col-span-8 font-bold text-white">{item.desc || 'Item description'}</span>
+                            <span className="col-span-4 font-black text-white text-right">KES {(item.qty * item.price).toFixed(2)}</span>
                           </div>
                         ))}
                         <div className="mt-8 pt-4 border-t-2 border-[#020b18] flex justify-between items-center">
                            <span className="text-[10px] font-black uppercase tracking-widest">Total Amount</span>
-                           <span className="text-lg font-black text-[#041628]">KES {calculateTotal().toFixed(2)}</span>
+                           <span className="text-lg font-black text-white">KES {calculateTotal().toFixed(2)}</span>
                         </div>
                       </div>
                     ) : activeType === 'accounting' ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-12 border-b border-[#eaf2fc] pb-2">
-                          <span className="col-span-4 text-[7px] font-black text-[#7ab3e8] uppercase tracking-widest">Date</span>
-                          <span className="col-span-5 text-[7px] font-black text-[#7ab3e8] uppercase tracking-widest">Desc</span>
-                          <span className="col-span-3 text-[7px] font-black text-[#7ab3e8] uppercase tracking-widest text-right">Amount</span>
+                        <div className="grid grid-cols-12 border-b border-[#21262d] pb-2">
+                          <span className="col-span-4 text-[7px] font-black text-[#8b949e] uppercase tracking-widest">Date</span>
+                          <span className="col-span-5 text-[7px] font-black text-[#8b949e] uppercase tracking-widest">Desc</span>
+                          <span className="col-span-3 text-[7px] font-black text-[#8b949e] uppercase tracking-widest text-right">Amount</span>
                         </div>
                         {formData.accountingEntries.map((entry: any, i: number) => (
                           <div key={i} className="grid grid-cols-12 text-[9px] py-1 border-b border-[#f0f6ff]">
-                            <span className="col-span-4 text-[#365874]">{entry.date}</span>
-                            <span className="col-span-5 font-bold text-[#0a2d5a] truncate">{entry.desc}</span>
-                            <span className="col-span-3 font-black text-[#041628] text-right">KES {entry.amount.toFixed(2)}</span>
+                            <span className="col-span-4 text-[#8b949e]">{entry.date}</span>
+                            <span className="col-span-5 font-bold text-white truncate">{entry.desc}</span>
+                            <span className="col-span-3 font-black text-white text-right">KES {entry.amount.toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
                     ) : activeType === 'minutes' ? (
                       <div className="space-y-4">
-                        <h6 className="font-black text-[#041628] text-sm">{formData.minutesMeetingTitle}</h6>
-                        <p className="text-[8px] font-bold text-[#4d7291]">Attendees: {formData.minutesAttendees}</p>
+                        <h6 className="font-black text-white text-sm">{formData.minutesMeetingTitle}</h6>
+                        <p className="text-[8px] font-bold text-[#8b949e]">Attendees: {formData.minutesAttendees}</p>
                         <div className="mt-4">
-                           <p className="text-[8px] font-black text-[#7ab3e8] uppercase tracking-widest mb-2">Action Items</p>
-                           <p className="text-[10px] text-[#224260] whitespace-pre-wrap">{formData.minutesActionItems}</p>
+                           <p className="text-[8px] font-black text-[#8b949e] uppercase tracking-widest mb-2">Action Items</p>
+                           <p className="text-[10px] text-[#e6edf3] whitespace-pre-wrap">{formData.minutesActionItems}</p>
                         </div>
                       </div>
                     ) : activeType === 'contract' ? (
                       <div className="space-y-4">
-                        <h6 className="font-black text-[#041628] text-sm text-center uppercase underline">{formData.contractTitle}</h6>
-                        <p className="text-[9px] text-[#224260] leading-relaxed whitespace-pre-wrap">
+                        <h6 className="font-black text-white text-sm text-center uppercase underline">{formData.contractTitle}</h6>
+                        <p className="text-[9px] text-[#e6edf3] leading-relaxed whitespace-pre-wrap">
                           This agreement is made between {formData.senderName} and {formData.clientName} on {formData.date}.
                           {"\n\n"}
                           {formData.contractTerms}
@@ -1104,19 +1104,19 @@ export default function DocumentGenerator() {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        <h6 className="font-black text-[#041628] text-sm">{formData.letterSubject || formData.subject || formData.title || activeTemplate?.name}</h6>
+                        <h6 className="font-black text-white text-sm">{formData.letterSubject || formData.subject || formData.title || activeTemplate?.name}</h6>
                         <div className="space-y-4">
                           {activeTemplate?.fields.filter(f => !['invoiceNumber', 'clientName', 'clientAddress', 'date', 'senderName', 'senderAddress', 'senderEmail', 'letterSubject', 'letterContent', 'subject', 'title', 'recipient'].includes(f)).map(field => {
                             const label = field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                             return (
                               <div key={field}>
-                                <p className="text-[7px] font-black text-[#7ab3e8] uppercase tracking-widest">{label}</p>
-                                <p className="text-[10px] text-[#0a2d5a] font-medium">{formData[field] || '...'}</p>
+                                <p className="text-[7px] font-black text-[#8b949e] uppercase tracking-widest">{label}</p>
+                                <p className="text-[10px] text-white font-medium">{formData[field] || '...'}</p>
                               </div>
                             );
                           })}
                         </div>
-                        <p className="text-[10px] text-[#224260] leading-relaxed whitespace-pre-wrap">
+                        <p className="text-[10px] text-[#e6edf3] leading-relaxed whitespace-pre-wrap">
                           {formData.letterContent || formData.content || formData.terms || formData.details || formData.statement || 'Your document content will appear here...'}
                         </p>
                       </div>
@@ -1125,7 +1125,7 @@ export default function DocumentGenerator() {
 
                   {/* Footer */}
                   <div className="mt-auto pt-8 border-t border-[#f0f6ff] text-center">
-                    <p className="text-[7px] text-[#7ab3e8] font-bold uppercase tracking-widest">Generated by FreeStamps KE Document Architect</p>
+                    <p className="text-[7px] text-[#8b949e] font-bold uppercase tracking-widest">Generated by FreeStamps KE Document Architect</p>
                   </div>
                   
                   {/* Action Overlay */}
@@ -1136,13 +1136,13 @@ export default function DocumentGenerator() {
                     <button onClick={() => handleShare('whatsapp')} className="bg-emerald-500 text-white p-2 rounded-xl shadow-xl">
                       <MessageSquare size={14} />
                     </button>
-                    <button onClick={() => handleShare('email')} className="bg-[#134589] text-white p-2 rounded-xl shadow-xl">
+                    <button onClick={() => handleShare('email')} className="bg-[#1f6feb] text-white p-2 rounded-xl shadow-xl">
                       <Share2 size={14} />
                     </button>
                   </div>
                   
                   {/* Decorative element */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#134589]/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#1f6feb]/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 </div>
               </div>
             </div>

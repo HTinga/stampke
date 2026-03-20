@@ -241,17 +241,17 @@ export function MainToolbar({
   };
 
   return (
-    <header className="main-toolbar flex flex-col bg-[#041628] border-b border-[#0e3a72] shadow-sm z-30">
+    <header className="main-toolbar flex flex-col bg-[#161b22] border-b border-[#30363d] shadow-sm z-30">
       {/* Tabs */}
-      <div className="flex items-center px-4 border-b border-[#eaf2fc] bg-[#f0f6ff]/50">
+      <div className="flex items-center px-4 border-b border-[#21262d] bg-[#0d1117]/50">
         {(['file', 'home', 'insert', 'layout', 'review', 'form', 'view'] as ToolbarTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${
               activeTab === tab 
-                ? 'border-blue-600 text-blue-600 bg-white' 
-                : 'border-transparent text-[#7ab3e8] hover:text-white hover:bg-[#0e3a72]'
+                ? 'border-blue-600 text-blue-600 bg-[#161b22]' 
+                : 'border-transparent text-[#8b949e] hover:text-white hover:bg-[#30363d]'
             }`}
           >
             {tab}
@@ -262,7 +262,7 @@ export function MainToolbar({
       {/* Toolbar Actions */}
       <div className="flex items-center h-20 px-4 gap-2 overflow-x-auto no-scrollbar">
         {/* Common Actions (Always Visible) */}
-        <div className="flex items-center gap-1 pr-2 border-r border-[#eaf2fc]">
+        <div className="flex items-center gap-1 pr-2 border-r border-[#21262d]">
           <button className="toolbar-btn icon-only" onClick={() => fileInputRef.current?.click()} title="Open File">
             <FileUp size={18} />
           </button>
@@ -294,34 +294,34 @@ export function MainToolbar({
                   <ChevronDown size={14} />
                 </button>
                 {exportMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-[#c5d8ef] rounded-lg shadow-xl z-50">
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-[#161b22] border border-[#30363d] rounded-lg shadow-xl z-50">
                     <div className="py-1">
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#eaf2fc] flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
                         onClick={() => { onExport(); setExportMenuOpen(false); }}
                       >
                         <Save size={14} /> PDF
                       </button>
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#eaf2fc] flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
                         onClick={() => { onExportWithFormat?.('word'); setExportMenuOpen(false); }}
                       >
                         <FileText size={14} /> Word (.docx)
                       </button>
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#eaf2fc] flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
                         onClick={() => { onExportWithFormat?.('excel'); setExportMenuOpen(false); }}
                       >
                         <FileText size={14} /> Excel (.xlsx)
                       </button>
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#eaf2fc] flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
                         onClick={() => { onExportWithFormat?.('powerpoint'); setExportMenuOpen(false); }}
                       >
                         <FileText size={14} /> PowerPoint (.pptx)
                       </button>
                       <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#eaf2fc] flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
                         onClick={() => { onExportWithFormat?.('image'); setExportMenuOpen(false); }}
                       >
                         <ImageIcon size={14} /> Image (.png)
@@ -478,7 +478,7 @@ export function MainToolbar({
           {activeTab === 'form' && (
             <>
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-[#365874] uppercase">Add Field</span>
+                <span className="text-[10px] font-bold text-[#8b949e] uppercase">Add Field</span>
                 <div className="flex gap-1">
                   <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('text')} disabled={!hasDocument} title="Text Field">
                     <Type size={18} />
@@ -560,7 +560,7 @@ export function MainToolbar({
                   else if (val === 'fit-width') onFitToWidth();
                   else onSetZoom(parseFloat(val));
                 }}
-                className="zoom-select h-10 bg-[#f0f6ff] border border-[#c5d8ef] rounded px-2 text-xs font-bold outline-none"
+                className="zoom-select h-10 bg-[#0d1117] border border-[#30363d] rounded px-2 text-xs font-bold outline-none"
                 disabled={!hasDocument}
               >
                 <option value="fit-page">Fit Page</option>
@@ -579,8 +579,8 @@ export function MainToolbar({
 
         {/* Navigation & Search */}
         <div className="flex items-center gap-2">
-          <div className="page-indicator flex items-center bg-[#f0f6ff] border border-[#c5d8ef] rounded-lg px-2 h-9">
-            <button className="p-1 hover:bg-[#c5d8ef] rounded disabled:opacity-30" onClick={onPreviousPage} disabled={!hasDocument || currentPage <= 1}>
+          <div className="page-indicator flex items-center bg-[#0d1117] border border-[#30363d] rounded-lg px-2 h-9">
+            <button className="p-1 hover:bg-[#30363d] rounded disabled:opacity-30" onClick={onPreviousPage} disabled={!hasDocument || currentPage <= 1}>
               <ChevronLeft size={16} />
             </button>
             <input 
@@ -592,9 +592,9 @@ export function MainToolbar({
               max={totalPages}
               disabled={!hasDocument}
             />
-            <span className="text-[10px] font-black text-[#4d7291] mx-1">/</span>
-            <span className="text-xs font-black text-[#224260] min-w-[20px]">{totalPages || 0}</span>
-            <button className="p-1 hover:bg-[#c5d8ef] rounded disabled:opacity-30" onClick={onNextPage} disabled={!hasDocument || currentPage >= totalPages}>
+            <span className="text-[10px] font-black text-[#8b949e] mx-1">/</span>
+            <span className="text-xs font-black text-[#e6edf3] min-w-[20px]">{totalPages || 0}</span>
+            <button className="p-1 hover:bg-[#30363d] rounded disabled:opacity-30" onClick={onNextPage} disabled={!hasDocument || currentPage >= totalPages}>
               <ChevronRight size={16} />
             </button>
           </div>

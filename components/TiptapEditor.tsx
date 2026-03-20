@@ -75,7 +75,7 @@ export const TiptapEditor: React.FC<TiptapEditorProps> = ({ content, onChange })
   }
 
   return (
-    <div className="tiptap-editor-container border border-[#c5d8ef] rounded-xl overflow-hidden bg-white">
+    <div className="tiptap-editor-container border border-[#30363d] rounded-xl overflow-hidden bg-[#161b22]">
       <TipTapToolbar editor={editor} />
       <div className="tiptap-content-area p-4 min-h-[150px] max-h-[400px] overflow-y-auto focus:outline-none prose prose-sm max-w-none">
         <EditorContent editor={editor} />

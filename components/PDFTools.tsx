@@ -856,7 +856,7 @@ export default function PDFTools() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      className="h-full flex flex-col bg-[#eaf2fc] overflow-hidden transition-colors duration-200 [&.drag-over]:bg-[#eaf2fc]"
+      className="h-full flex flex-col bg-[#21262d] overflow-hidden transition-colors duration-200 [&.drag-over]:bg-[#21262d]"
     >
       {/* Header */}
       <MainToolbar 
@@ -910,14 +910,14 @@ export default function PDFTools() {
 
       <div className="flex-1 flex overflow-hidden">
         {!pdfData ? (
-          <div className="flex-1 flex flex-col items-center justify-center bg-[#f0f6ff] p-8">
+          <div className="flex-1 flex flex-col items-center justify-center bg-[#0d1117] p-8">
             <div className="max-w-md w-full text-center space-y-8">
-              <div className="w-24 h-24 bg-[#134589] rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-[#aaccf2] rotate-3">
+              <div className="w-24 h-24 bg-[#1f6feb] rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-black rotate-3">
                 <FileText size={48} className="text-white" />
               </div>
               <div className="space-y-4">
                 <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
-                <p className="text-[#365874] font-medium text-lg leading-relaxed">
+                <p className="text-[#8b949e] font-medium text-lg leading-relaxed">
                   Professional PDF editing, annotation, and manipulation. All in your browser.
                 </p>
               </div>
@@ -931,7 +931,7 @@ export default function PDFTools() {
                 />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full bg-[#134589] text-white py-6 rounded-[32px] font-black text-xl hover:bg-[#0e3a72] transition-all shadow-xl shadow-[#c5d8ef] flex items-center justify-center gap-3"
+                  className="w-full bg-[#1f6feb] text-white py-6 rounded-[32px] font-black text-xl hover:bg-[#30363d] transition-all shadow-xl shadow-[#c5d8ef] flex items-center justify-center gap-3"
                 >
                   <Plus size={24} /> Select PDF File
                 </button>
@@ -947,14 +947,14 @@ export default function PDFTools() {
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 300, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="bg-white border-r border-[#c5d8ef] flex flex-col overflow-hidden z-20 shadow-xl"
+              className="bg-[#161b22] border-r border-[#30363d] flex flex-col overflow-hidden z-20 shadow-xl"
             >
-              <div className="flex items-center p-4 border-b border-[#eaf2fc] bg-[#f0f6ff]/50 gap-2">
+              <div className="flex items-center p-4 border-b border-[#21262d] bg-[#0d1117]/50 gap-2">
                 <button
                   onClick={() => setActivePanel('thumbnails')}
                   title="Thumbnails"
                   className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
-                    activePanel === 'thumbnails' ? 'bg-[#134589] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#4d7291] hover:text-[#224260] hover:bg-[#eaf2fc]'
+                    activePanel === 'thumbnails' ? 'bg-[#1f6feb] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#21262d]'
                   }`}
                 >
                   <Layers size={18} />
@@ -963,7 +963,7 @@ export default function PDFTools() {
                   onClick={() => setActivePanel('outline')}
                   title="Outline"
                   className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
-                    activePanel === 'outline' ? 'bg-[#134589] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#4d7291] hover:text-[#224260] hover:bg-[#eaf2fc]'
+                    activePanel === 'outline' ? 'bg-[#1f6feb] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#21262d]'
                   }`}
                 >
                   <FileText size={18} />
@@ -987,17 +987,17 @@ export default function PDFTools() {
           )}
         </AnimatePresence>
 
-        <div className="flex-1 relative overflow-auto bg-[#c5d8ef] p-8 flex justify-center items-start">
+        <div className="flex-1 relative overflow-auto bg-[#30363d] p-8 flex justify-center items-start">
           <AnimatePresence>
             {searchOpen && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="absolute top-4 left-1/2 -translate-x-1/2 w-96 bg-white rounded-2xl shadow-2xl border border-[#c5d8ef] p-4 z-20"
+                className="absolute top-4 left-1/2 -translate-x-1/2 w-96 bg-[#161b22] rounded-2xl shadow-2xl border border-[#30363d] p-4 z-20"
               >
                 <div className="flex items-center gap-3">
-                  <Search size={18} className="text-[#4d7291]" />
+                  <Search size={18} className="text-[#8b949e]" />
                   <input 
                     type="text"
                     value={query}
@@ -1005,7 +1005,7 @@ export default function PDFTools() {
                     placeholder="Search document..."
                     className="flex-1 bg-transparent border-none outline-none text-sm font-bold"
                   />
-                  <button onClick={toggleSearch} className="p-1 hover:bg-[#eaf2fc] rounded">
+                  <button onClick={toggleSearch} className="p-1 hover:bg-[#21262d] rounded">
                     <X size={16} />
                   </button>
                 </div>
@@ -1015,7 +1015,7 @@ export default function PDFTools() {
 
           <div 
             ref={containerRef}
-            className="bg-white shadow-2xl relative"
+            className="bg-[#161b22] shadow-2xl relative"
             onClick={(e) => {
               if (currentTool === 'text') {
                 const rect = containerRef.current?.getBoundingClientRect();
@@ -1133,10 +1133,10 @@ export default function PDFTools() {
             </AnimatePresence>
 
             {isDetectingText && (
-              <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-30 flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#161b22]/50 backdrop-blur-[2px] z-30 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                  <RefreshCw size={32} className="text-[#134589] animate-spin" />
-                  <span className="text-sm font-black text-[#134589] uppercase tracking-widest">Detecting Text...</span>
+                  <RefreshCw size={32} className="text-[#58a6ff] animate-spin" />
+                  <span className="text-sm font-black text-[#58a6ff] uppercase tracking-widest">Detecting Text...</span>
                 </div>
               </div>
             )}
@@ -1146,7 +1146,7 @@ export default function PDFTools() {
                 {/* Inline Editor */}
                 {inlineEditingBlockId === block.id ? (
                   <div
-                    className="absolute border-2 border-[#1a5cad] bg-white shadow-xl rounded z-50"
+                    className="absolute border-2 border-[#1a5cad] bg-[#161b22] shadow-xl rounded z-50"
                     style={{
                       left: block.rect.x * zoom,
                       top: block.rect.y * zoom,
@@ -1157,17 +1157,17 @@ export default function PDFTools() {
                   >
                     <div className="p-2 flex flex-col h-full">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-[#134589]">Editing Text</span>
+                        <span className="text-xs font-bold text-[#58a6ff]">Editing Text</span>
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleSaveInlineEdit(block)}
-                            className="px-2 py-1 text-xs bg-[#134589] text-white rounded hover:bg-[#0e3a72]"
+                            className="px-2 py-1 text-xs bg-[#1f6feb] text-white rounded hover:bg-[#30363d]"
                           >
                             Save
                           </button>
                           <button
                             onClick={() => setInlineEditingBlockId(null)}
-                            className="px-2 py-1 text-xs bg-gray-200 text-[#224260] rounded hover:bg-gray-300"
+                            className="px-2 py-1 text-xs bg-gray-200 text-[#e6edf3] rounded hover:bg-gray-300"
                           >
                             Cancel
                           </button>
@@ -1176,7 +1176,7 @@ export default function PDFTools() {
                       <textarea
                         value={inlineEditContent}
                         onChange={(e) => setInlineEditContent(e.target.value)}
-                        className="flex-1 w-full p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#134589]"
+                        className="flex-1 w-full p-2 border border-gray-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1f6feb]"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && e.ctrlKey) {
@@ -1187,7 +1187,7 @@ export default function PDFTools() {
                           }
                         }}
                       />
-                      <div className="mt-2 text-xs text-[#365874]">
+                      <div className="mt-2 text-xs text-[#8b949e]">
                         Press Ctrl+Enter to save, Esc to cancel
                       </div>
                     </div>
@@ -1214,7 +1214,7 @@ export default function PDFTools() {
                       zIndex: 5
                     }}
                   >
-                    <div className="hidden group-hover:flex absolute -top-6 left-0 bg-[#134589] text-white text-[10px] px-2 py-0.5 rounded shadow-lg whitespace-nowrap items-center gap-1">
+                    <div className="hidden group-hover:flex absolute -top-6 left-0 bg-[#1f6feb] text-white text-[10px] px-2 py-0.5 rounded shadow-lg whitespace-nowrap items-center gap-1">
                       <Type size={10} /> Edit Text
                     </div>
                   </div>
@@ -1244,7 +1244,7 @@ export default function PDFTools() {
                   e.stopPropagation();
                   setSelectedElementId(el.id);
                 }}
-                className={`absolute cursor-move group ${selectedElementId === el.id ? 'ring-2 ring-[#134589] ring-offset-2' : ''}`}
+                className={`absolute cursor-move group ${selectedElementId === el.id ? 'ring-2 ring-[#1f6feb] ring-offset-2' : ''}`}
                 style={{
                   left: el.x * zoom,
                   top: el.y * zoom,
@@ -1252,7 +1252,7 @@ export default function PDFTools() {
                 }}
               >
                 {selectedElementId === el.id && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-xl border border-[#c5d8ef] p-1 flex items-center gap-1 z-20">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#161b22] rounded-lg shadow-xl border border-[#30363d] p-1 flex items-center gap-1 z-20">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1265,8 +1265,8 @@ export default function PDFTools() {
                     >
                       <Trash2 size={14} />
                     </button>
-                    <div className="w-[1px] h-4 bg-[#c5d8ef] mx-1" />
-                    <button className="p-1.5 hover:bg-[#eaf2fc] text-[#224260] rounded transition-colors">
+                    <div className="w-[1px] h-4 bg-[#30363d] mx-1" />
+                    <button className="p-1.5 hover:bg-[#21262d] text-[#e6edf3] rounded transition-colors">
                       <Settings size={14} />
                     </button>
                   </div>
@@ -1468,17 +1468,17 @@ export default function PDFTools() {
       {/* Digital Sign Center Modal */}
       {showSignCenter && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#041628] rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-[#c5d8ef] dark:border-[#0e3a72]">
-            <div className="px-6 py-4 border-bottom border-[#c5d8ef] dark:border-[#0e3a72] flex items-center justify-between bg-zinc-50 dark:bg-[#041628]/50">
+          <div className="bg-[#161b22] dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-[#30363d] dark:border-[#30363d]">
+            <div className="px-6 py-4 border-bottom border-[#30363d] dark:border-[#30363d] flex items-center justify-between bg-zinc-50 dark:bg-[#161b22]/50">
               <div>
-                <h2 className="text-xl font-semibold text-[#041628] dark:text-white">Digital Signature Center</h2>
-                <p className="text-sm text-[#365874] dark:text-[#4d7291]">Capture and apply your professional signature</p>
+                <h2 className="text-xl font-semibold text-white dark:text-white">Digital Signature Center</h2>
+                <p className="text-sm text-[#8b949e] dark:text-[#8b949e]">Capture and apply your professional signature</p>
               </div>
               <button 
                 onClick={() => setShowSignCenter(false)}
-                className="p-2 hover:bg-zinc-200 dark:hover:bg-[#062040] rounded-full transition-colors"
+                className="p-2 hover:bg-zinc-200 dark:hover:bg-[#21262d] rounded-full transition-colors"
               >
-                <X className="w-6 h-6 text-[#365874]" />
+                <X className="w-6 h-6 text-[#8b949e]" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">

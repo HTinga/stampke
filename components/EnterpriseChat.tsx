@@ -114,39 +114,39 @@ export default function EnterpriseChat() {
   }, [messages]);
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-[#041628] rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] overflow-hidden shadow-2xl">
+    <div className="h-full flex flex-col bg-[#161b22] dark:bg-[#161b22] rounded-[48px] border border-[#21262d] dark:border-[#30363d] overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="p-8 border-b border-[#eaf2fc] dark:border-[#0e3a72] flex items-center justify-between bg-[#f0f6ff]/50 dark:bg-[#062040]/50 backdrop-blur-xl">
+      <div className="p-8 border-b border-[#21262d] dark:border-[#30363d] flex items-center justify-between bg-[#0d1117]/50 dark:bg-[#21262d]/50 backdrop-blur-xl">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-[#134589] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#aaccf2]">
+          <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-black">
             <Hash size={24} />
           </div>
           <div>
             <h3 className="text-xl font-black tracking-tighter capitalize">{activeChannel}</h3>
-            <p className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest">Enterprise Communication Hub</p>
+            <p className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest">Enterprise Communication Hub</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white dark:bg-[#041628] px-4 py-2 rounded-xl border border-[#eaf2fc] dark:border-[#0e3a72]">
-            <Search size={16} className="text-[#4d7291]" />
+          <div className="flex items-center gap-2 bg-[#161b22] dark:bg-[#161b22] px-4 py-2 rounded-xl border border-[#21262d] dark:border-[#30363d]">
+            <Search size={16} className="text-[#8b949e]" />
             <input type="text" placeholder="Search messages..." className="bg-transparent border-none outline-none text-xs font-bold w-32" />
           </div>
-          <button className="p-3 hover:bg-white dark:hover:bg-[#041628] rounded-xl transition-all text-[#4d7291]"><Palette size={20} /></button>
-          <button className="p-3 hover:bg-white dark:hover:bg-[#041628] rounded-xl transition-all text-[#4d7291]"><MoreVertical size={20} /></button>
+          <button className="p-3 hover:bg-[#161b22] dark:hover:bg-[#161b22] rounded-xl transition-all text-[#8b949e]"><Palette size={20} /></button>
+          <button className="p-3 hover:bg-[#161b22] dark:hover:bg-[#161b22] rounded-xl transition-all text-[#8b949e]"><MoreVertical size={20} /></button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 border-r border-[#eaf2fc] dark:border-[#0e3a72] p-6 space-y-8 hidden lg:block">
+        <div className="w-64 border-r border-[#21262d] dark:border-[#30363d] p-6 space-y-8 hidden lg:block">
           <div>
-            <h4 className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-4">Channels</h4>
+            <h4 className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-4">Channels</h4>
             <div className="space-y-1">
               {['general', 'legal-ops', 'finance', 'random'].map(channel => (
                 <button 
                   key={channel}
                   onClick={() => setActiveChannel(channel)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeChannel === channel ? 'bg-[#eaf2fc] dark:bg-[#062040] text-[#134589]' : 'text-[#365874] hover:bg-[#f0f6ff] dark:hover:bg-[#062040]'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeChannel === channel ? 'bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff]' : 'text-[#8b949e] hover:bg-[#0d1117] dark:hover:bg-[#21262d]'}`}
                 >
                   <Hash size={16} /> {channel}
                 </button>
@@ -155,29 +155,29 @@ export default function EnterpriseChat() {
           </div>
 
           <div>
-            <h4 className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-4">Direct Messages</h4>
+            <h4 className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-4">Direct Messages</h4>
             <div className="space-y-1">
               {['Sarah Wambui', 'John Kamau', 'Legal Bot'].map(user => (
-                <button key={user} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold text-[#365874] hover:bg-[#f0f6ff] dark:hover:bg-[#062040] transition-all">
+                <button key={user} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold text-[#8b949e] hover:bg-[#0d1117] dark:hover:bg-[#21262d] transition-all">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" /> {user}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
-            <div className="bg-[#f0f6ff] dark:bg-[#062040] p-4 rounded-2xl">
+          <div className="pt-8 border-t border-[#21262d] dark:border-[#30363d]">
+            <div className="bg-[#0d1117] dark:bg-[#21262d] p-4 rounded-2xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black uppercase text-[#4d7291]">Sentiment Trend</span>
+                <span className="text-[10px] font-black uppercase text-[#8b949e]">Sentiment Trend</span>
                 <TrendingUp size={14} className="text-emerald-500" />
               </div>
-              <p className="text-xs font-bold text-[#224260] dark:text-[#7ab3e8]">Overall Mood: Positive</p>
+              <p className="text-xs font-bold text-[#e6edf3] dark:text-[#8b949e]">Overall Mood: Positive</p>
             </div>
           </div>
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-[#f0f6ff]/30 dark:bg-[#020b18]/30">
+        <div className="flex-1 flex flex-col bg-[#0d1117]/30 dark:bg-[#0d1117]/30">
           <div className="flex-1 overflow-y-auto p-8 space-y-6">
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
@@ -187,27 +187,27 @@ export default function EnterpriseChat() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex gap-4 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${msg.isAnonymous ? 'bg-[#062040]' : 'bg-[#134589]'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${msg.isAnonymous ? 'bg-[#21262d]' : 'bg-[#1f6feb]'}`}>
                     {msg.isAnonymous ? <EyeOff size={18} /> : <User size={18} />}
                   </div>
                   <div className={`max-w-[70%] space-y-2 ${msg.user === 'You' ? 'items-end' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-[#041628] dark:text-white">{msg.user}</span>
-                      {msg.role && <span className="text-[8px] font-black uppercase bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] px-1.5 py-0.5 rounded-md">{msg.role}</span>}
-                      <span className="text-[10px] text-[#4d7291] font-medium">{msg.time}</span>
+                      <span className="text-xs font-black text-white dark:text-white">{msg.user}</span>
+                      {msg.role && <span className="text-[8px] font-black uppercase bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] px-1.5 py-0.5 rounded-md">{msg.role}</span>}
+                      <span className="text-[10px] text-[#8b949e] font-medium">{msg.time}</span>
                       {msg.sentiment === 'positive' && <Zap size={12} className="text-amber-500" />}
                     </div>
-                    <div className={`p-4 rounded-3xl shadow-sm border ${msg.user === 'You' ? 'bg-[#134589] text-white border-[#1a5cad] rounded-tr-none' : 'bg-white dark:bg-[#041628] border-[#eaf2fc] dark:border-[#0e3a72] rounded-tl-none'}`}>
+                    <div className={`p-4 rounded-3xl shadow-sm border ${msg.user === 'You' ? 'bg-[#1f6feb] text-white border-[#1a5cad] rounded-tr-none' : 'bg-[#161b22] dark:bg-[#161b22] border-[#21262d] dark:border-[#30363d] rounded-tl-none'}`}>
                       <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
                     </div>
                     <div className="flex items-center gap-3 px-2">
                       <button 
                         onClick={() => handleUpvote(msg.id)}
-                        className="flex items-center gap-1.5 text-[10px] font-black text-[#4d7291] hover:text-[#134589] transition-all"
+                        className="flex items-center gap-1.5 text-[10px] font-black text-[#8b949e] hover:text-[#58a6ff] transition-all"
                       >
                         <ThumbsUp size={12} /> {msg.upvotes}
                       </button>
-                      <button className="text-[10px] font-black text-[#4d7291] hover:text-[#224260] transition-all">Reply</button>
+                      <button className="text-[10px] font-black text-[#8b949e] hover:text-[#e6edf3] transition-all">Reply</button>
                       <div className={`w-1.5 h-1.5 rounded-full ${msg.sentiment === 'positive' ? 'bg-emerald-500' : msg.sentiment === 'negative' ? 'bg-rose-500' : 'bg-[#aaccf2]'}`} />
                     </div>
                   </div>
@@ -218,22 +218,22 @@ export default function EnterpriseChat() {
           </div>
 
           {/* Input Area */}
-          <div className="p-8 bg-white dark:bg-[#041628] border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+          <div className="p-8 bg-[#161b22] dark:bg-[#161b22] border-t border-[#21262d] dark:border-[#30363d]">
             <div className="flex items-center gap-4 mb-4">
               <button 
                 onClick={() => setIsAnonymousMode(!isAnonymousMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isAnonymousMode ? 'bg-[#041628] text-white' : 'bg-[#eaf2fc] text-[#365874] hover:bg-[#c5d8ef]'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isAnonymousMode ? 'bg-[#161b22] text-white' : 'bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]'}`}
               >
                 {isAnonymousMode ? <EyeOff size={14} /> : <User size={14} />}
                 {isAnonymousMode ? 'Anonymous Active' : 'Go Anonymous'}
               </button>
-              <div className="h-4 w-px bg-[#eaf2fc] dark:bg-[#062040]" />
-              <span className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">
+              <div className="h-4 w-px bg-[#21262d] dark:bg-[#21262d]" />
+              <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">
                 {isAnonymousMode ? 'Your identity is hidden' : 'Posting as Tinga'}
               </span>
             </div>
-            <div className="flex items-center gap-4 bg-[#f0f6ff] dark:bg-[#062040] p-2 rounded-[32px] border border-[#eaf2fc] dark:border-[#134589]">
-              <button className="p-4 hover:bg-white dark:hover:bg-[#041628] rounded-full transition-all text-[#4d7291]"><Paperclip size={20} /></button>
+            <div className="flex items-center gap-4 bg-[#0d1117] dark:bg-[#21262d] p-2 rounded-[32px] border border-[#21262d] dark:border-[#58a6ff]">
+              <button className="p-4 hover:bg-[#161b22] dark:hover:bg-[#161b22] rounded-full transition-all text-[#8b949e]"><Paperclip size={20} /></button>
               <input 
                 type="text" 
                 value={input}
@@ -242,10 +242,10 @@ export default function EnterpriseChat() {
                 placeholder="Type a message or use / for commands..." 
                 className="flex-1 bg-transparent border-none outline-none font-bold text-sm px-2"
               />
-              <button className="p-4 hover:bg-white dark:hover:bg-[#041628] rounded-full transition-all text-[#4d7291]"><Smile size={20} /></button>
+              <button className="p-4 hover:bg-[#161b22] dark:hover:bg-[#161b22] rounded-full transition-all text-[#8b949e]"><Smile size={20} /></button>
               <button 
                 onClick={handleSend}
-                className="bg-[#134589] text-white p-4 rounded-full shadow-lg shadow-[#aaccf2] hover:scale-110 transition-all active:scale-95"
+                className="bg-[#1f6feb] text-white p-4 rounded-full shadow-lg shadow-black hover:scale-110 transition-all active:scale-95"
               >
                 <Send size={20} />
               </button>

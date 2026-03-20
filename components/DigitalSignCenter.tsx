@@ -122,19 +122,19 @@ export const SignaturePad: React.FC<{
   };
 
   return (
-    <div className="bg-white p-6 md:p-10 rounded-[48px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border border-[#eaf2fc] max-w-xl w-full animate-in zoom-in duration-300">
+    <div className="bg-[#161b22] p-6 md:p-10 rounded-[48px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border border-[#21262d] max-w-xl w-full animate-in zoom-in duration-300">
       <div className="flex justify-between items-center mb-8">
-        <h4 className="text-3xl font-black text-[#041628] tracking-tighter">{title}</h4>
-        <button onClick={onCancel} className="p-2 hover:bg-[#eaf2fc] rounded-full transition-all text-[#4d7291]"><X size={24} /></button>
+        <h4 className="text-3xl font-black text-white tracking-tighter">{title}</h4>
+        <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-full transition-all text-[#8b949e]"><X size={24} /></button>
       </div>
 
-      <div className="flex bg-[#eaf2fc] p-1.5 rounded-2xl mb-8">
+      <div className="flex bg-[#21262d] p-1.5 rounded-2xl mb-8">
         {['draw', 'type', 'upload'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
             className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-              activeTab === tab ? 'bg-white shadow-md text-[#134589]' : 'text-[#4d7291] hover:text-[#224260]'
+              activeTab === tab ? 'bg-[#161b22] shadow-md text-[#58a6ff]' : 'text-[#8b949e] hover:text-[#e6edf3]'
             }`}
           >
             {tab}
@@ -142,7 +142,7 @@ export const SignaturePad: React.FC<{
         ))}
       </div>
 
-      <div className="bg-[#f0f6ff] border-2 border-dashed border-[#c5d8ef] rounded-[32px] overflow-hidden mb-10 h-72 flex items-center justify-center relative shadow-inner">
+      <div className="bg-[#0d1117] border-2 border-dashed border-[#30363d] rounded-[32px] overflow-hidden mb-10 h-72 flex items-center justify-center relative shadow-inner">
         {activeTab === 'draw' && (
           <canvas
             ref={canvasRef}
@@ -154,7 +154,7 @@ export const SignaturePad: React.FC<{
             onTouchStart={startDrawing}
             onTouchEnd={() => setIsDrawing(false)}
             onTouchMove={draw}
-            className="w-full h-full cursor-crosshair bg-white touch-none"
+            className="w-full h-full cursor-crosshair bg-[#161b22] touch-none"
           />
         )}
         {activeTab === 'type' && (
@@ -164,23 +164,23 @@ export const SignaturePad: React.FC<{
               placeholder="Your Name Here"
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
-              className={`w-full bg-transparent border-b-2 border-[#c5d8ef] py-6 px-4 text-center text-4xl outline-none focus:border-[#1a5cad] transition-colors ${isBold ? 'font-bold' : ''}`}
+              className={`w-full bg-transparent border-b-2 border-[#30363d] py-6 px-4 text-center text-4xl outline-none focus:border-[#1a5cad] transition-colors ${isBold ? 'font-bold' : ''}`}
               style={{ fontFamily: selectedFont }}
             />
             <div className="flex flex-wrap justify-center gap-4">
               <button 
                 onClick={() => setIsBold(!isBold)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center gap-2 ${isBold ? 'border-[#134589] bg-[#134589] text-white' : 'border-[#c5d8ef] text-[#4d7291]'}`}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center gap-2 ${isBold ? 'border-[#58a6ff] bg-[#1f6feb] text-white' : 'border-[#30363d] text-[#8b949e]'}`}
               >
                 {isBold ? <Check size={14} /> : null} Bold Text
               </button>
-              <div className="h-8 w-px bg-[#c5d8ef] mx-2"></div>
+              <div className="h-8 w-px bg-[#30363d] mx-2"></div>
               {SIGNATURE_FONTS.map((font) => (
                 <button
                   key={font.family}
                   onClick={() => setSelectedFont(font.family)}
                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${
-                    selectedFont === font.family ? 'border-[#134589] bg-[#eaf2fc] text-[#134589]' : 'border-[#c5d8ef] text-[#4d7291]'
+                    selectedFont === font.family ? 'border-[#58a6ff] bg-[#21262d] text-[#58a6ff]' : 'border-[#30363d] text-[#8b949e]'
                   }`}
                 >
                   {font.name}
@@ -192,20 +192,20 @@ export const SignaturePad: React.FC<{
         {activeTab === 'upload' && (
           <div className="text-center p-10">
             <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-            <div className="bg-[#134589] text-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-[#aaccf2]">
+            <div className="bg-[#1f6feb] text-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black">
               <Upload size={32} />
             </div>
-            <p className="text-[#041628] font-black text-lg">Upload Transparent PNG</p>
-            <p className="text-[#4d7291] text-xs mt-2 uppercase font-bold tracking-widest">Recommended for best quality</p>
+            <p className="text-white font-black text-lg">Upload Transparent PNG</p>
+            <p className="text-[#8b949e] text-xs mt-2 uppercase font-bold tracking-widest">Recommended for best quality</p>
           </div>
         )}
       </div>
 
       {(activeTab === 'draw' || activeTab === 'type') && (
-        <div className="mb-8 p-6 bg-[#f0f6ff] rounded-3xl border border-[#eaf2fc]">
+        <div className="mb-8 p-6 bg-[#0d1117] rounded-3xl border border-[#21262d]">
           <div className="flex justify-between items-center mb-4">
-            <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Stroke Thickness</label>
-            <span className="text-xs font-bold text-[#134589]">{strokeWidth}px</span>
+            <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Stroke Thickness</label>
+            <span className="text-xs font-bold text-[#58a6ff]">{strokeWidth}px</span>
           </div>
           <input 
             type="range" 
@@ -214,7 +214,7 @@ export const SignaturePad: React.FC<{
             step="1" 
             value={strokeWidth} 
             onChange={e => setStrokeWidth(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-[#c5d8ef] rounded-lg accent-[#134589] cursor-pointer"
+            className="w-full h-1.5 bg-[#30363d] rounded-lg accent-[#1f6feb] cursor-pointer"
           />
         </div>
       )}
@@ -230,13 +230,13 @@ export const SignaturePad: React.FC<{
               setTypedName('');
             }
           }}
-          className="bg-[#eaf2fc] text-[#224260] py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#c5d8ef]"
+          className="bg-[#21262d] text-[#e6edf3] py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#30363d]"
         >
           <Eraser size={20} /> Reset
         </button>
         <button
           onClick={handleApply}
-          className="bg-[#134589] text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#0e3a72] shadow-2xl shadow-[#c5d8ef]"
+          className="bg-[#1f6feb] text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#30363d] shadow-2xl shadow-[#c5d8ef]"
         >
           <Save size={20} /> Apply
         </button>
@@ -832,15 +832,15 @@ export default function DigitalSignCenter({
   const renderLanding = () => (
     <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 animate-in fade-in duration-1000">
       <div className="max-w-4xl w-full text-center space-y-12 px-4">
-        <div className="inline-flex items-center gap-3 px-6 py-3 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-full text-[10px] font-black uppercase tracking-[0.2em] animate-bounce">
+        <div className="inline-flex items-center gap-3 px-6 py-3 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-full text-[10px] font-black uppercase tracking-[0.2em] animate-bounce">
           <ShieldCheck size={14} /> Legally Binding in Kenya
         </div>
         
-        <h2 className="text-7xl md:text-8xl font-black text-[#041628] dark:text-white tracking-tighter leading-[0.85]">
-          Sign & Stamp <br/> <span className="text-[#134589]">Instantly.</span>
+        <h2 className="text-7xl md:text-8xl font-black text-white dark:text-white tracking-tighter leading-[0.85]">
+          Sign & Stamp <br/> <span className="text-[#58a6ff]">Instantly.</span>
         </h2>
         
-        <p className="text-xl md:text-2xl text-[#365874] dark:text-[#4d7291] font-medium max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl md:text-2xl text-[#8b949e] dark:text-[#8b949e] font-medium max-w-2xl mx-auto leading-relaxed">
           Upload your document, place your signature or stamp, and download. Simple, secure, and professional.
         </p>
 
@@ -853,7 +853,7 @@ export default function DigitalSignCenter({
               accept=".pdf,.doc,.docx"
             />
             <button 
-              className="bg-[#041628] dark:bg-[#134589] text-white px-16 py-8 rounded-[40px] font-black text-3xl hover:scale-105 transition-all shadow-2xl flex items-center gap-6"
+              className="bg-[#161b22] dark:bg-[#1f6feb] text-white px-16 py-8 rounded-[40px] font-black text-3xl hover:scale-105 transition-all shadow-2xl flex items-center gap-6"
             >
               <Upload size={40} /> Upload Document
             </button>
@@ -861,7 +861,7 @@ export default function DigitalSignCenter({
           
           <button 
             onClick={() => setView('dashboard')}
-            className="text-[#365874] dark:text-[#4d7291] font-black text-lg hover:text-[#134589] transition-all flex items-center gap-2"
+            className="text-[#8b949e] dark:text-[#8b949e] font-black text-lg hover:text-[#58a6ff] transition-all flex items-center gap-2"
           >
             <History size={20} /> View Past Documents
           </button>
@@ -873,12 +873,12 @@ export default function DigitalSignCenter({
             { icon: Zap, title: 'Instant Execution', desc: 'Deploy complex multi-signer workflows in seconds, not hours.' },
             { icon: PenTool, title: 'Vector Precision', desc: 'High-fidelity SVG impressions that remain sharp at any scale.' }
           ].map((feature, i) => (
-            <div key={i} className="p-10 bg-white dark:bg-[#041628] rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] text-left space-y-4 hover:shadow-2xl transition-all hover:-translate-y-2">
-              <div className="w-14 h-14 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-2xl flex items-center justify-center">
+            <div key={i} className="p-10 bg-[#161b22] dark:bg-[#161b22] rounded-[48px] border border-[#21262d] dark:border-[#30363d] text-left space-y-4 hover:shadow-2xl transition-all hover:-translate-y-2">
+              <div className="w-14 h-14 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-2xl flex items-center justify-center">
                 <feature.icon size={28} />
               </div>
               <h4 className="text-xl font-black tracking-tight">{feature.title}</h4>
-              <p className="text-sm text-[#365874] dark:text-[#4d7291] font-medium leading-relaxed">{feature.desc}</p>
+              <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">{feature.desc}</p>
             </div>
           ))}
         </div>
@@ -890,14 +890,14 @@ export default function DigitalSignCenter({
     const activeDoc = newEnv.documents?.[0];
 
     return (
-      <div className="animate-in fade-in slide-in-from-right-4 duration-700 fixed inset-0 z-[100] bg-[#041628] dark:bg-[#020b18] flex flex-col overflow-hidden">
+      <div className="animate-in fade-in slide-in-from-right-4 duration-700 fixed inset-0 z-[100] bg-[#161b22] dark:bg-[#0d1117] flex flex-col overflow-hidden">
          {/* Top Header Bar */}
-         <div className="bg-white dark:bg-[#041628] border-b border-[#c5d8ef] dark:border-[#0e3a72] px-6 md:px-12 py-4 flex items-center justify-between z-[110] shadow-sm">
+         <div className="bg-[#161b22] dark:bg-[#161b22] border-b border-[#30363d] dark:border-[#30363d] px-6 md:px-12 py-4 flex items-center justify-between z-[110] shadow-sm">
             <div className="flex items-center gap-6">
-               <div className="bg-[#134589] text-white p-3 rounded-2xl shadow-xl flex-shrink-0"><FileText size={24} /></div>
+               <div className="bg-[#1f6feb] text-white p-3 rounded-2xl shadow-xl flex-shrink-0"><FileText size={24} /></div>
                <div className="min-w-0">
-                  <h3 className="text-2xl font-black text-[#041628] dark:text-white truncate leading-none tracking-tight">{newEnv.title || 'Untitled Document'}</h3>
-                  <p className="text-[10px] font-bold text-[#4d7291] uppercase tracking-widest mt-2 flex items-center gap-2">
+                  <h3 className="text-2xl font-black text-white dark:text-white truncate leading-none tracking-tight">{newEnv.title || 'Untitled Document'}</h3>
+                  <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-widest mt-2 flex items-center gap-2">
                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                      Ready to Place Tags
                   </p>
@@ -905,36 +905,36 @@ export default function DigitalSignCenter({
             </div>
             
             <div className="flex items-center gap-8">
-               <div className="hidden md:flex items-center gap-4 bg-[#f0f6ff] dark:bg-[#062040] border border-[#c5d8ef] dark:border-[#134589] rounded-2xl px-6 py-3">
-                  <span className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Active Signer:</span>
+               <div className="hidden md:flex items-center gap-4 bg-[#0d1117] dark:bg-[#21262d] border border-[#30363d] dark:border-[#58a6ff] rounded-2xl px-6 py-3">
+                  <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Active Signer:</span>
                   <select 
                     value={selectedSignerId} 
                     onChange={e => setSelectedSignerId(e.target.value)}
-                    className="bg-transparent text-sm font-black text-[#041628] dark:text-white outline-none min-w-[160px] cursor-pointer"
+                    className="bg-transparent text-sm font-black text-white dark:text-white outline-none min-w-[160px] cursor-pointer"
                   >
                     {newEnv.signers?.map(s => (
-                      <option key={s.id} value={s.id} className="dark:bg-[#041628]">{s.name || s.email}</option>
+                      <option key={s.id} value={s.id} className="dark:bg-[#161b22]">{s.name || s.email}</option>
                     ))}
                   </select>
                </div>
 
                <button 
                  onClick={() => setShowInviteModal(true)}
-                 className="flex items-center gap-3 px-6 py-3 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#d4e6f9] transition-all border border-[#d4e6f9] dark:border-blue-800"
+                 className="flex items-center gap-3 px-6 py-3 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#d4e6f9] transition-all border border-[#d4e6f9] dark:border-blue-800"
                >
                  <UserPlus size={18} /> Invite Others
                </button>
 
-               <button onClick={() => setView('dashboard')} className="p-3 hover:bg-[#eaf2fc] dark:hover:bg-[#062040] rounded-full transition-all text-[#4d7291]"><X size={32} /></button>
+               <button onClick={() => setView('dashboard')} className="p-3 hover:bg-[#21262d] dark:hover:bg-[#21262d] rounded-full transition-all text-[#8b949e]"><X size={32} /></button>
             </div>
          </div>
 
          {/* Main Workspace */}
          <div className="flex-1 flex overflow-hidden relative">
             {/* Preparation Tool Dock - Vertical Left */}
-             <div className="w-64 md:w-72 bg-white dark:bg-[#041628] border-r border-[#c5d8ef] dark:border-[#0e3a72] flex flex-col z-[120] shadow-2xl shrink-0">
-                <div className="p-8 border-b border-[#eaf2fc] dark:border-[#0e3a72]">
-                   <h4 className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mb-6">Tools & Actions</h4>
+             <div className="w-64 md:w-72 bg-[#161b22] dark:bg-[#161b22] border-r border-[#30363d] dark:border-[#30363d] flex flex-col z-[120] shadow-2xl shrink-0">
+                <div className="p-8 border-b border-[#21262d] dark:border-[#30363d]">
+                   <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest mb-6">Tools & Actions</h4>
                    <button 
                      onClick={() => {
                        const firstField = newEnv.fields?.[0];
@@ -944,7 +944,7 @@ export default function DigitalSignCenter({
                          setShowToast({ message: 'Place at least one tag first', type: 'info' });
                        }
                      }}
-                     className="w-full bg-[#134589] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#0e3a72] transition-all shadow-xl shadow-[#c5d8ef] dark:shadow-none flex items-center justify-center gap-2 mb-4"
+                     className="w-full bg-[#1f6feb] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#30363d] transition-all shadow-xl shadow-[#c5d8ef] dark:shadow-none flex items-center justify-center gap-2 mb-4"
                    >
                      <Layers size={14} /> Bulk Sign All Pages
                    </button>
@@ -952,10 +952,10 @@ export default function DigitalSignCenter({
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest px-2">Document Tags</label>
+                      <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest px-2">Document Tags</label>
                       <div className="grid grid-cols-2 gap-3">
                          {[
-                           { type: 'signature', label: 'Sign', icon: <PenTool size={20}/>, color: 'text-[#134589]', bg: 'bg-[#eaf2fc] dark:bg-[#062040]' },
+                           { type: 'signature', label: 'Sign', icon: <PenTool size={20}/>, color: 'text-[#58a6ff]', bg: 'bg-[#21262d] dark:bg-[#21262d]' },
                            { type: 'stamp', label: 'Stamp', icon: <Stamp size={20}/>, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
                            { type: 'date', label: 'Date', icon: <Calendar size={20}/>, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
                            { type: 'text', label: 'Text', icon: <Type size={20}/>, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' }
@@ -977,21 +977,21 @@ export default function DigitalSignCenter({
                              }}
                              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                                draggedFieldType === tag.type 
-                                 ? 'border-[#134589] bg-[#eaf2fc] dark:bg-[#062040] shadow-lg' 
-                                 : 'border-transparent bg-[#f0f6ff] dark:bg-[#062040]/50 hover:border-[#c5d8ef] dark:hover:border-[#134589]'
+                                 ? 'border-[#58a6ff] bg-[#21262d] dark:bg-[#21262d] shadow-lg' 
+                                 : 'border-transparent bg-[#0d1117] dark:bg-[#21262d]/50 hover:border-[#30363d] dark:hover:border-[#58a6ff]'
                              }`}
                            >
                               <div className={`${tag.color}`}>{tag.icon}</div>
-                              <span className="font-black text-[9px] uppercase tracking-widest text-[#365874]">{tag.label}</span>
+                              <span className="font-black text-[9px] uppercase tracking-widest text-[#8b949e]">{tag.label}</span>
                            </div>
                          ))}
                       </div>
                    </div>
 
-                   <div className="space-y-4 pt-4 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+                   <div className="space-y-4 pt-4 border-t border-[#21262d] dark:border-[#30363d]">
                       <div className="flex justify-between items-center px-2">
-                        <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Global Scale</label>
-                        <span className="text-[10px] font-bold text-[#4d7291]">{Math.round(globalScale * 100)}%</span>
+                        <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Global Scale</label>
+                        <span className="text-[10px] font-bold text-[#8b949e]">{Math.round(globalScale * 100)}%</span>
                       </div>
                       <input 
                         type="range" 
@@ -1000,24 +1000,24 @@ export default function DigitalSignCenter({
                         step="0.1" 
                         value={globalScale} 
                         onChange={e => setGlobalScale(parseFloat(e.target.value))} 
-                        className="w-full h-1.5 bg-[#eaf2fc] dark:bg-[#062040] rounded-lg accent-[#134589] cursor-pointer" 
+                        className="w-full h-1.5 bg-[#21262d] dark:bg-[#21262d] rounded-lg accent-[#1f6feb] cursor-pointer" 
                       />
                    </div>
                 </div>
 
-                <div className="p-8 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+                <div className="p-8 border-t border-[#21262d] dark:border-[#30363d]">
                    <div className="grid grid-cols-2 gap-3">
                       <button 
                         disabled={newEnv.fields?.length === 0}
                         onClick={() => downloadDocument(newEnv as Envelope)}
-                        className="bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#134589] hover:text-white transition-all shadow-lg flex flex-col items-center justify-center gap-2 active:scale-95 disabled:opacity-20"
+                        className="bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#1f6feb] hover:text-white transition-all shadow-lg flex flex-col items-center justify-center gap-2 active:scale-95 disabled:opacity-20"
                       >
                         <FileDown size={18} /> Download
                       </button>
                       <button 
                         disabled={newEnv.fields?.length === 0}
                         onClick={() => handleSend()} 
-                        className="bg-[#041628] dark:bg-[#134589] text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl disabled:opacity-20 flex flex-col items-center justify-center gap-2 active:scale-95"
+                        className="bg-[#161b22] dark:bg-[#1f6feb] text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl disabled:opacity-20 flex flex-col items-center justify-center gap-2 active:scale-95"
                       >
                         <Send size={18} /> Finish & Send
                       </button>
@@ -1026,11 +1026,11 @@ export default function DigitalSignCenter({
              </div>
 
             {/* Document Canvas - Maximized Focus */}
-            <div className="flex-1 bg-[#eaf2fc] dark:bg-[#041628] relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-16">
+            <div className="flex-1 bg-[#21262d] dark:bg-[#161b22] relative overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center py-12 md:py-24 px-6 scroll-smooth gap-16">
                {isLoadingDoc && (
-                 <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#041628]/80 backdrop-blur-xl">
+                 <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#161b22]/80 backdrop-blur-xl">
                    <div className="relative">
-                     <Loader2 size={80} className="text-[#1a5cad] animate-spin mb-8" />
+                     <Loader2 size={80} className="text-[#58a6ff] animate-spin mb-8" />
                      <div className="absolute inset-0 flex items-center justify-center">
                        <FileCode size={32} className="text-blue-200 animate-pulse" />
                      </div>
@@ -1045,10 +1045,10 @@ export default function DigitalSignCenter({
                    key={idx}
                    onClick={(e) => handlePageClick(e, idx + 1)}
                    onPointerMove={handlePointerMove}
-                   className="pdf-page-container w-full max-w-5xl bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-[#c5d8ef] dark:border-[#0e3a72]"
+                   className="pdf-page-container w-full max-w-5xl bg-[#161b22] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] relative aspect-[1/1.41] shrink-0 cursor-crosshair overflow-visible border border-[#30363d] dark:border-[#30363d]"
                  >
                     {/* High-Resolution Document Rendering */}
-                    <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-white">
+                    <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden bg-[#161b22]">
                        <img src={preview} className="w-full h-full object-contain" alt={`Page ${idx + 1}`} />
                     </div>
 
@@ -1068,7 +1068,7 @@ export default function DigitalSignCenter({
                              className={`absolute -translate-x-1/2 -translate-y-1/2 p-4 rounded-2xl flex flex-col items-center justify-center group cursor-move transition-all active:scale-110 ${
                                field.isCompleted 
                                  ? 'border-none shadow-none' 
-                                 : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-[#1a5cad] bg-[#eaf2fc]/10' : 'border-[#aaccf2] opacity-50'}`
+                                 : `border-2 border-dashed shadow-2xl ${field.signerId === selectedSignerId ? 'border-[#1a5cad] bg-[#21262d]/10' : 'border-[#aaccf2] opacity-50'}`
                              }`}
                              style={{ 
                                left: `${field.x}%`, 
@@ -1095,10 +1095,10 @@ export default function DigitalSignCenter({
                              ) : (
                                <>
                                  {field.type === 'date' && field.signerId === selectedSignerId && (
-                                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-2xl">
+                                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#161b22]/80 backdrop-blur-sm rounded-2xl">
                                      <input 
                                        type="date" 
-                                       className="bg-white p-2 rounded-lg border-2 border-[#1a5cad] shadow-lg text-xs font-black uppercase"
+                                       className="bg-[#161b22] p-2 rounded-lg border-2 border-[#1a5cad] shadow-lg text-xs font-black uppercase"
                                        onChange={(e) => {
                                          const date = new Date(e.target.value);
                                          if (!isNaN(date.getTime())) {
@@ -1116,15 +1116,15 @@ export default function DigitalSignCenter({
                                      />
                                    </div>
                                  )}
-                                 <div className={`p-3 rounded-xl mb-2 ${field.signerId === selectedSignerId ? 'bg-[#134589] text-white shadow-lg' : 'bg-[#c5d8ef] text-[#365874]'}`}>
+                                 <div className={`p-3 rounded-xl mb-2 ${field.signerId === selectedSignerId ? 'bg-[#1f6feb] text-white shadow-lg' : 'bg-[#30363d] text-[#8b949e]'}`}>
                                    {field.type === 'signature' && <PenTool size={20} />}
                                    {field.type === 'stamp' && <Stamp size={20} />}
                                    {field.type === 'date' && <Calendar size={20} />}
                                    {field.type === 'text' && <Type size={20} />}
                                  </div>
                                  <div className="text-center">
-                                   <span className={`text-xs font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-[#224260]'}`}>{signer?.name || 'Signer'}</span>
-                                   <span className="text-[9px] font-bold opacity-60 uppercase tracking-widest text-[#365874]">{field.type} Area</span>
+                                   <span className={`text-xs font-black uppercase tracking-tight truncate block ${field.signerId === selectedSignerId ? 'text-blue-800' : 'text-[#e6edf3]'}`}>{signer?.name || 'Signer'}</span>
+                                   <span className="text-[9px] font-bold opacity-60 uppercase tracking-widest text-[#8b949e]">{field.type} Area</span>
                                  </div>
                                </>
                              )}
@@ -1136,7 +1136,7 @@ export default function DigitalSignCenter({
                                    setIsResizing(field.id);
                                    (e.target as HTMLElement).setPointerCapture(e.pointerId);
                                  }}
-                                 className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize bg-[#eaf2fc]0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                 className="absolute bottom-0 right-0 w-8 h-8 cursor-nwse-resize bg-[#21262d]0 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                                >
                                  <Maximize2 size={12} />
                                </div>
@@ -1148,7 +1148,7 @@ export default function DigitalSignCenter({
                                  cloneFieldToAllPages(field.id);
                                }}
                                title="Clone to all pages"
-                               className="absolute -top-5 -right-14 bg-[#134589] text-white p-2.5 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                               className="absolute -top-5 -right-14 bg-[#1f6feb] text-white p-2.5 rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
                              >
                                <Layers size={14} />
                              </button>
@@ -1170,10 +1170,10 @@ export default function DigitalSignCenter({
             </div>
 
             {/* Signers Sidebar - Right */}
-            <div className="hidden lg:flex w-80 bg-white dark:bg-[#041628] border-l border-[#c5d8ef] dark:border-[#0e3a72] flex-col z-[120] shadow-2xl">
-               <div className="p-8 border-b border-[#eaf2fc] dark:border-[#0e3a72] flex items-center justify-between">
-                  <h4 className="text-xs font-black text-[#041628] dark:text-white uppercase tracking-widest">Signers</h4>
-                  <button onClick={() => setShowInviteModal(true)} className="text-[#134589] hover:scale-110 transition-transform"><UserPlus size={20} /></button>
+            <div className="hidden lg:flex w-80 bg-[#161b22] dark:bg-[#161b22] border-l border-[#30363d] dark:border-[#30363d] flex-col z-[120] shadow-2xl">
+               <div className="p-8 border-b border-[#21262d] dark:border-[#30363d] flex items-center justify-between">
+                  <h4 className="text-xs font-black text-white dark:text-white uppercase tracking-widest">Signers</h4>
+                  <button onClick={() => setShowInviteModal(true)} className="text-[#58a6ff] hover:scale-110 transition-transform"><UserPlus size={20} /></button>
                </div>
                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4">
                   {newEnv.signers?.map((signer, idx) => (
@@ -1182,37 +1182,37 @@ export default function DigitalSignCenter({
                       onClick={() => setSelectedSignerId(signer.id)}
                       className={`p-6 rounded-3xl border-2 transition-all cursor-pointer group ${
                         selectedSignerId === signer.id 
-                          ? 'bg-[#eaf2fc] dark:bg-[#062040] border-[#134589] shadow-lg' 
-                          : 'bg-[#f0f6ff] dark:bg-[#062040]/50 border-transparent hover:border-[#c5d8ef] dark:hover:border-[#134589]'
+                          ? 'bg-[#21262d] dark:bg-[#21262d] border-[#58a6ff] shadow-lg' 
+                          : 'bg-[#0d1117] dark:bg-[#21262d]/50 border-transparent hover:border-[#30363d] dark:hover:border-[#58a6ff]'
                       }`}
                     >
                        <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm ${
-                            selectedSignerId === signer.id ? 'bg-[#134589] text-white' : 'bg-white dark:bg-[#041628] text-[#4d7291]'
+                            selectedSignerId === signer.id ? 'bg-[#1f6feb] text-white' : 'bg-[#161b22] dark:bg-[#161b22] text-[#8b949e]'
                           }`}>
                             {signer.name.charAt(0) || idx + 1}
                           </div>
                           <div className="min-w-0 flex-1">
-                             <p className={`font-black text-sm truncate ${selectedSignerId === signer.id ? 'text-blue-900 dark:text-blue-100' : 'text-[#041628] dark:text-white'}`}>{signer.name || 'Unnamed Recipient'}</p>
-                             <p className="text-[10px] font-bold text-[#4d7291] uppercase tracking-widest truncate mt-1">{signer.email || 'No email provided'}</p>
-                             <p className="text-[9px] font-medium text-[#7ab3e8] uppercase tracking-widest mt-0.5">{signer.role}</p>
+                             <p className={`font-black text-sm truncate ${selectedSignerId === signer.id ? 'text-blue-900 dark:text-blue-100' : 'text-white dark:text-white'}`}>{signer.name || 'Unnamed Recipient'}</p>
+                             <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-widest truncate mt-1">{signer.email || 'No email provided'}</p>
+                             <p className="text-[9px] font-medium text-[#8b949e] uppercase tracking-widest mt-0.5">{signer.role}</p>
                           </div>
-                          {selectedSignerId === signer.id && <div className="w-2 h-2 bg-[#134589] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]"></div>}
+                          {selectedSignerId === signer.id && <div className="w-2 h-2 bg-[#1f6feb] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]"></div>}
                        </div>
                     </div>
                   ))}
                </div>
-               <div className="p-8 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+               <div className="p-8 border-t border-[#21262d] dark:border-[#30363d]">
 
                   <button 
                     onClick={() => downloadDocument(newEnv as Envelope)}
-                    className="w-full bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] py-4 rounded-[20px] font-black text-xs hover:bg-[#134589] hover:text-white transition-all shadow-lg flex items-center justify-center gap-3 mb-4"
+                    className="w-full bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] py-4 rounded-[20px] font-black text-xs hover:bg-[#1f6feb] hover:text-white transition-all shadow-lg flex items-center justify-center gap-3 mb-4"
                   >
                     <FileDown size={20} /> Download PDF
                   </button>
                   <button 
                     onClick={() => handleSend()}
-                    className="w-full bg-[#041628] dark:bg-[#134589] text-white py-6 rounded-[24px] font-black text-sm hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3"
+                    className="w-full bg-[#161b22] dark:bg-[#1f6feb] text-white py-6 rounded-[24px] font-black text-sm hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-3"
                   >
                     Finish & Send Document <Send size={20} />
                   </button>
@@ -1222,12 +1222,12 @@ export default function DigitalSignCenter({
 
          {/* Immediate Prompting Pad */}
          {showSignPad && (
-           <div className="fixed inset-0 bg-[#041628]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-6">
+           <div className="fixed inset-0 bg-[#161b22]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-6">
               {(showSignPad.type === 'stamp' || (showSignPad.fieldId && newEnv.fields?.find(f => f.id === showSignPad.fieldId)?.type === 'stamp')) ? (
-                 <div className="bg-white p-12 rounded-[64px] shadow-2xl max-w-5xl w-full animate-in zoom-in overflow-hidden">
+                 <div className="bg-[#161b22] p-12 rounded-[64px] shadow-2xl max-w-5xl w-full animate-in zoom-in overflow-hidden">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                       {/* Left Side: Preview */}
-                      <div className="bg-[#f0f6ff] p-12 rounded-[48px] border border-[#eaf2fc] flex items-center justify-center shadow-inner min-h-[400px]" id="stamp-preview-container">
+                      <div className="bg-[#0d1117] p-12 rounded-[48px] border border-[#21262d] flex items-center justify-center shadow-inner min-h-[400px]" id="stamp-preview-container">
                          <div className="scale-[1.5] origin-center">
                            <SVGPreview config={localStampConfig} />
                          </div>
@@ -1236,33 +1236,33 @@ export default function DigitalSignCenter({
                       {/* Right Side: Controls */}
                       <div className="flex flex-col justify-center space-y-8">
                         <div>
-                          <h4 className="text-5xl font-black text-[#041628] tracking-tighter leading-none mb-4">Apply Stamp</h4>
-                          <p className="text-[#365874] font-bold uppercase text-[11px] tracking-widest">Place your official seal</p>
+                          <h4 className="text-5xl font-black text-white tracking-tighter leading-none mb-4">Apply Stamp</h4>
+                          <p className="text-[#8b949e] font-bold uppercase text-[11px] tracking-widest">Place your official seal</p>
                         </div>
 
                         {isEditingStamp ? (
                           <div className="space-y-4">
                             <div>
-                              <label className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-2 block">Primary Text</label>
+                              <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Primary Text</label>
                               <input 
                                 type="text" 
                                 value={localStampConfig.primaryText} 
                                 onChange={e => setLocalStampConfig(prev => ({ ...prev, primaryText: e.target.value }))}
-                                className="w-full bg-[#f0f6ff] p-4 rounded-2xl border border-[#eaf2fc] outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                                className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                               />
                             </div>
                             <div>
-                              <label className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-2 block">Center Text</label>
+                              <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Center Text</label>
                               <input 
                                 type="text" 
                                 value={localStampConfig.centerText} 
                                 onChange={e => setLocalStampConfig(prev => ({ ...prev, centerText: e.target.value }))}
-                                className="w-full bg-[#f0f6ff] p-4 rounded-2xl border border-[#eaf2fc] outline-none focus:ring-4 focus:ring-[#134589]/10 font-bold"
+                                className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
                               />
                             </div>
                             <button 
                               onClick={() => setIsEditingStamp(false)}
-                              className="w-full py-4 bg-[#041628] text-white rounded-2xl font-black text-sm shadow-xl hover:bg-[#134589] transition-all"
+                              className="w-full py-4 bg-[#161b22] text-white rounded-2xl font-black text-sm shadow-xl hover:bg-[#1f6feb] transition-all"
                             >
                               Done Customizing
                             </button>
@@ -1276,7 +1276,7 @@ export default function DigitalSignCenter({
                                   handleSignatureCaptured(pngData);
                                 }
                               }} 
-                              className="w-full py-6 rounded-3xl font-black text-white bg-[#134589] shadow-2xl hover:bg-[#0e3a72] transition-all flex items-center justify-center gap-3 text-lg"
+                              className="w-full py-6 rounded-3xl font-black text-white bg-[#1f6feb] shadow-2xl hover:bg-[#30363d] transition-all flex items-center justify-center gap-3 text-lg"
                             >
                               <Check size={24} /> Apply to Document
                             </button>
@@ -1284,13 +1284,13 @@ export default function DigitalSignCenter({
                             <div className="grid grid-cols-2 gap-4">
                               <button 
                                 onClick={() => onOpenStudio ? onOpenStudio(showSignPad?.fieldId) : setIsEditingStamp(true)}
-                                className="py-5 rounded-3xl font-black text-[#134589] bg-[#eaf2fc] hover:bg-[#d4e6f9] transition-all flex items-center justify-center gap-2"
+                                className="py-5 rounded-3xl font-black text-[#58a6ff] bg-[#21262d] hover:bg-[#d4e6f9] transition-all flex items-center justify-center gap-2"
                               >
                                 <Edit3 size={18} /> {onOpenStudio ? 'Open Studio' : 'Customize'}
                               </button>
                               <button 
                                 onClick={() => setShowSignPad(null)}
-                                className="py-5 rounded-3xl font-black text-[#4d7291] bg-[#eaf2fc] hover:bg-[#c5d8ef] transition-all flex items-center justify-center gap-2"
+                                className="py-5 rounded-3xl font-black text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2"
                               >
                                 <X size={18} /> Discard
                               </button>
@@ -1321,20 +1321,20 @@ export default function DigitalSignCenter({
       <div className="animate-in fade-in duration-700 px-4 md:px-8 pb-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
            <div>
-              <h2 className="text-4xl md:text-6xl font-black text-[#041628] dark:text-white tracking-tighter leading-none">{activeEnvelope.title}</h2>
-              <p className="text-[#365874] font-bold uppercase text-[11px] tracking-widest mt-4 flex items-center gap-2">
+              <h2 className="text-4xl md:text-6xl font-black text-white dark:text-white tracking-tighter leading-none">{activeEnvelope.title}</h2>
+              <p className="text-[#8b949e] font-bold uppercase text-[11px] tracking-widest mt-4 flex items-center gap-2">
                  <ShieldCheck size={16} className="text-green-500" />
                  Secure Document Signing Enabled
               </p>
            </div>
-           <button onClick={() => setView('dashboard')} className="p-5 bg-[#eaf2fc] dark:bg-[#062040] hover:bg-[#c5d8ef] dark:hover:bg-[#0a2d5a] rounded-[24px] transition-all text-[#4d7291] self-start md:self-center"><X size={28} /></button>
+           <button onClick={() => setView('dashboard')} className="p-5 bg-[#21262d] dark:bg-[#21262d] hover:bg-[#30363d] dark:hover:bg-[#30363d] rounded-[24px] transition-all text-[#8b949e] self-start md:self-center"><X size={28} /></button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16">
-           <div className="lg:col-span-8 bg-[#041628] rounded-[48px] md:rounded-[64px] p-4 md:p-16 flex flex-col items-center gap-8 md:gap-12 overflow-y-auto max-h-[70vh] md:max-h-[90vh] custom-scrollbar shadow-2xl">
+           <div className="lg:col-span-8 bg-[#161b22] rounded-[48px] md:rounded-[64px] p-4 md:p-16 flex flex-col items-center gap-8 md:gap-12 overflow-y-auto max-h-[70vh] md:max-h-[90vh] custom-scrollbar shadow-2xl">
               {activeDoc?.pagePreviews?.map((preview, idx) => (
-                <div key={idx} className="w-full max-w-4xl bg-white aspect-[1/1.41] relative shadow-2xl overflow-hidden shrink-0">
-                   <div className="absolute inset-0 w-full h-full bg-white">
+                <div key={idx} className="w-full max-w-4xl bg-[#161b22] aspect-[1/1.41] relative shadow-2xl overflow-hidden shrink-0">
+                   <div className="absolute inset-0 w-full h-full bg-[#161b22]">
                       <img src={preview} className="w-full h-full object-contain" alt={`Page ${idx + 1}`} />
                    </div>
 
@@ -1354,11 +1354,11 @@ export default function DigitalSignCenter({
                            ) : field.type === 'stamp' ? (
                              <div className="scale-[0.3] md:scale-[0.5] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
                            ) : (
-                             <span className="font-bold text-[#041628] text-xl px-6 py-3">{field.value}</span>
+                             <span className="font-bold text-white text-xl px-6 py-3">{field.value}</span>
                            )
                          ) : (
-                           <div className="bg-[#134589]/95 text-white px-8 py-6 rounded-[32px] border-2 border-white border-dashed shadow-2xl flex flex-col items-center gap-3 hover:bg-[#0e3a72] transition-all animate-pulse">
-                              <div className="bg-white/20 p-3 rounded-2xl"><PenTool size={24} /></div>
+                           <div className="bg-[#1f6feb]/95 text-white px-8 py-6 rounded-[32px] border-2 border-[#30363d] border-dashed shadow-2xl flex flex-col items-center gap-3 hover:bg-[#30363d] transition-all animate-pulse">
+                              <div className="bg-[#161b22]/20 p-3 rounded-2xl"><PenTool size={24} /></div>
                               <span className="text-xs font-black uppercase tracking-widest text-white/90">Touch to {field.type}</span>
                            </div>
                          )}
@@ -1370,32 +1370,32 @@ export default function DigitalSignCenter({
            </div>
 
            <div className="lg:col-span-4 space-y-8 md:space-y-10">
-              <div className="bg-white dark:bg-[#041628] p-8 md:p-12 rounded-[40px] md:rounded-[56px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-xl space-y-8 md:space-y-10">
+              <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-12 rounded-[40px] md:rounded-[56px] border border-[#21262d] dark:border-[#30363d] shadow-xl space-y-8 md:space-y-10">
                  <div className="space-y-4 text-center">
-                    <h4 className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Completion Ratio</h4>
-                    <div className="w-full bg-[#f0f6ff] dark:bg-[#062040] h-4 rounded-full overflow-hidden border border-[#eaf2fc] dark:border-[#0e3a72] shadow-inner">
-                       <div className="bg-[#134589] h-full transition-all duration-1000 ease-out shadow-lg" style={{ width: `${(activeEnvelope.fields.filter(f => f.isCompleted).length / activeEnvelope.fields.length) * 100}%` }}></div>
+                    <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Completion Ratio</h4>
+                    <div className="w-full bg-[#0d1117] dark:bg-[#21262d] h-4 rounded-full overflow-hidden border border-[#21262d] dark:border-[#30363d] shadow-inner">
+                       <div className="bg-[#1f6feb] h-full transition-all duration-1000 ease-out shadow-lg" style={{ width: `${(activeEnvelope.fields.filter(f => f.isCompleted).length / activeEnvelope.fields.length) * 100}%` }}></div>
                     </div>
-                    <p className="text-sm font-black text-[#041628] dark:text-white tracking-tight">{activeEnvelope.fields.filter(f => f.isCompleted).length} of {activeEnvelope.fields.length} Fields Completed</p>
+                    <p className="text-sm font-black text-white dark:text-white tracking-tight">{activeEnvelope.fields.filter(f => f.isCompleted).length} of {activeEnvelope.fields.length} Fields Completed</p>
                  </div>
                  
-                 <div className="pt-6 border-t border-[#eaf2fc] dark:border-[#0e3a72] space-y-6">
+                 <div className="pt-6 border-t border-[#21262d] dark:border-[#30363d] space-y-6">
                       <div className="grid grid-cols-3 gap-4">
                         <button 
                           onClick={() => downloadDocument(activeEnvelope)}
-                          className="bg-[#134589] text-white py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#0e3a72] shadow-xl transition-all active:scale-95"
+                          className="bg-[#1f6feb] text-white py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#30363d] shadow-xl transition-all active:scale-95"
                         >
                           <FileDown size={16} /> Download
                         </button>
                         <button 
                           onClick={() => shareDocument(activeEnvelope)}
-                          className="bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#c5d8ef] dark:hover:bg-[#0a2d5a] transition-all active:scale-95"
+                          className="bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#30363d] dark:hover:bg-[#30363d] transition-all active:scale-95"
                         >
                           <Share2 size={16} /> Share
                         </button>
                         <button 
                           onClick={() => sendDocument(activeEnvelope)}
-                          className="bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#c5d8ef] dark:hover:bg-[#0a2d5a] transition-all active:scale-95"
+                          className="bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#30363d] dark:hover:bg-[#30363d] transition-all active:scale-95"
                         >
                           <Mail size={16} /> Send
                         </button>
@@ -1410,25 +1410,25 @@ export default function DigitalSignCenter({
                           setView('dashboard');
                         }
                       }}
-                      className="w-full bg-[#041628] dark:bg-[#134589] text-white py-6 md:py-7 rounded-[24px] md:rounded-[32px] font-black text-xl md:text-2xl hover:bg-[#134589] transition-all shadow-2xl active:scale-95 disabled:opacity-20 flex items-center justify-center gap-4"
+                      className="w-full bg-[#161b22] dark:bg-[#1f6feb] text-white py-6 md:py-7 rounded-[24px] md:rounded-[32px] font-black text-xl md:text-2xl hover:bg-[#1f6feb] transition-all shadow-2xl active:scale-95 disabled:opacity-20 flex items-center justify-center gap-4"
                     >
                       Finish & Download <CheckCircle2 size={28} className="md:size-[32px]" />
                     </button>
-                    {!allSigned && <p className="text-center text-[10px] text-[#4d7291] font-bold uppercase mt-6 tracking-widest leading-relaxed">Please sign all required fields <br/> to complete the document.</p>}
+                    {!allSigned && <p className="text-center text-[10px] text-[#8b949e] font-bold uppercase mt-6 tracking-widest leading-relaxed">Please sign all required fields <br/> to complete the document.</p>}
                  </div>
               </div>
 
-              <div className="bg-[#f0f6ff] dark:bg-[#062040]/50 p-8 md:p-12 rounded-[40px] md:rounded-[56px] border border-[#eaf2fc] dark:border-[#0e3a72] hidden md:block shadow-inner">
-                 <h4 className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mb-10 text-center">System Audit Log</h4>
+              <div className="bg-[#0d1117] dark:bg-[#21262d]/50 p-8 md:p-12 rounded-[40px] md:rounded-[56px] border border-[#21262d] dark:border-[#30363d] hidden md:block shadow-inner">
+                 <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest mb-10 text-center">System Audit Log</h4>
                  <div className="space-y-10 relative">
-                    <div className="absolute top-4 left-[25px] bottom-0 w-px bg-[#c5d8ef] dark:bg-[#0a2d5a]"></div>
+                    <div className="absolute top-4 left-[25px] bottom-0 w-px bg-[#30363d] dark:bg-[#30363d]"></div>
                     {activeEnvelope.auditLog.map(log => (
                       <div key={log.id} className="flex gap-6 relative z-10">
-                         <div className="bg-white dark:bg-[#041628] p-3 h-fit rounded-2xl shadow-sm border border-[#eaf2fc] dark:border-[#0e3a72]"><History size={20} className="text-[#4d7291]"/></div>
+                         <div className="bg-[#161b22] dark:bg-[#161b22] p-3 h-fit rounded-2xl shadow-sm border border-[#21262d] dark:border-[#30363d]"><History size={20} className="text-[#8b949e]"/></div>
                          <div className="flex-1">
-                            <p className="text-sm font-black text-[#041628] dark:text-white leading-none">{log.action}</p>
-                            <p className="text-[10px] font-bold text-[#4d7291] uppercase tracking-widest mt-2">{log.user} • {log.ip}</p>
-                            <p className="text-[10px] text-[#7ab3e8] font-medium mt-1">{new Date(log.timestamp).toLocaleTimeString()}</p>
+                            <p className="text-sm font-black text-white dark:text-white leading-none">{log.action}</p>
+                            <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-widest mt-2">{log.user} • {log.ip}</p>
+                            <p className="text-[10px] text-[#8b949e] font-medium mt-1">{new Date(log.timestamp).toLocaleTimeString()}</p>
                          </div>
                       </div>
                     ))}
@@ -1438,7 +1438,7 @@ export default function DigitalSignCenter({
         </div>
 
         {showSignPad && (
-          <div className="fixed inset-0 bg-[#041628]/90 backdrop-blur-3xl z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-[#161b22]/90 backdrop-blur-3xl z-[200] flex items-center justify-center p-4">
             <SignaturePad 
               onCancel={() => setShowSignPad(null)}
               onSave={handleSignatureCaptured}
@@ -1450,17 +1450,17 @@ export default function DigitalSignCenter({
         <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">
            <button 
              onClick={() => downloadDocument(activeEnvelope)}
-             className="w-16 h-16 bg-[#134589] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#0e3a72] hover:scale-110 transition-all group relative"
+             className="w-16 h-16 bg-[#1f6feb] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#30363d] hover:scale-110 transition-all group relative"
            >
              <FileDown size={28} />
-             <span className="absolute right-20 bg-[#041628] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Document</span>
+             <span className="absolute right-20 bg-[#161b22] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download Document</span>
            </button>
            <button 
              onClick={() => shareDocument(activeEnvelope)}
-             className="w-16 h-16 bg-white text-[#224260] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#f0f6ff] hover:scale-110 transition-all group relative border border-[#eaf2fc]"
+             className="w-16 h-16 bg-[#161b22] text-[#e6edf3] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#0d1117] hover:scale-110 transition-all group relative border border-[#21262d]"
            >
              <Share2 size={28} />
-             <span className="absolute right-20 bg-[#041628] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Share Link</span>
+             <span className="absolute right-20 bg-[#161b22] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Share Link</span>
            </button>
            <button 
              onClick={() => {
@@ -1468,20 +1468,20 @@ export default function DigitalSignCenter({
                setCurrentStep(1);
                setView('create');
              }}
-             className="w-16 h-16 bg-white text-[#224260] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#f0f6ff] hover:scale-110 transition-all group relative border border-[#eaf2fc]"
+             className="w-16 h-16 bg-[#161b22] text-[#e6edf3] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#0d1117] hover:scale-110 transition-all group relative border border-[#21262d]"
            >
              <UserPlus size={28} />
-             <span className="absolute right-20 bg-[#041628] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Invite Others</span>
+             <span className="absolute right-20 bg-[#161b22] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Invite Others</span>
            </button>
            <button 
              onClick={() => {
                archiveDocument(activeEnvelope.id);
                setView('dashboard');
              }}
-             className="w-16 h-16 bg-white text-red-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-red-50 hover:scale-110 transition-all group relative border border-red-100"
+             className="w-16 h-16 bg-[#161b22] text-red-600 rounded-full shadow-2xl flex items-center justify-center hover:bg-red-50 hover:scale-110 transition-all group relative border border-red-100"
            >
              <Trash2 size={28} />
-             <span className="absolute right-20 bg-[#041628] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Archive Document</span>
+             <span className="absolute right-20 bg-[#161b22] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Archive Document</span>
            </button>
            <button 
              onClick={() => {
@@ -1489,10 +1489,10 @@ export default function DigitalSignCenter({
                setCurrentStep(2);
                setView('create');
              }}
-             className="w-16 h-16 bg-white text-[#224260] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#f0f6ff] hover:scale-110 transition-all group relative border border-[#eaf2fc]"
+             className="w-16 h-16 bg-[#161b22] text-[#e6edf3] rounded-full shadow-2xl flex items-center justify-center hover:bg-[#0d1117] hover:scale-110 transition-all group relative border border-[#21262d]"
            >
              <Edit3 size={28} />
-             <span className="absolute right-20 bg-[#041628] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Fields</span>
+             <span className="absolute right-20 bg-[#161b22] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit Fields</span>
            </button>
         </div>
       </div>
@@ -1503,8 +1503,8 @@ export default function DigitalSignCenter({
     <div className="animate-in fade-in duration-500 px-4 md:px-8 py-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
         <div>
-          <h2 className="text-5xl md:text-7xl font-black text-[#041628] dark:text-white tracking-tighter leading-none">Sign Center</h2>
-          <p className="text-[#365874] dark:text-[#4d7291] font-medium text-lg mt-4">Upload documents to sign, stamp, or send for signature.</p>
+          <h2 className="text-5xl md:text-7xl font-black text-white dark:text-white tracking-tighter leading-none">Sign Center</h2>
+          <p className="text-[#8b949e] dark:text-[#8b949e] font-medium text-lg mt-4">Upload documents to sign, stamp, or send for signature.</p>
         </div>
         <div className="relative group w-full md:w-auto">
           <input 
@@ -1513,44 +1513,44 @@ export default function DigitalSignCenter({
             className="absolute inset-0 opacity-0 cursor-pointer z-10" 
             accept=".pdf,.doc,.docx"
           />
-          <button className="w-full md:w-auto bg-[#134589] text-white px-12 py-6 rounded-[32px] font-black text-xl shadow-2xl shadow-[#c5d8ef] dark:shadow-none hover:bg-[#0e3a72] transition-all flex items-center justify-center gap-3 active:scale-95">
+          <button className="w-full md:w-auto bg-[#1f6feb] text-white px-12 py-6 rounded-[32px] font-black text-xl shadow-2xl shadow-[#c5d8ef] dark:shadow-none hover:bg-[#30363d] transition-all flex items-center justify-center gap-3 active:scale-95">
             <Upload size={28} /> Upload & Sign
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16">
-        <div className="bg-white dark:bg-[#041628] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-sm hover:shadow-xl transition-all group">
-          <div className="w-14 h-14 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
+          <div className="w-14 h-14 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
             <ShieldCheck size={28} />
           </div>
           <h4 className="text-xl font-black tracking-tight mb-2">Legal Compliance</h4>
-          <p className="text-sm text-[#365874] dark:text-[#4d7291] font-medium leading-relaxed">Fully compliant with Kenyan Information and Communications Act (KICA).</p>
+          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Fully compliant with Kenyan Information and Communications Act (KICA).</p>
         </div>
-        <div className="bg-white dark:bg-[#041628] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-sm hover:shadow-xl transition-all group">
+        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
           <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
             <Layers size={28} />
           </div>
           <h4 className="text-xl font-black tracking-tight mb-2">Bulk Processing</h4>
-          <p className="text-sm text-[#365874] dark:text-[#4d7291] font-medium leading-relaxed">Sign or stamp hundreds of pages in seconds with our multi-page engine.</p>
+          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Sign or stamp hundreds of pages in seconds with our multi-page engine.</p>
         </div>
-        <div className="bg-white dark:bg-[#041628] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-sm hover:shadow-xl transition-all group">
+        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
           <div className="w-14 h-14 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
             <UserPlus size={28} />
           </div>
           <h4 className="text-xl font-black tracking-tight mb-2">Multi-Signer</h4>
-          <p className="text-sm text-[#365874] dark:text-[#4d7291] font-medium leading-relaxed">Incorporate multiple signers with secure email-based authentication.</p>
+          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Incorporate multiple signers with secure email-based authentication.</p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#041628] border border-[#eaf2fc] dark:border-[#0e3a72] rounded-[40px] md:rounded-[56px] overflow-hidden shadow-xl">
+      <div className="bg-[#161b22] dark:bg-[#161b22] border border-[#21262d] dark:border-[#30363d] rounded-[40px] md:rounded-[56px] overflow-hidden shadow-xl">
         {envelopes.filter(e => e.status !== 'archived').length === 0 ? (
           <div className="p-20 md:p-40 text-center">
-            <div className="bg-[#f0f6ff] dark:bg-[#062040] w-24 h-24 md:w-32 md:h-32 rounded-[32px] md:rounded-[48px] flex items-center justify-center mx-auto mb-10">
-               <FileText size={48} className="text-[#aaccf2] dark:text-[#0a2d5a] md:size-[56px]" />
+            <div className="bg-[#0d1117] dark:bg-[#21262d] w-24 h-24 md:w-32 md:h-32 rounded-[32px] md:rounded-[48px] flex items-center justify-center mx-auto mb-10">
+               <FileText size={48} className="text-[#e6edf3] dark:text-white md:size-[56px]" />
             </div>
-            <h3 className="text-3xl md:text-4xl font-black text-[#041628] dark:text-white mb-4">No active documents</h3>
-            <p className="text-[#365874] dark:text-[#4d7291] mb-10 max-w-sm mx-auto">Your document list is empty. Upload a document to begin.</p>
+            <h3 className="text-3xl md:text-4xl font-black text-white dark:text-white mb-4">No active documents</h3>
+            <p className="text-[#8b949e] dark:text-[#8b949e] mb-10 max-w-sm mx-auto">Your document list is empty. Upload a document to begin.</p>
             <div className="relative inline-block group">
               <input 
                 type="file" 
@@ -1558,43 +1558,43 @@ export default function DigitalSignCenter({
                 className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                 accept=".pdf,.doc,.docx"
               />
-              <button className="text-[#134589] font-black uppercase text-sm tracking-widest hover:underline decoration-2 underline-offset-8">Start Your First Document</button>
+              <button className="text-[#58a6ff] font-black uppercase text-sm tracking-widest hover:underline decoration-2 underline-offset-8">Start Your First Document</button>
             </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[800px]">
               <thead>
-                <tr className="bg-[#f0f6ff] dark:bg-[#062040]/50 border-b border-[#eaf2fc] dark:border-[#0e3a72]">
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#4d7291] uppercase tracking-widest">Document Name</th>
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#4d7291] uppercase tracking-widest">Status</th>
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#4d7291] uppercase tracking-widest text-right">Access</th>
+                <tr className="bg-[#0d1117] dark:bg-[#21262d]/50 border-b border-[#21262d] dark:border-[#30363d]">
+                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Document Name</th>
+                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Status</th>
+                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest text-right">Access</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-[#0e3a72]">
+              <tbody className="divide-y divide-slate-50 dark:divide-[#30363d]">
                 {envelopes.filter(e => e.status !== 'archived').map(env => (
-                  <tr key={env.id} className="hover:bg-[#f0f6ff]/50 dark:hover:bg-[#062040]/30 transition-colors group">
+                  <tr key={env.id} className="hover:bg-[#0d1117]/50 dark:hover:bg-[#21262d]/30 transition-colors group">
                     <td className="px-8 md:px-12 py-8 md:py-10">
                       <div className="flex items-center gap-4 md:gap-6 cursor-pointer" onClick={() => { setActiveEnvelope(env); setView('signer-view'); }}>
-                        <div className="bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] p-4 md:p-5 rounded-2xl md:rounded-3xl flex-shrink-0"><FileText size={24} className="md:size-[28px]" /></div>
+                        <div className="bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] p-4 md:p-5 rounded-2xl md:rounded-3xl flex-shrink-0"><FileText size={24} className="md:size-[28px]" /></div>
                         <div className="min-w-0">
-                          <div className="font-black text-[#041628] dark:text-white text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{env.title}</div>
-                          <div className="text-[10px] md:text-xs text-[#4d7291] font-bold mt-1">ID: {env.id.toUpperCase()} • {new Date(env.createdAt).toLocaleDateString()}</div>
+                          <div className="font-black text-white dark:text-white text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{env.title}</div>
+                          <div className="text-[10px] md:text-xs text-[#8b949e] font-bold mt-1">ID: {env.id.toUpperCase()} • {new Date(env.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 md:px-12 py-8 md:py-10">
                       <div className="flex items-center gap-3">
                         <span className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest border ${
-                          env.status === 'sent' ? 'bg-[#eaf2fc] text-[#134589] border-[#d4e6f9] dark:bg-[#062040] dark:border-blue-800' : 
+                          env.status === 'sent' ? 'bg-[#21262d] text-[#58a6ff] border-[#d4e6f9] dark:bg-[#21262d] dark:border-blue-800' : 
                           env.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800' :
-                          'bg-[#f0f6ff] text-[#4d7291] border-[#eaf2fc] dark:bg-[#062040] dark:border-[#134589]'
+                          'bg-[#0d1117] text-[#8b949e] border-[#21262d] dark:bg-[#21262d] dark:border-[#58a6ff]'
                         }`}>
                           {env.status}
                         </span>
                         <div className="hidden sm:flex -space-x-3">
                           {env.signers.map((s, i) => (
-                            <div key={s.id} className="w-8 h-8 rounded-full bg-white dark:bg-[#062040] border-2 border-[#eaf2fc] dark:border-[#020b18] flex items-center justify-center text-[10px] font-black text-[#4d7291]" title={s.name}>
+                            <div key={s.id} className="w-8 h-8 rounded-full bg-[#161b22] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#020b18] flex items-center justify-center text-[10px] font-black text-[#8b949e]" title={s.name}>
                               {s.name.charAt(0)}
                             </div>
                           ))}
@@ -1605,26 +1605,26 @@ export default function DigitalSignCenter({
                       <div className="flex items-center justify-end gap-2 md:gap-4">
                         <button 
                           onClick={() => { setActiveEnvelope(env); setView('create'); setCurrentStep(2); setNewEnv(env); }}
-                          className="p-3 md:p-4 bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] rounded-xl md:rounded-2xl hover:bg-[#134589] hover:text-white transition-all"
+                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-[#1f6feb] hover:text-white transition-all"
                           title="Edit Tags"
                         >
                           <Edit3 size={18} className="md:size-[20px]" />
                         </button>
                         <button 
                           onClick={() => downloadDocument(env)}
-                          className="p-3 md:p-4 bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] rounded-xl md:rounded-2xl hover:bg-[#134589] hover:text-white transition-all"
+                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-[#1f6feb] hover:text-white transition-all"
                           title="Download PDF"
                         >
                           <FileDown size={18} className="md:size-[20px]" />
                         </button>
                         <button 
                           onClick={() => archiveDocument(env.id)}
-                          className="p-3 md:p-4 bg-[#eaf2fc] dark:bg-[#062040] text-[#224260] dark:text-[#4d7291] rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all"
+                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all"
                           title="Archive"
                         >
                           <Trash2 size={18} className="md:size-[20px]" />
                         </button>
-                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="hidden sm:block bg-[#041628] dark:bg-[#134589] text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95">Open</button>
+                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="hidden sm:block bg-[#161b22] dark:bg-[#1f6feb] text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95">Open</button>
                       </div>
                     </td>
                   </tr>
@@ -1639,14 +1639,14 @@ export default function DigitalSignCenter({
 
   const renderCreateStep1 = () => (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 max-w-4xl mx-auto py-16 px-4">
-      <div className="bg-white dark:bg-[#041628] p-14 rounded-[64px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-2xl space-y-12">
+      <div className="bg-[#161b22] dark:bg-[#161b22] p-14 rounded-[64px] border border-[#21262d] dark:border-[#30363d] shadow-2xl space-y-12">
         <div className="text-center space-y-4">
-          <h3 className="text-4xl font-black text-[#041628] dark:text-white tracking-tighter">Document Details</h3>
-          <p className="text-[#365874] font-medium">Give your document a name and add any other signers if needed.</p>
+          <h3 className="text-4xl font-black text-white dark:text-white tracking-tighter">Document Details</h3>
+          <p className="text-[#8b949e] font-medium">Give your document a name and add any other signers if needed.</p>
         </div>
 
         <div className="space-y-6">
-          <label className="text-[11px] font-black text-[#4d7291] uppercase tracking-widest flex items-center gap-2">
+          <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
             Document Title
           </label>
           <input 
@@ -1654,24 +1654,24 @@ export default function DigitalSignCenter({
             placeholder="e.g., Partnership Agreement"
             value={newEnv.title}
             onChange={e => setNewEnv(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-2 border-[#eaf2fc] dark:border-[#0e3a72] rounded-3xl py-7 px-10 outline-none focus:ring-8 focus:ring-[#134589]/10 text-2xl font-black transition-all dark:text-white"
+            className="w-full bg-[#0d1117] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#30363d] rounded-3xl py-7 px-10 outline-none focus:ring-8 focus:ring-[#1f6feb]/10 text-2xl font-black transition-all dark:text-white"
           />
         </div>
 
         <div className="space-y-10">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-black text-[#4d7291] uppercase tracking-widest">Signers</label>
+            <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Signers</label>
             <button 
               onClick={() => setNewEnv(prev => ({ ...prev, signers: [...(prev.signers || []), { id: `s-${Date.now()}`, name: '', email: '', role: 'signer', order: (prev.signers?.length || 0) + 1, status: 'pending' }] }))} 
-              className="text-[#134589] font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-[#eaf2fc] dark:bg-[#062040] px-6 py-4 rounded-[28px] hover:bg-[#d4e6f9] transition-all shadow-sm"
+              className="text-[#58a6ff] font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-[#21262d] dark:bg-[#21262d] px-6 py-4 rounded-[28px] hover:bg-[#d4e6f9] transition-all shadow-sm"
             >
               <UserPlus size={20} /> Add Another Signer
             </button>
           </div>
           <div className="space-y-6">
             {newEnv.signers?.map((signer, i) => (
-              <div key={signer.id} className="flex flex-col md:flex-row gap-6 p-8 bg-[#f0f6ff] dark:bg-[#062040]/50 rounded-[40px] items-center group border border-[#eaf2fc] dark:border-[#0e3a72] transition-all hover:bg-white dark:hover:bg-[#062040] hover:shadow-xl">
-                <div className="w-12 h-12 bg-white dark:bg-[#041628] rounded-2xl flex items-center justify-center font-black text-[#4d7291] border border-[#eaf2fc] dark:border-[#0e3a72] flex-shrink-0 shadow-md">{i + 1}</div>
+              <div key={signer.id} className="flex flex-col md:flex-row gap-6 p-8 bg-[#0d1117] dark:bg-[#21262d]/50 rounded-[40px] items-center group border border-[#21262d] dark:border-[#30363d] transition-all hover:bg-[#161b22] dark:hover:bg-[#21262d] hover:shadow-xl">
+                <div className="w-12 h-12 bg-[#161b22] dark:bg-[#161b22] rounded-2xl flex items-center justify-center font-black text-[#8b949e] border border-[#21262d] dark:border-[#30363d] flex-shrink-0 shadow-md">{i + 1}</div>
                 <input 
                   type="text" placeholder="Full Name" value={signer.name}
                   onChange={e => {
@@ -1679,7 +1679,7 @@ export default function DigitalSignCenter({
                     updated[i].name = e.target.value;
                     setNewEnv(prev => ({ ...prev, signers: updated }));
                   }}
-                  className="w-full md:flex-1 bg-white dark:bg-[#041628] border border-[#c5d8ef] dark:border-[#134589] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#134589]/10 dark:text-white" 
+                  className="w-full md:flex-1 bg-[#161b22] dark:bg-[#161b22] border border-[#30363d] dark:border-[#58a6ff] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#1f6feb]/10 dark:text-white" 
                 />
                 <input 
                   type="email" placeholder="Email Address" value={signer.email}
@@ -1688,12 +1688,12 @@ export default function DigitalSignCenter({
                     updated[i].email = e.target.value;
                     setNewEnv(prev => ({ ...prev, signers: updated }));
                   }}
-                  className="w-full md:flex-1 bg-white dark:bg-[#041628] border border-[#c5d8ef] dark:border-[#134589] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#134589]/10 dark:text-white" 
+                  className="w-full md:flex-1 bg-[#161b22] dark:bg-[#161b22] border border-[#30363d] dark:border-[#58a6ff] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#1f6feb]/10 dark:text-white" 
                 />
                 {i > 0 && (
                   <button 
                     onClick={() => setNewEnv(prev => ({ ...prev, signers: prev.signers?.filter(s => s.id !== signer.id) }))} 
-                    className="text-[#7ab3e8] hover:text-red-500 transition-colors p-4 bg-white dark:bg-[#041628] rounded-2xl shadow-sm border border-[#eaf2fc] dark:border-[#0e3a72]"
+                    className="text-[#8b949e] hover:text-red-500 transition-colors p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl shadow-sm border border-[#21262d] dark:border-[#30363d]"
                   >
                     <Trash2 size={20} />
                   </button>
@@ -1707,7 +1707,7 @@ export default function DigitalSignCenter({
       <div className="flex justify-end">
          <button 
           onClick={() => setCurrentStep(2)}
-          className="bg-[#041628] dark:bg-[#134589] text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:scale-105 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
+          className="bg-[#161b22] dark:bg-[#1f6feb] text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:scale-105 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
         >
           Continue to Studio <ChevronRight size={32} />
         </button>
@@ -1718,44 +1718,44 @@ export default function DigitalSignCenter({
   return (
     <div className="min-h-[80vh] flex flex-col">
       {showInviteModal && (
-        <div className="fixed inset-0 bg-[#041628]/90 backdrop-blur-2xl z-[300] flex items-center justify-center p-6">
-          <div className="bg-white dark:bg-[#041628] w-full max-w-2xl rounded-[64px] shadow-2xl overflow-hidden animate-in zoom-in duration-500 border border-[#eaf2fc] dark:border-[#0e3a72]">
+        <div className="fixed inset-0 bg-[#161b22]/90 backdrop-blur-2xl z-[300] flex items-center justify-center p-6">
+          <div className="bg-[#161b22] dark:bg-[#161b22] w-full max-w-2xl rounded-[64px] shadow-2xl overflow-hidden animate-in zoom-in duration-500 border border-[#21262d] dark:border-[#30363d]">
             <div className="p-16 space-y-12">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-5xl font-black text-[#041628] dark:text-white tracking-tighter leading-none">Invite Signer</h4>
-                  <p className="text-[#365874] dark:text-[#4d7291] font-bold uppercase text-[10px] tracking-widest mt-4">Expand the Signing Session</p>
+                  <h4 className="text-5xl font-black text-white dark:text-white tracking-tighter leading-none">Invite Signer</h4>
+                  <p className="text-[#8b949e] dark:text-[#8b949e] font-bold uppercase text-[10px] tracking-widest mt-4">Expand the Signing Session</p>
                 </div>
-                <button onClick={() => setShowInviteModal(false)} className="p-4 bg-[#eaf2fc] dark:bg-[#062040] rounded-full text-[#4d7291] hover:text-[#041628] dark:hover:text-white transition-all"><X size={32} /></button>
+                <button onClick={() => setShowInviteModal(false)} className="p-4 bg-[#21262d] dark:bg-[#21262d] rounded-full text-[#8b949e] hover:text-white dark:hover:text-white transition-all"><X size={32} /></button>
               </div>
 
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Full Name</label>
+                  <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Full Name</label>
                   <input 
                     type="text" 
                     value={newSigner.name}
                     onChange={e => setNewSigner(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-2 border-[#eaf2fc] dark:border-[#0e3a72] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#134589]/10 font-bold text-lg dark:text-white"
+                    className="w-full bg-[#0d1117] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#30363d] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#1f6feb]/10 font-bold text-lg dark:text-white"
                     placeholder="e.g., Jane Doe"
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Email Address</label>
+                  <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Email Address</label>
                   <input 
                     type="email" 
                     value={newSigner.email}
                     onChange={e => setNewSigner(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-2 border-[#eaf2fc] dark:border-[#0e3a72] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#134589]/10 font-bold text-lg dark:text-white"
+                    className="w-full bg-[#0d1117] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#30363d] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#1f6feb]/10 font-bold text-lg dark:text-white"
                     placeholder="e.g., jane@firm.ke"
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">Role</label>
+                  <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Role</label>
                   <select 
                     value={newSigner.role}
                     onChange={e => setNewSigner(prev => ({ ...prev, role: e.target.value as any }))}
-                    className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-2 border-[#eaf2fc] dark:border-[#0e3a72] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#134589]/10 font-bold text-lg dark:text-white appearance-none"
+                    className="w-full bg-[#0d1117] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#30363d] rounded-3xl py-6 px-8 outline-none focus:ring-8 focus:ring-[#1f6feb]/10 font-bold text-lg dark:text-white appearance-none"
                   >
                     <option value="signer">Signer</option>
                     <option value="viewer">Viewer</option>
@@ -1766,7 +1766,7 @@ export default function DigitalSignCenter({
 
               <button 
                 onClick={() => addSigner()}
-                className="w-full bg-[#041628] dark:bg-[#134589] text-white py-8 rounded-[32px] font-black text-2xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4"
+                className="w-full bg-[#161b22] dark:bg-[#1f6feb] text-white py-8 rounded-[32px] font-black text-2xl hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-4"
               >
                 Add to Document <UserPlus size={28} />
               </button>
@@ -1778,7 +1778,7 @@ export default function DigitalSignCenter({
       {showToast && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[400] animate-in slide-in-from-top-10 duration-500">
           <div className={`px-10 py-5 rounded-[40px] shadow-2xl flex items-center gap-5 border ${
-            showToast.type === 'success' ? 'bg-green-600 text-white border-green-500' : 'bg-[#134589] text-white border-[#1a5cad]'
+            showToast.type === 'success' ? 'bg-green-600 text-white border-green-500' : 'bg-[#1f6feb] text-white border-[#1a5cad]'
           }`}>
             <CheckCircle2 size={28} />
             <span className="font-black uppercase tracking-[0.2em] text-xs">{showToast.message}</span>
@@ -1792,22 +1792,22 @@ export default function DigitalSignCenter({
           {currentStep === 2 && renderCreateStep2()}
           {currentStep === 3 && (
             <div className="animate-in zoom-in-95 duration-1000 max-w-2xl mx-auto py-24 px-4">
-               <div className="bg-white p-14 md:p-20 rounded-[72px] border border-[#eaf2fc] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.3)] space-y-16 text-center">
+               <div className="bg-[#161b22] p-14 md:p-20 rounded-[72px] border border-[#21262d] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.3)] space-y-16 text-center">
                   <div className="bg-green-50 text-green-600 w-28 h-28 rounded-[48px] flex items-center justify-center mx-auto shadow-2xl shadow-green-100 animate-bounce border border-green-100">
                      <ShieldCheck size={64} />
                   </div>
                   <div className="space-y-6">
-                    <h3 className="text-5xl md:text-7xl font-black text-[#041628] tracking-tighter">Ready to Deploy</h3>
-                    <p className="text-2xl text-[#365874] font-medium leading-relaxed">Secure authentication workflow finalized and ready for immediate registry.</p>
+                    <h3 className="text-5xl md:text-7xl font-black text-white tracking-tighter">Ready to Deploy</h3>
+                    <p className="text-2xl text-[#8b949e] font-medium leading-relaxed">Secure authentication workflow finalized and ready for immediate registry.</p>
                   </div>
                   
-                  <div className="bg-[#f0f6ff] p-12 rounded-[56px] text-left space-y-8 border border-[#eaf2fc] shadow-inner">
-                     <div className="flex items-center justify-between border-b border-[#c5d8ef] pb-6">
-                        <span className="text-[11px] font-black text-[#4d7291] uppercase tracking-widest">Document</span>
-                        <span className="font-black text-[#041628] text-lg truncate max-w-[250px]">{newEnv.title}</span>
+                  <div className="bg-[#0d1117] p-12 rounded-[56px] text-left space-y-8 border border-[#21262d] shadow-inner">
+                     <div className="flex items-center justify-between border-b border-[#30363d] pb-6">
+                        <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Document</span>
+                        <span className="font-black text-white text-lg truncate max-w-[250px]">{newEnv.title}</span>
                      </div>
                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-black text-[#4d7291] uppercase tracking-widest">Identifiers</span>
+                        <span className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Identifiers</span>
                         <div className="flex items-center gap-3 text-green-600">
                            <ShieldCheck size={20} /> <span className="text-xs font-black uppercase tracking-widest">Audit Active • {newEnv.fields?.length} Tags</span>
                         </div>
@@ -1815,10 +1815,10 @@ export default function DigitalSignCenter({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <button onClick={() => setCurrentStep(2)} className="bg-[#eaf2fc] text-[#224260] py-8 rounded-[36px] font-black text-xl hover:bg-[#c5d8ef] transition-all">Refine Tags</button>
+                    <button onClick={() => setCurrentStep(2)} className="bg-[#21262d] text-[#e6edf3] py-8 rounded-[36px] font-black text-xl hover:bg-[#30363d] transition-all">Refine Tags</button>
                     <button 
                       onClick={handleSend}
-                      className="bg-[#134589] text-white py-8 rounded-[36px] font-black text-2xl hover:bg-[#0e3a72] shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] flex items-center justify-center gap-5 transition-all active:scale-95"
+                      className="bg-[#1f6feb] text-white py-8 rounded-[36px] font-black text-2xl hover:bg-[#30363d] shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] flex items-center justify-center gap-5 transition-all active:scale-95"
                     >
                       <Send size={32} /> Dispatch All
                     </button>
