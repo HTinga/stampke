@@ -1,80 +1,131 @@
+/* ── Text Edit Layer ─────────────────────────── */
 .text-edit-layer {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   pointer-events: none;
   z-index: 25;
 }
 
+/* Loading indicator */
 .text-edit-loading {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 12px;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(10, 15, 26, 0.92);
+  color: #58a6ff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  backdrop-filter: blur(8px);
   z-index: 100;
 }
+.text-edit-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(88,166,255,0.25);
+  border-top-color: #58a6ff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
+.text-edit-empty {
+  position: absolute;
+  top: 40%; left: 50%; transform: translateX(-50%);
+  background: rgba(10,15,26,0.85);
+  color: rgba(255,255,255,0.35);
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Block hit area ──────────────────────────── */
 .text-block-box {
   position: absolute;
   pointer-events: auto;
   cursor: text;
-  border: 1px dashed transparent;
-  border-radius: 2px;
-  transition: border-color 0.15s, background 0.15s;
+  border: 1.5px solid transparent;
+  border-radius: 3px;
+  transition: border-color 0.12s, background 0.12s;
   box-sizing: border-box;
+  /* Ensure block is exactly as tall as the text */
+  overflow: visible;
 }
 
-.text-block-box:hover {
-  border-color: rgba(59, 130, 246, 0.5);
-  background: rgba(59, 130, 246, 0.05);
+.text-block-box.hovered {
+  border-color: rgba(88, 166, 255, 0.55);
+  background: rgba(88, 166, 255, 0.06);
 }
 
 .text-block-box.editing {
-  border-color: #3b82f6;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  border-color: #1f6feb;
+  background: transparent;
+  box-shadow: 0 0 0 3px rgba(31,111,235,0.18);
+  z-index: 30;
+  overflow: visible;
 }
 
+/* Tooltip */
+.text-block-tooltip {
+  position: absolute;
+  top: -26px; left: 0;
+  background: #0d1117;
+  color: #58a6ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  white-space: nowrap;
+  border: 1px solid rgba(88,166,255,0.25);
+  display: flex; align-items: center; gap: 5px;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* White-out covers the PDF text underneath while editing */
+.text-block-whiteout {
+  position: absolute;
+  inset: -2px;
+  background: #ffffff;
+  border-radius: 2px;
+  z-index: 1;
+}
+
+/* ── Textarea ─────────────────────────────────── */
 .text-edit-input {
+  position: absolute;
+  inset: 0;
+  /* Size: match block exactly, auto-grow via min-height */
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   border: none;
   background: transparent;
-  padding: 0;
+  padding: 1px 2px;
   margin: 0;
   outline: none;
   resize: none;
   overflow: hidden;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: transparent; /* Hide original text while editing */
-  caret-color: #000;
+  caret-color: #1f6feb;
+  z-index: 2;
+  /* Match PDF text rendering */
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
 }
 
-.text-block-box.editing .text-edit-input {
-  color: inherit; /* Show text when editing */
-}
-
-/* Original text overlay (hidden when editing) */
-.text-original {
+/* Hint bar below editing block */
+.text-edit-hint {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  bottom: -22px; left: 0;
+  background: rgba(10,15,26,0.9);
+  color: rgba(255,255,255,0.35);
+  font-size: 10px; font-weight: 600;
+  padding: 3px 8px; border-radius: 5px;
+  white-space: nowrap;
   pointer-events: none;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.text-block-box.editing .text-original {
-  display: none;
+  z-index: 50;
+  border: 1px solid rgba(255,255,255,0.06);
 }

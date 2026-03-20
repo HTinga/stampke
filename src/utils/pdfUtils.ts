@@ -831,23 +831,52 @@ export async function detectTextBlocks(page: PDFPageProxy): Promise<TextBlock[]>
   const viewport = page.getViewport({ scale: 1, rotation: 0 });
   const pageHeight = viewport.height;
 
-  const items: TextItem[] = textContent.items
+  const rawItems: TextItem[] = textContent.items
     .filter((item: any) => 'str' in item && item.str.trim() !== '')
     .map((item: any) => {
       const tx = item.transform;
       const x = tx[4];
       const y = pageHeight - tx[5];
       const fontSize = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
-      const width = item.width ?? 0;
-      const height = item.height ?? fontSize;
-      return { str: item.str, x, y: y - height, width, height, fontName: item.fontName ?? 'unknown', fontSize, transform: tx };
+      const width = item.width ?? fontSize * item.str.length * 0.55;
+      const height = item.height ?? Math.max(fontSize * 1.2, 4);
+      const color = (item as any).color
+        ? `rgb(${Math.round((item as any).color[0]*255)},${Math.round((item as any).color[1]*255)},${Math.round((item as any).color[2]*255)})`
+        : '#000000';
+      return { str: item.str, x, y: y - height, width, height, fontName: item.fontName ?? 'unknown', fontSize, transform: tx, color };
     });
 
-  if (items.length === 0) return [];
-  items.sort((a, b) => Math.abs(a.y - b.y) > a.height * 0.5 ? a.y - b.y : a.x - b.x);
+  if (rawItems.length === 0) return [];
 
-  const lines = groupIntoLines(items);
+  // Sort top-to-bottom, left-to-right
+  rawItems.sort((a, b) => Math.abs(a.y - b.y) > a.height * 0.5 ? a.y - b.y : a.x - b.x);
+
+  // Group into lines with tight y-tolerance
+  const lines = groupIntoLines(rawItems);
+
+  // For tables/receipts/complex docs: use per-LINE blocks so each cell/row is independently editable
+  // Detect if page has table-like structure (many items at different x positions on same y)
+  const isComplexLayout = detectComplexLayout(lines);
+
+  if (isComplexLayout) {
+    // Fine-grained: each line becomes its own block
+    return lines.map((line, i) => createBlock([line], page.pageNumber, i));
+  }
+
+  // Otherwise: group nearby lines into paragraph blocks
   return groupIntoBlocks(lines, page.pageNumber);
+}
+
+function detectComplexLayout(lines: TextLine[]): boolean {
+  if (lines.length < 3) return false;
+  // If many lines have multiple distinct x-columns, treat as complex
+  let multiColumnCount = 0;
+  for (const line of lines) {
+    const xs = line.items.map(i => i.x);
+    const uniqueX = new Set(xs.map(x => Math.round(x / 10)));
+    if (uniqueX.size >= 2) multiColumnCount++;
+  }
+  return multiColumnCount > lines.length * 0.25;
 }
 
 function groupIntoLines(items: TextItem[]): TextLine[] {
@@ -924,13 +953,21 @@ function createBlock(lines: TextLine[], pageNumber: number, id: number): TextBlo
   const minY = Math.min(...lines.map(l => l.y));
   const maxY = Math.max(...lines.map(l => l.y + l.height));
   const firstItem = lines[0]?.items[0];
+  // Try to get actual color from item
+  const color = (firstItem as any)?.color || firstItem?.fontName ? undefined : '#000000';
   return {
     id: `block-${pageNumber}-${id}`,
     pageNumber,
     lines,
     text,
-    rect: { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
-    style: { fontName: firstItem?.fontName || 'unknown', fontSize: firstItem?.fontSize || 12, alignment: 'left', lineHeight: lines.length > 1 ? (lines[1].y - lines[0].y) / (firstItem?.fontSize || 12) : 1.2 },
+    rect: { x: minX, y: minY, width: Math.max(maxX - minX, 10), height: Math.max(maxY - minY, firstItem?.fontSize || 10) },
+    style: {
+      fontName: firstItem?.fontName || 'unknown',
+      fontSize: firstItem?.fontSize || 12,
+      fontColor: (firstItem as any)?.color || '#000000',
+      alignment: 'left',
+      lineHeight: lines.length > 1 ? (lines[1].y - lines[0].y) / (firstItem?.fontSize || 12) : 1.2
+    },
     editable: true,
   };
 }
