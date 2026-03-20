@@ -34,7 +34,7 @@ import {
   FileCode,
   RefreshCw,
   Stamp,
-  PenTool as Pen
+  PenTool as Pen, CheckSquare, Circle, ChevronDown
 } from 'lucide-react';
 import { 
   useFormStore, 
@@ -67,6 +67,7 @@ interface MainToolbarProps {
   searchOpen: boolean;
   onOpenFile: (file: File) => void;
   onExport: () => void;
+  onExportWithFormat?: (format: string) => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
   onGoToPage: (page: number) => void;
@@ -103,6 +104,7 @@ interface MainToolbarProps {
   onSaveAsTemplate?: (name: string) => void;
   onInsertStamp?: () => void;
   onSignDocument?: () => void;
+  onInsertFormField?: (type: string) => void;
 }
 
 type ToolbarTab = 'file' | 'home' | 'insert' | 'draw' | 'layout' | 'review' | 'form' | 'view';
@@ -157,6 +159,8 @@ export function MainToolbar({
   onSaveAsTemplate,
   onInsertStamp,
   onSignDocument,
+  onInsertFormField,
+  onExportWithFormat,
 }: MainToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +170,7 @@ export function MainToolbar({
   const { mode: editingMode, setMode: setEditingMode } = useEditingStore();
   const [activeTab, setActiveTab] = useState<ToolbarTab>('home');
   const [pendingInsertPosition, setPendingInsertPosition] = useState<number | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -277,10 +282,54 @@ export function MainToolbar({
                 <FileUp size={18} />
                 <span className="text-xs font-bold">Open</span>
               </button>
-              <button className="toolbar-btn flex items-center gap-2 px-3" onClick={onExport} disabled={!hasDocument} title="Export PDF">
-                <Save size={18} />
-                <span className="text-xs font-bold">Export</span>
-              </button>
+              <div className="relative">
+                <button 
+                  className="toolbar-btn flex items-center gap-2 px-3" 
+                  onClick={() => setExportMenuOpen(!exportMenuOpen)} 
+                  disabled={!hasDocument} 
+                  title="Export PDF"
+                >
+                  <Save size={18} />
+                  <span className="text-xs font-bold">Export</span>
+                  <ChevronDown size={14} />
+                </button>
+                {exportMenuOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl z-50">
+                    <div className="py-1">
+                      <button 
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
+                        onClick={() => { onExport(); setExportMenuOpen(false); }}
+                      >
+                        <Save size={14} /> PDF
+                      </button>
+                      <button 
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
+                        onClick={() => { onExportWithFormat?.('word'); setExportMenuOpen(false); }}
+                      >
+                        <FileText size={14} /> Word (.docx)
+                      </button>
+                      <button 
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
+                        onClick={() => { onExportWithFormat?.('excel'); setExportMenuOpen(false); }}
+                      >
+                        <FileText size={14} /> Excel (.xlsx)
+                      </button>
+                      <button 
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
+                        onClick={() => { onExportWithFormat?.('powerpoint'); setExportMenuOpen(false); }}
+                      >
+                        <FileText size={14} /> PowerPoint (.pptx)
+                      </button>
+                      <button 
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 flex items-center gap-2"
+                        onClick={() => { onExportWithFormat?.('image'); setExportMenuOpen(false); }}
+                      >
+                        <ImageIcon size={14} /> Image (.png)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button className="toolbar-btn flex items-center gap-2 px-3 text-red-500 hover:bg-red-50" onClick={onCloseDocument} disabled={!hasDocument} title="Close Document">
                 <X size={18} />
                 <span className="text-xs font-bold">Close</span>
@@ -428,6 +477,38 @@ export function MainToolbar({
 
           {activeTab === 'form' && (
             <>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Add Field</span>
+                <div className="flex gap-1">
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('text')} disabled={!hasDocument} title="Text Field">
+                    <Type size={18} />
+                    <span className="text-[10px] font-bold">Text</span>
+                  </button>
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('checkbox')} disabled={!hasDocument} title="Checkbox">
+                    <CheckSquare size={18} />
+                    <span className="text-[10px] font-bold">Checkbox</span>
+                  </button>
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('radio')} disabled={!hasDocument} title="Radio Button">
+                    <Circle size={18} />
+                    <span className="text-[10px] font-bold">Radio</span>
+                  </button>
+                </div>
+                <div className="flex gap-1 mt-1">
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('dropdown')} disabled={!hasDocument} title="Dropdown">
+                    <ChevronDown size={18} />
+                    <span className="text-[10px] font-bold">Dropdown</span>
+                  </button>
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('signature')} disabled={!hasDocument} title="Signature Field">
+                    <PenTool size={18} />
+                    <span className="text-[10px] font-bold">Signature</span>
+                  </button>
+                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('stamp')} disabled={!hasDocument} title="Stamp Field">
+                    <Stamp size={18} />
+                    <span className="text-[10px] font-bold">Stamp</span>
+                  </button>
+                </div>
+              </div>
+              <div className="toolbar-divider" />
               <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onFlattenForm} disabled={!hasDocument} title="Flatten Form">
                 <Zap size={18} />
                 <span className="text-[10px] font-bold">Flatten</span>

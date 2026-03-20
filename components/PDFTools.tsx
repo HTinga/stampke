@@ -94,7 +94,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface EditElement {
   id: string;
-  type: 'text' | 'image' | 'whiteout';
+  type: 'text' | 'image' | 'whiteout' | 'form';
   page: number;
   x: number;
   y: number;
@@ -112,6 +112,10 @@ interface EditElement {
   lineHeight?: number;
   letterSpacing?: number;
   boxStyle?: BoxStyle;
+  formType?: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'signature' | 'stamp';
+  fieldName?: string;
+  value?: string;
+  options?: string[];
 }
 
 export default function PDFTools() {
@@ -147,13 +151,14 @@ export default function PDFTools() {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [selectedTextBlockId, setSelectedTextBlockId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pages' | 'edit' | 'actions'>('pages');
+  const [activeTab, setActiveTab] = useState<'pages' | 'edit' | 'actions' | 'form'>('pages');
   const [isDetectingText, setIsDetectingText] = useState(false);
   const [showStampStudio, setShowStampStudio] = useState(false);
   const [showSignCenter, setShowSignCenter] = useState(false);
   const { config: stampConfig } = useStampStore();
   const [inlineEditingBlockId, setInlineEditingBlockId] = useState<string | null>(null);
   const [inlineEditContent, setInlineEditContent] = useState<string>('');
+  const [currentFormFieldType, setCurrentFormFieldType] = useState<string | null>(null);
   const [activePanel, setActivePanel] = useState<'outline' | 'thumbnails'>('thumbnails');
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -553,6 +558,32 @@ export default function PDFTools() {
     await downloadPDF(editedData, fileName || 'edited.pdf');
   }, [saveEditedPdf, fileName]);
 
+  const handleExportWithFormat = useCallback(async (format: string) => {
+    const editedData = await saveEditedPdf();
+    if (!editedData) return;
+    
+    switch (format) {
+      case 'pdf':
+        await downloadPDF(editedData, fileName ? fileName.replace(/\.pdf$/i, '_exported.pdf') : 'exported.pdf');
+        break;
+      case 'word':
+        // Mock Word export - would require actual conversion library
+        alert('Word export would require server-side conversion. Feature coming soon!');
+        break;
+      case 'excel':
+        alert('Excel export would require server-side conversion. Feature coming soon!');
+        break;
+      case 'powerpoint':
+        alert('PowerPoint export would require server-side conversion. Feature coming soon!');
+        break;
+      case 'image':
+        alert('Image export would require server-side conversion. Feature coming soon!');
+        break;
+      default:
+        await downloadPDF(editedData, fileName || 'edited.pdf');
+    }
+  }, [saveEditedPdf, fileName]);
+
   // Search Logic
   useEffect(() => {
     if (!query || !pdfDoc) {
@@ -752,6 +783,13 @@ export default function PDFTools() {
     setSelectedElementId(newElement.id);
   }, [currentPage, editElements, pdfData, fileName, pushState]);
 
+  const handleInsertFormField = useCallback((type: string) => {
+    // Set the current form field type for placement
+    setCurrentFormFieldType(type);
+    // User will now click on PDF to place the field
+    console.log(`Ready to insert ${type} field. Click on PDF to place.`);
+  }, []);
+
   const handleResetForm = useCallback(() => {
     resetForm();
   }, [resetForm]);
@@ -867,6 +905,7 @@ export default function PDFTools() {
         onInsertImage={handleInsertImageFromToolbar}
         onInsertStamp={() => setShowStampStudio(true)}
         onSignDocument={() => setShowSignCenter(true)}
+        onInsertFormField={handleInsertFormField}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -998,6 +1037,65 @@ export default function PDFTools() {
                   pushState(pdfData!, fileName, 'Add Text', newElements);
                   setSelectedElementId(newElement.id);
                   setCurrentTool('select');
+                }
+              } else if (currentFormFieldType) {
+                const rect = containerRef.current?.getBoundingClientRect();
+                if (rect) {
+                  const x = (e.clientX - rect.left) / zoom;
+                  const y = (e.clientY - rect.top) / zoom;
+                  let fieldName = '';
+                  let defaultValue = '';
+                  let options: string[] = [];
+                  
+                  switch (currentFormFieldType) {
+                    case 'text':
+                      fieldName = `text_${Date.now()}`;
+                      defaultValue = '';
+                      break;
+                    case 'checkbox':
+                      fieldName = `checkbox_${Date.now()}`;
+                      defaultValue = 'false';
+                      break;
+                    case 'radio':
+                      fieldName = `radio_${Date.now()}`;
+                      defaultValue = '';
+                      options = ['Option 1', 'Option 2', 'Option 3'];
+                      break;
+                    case 'dropdown':
+                      fieldName = `dropdown_${Date.now()}`;
+                      defaultValue = '';
+                      options = ['Option 1', 'Option 2', 'Option 3'];
+                      break;
+                    case 'signature':
+                      fieldName = `signature_${Date.now()}`;
+                      defaultValue = '';
+                      break;
+                    case 'stamp':
+                      fieldName = `stamp_${Date.now()}`;
+                      defaultValue = '';
+                      break;
+                  }
+                  
+                  const newElement: EditElement = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    type: 'form',
+                    page: currentPage,
+                    x,
+                    y,
+                    width: currentFormFieldType === 'checkbox' || currentFormFieldType === 'radio' ? 20 : 120,
+                    height: currentFormFieldType === 'checkbox' || currentFormFieldType === 'radio' ? 20 : 40,
+                    formType: currentFormFieldType as any,
+                    fieldName,
+                    value: defaultValue,
+                    options: options.length > 0 ? options : undefined,
+                    content: currentFormFieldType === 'text' ? '' : undefined,
+                    color: '#000000'
+                  };
+                  const newElements = [...editElements, newElement];
+                  setEditElements(newElements);
+                  pushState(pdfData!, fileName, `Add ${currentFormFieldType} Field`, newElements);
+                  setSelectedElementId(newElement.id);
+                  setCurrentFormFieldType(null); // Reset after placement
                 }
               }
             }}
@@ -1205,6 +1303,98 @@ export default function PDFTools() {
                     style={{ width: (el.width || 100) * zoom, height: (el.height || 100) * zoom }} 
                     referrerPolicy="no-referrer"
                   />
+                )}
+                {el.type === 'form' && (
+                  <div 
+                    style={{ 
+                      width: (el.width || 100) * zoom, 
+                      height: (el.height || 40) * zoom,
+                      border: '1px dashed #4f46e5',
+                      backgroundColor: el.formType === 'checkbox' || el.formType === 'radio' ? 'transparent' : '#f8fafc',
+                      borderRadius: '4px',
+                      padding: '4px',
+                      fontSize: '12px',
+                      color: '#000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {el.formType === 'text' && (
+                      <input 
+                        type="text" 
+                        placeholder="Enter text" 
+                        defaultValue={el.value || ''}
+                        onChange={(e) => {
+                          // Update element value on change
+                          const newElements = editElements.map(item => 
+                            item.id === el.id ? { ...item, value: e.target.value } : item
+                          );
+                          setEditElements(newElements);
+                        }}
+                        style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none' }}
+                      />
+                    )}
+                    {el.formType === 'checkbox' && (
+                      <input 
+                        type="checkbox" 
+                        checked={el.value === 'true'}
+                        onChange={(e) => {
+                          const newElements = editElements.map(item => 
+                            item.id === el.id ? { ...item, value: e.target.checked ? 'true' : 'false' } : item
+                          );
+                          setEditElements(newElements);
+                        }}
+                      />
+                    )}
+                    {el.formType === 'radio' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {(el.options || ['Option 1', 'Option 2', 'Option 3']).map((option, idx) => (
+                          <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <input 
+                              type="radio" 
+                              name={el.fieldName}
+                              checked={el.value === option}
+                              onChange={() => {
+                                const newElements = editElements.map(item => 
+                                  item.id === el.id ? { ...item, value: option } : item
+                                );
+                                setEditElements(newElements);
+                              }}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {el.formType === 'dropdown' && (
+                      <select 
+                        value={el.value || ''}
+                        onChange={(e) => {
+                          const newElements = editElements.map(item => 
+                            item.id === el.id ? { ...item, value: e.target.value } : item
+                          );
+                          setEditElements(newElements);
+                        }}
+                        style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none' }}
+                      >
+                        <option value="">Select...</option>
+                        {(el.options || ['Option 1', 'Option 2', 'Option 3']).map((option, idx) => (
+                          <option key={idx} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    )}
+                    {el.formType === 'signature' && (
+                      <div style={{ textAlign: 'center', color: '#6b7280', fontStyle: 'italic' }}>
+                        [Signature Field]
+                      </div>
+                    )}
+                    {el.formType === 'stamp' && (
+                      <div style={{ textAlign: 'center', color: '#6b7280', fontStyle: 'italic' }}>
+                        [Stamp Field]
+                      </div>
+                    )}
+                  </div>
                 )}
                 {el.type === 'whiteout' && (
                   <div style={{ 
