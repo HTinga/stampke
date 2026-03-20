@@ -1,50 +1,18 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  RotateCw, 
-  RotateCcw, 
-  Trash2, 
-  Plus, 
-  Image as ImageIcon, 
-  FileUp, 
-  Undo2, 
-  Redo2, 
-  FileText, 
-  Settings, 
-  X, 
-  ChevronLeft, 
-  ChevronRight,
-  Type,
-  Square,
-  Eraser,
-  Layers,
-  Scissors,
-  Check,
-  Zap,
-  PanelLeft,
-  Columns,
-  File,
-  Files,
-  Maximize,
-  MoveHorizontal,
-  ZoomIn,
-  ZoomOut,
-  Search,
-  Save,
-  FileCode,
-  RefreshCw,
-  Stamp,
-  PenTool as Pen, CheckSquare, Circle, ChevronDown
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  RotateCw, RotateCcw, Trash2, Plus, Image as ImageIcon, FileUp, Undo2, Redo2,
+  FileText, X, ChevronLeft, ChevronRight, Type, Eraser, Layers, Scissors, Check,
+  PanelLeft, Columns, File, Maximize, MoveHorizontal, ZoomIn, ZoomOut, Search,
+  Save, FileCode, RefreshCw, Stamp, PenTool as Pen, CheckSquare, Circle,
+  ChevronDown, ChevronUp, Eye, EyeOff, Highlighter, Underline, AlignLeft,
+  AlignCenter, AlignRight, Bold, Italic, Table, BarChart2, Link, Bookmark,
+  Lock, Unlock, Shield, Printer, Share2, Copy, Clipboard, Hash, SlidersHorizontal,
+  MousePointer, Move, Crop, Wand2, Palette, Grid3X3, Settings2, Minimize2,
+  PanelTopClose, PanelTopOpen, Maximize2
 } from 'lucide-react';
-import { 
-  useFormStore, 
-  useEditingStore, 
-  useAnnotationStore, 
-  AnnotationTool, 
-  EditingMode,
-  ZoomMode,
-  ViewMode,
-  useUIStore
+import {
+  useFormStore, useEditingStore, useAnnotationStore, AnnotationTool, EditingMode,
+  ZoomMode, ViewMode, useUIStore
 } from '../src/store';
 
 export interface PendingImageData {
@@ -107,60 +75,56 @@ interface MainToolbarProps {
   onInsertFormField?: (type: string) => void;
 }
 
-type ToolbarTab = 'file' | 'home' | 'insert' | 'draw' | 'layout' | 'review' | 'form' | 'view';
+type ToolbarTab = 'file' | 'home' | 'insert' | 'layout' | 'review' | 'form' | 'view' | 'security';
 
-const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+const ZOOM_PRESETS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 const SUPPORTED_IMAGE_EXTENSIONS = 'image/*';
 
+// Divider
+const Div = () => <div className="w-px h-8 bg-white/10 mx-1 flex-shrink-0" />;
+
+// Tool button
+const Btn = ({
+  onClick, disabled, active, icon: Icon, label, title, accent, danger, size = 15
+}: {
+  onClick?: () => void; disabled?: boolean; active?: boolean; icon: React.ElementType;
+  label?: string; title?: string; accent?: boolean; danger?: boolean; size?: number;
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    title={title || label}
+    className={`
+      group flex flex-col items-center justify-center gap-0.5 px-2.5 py-1.5 rounded-lg
+      text-[10px] font-bold tracking-wide transition-all duration-150 flex-shrink-0
+      disabled:opacity-30 disabled:cursor-not-allowed min-w-[46px]
+      ${active
+        ? accent
+          ? 'bg-[#1f6feb] text-white shadow-lg shadow-[#1f6feb]/30'
+          : 'bg-white/15 text-white ring-1 ring-white/30'
+        : danger
+          ? 'text-rose-400 hover:bg-rose-500/15 hover:text-rose-300'
+          : accent
+            ? 'text-[#58a6ff] hover:bg-[#1f6feb]/20 hover:text-white'
+            : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+      }
+    `}
+  >
+    <Icon size={size} className="transition-transform group-hover:scale-110" />
+    {label && <span className="leading-none mt-0.5 whitespace-nowrap">{label}</span>}
+  </button>
+);
+
 export function MainToolbar({
-  currentPage,
-  totalPages,
-  selectedPages,
-  zoom,
-  zoomMode,
-  viewMode,
-  sidebarOpen,
-  searchOpen,
-  onOpenFile,
-  onExport,
-  onPreviousPage,
-  onNextPage,
-  onGoToPage,
-  onZoomIn,
-  onZoomOut,
-  onSetZoom,
-  onFitToPage,
-  onFitToWidth,
-  onRotatePages,
-  onDeletePages,
-  onInsertBlankPage,
-  onInsertFromFile,
-  onMerge,
-  onSplit,
-  hasDocument,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
-  undoActionName,
-  redoActionName,
-  onResetToOriginal,
-  onCloseDocument,
-  canResetToOriginal,
-  onToggleSidebar,
-  onSetViewMode,
-  onToggleSearch,
-  onExportFormData,
-  onImportFormData,
-  onFlattenForm,
-  onResetForm,
-  onApplyRedactions,
-  onInsertImage,
-  onSaveAsTemplate,
-  onInsertStamp,
-  onSignDocument,
-  onInsertFormField,
-  onExportWithFormat,
+  currentPage, totalPages, selectedPages, zoom, zoomMode, viewMode,
+  sidebarOpen, searchOpen, onOpenFile, onExport, onPreviousPage, onNextPage,
+  onGoToPage, onZoomIn, onZoomOut, onSetZoom, onFitToPage, onFitToWidth,
+  onRotatePages, onDeletePages, onInsertBlankPage, onInsertFromFile, onMerge,
+  onSplit, hasDocument, onUndo, onRedo, canUndo, canRedo, undoActionName,
+  redoActionName, onResetToOriginal, onCloseDocument, canResetToOriginal,
+  onToggleSidebar, onSetViewMode, onToggleSearch, onExportFormData,
+  onImportFormData, onFlattenForm, onResetForm, onApplyRedactions, onInsertImage,
+  onSaveAsTemplate, onInsertStamp, onSignDocument, onInsertFormField, onExportWithFormat,
 }: MainToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -171,20 +135,19 @@ export function MainToolbar({
   const [activeTab, setActiveTab] = useState<ToolbarTab>('home');
   const [pendingInsertPosition, setPendingInsertPosition] = useState<number | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [showPageInput, setShowPageInput] = useState(false);
+  const [pageInputVal, setPageInputVal] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onOpenFile(file);
-    }
+    if (file) onOpenFile(file);
     e.target.value = '';
   };
 
   const handleInsertFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && pendingInsertPosition !== null) {
-      onInsertFromFile(pendingInsertPosition);
-    }
+    if (file && pendingInsertPosition !== null) onInsertFromFile(pendingInsertPosition);
     setPendingInsertPosition(null);
     e.target.value = '';
   };
@@ -192,46 +155,26 @@ export function MainToolbar({
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     const imagePromises: Promise<PendingImageData>[] = [];
-
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
-
-      imagePromises.push(
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const img = new Image();
-            img.onload = () => {
-              resolve({
-                imageData: reader.result as string,
-                originalWidth: img.naturalWidth,
-                originalHeight: img.naturalHeight,
-                filename: file.name,
-                fileSize: file.size,
-                mimeType: file.type,
-              });
-            };
-            img.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
-            img.src = reader.result as string;
-          };
-          reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
-          reader.readAsDataURL(file);
-        })
-      );
+      imagePromises.push(new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => resolve({ imageData: reader.result as string, originalWidth: img.naturalWidth, originalHeight: img.naturalHeight, filename: file.name, fileSize: file.size, mimeType: file.type });
+          img.onerror = () => reject(new Error(`Failed to load image: ${file.name}`));
+          img.src = reader.result as string;
+        };
+        reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+        reader.readAsDataURL(file);
+      }));
     }
-
     try {
       const images = await Promise.all(imagePromises);
-      if (images.length > 0 && onInsertImage) {
-        onInsertImage(images);
-      }
-    } catch (error) {
-      console.error('Error loading images:', error);
-    }
-
+      if (images.length > 0 && onInsertImage) onInsertImage(images);
+    } catch (error) { console.error('Error loading images:', error); }
     e.target.value = '';
   };
 
@@ -240,399 +183,257 @@ export function MainToolbar({
     setCurrentTool(currentTool === tool ? 'select' : tool);
   };
 
+  const tabs: { id: ToolbarTab; label: string }[] = [
+    { id: 'file', label: 'File' },
+    { id: 'home', label: 'Home' },
+    { id: 'insert', label: 'Insert' },
+    { id: 'layout', label: 'Layout' },
+    { id: 'review', label: 'Review' },
+    { id: 'form', label: 'Form' },
+    { id: 'view', label: 'View' },
+    { id: 'security', label: 'Security' },
+  ];
+
   return (
-    <header className="main-toolbar flex flex-col bg-[#161b22] border-b border-[#30363d] shadow-sm z-30">
-      {/* Tabs */}
-      <div className="flex items-center px-4 border-b border-[#21262d] bg-[#0d1117]/50">
-        {(['file', 'home', 'insert', 'layout', 'review', 'form', 'view'] as ToolbarTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all border-b-2 ${
-              activeTab === tab 
-                ? 'border-blue-600 text-blue-600 bg-[#161b22]' 
-                : 'border-transparent text-[#8b949e] hover:text-white hover:bg-[#30363d]'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+    <header className="flex flex-col flex-shrink-0 z-30" style={{ background: 'linear-gradient(180deg, #0f1520 0%, #111827 100%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
 
-      {/* Toolbar Actions */}
-      <div className="flex items-center h-20 px-4 gap-2 overflow-x-auto no-scrollbar">
-        {/* Common Actions (Always Visible) */}
-        <div className="flex items-center gap-1 pr-2 border-r border-[#21262d]">
-          <button className="toolbar-btn icon-only" onClick={() => fileInputRef.current?.click()} title="Open File">
-            <FileUp size={18} />
-          </button>
-          <button className="toolbar-btn icon-only" onClick={onUndo} disabled={!canUndo} title={undoActionName || "Undo"}>
-            <Undo2 size={18} />
-          </button>
-          <button className="toolbar-btn icon-only" onClick={onRedo} disabled={!canRedo} title={redoActionName || "Redo"}>
-            <Redo2 size={18} />
-          </button>
+      {/* ── Top bar: tabs + nav + collapse ── */}
+      <div className="flex items-center h-9 px-3 gap-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Logo mark */}
+        <div className="flex items-center gap-2 pr-3 mr-1" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1f6feb, #58a6ff)' }}>
+            <FileText size={10} className="text-white" />
+          </div>
+          <span className="text-[11px] font-black tracking-widest text-white/70 uppercase">PDF</span>
         </div>
 
-        {/* Tab Specific Actions */}
-        <div className="flex items-center gap-1">
-          {activeTab === 'file' && (
-            <>
-              <button className="toolbar-btn flex items-center gap-2 px-3" onClick={() => fileInputRef.current?.click()} title="Open PDF">
-                <FileUp size={18} />
-                <span className="text-xs font-bold">Open</span>
-              </button>
-              <div className="relative">
-                <button 
-                  className="toolbar-btn flex items-center gap-2 px-3" 
-                  onClick={() => setExportMenuOpen(!exportMenuOpen)} 
-                  disabled={!hasDocument} 
-                  title="Export PDF"
-                >
-                  <Save size={18} />
-                  <span className="text-xs font-bold">Export</span>
-                  <ChevronDown size={14} />
-                </button>
-                {exportMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-[#161b22] border border-[#30363d] rounded-lg shadow-xl z-50">
-                    <div className="py-1">
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
-                        onClick={() => { onExport(); setExportMenuOpen(false); }}
-                      >
-                        <Save size={14} /> PDF
-                      </button>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
-                        onClick={() => { onExportWithFormat?.('word'); setExportMenuOpen(false); }}
-                      >
-                        <FileText size={14} /> Word (.docx)
-                      </button>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
-                        onClick={() => { onExportWithFormat?.('excel'); setExportMenuOpen(false); }}
-                      >
-                        <FileText size={14} /> Excel (.xlsx)
-                      </button>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
-                        onClick={() => { onExportWithFormat?.('powerpoint'); setExportMenuOpen(false); }}
-                      >
-                        <FileText size={14} /> PowerPoint (.pptx)
-                      </button>
-                      <button 
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-[#21262d] flex items-center gap-2"
-                        onClick={() => { onExportWithFormat?.('image'); setExportMenuOpen(false); }}
-                      >
-                        <ImageIcon size={14} /> Image (.png)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button className="toolbar-btn flex items-center gap-2 px-3 text-red-500 hover:bg-red-50" onClick={onCloseDocument} disabled={!hasDocument} title="Close Document">
-                <X size={18} />
-                <span className="text-xs font-bold">Close</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'home' && (
-            <>
-              <button 
-                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'select' ? 'active' : ''}`}
-                onClick={() => handleToolClick('select')}
-                disabled={!hasDocument}
-                title="Select Tool"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 4L10 22L13 13L22 10L4 4Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-[10px] font-bold">Select</span>
-              </button>
-              <button 
-                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'highlight' ? 'active' : ''}`}
-                onClick={() => handleToolClick('highlight')}
-                disabled={!hasDocument}
-                title="Highlight Tool"
-              >
-                <div className="w-4 h-4 bg-yellow-300 rounded-sm border border-gray-400" />
-                <span className="text-[10px] font-bold">Highlight</span>
-              </button>
-              <button 
-                className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${currentTool === 'text' ? 'active' : ''}`}
-                onClick={() => handleToolClick('text')}
-                disabled={!hasDocument}
-                title="Text Tool"
-              >
-                <Type size={18} />
-                <span className="text-[10px] font-bold">Text</span>
-              </button>
-              <div className="toolbar-divider" />
-              <div className="flex flex-col gap-1">
-                <div className="flex gap-1">
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onRotatePages([currentPage], 90)} disabled={!hasDocument} title="Rotate Clockwise 90°">
-                    <RotateCw size={16} />
-                  </button>
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onRotatePages([currentPage], -90)} disabled={!hasDocument} title="Rotate Counter-Clockwise 90°">
-                    <RotateCcw size={16} />
-                  </button>
-                </div>
-                <span className="text-[10px] font-bold text-center">Rotate</span>
-              </div>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onDeletePages([currentPage])} disabled={!hasDocument || totalPages <= 1} title="Delete Page">
-                <Trash2 size={18} />
-                <span className="text-[10px] font-bold">Delete</span>
-              </button>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onResetToOriginal} disabled={!canResetToOriginal} title="Reset to Original">
-                <RefreshCw size={18} />
-                <span className="text-[10px] font-bold">Reset</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onSaveAsTemplate?.('New Template')} disabled={!hasDocument} title="Save as Template">
-                <Save size={18} />
-                <span className="text-[10px] font-bold">Template</span>
-              </button>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
-                <Stamp size={18} />
-                <span className="text-[10px] font-bold">Stamp</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
-                <Pen size={18} />
-                <span className="text-[10px] font-bold">Sign</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'insert' && (
-            <>
-              <div className="flex flex-col gap-1">
-                <div className="flex gap-1">
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onInsertBlankPage(currentPage)} disabled={!hasDocument} title="Insert Blank Page Before">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => onInsertBlankPage(currentPage + 1)} disabled={!hasDocument} title="Insert Blank Page After">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-                <span className="text-[10px] font-bold text-center">Blank Page</span>
-              </div>
-              <div className="toolbar-divider" />
-              <div className="flex flex-col gap-1">
-                <div className="flex gap-1">
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => {
-                    setPendingInsertPosition(currentPage);
-                    insertFileInputRef.current?.click();
-                  }} disabled={!hasDocument} title="Insert From File Before">
-                    <ChevronLeft size={14} />
-                  </button>
-                  <button className="toolbar-btn icon-only h-8 w-8" onClick={() => {
-                    setPendingInsertPosition(currentPage + 1);
-                    insertFileInputRef.current?.click();
-                  }} disabled={!hasDocument} title="Insert From File After">
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-                <span className="text-[10px] font-bold text-center">From File</span>
-              </div>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => imageInputRef.current?.click()} disabled={!hasDocument} title="Insert Image">
-                <ImageIcon size={18} />
-                <span className="text-[10px] font-bold">Image</span>
-              </button>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100" onClick={onInsertStamp} disabled={!hasDocument} title="Insert Stamp">
-                <Stamp size={18} />
-                <span className="text-[10px] font-bold">Stamp</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px] bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100" onClick={onSignDocument} disabled={!hasDocument} title="Sign Document">
-                <Pen size={18} />
-                <span className="text-[10px] font-bold">Sign</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'layout' && (
-            <>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onMerge} disabled={!hasDocument} title="Merge PDFs">
-                <Layers size={18} />
-                <span className="text-[10px] font-bold">Merge</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onSplit} disabled={!hasDocument} title="Split PDF">
-                <Scissors size={18} />
-                <span className="text-[10px] font-bold">Split</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'review' && (
-            <>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onApplyRedactions} disabled={!hasDocument} title="Apply Redactions">
-                <Eraser size={18} />
-                <span className="text-[10px] font-bold">Redact</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'form' && (
-            <>
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-[#8b949e] uppercase">Add Field</span>
-                <div className="flex gap-1">
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('text')} disabled={!hasDocument} title="Text Field">
-                    <Type size={18} />
-                    <span className="text-[10px] font-bold">Text</span>
-                  </button>
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('checkbox')} disabled={!hasDocument} title="Checkbox">
-                    <CheckSquare size={18} />
-                    <span className="text-[10px] font-bold">Checkbox</span>
-                  </button>
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('radio')} disabled={!hasDocument} title="Radio Button">
-                    <Circle size={18} />
-                    <span className="text-[10px] font-bold">Radio</span>
-                  </button>
-                </div>
-                <div className="flex gap-1 mt-1">
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('dropdown')} disabled={!hasDocument} title="Dropdown">
-                    <ChevronDown size={18} />
-                    <span className="text-[10px] font-bold">Dropdown</span>
-                  </button>
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('signature')} disabled={!hasDocument} title="Signature Field">
-                    <Pen size={18} />
-                    <span className="text-[10px] font-bold">Signature</span>
-                  </button>
-                  <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onInsertFormField?.('stamp')} disabled={!hasDocument} title="Stamp Field">
-                    <Stamp size={18} />
-                    <span className="text-[10px] font-bold">Stamp</span>
-                  </button>
-                </div>
-              </div>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onFlattenForm} disabled={!hasDocument} title="Flatten Form">
-                <Zap size={18} />
-                <span className="text-[10px] font-bold">Flatten</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onResetForm} disabled={!hasDocument} title="Reset Form">
-                <RefreshCw size={18} />
-                <span className="text-[10px] font-bold">Reset</span>
-              </button>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('json')} disabled={!hasDocument} title="Export Form Data (JSON)">
-                <FileCode size={18} />
-                <span className="text-[10px] font-bold">JSON</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('fdf')} disabled={!hasDocument} title="Export Form Data (FDF)">
-                <FileText size={18} />
-                <span className="text-[10px] font-bold">FDF</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={() => onExportFormData?.('xfdf')} disabled={!hasDocument} title="Export Form Data (XFDF)">
-                <FileUp size={18} className="rotate-180" />
-                <span className="text-[10px] font-bold">XFDF</span>
-              </button>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onImportFormData} disabled={!hasDocument} title="Import Form Data">
-                <FileUp size={18} />
-                <span className="text-[10px] font-bold">Import</span>
-              </button>
-            </>
-          )}
-
-          {activeTab === 'view' && (
-            <>
-              <button className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${viewMode === 'single' ? 'active' : ''}`} onClick={() => onSetViewMode('single')} disabled={!hasDocument} title="Single Page View">
-                <File size={18} />
-                <span className="text-[10px] font-bold">Single</span>
-              </button>
-              <button className={`toolbar-btn flex flex-col items-center gap-1 min-w-[64px] ${viewMode === 'continuous' ? 'active' : ''}`} onClick={() => onSetViewMode('continuous')} disabled={!hasDocument} title="Continuous View">
-                <Columns size={18} />
-                <span className="text-[10px] font-bold">Scroll</span>
-              </button>
-              <div className="toolbar-divider" />
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onZoomOut} disabled={!hasDocument} title="Zoom Out">
-                <ZoomOut size={18} />
-                <span className="text-[10px] font-bold">Out</span>
-              </button>
-              <select 
-                value={zoomMode === 'manual' ? zoom : zoomMode} 
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'fit-page') onFitToPage();
-                  else if (val === 'fit-width') onFitToWidth();
-                  else onSetZoom(parseFloat(val));
-                }}
-                className="zoom-select h-10 bg-[#0d1117] border border-[#30363d] rounded px-2 text-xs font-bold outline-none"
-                disabled={!hasDocument}
-              >
-                <option value="fit-page">Fit Page</option>
-                <option value="fit-width">Fit Width</option>
-                {ZOOM_PRESETS.map(p => <option key={p} value={p}>{Math.round(p * 100)}%</option>)}
-              </select>
-              <button className="toolbar-btn flex flex-col items-center gap-1 min-w-[64px]" onClick={onZoomIn} disabled={!hasDocument} title="Zoom In">
-                <ZoomIn size={18} />
-                <span className="text-[10px] font-bold">In</span>
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="toolbar-spacer flex-1" />
-
-        {/* Navigation & Search */}
-        <div className="flex items-center gap-2">
-          <div className="page-indicator flex items-center bg-[#0d1117] border border-[#30363d] rounded-lg px-2 h-9">
-            <button className="p-1 hover:bg-[#30363d] rounded disabled:opacity-30" onClick={onPreviousPage} disabled={!hasDocument || currentPage <= 1}>
-              <ChevronLeft size={16} />
+        {/* Tabs */}
+        <div className="flex items-center flex-1 overflow-x-auto no-scrollbar">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); if (collapsed) setCollapsed(false); }}
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-b-2 h-9 ${
+                activeTab === tab.id && !collapsed
+                  ? 'border-[#58a6ff] text-[#58a6ff]'
+                  : 'border-transparent text-white/40 hover:text-white/80 hover:bg-white/5'
+              }`}
+            >
+              {tab.label}
             </button>
-            <input 
-              type="number" 
-              className="w-10 bg-transparent text-center text-xs font-black outline-none" 
-              value={currentPage} 
-              onChange={(e) => onGoToPage(parseInt(e.target.value))}
-              min={1}
-              max={totalPages}
-              disabled={!hasDocument}
-            />
-            <span className="text-[10px] font-black text-[#8b949e] mx-1">/</span>
-            <span className="text-xs font-black text-[#e6edf3] min-w-[20px]">{totalPages || 0}</span>
-            <button className="p-1 hover:bg-[#30363d] rounded disabled:opacity-30" onClick={onNextPage} disabled={!hasDocument || currentPage >= totalPages}>
-              <ChevronRight size={16} />
+          ))}
+        </div>
+
+        {/* Right side: page nav + search + collapse */}
+        <div className="flex items-center gap-1 pl-2" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+          {/* Page navigation */}
+          <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 rounded-lg px-1.5 h-7">
+            <button onClick={onPreviousPage} disabled={!hasDocument || currentPage <= 1} className="p-0.5 text-white/50 hover:text-white disabled:opacity-20 transition-colors">
+              <ChevronLeft size={12} />
+            </button>
+            <span
+              className="text-[11px] font-black text-white/80 px-1 cursor-pointer hover:text-white min-w-[42px] text-center"
+              onClick={() => setShowPageInput(true)}
+            >
+              {showPageInput ? (
+                <input
+                  autoFocus
+                  type="number"
+                  value={pageInputVal || currentPage}
+                  onChange={e => setPageInputVal(e.target.value)}
+                  onBlur={() => { if (pageInputVal) onGoToPage(parseInt(pageInputVal)); setShowPageInput(false); setPageInputVal(''); }}
+                  onKeyDown={e => { if (e.key === 'Enter') { if (pageInputVal) onGoToPage(parseInt(pageInputVal)); setShowPageInput(false); setPageInputVal(''); } }}
+                  className="w-8 bg-transparent text-center outline-none text-[11px] font-black text-white"
+                />
+              ) : (
+                <>{currentPage} <span className="text-white/30">/</span> {totalPages || 0}</>
+              )}
+            </span>
+            <button onClick={onNextPage} disabled={!hasDocument || currentPage >= totalPages} className="p-0.5 text-white/50 hover:text-white disabled:opacity-20 transition-colors">
+              <ChevronRight size={12} />
             </button>
           </div>
 
-          <button className={`toolbar-btn icon-only ${searchOpen ? 'active' : ''}`} onClick={onToggleSearch} disabled={!hasDocument} title="Search">
-            <Search size={18} />
+          <button onClick={onToggleSearch} disabled={!hasDocument} title="Search (Ctrl+F)"
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${searchOpen ? 'bg-[#1f6feb] text-white' : 'text-white/40 hover:text-white hover:bg-white/10'}`}>
+            <Search size={13} />
           </button>
-          <button className={`toolbar-btn icon-only ${sidebarOpen ? 'active' : ''}`} onClick={onToggleSidebar} disabled={!hasDocument} title="Toggle Sidebar">
-            <PanelLeft size={18} />
+          <button onClick={onToggleSidebar} disabled={!hasDocument} title="Toggle sidebar"
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${sidebarOpen ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white hover:bg-white/10'}`}>
+            <PanelLeft size={13} />
           </button>
-          <button className="toolbar-btn icon-only text-red-500 hover:bg-red-50" onClick={onCloseDocument} disabled={!hasDocument} title="Close Document">
-            <X size={18} />
+          <button onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand toolbar' : 'Collapse toolbar'}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all">
+            {collapsed ? <PanelTopOpen size={13} /> : <PanelTopClose size={13} />}
           </button>
         </div>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf"
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
-      <input
-        ref={insertFileInputRef}
-        type="file"
-        accept=".pdf"
-        onChange={handleInsertFileChange}
-        style={{ display: 'none' }}
-      />
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept={SUPPORTED_IMAGE_EXTENSIONS}
-        multiple
-        onChange={handleImageFileChange}
-        style={{ display: 'none' }}
-      />
+      {/* ── Collapsible action bar ── */}
+      {!collapsed && (
+        <div className="flex items-center h-14 px-3 gap-1 overflow-x-auto no-scrollbar"
+          style={{ background: 'rgba(255,255,255,0.02)' }}>
+
+          {/* Always-visible: undo/redo + open */}
+          <Btn icon={FileUp} label="Open" title="Open PDF (Ctrl+O)" onClick={() => fileInputRef.current?.click()} />
+          <Btn icon={Undo2} title={undoActionName ? `Undo: ${undoActionName}` : 'Undo (Ctrl+Z)'} onClick={onUndo} disabled={!canUndo} />
+          <Btn icon={Redo2} title={redoActionName ? `Redo: ${redoActionName}` : 'Redo (Ctrl+Shift+Z)'} onClick={onRedo} disabled={!canRedo} />
+          <Div />
+
+          {/* FILE TAB */}
+          {activeTab === 'file' && (<>
+            <div className="relative">
+              <Btn icon={Save} label="Export" accent onClick={() => setExportMenuOpen(o => !o)} disabled={!hasDocument} />
+              {exportMenuOpen && (
+                <div className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-2xl z-50 overflow-hidden"
+                  style={{ background: '#0f1520', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {[
+                    { fmt: 'pdf', label: 'PDF Document', icon: FileText },
+                    { fmt: 'word', label: 'Word (.docx)', icon: FileText },
+                    { fmt: 'excel', label: 'Excel (.xlsx)', icon: FileText },
+                    { fmt: 'powerpoint', label: 'PowerPoint (.pptx)', icon: FileText },
+                    { fmt: 'image', label: 'Image (.png)', icon: ImageIcon },
+                  ].map(({ fmt, label, icon: Icon }) => (
+                    <button key={fmt}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-white/60 hover:bg-white/8 hover:text-white transition-all"
+                      onClick={() => { fmt === 'pdf' ? onExport() : onExportWithFormat?.(fmt); setExportMenuOpen(false); }}>
+                      <Icon size={14} className="text-[#58a6ff]" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Btn icon={Printer} label="Print" disabled={!hasDocument} onClick={() => window.print()} />
+            <Btn icon={Share2} label="Share" disabled={!hasDocument} />
+            <Div />
+            <Btn icon={RefreshCw} label="Reset" onClick={onResetToOriginal} disabled={!canResetToOriginal} />
+            <Btn icon={X} label="Close" danger onClick={onCloseDocument} disabled={!hasDocument} />
+          </>)}
+
+          {/* HOME TAB */}
+          {activeTab === 'home' && (<>
+            <Btn icon={MousePointer} label="Select" active={currentTool === 'select'} onClick={() => handleToolClick('select')} disabled={!hasDocument} />
+            <Btn icon={Type} label="Text" active={currentTool === 'text'} onClick={() => handleToolClick('text')} disabled={!hasDocument} accent />
+            <Btn icon={Highlighter} label="Highlight" active={currentTool === 'highlight'} onClick={() => handleToolClick('highlight')} disabled={!hasDocument} />
+            <Btn icon={Underline} label="Underline" active={currentTool === 'underline'} onClick={() => handleToolClick('underline')} disabled={!hasDocument} />
+            <Btn icon={Eraser} label="Erase" active={currentTool === 'eraser'} onClick={() => handleToolClick('eraser')} disabled={!hasDocument} />
+            <Div />
+            <Btn icon={RotateCw} label="Rotate ↻" onClick={() => onRotatePages([currentPage], 90)} disabled={!hasDocument} />
+            <Btn icon={RotateCcw} label="Rotate ↺" onClick={() => onRotatePages([currentPage], -90)} disabled={!hasDocument} />
+            <Btn icon={Trash2} label="Delete Pg" onClick={() => onDeletePages([currentPage])} disabled={!hasDocument || totalPages <= 1} danger />
+            <Div />
+            <Btn icon={Stamp} label="Stamp" accent onClick={onInsertStamp} disabled={!hasDocument} />
+            <Btn icon={Pen} label="Sign" accent onClick={onSignDocument} disabled={!hasDocument} />
+          </>)}
+
+          {/* INSERT TAB */}
+          {activeTab === 'insert' && (<>
+            <Btn icon={Plus} label="Blank Pg" onClick={() => onInsertBlankPage(currentPage + 1)} disabled={!hasDocument} />
+            <Btn icon={FileUp} label="From PDF" onClick={() => { setPendingInsertPosition(currentPage + 1); insertFileInputRef.current?.click(); }} disabled={!hasDocument} />
+            <Div />
+            <Btn icon={ImageIcon} label="Image" onClick={() => imageInputRef.current?.click()} disabled={!hasDocument} accent />
+            <Btn icon={Table} label="Table" disabled={!hasDocument} accent onClick={() => { /* insert table element */ }} />
+            <Btn icon={BarChart2} label="Chart" disabled={!hasDocument} accent />
+            <Btn icon={Link} label="Link" disabled={!hasDocument} />
+            <Btn icon={Bookmark} label="Bookmark" disabled={!hasDocument} />
+            <Div />
+            <Btn icon={Stamp} label="Stamp" accent onClick={onInsertStamp} disabled={!hasDocument} />
+            <Btn icon={Pen} label="Signature" accent onClick={onSignDocument} disabled={!hasDocument} />
+            <Btn icon={Hash} label="Page Num" disabled={!hasDocument} />
+            <Btn icon={Grid3X3} label="Watermark" disabled={!hasDocument} />
+          </>)}
+
+          {/* LAYOUT TAB */}
+          {activeTab === 'layout' && (<>
+            <Btn icon={Layers} label="Merge" onClick={onMerge} disabled={!hasDocument} accent />
+            <Btn icon={Scissors} label="Split" onClick={onSplit} disabled={!hasDocument} accent />
+            <Div />
+            <Btn icon={RotateCw} label="Rotate All" onClick={() => onRotatePages(Array.from({ length: totalPages }, (_, i) => i + 1), 90)} disabled={!hasDocument} />
+            <Btn icon={Crop} label="Crop" disabled={!hasDocument} />
+            <Btn icon={MoveHorizontal} label="Reorder" disabled={!hasDocument} />
+            <Div />
+            <Btn icon={Copy} label="Duplicate" disabled={!hasDocument} />
+            <Btn icon={Clipboard} label="Paste Pg" disabled={!hasDocument} />
+          </>)}
+
+          {/* REVIEW TAB */}
+          {activeTab === 'review' && (<>
+            <Btn icon={Eraser} label="Redact" onClick={onApplyRedactions} disabled={!hasDocument} danger />
+            <Btn icon={Wand2} label="OCR" disabled={!hasDocument} accent />
+            <Btn icon={SlidersHorizontal} label="Compare" disabled={!hasDocument} />
+            <Div />
+            <Btn icon={Search} label="Find" onClick={onToggleSearch} disabled={!hasDocument} active={searchOpen} />
+            <Btn icon={AlignLeft} label="Spell Chk" disabled={!hasDocument} />
+          </>)}
+
+          {/* FORM TAB */}
+          {activeTab === 'form' && (<>
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/25 px-1 flex-shrink-0">Add Field</span>
+            <Btn icon={Type} label="Text" onClick={() => onInsertFormField?.('text')} disabled={!hasDocument} accent />
+            <Btn icon={CheckSquare} label="Checkbox" onClick={() => onInsertFormField?.('checkbox')} disabled={!hasDocument} accent />
+            <Btn icon={Circle} label="Radio" onClick={() => onInsertFormField?.('radio')} disabled={!hasDocument} accent />
+            <Btn icon={ChevronDown} label="Dropdown" onClick={() => onInsertFormField?.('dropdown')} disabled={!hasDocument} accent />
+            <Btn icon={Pen} label="Signature" onClick={() => onInsertFormField?.('signature')} disabled={!hasDocument} accent />
+            <Btn icon={Stamp} label="Stamp" onClick={() => onInsertFormField?.('stamp')} disabled={!hasDocument} accent />
+            <Div />
+            <Btn icon={Check} label="Flatten" onClick={onFlattenForm} disabled={!hasDocument} />
+            <Btn icon={RefreshCw} label="Reset" onClick={onResetForm} disabled={!hasDocument} />
+            <Div />
+            <Btn icon={FileCode} label="JSON" onClick={() => onExportFormData?.('json')} disabled={!hasDocument} />
+            <Btn icon={FileText} label="FDF" onClick={() => onExportFormData?.('fdf')} disabled={!hasDocument} />
+            <Btn icon={FileUp} label="Import" onClick={onImportFormData} disabled={!hasDocument} />
+          </>)}
+
+          {/* VIEW TAB */}
+          {activeTab === 'view' && (<>
+            <Btn icon={File} label="Single" active={viewMode === 'single'} onClick={() => onSetViewMode('single')} disabled={!hasDocument} />
+            <Btn icon={Columns} label="Scroll" active={viewMode === 'continuous'} onClick={() => onSetViewMode('continuous')} disabled={!hasDocument} />
+            <Div />
+            <Btn icon={ZoomOut} label="Zoom –" onClick={onZoomOut} disabled={!hasDocument} />
+            <select
+              value={zoomMode === 'manual' ? zoom : zoomMode}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'fit-page') onFitToPage();
+                else if (val === 'fit-width') onFitToWidth();
+                else onSetZoom(parseFloat(val));
+              }}
+              className="h-8 rounded-lg px-2 text-[11px] font-black outline-none flex-shrink-0 disabled:opacity-30"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
+              disabled={!hasDocument}
+            >
+              <option value="fit-page">Fit Page</option>
+              <option value="fit-width">Fit Width</option>
+              {ZOOM_PRESETS.map(p => <option key={p} value={p}>{Math.round(p * 100)}%</option>)}
+            </select>
+            <Btn icon={ZoomIn} label="Zoom +" onClick={onZoomIn} disabled={!hasDocument} />
+            <Div />
+            <Btn icon={Maximize} label="Fullscreen" onClick={() => document.documentElement.requestFullscreen?.()} disabled={!hasDocument} />
+          </>)}
+
+          {/* SECURITY TAB */}
+          {activeTab === 'security' && (<>
+            <Btn icon={Lock} label="Encrypt" disabled={!hasDocument} accent />
+            <Btn icon={Unlock} label="Decrypt" disabled={!hasDocument} />
+            <Btn icon={Shield} label="Redact All" onClick={onApplyRedactions} disabled={!hasDocument} danger />
+            <Div />
+            <Btn icon={Eraser} label="Sanitize" disabled={!hasDocument} />
+            <Btn icon={Settings2} label="Permissions" disabled={!hasDocument} />
+          </>)}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Right: save shortcut */}
+          <Btn icon={Save} label="Save" accent onClick={onExport} disabled={!hasDocument} />
+        </div>
+      )}
+
+      {/* Hidden inputs */}
+      <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+      <input ref={insertFileInputRef} type="file" accept=".pdf" onChange={handleInsertFileChange} style={{ display: 'none' }} />
+      <input ref={imageInputRef} type="file" accept={SUPPORTED_IMAGE_EXTENSIONS} multiple onChange={handleImageFileChange} style={{ display: 'none' }} />
     </header>
   );
 }

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   FileText, 
   PenTool,
+  PenTool as Pen,
   Search, 
   Layout, 
   Undo2, 
@@ -856,7 +857,8 @@ export default function PDFTools() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      className="h-full flex flex-col bg-[#21262d] overflow-hidden transition-colors duration-200 [&.drag-over]:bg-[#21262d]"
+      className="h-full flex flex-col overflow-hidden transition-colors duration-200 [&.drag-over]:ring-2 [&.drag-over]:ring-[#1f6feb]/50"
+      style={{ background: '#0a0f1a' }}
     >
       {/* Header */}
       <MainToolbar 
@@ -910,31 +912,51 @@ export default function PDFTools() {
 
       <div className="flex-1 flex overflow-hidden">
         {!pdfData ? (
-          <div className="flex-1 flex flex-col items-center justify-center bg-[#0d1117] p-8">
-            <div className="max-w-md w-full text-center space-y-8">
-              <div className="w-24 h-24 bg-[#1f6feb] rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-black rotate-3">
-                <FileText size={48} className="text-white" />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #0a0f1a 0%, #0d1117 50%, #0a0f1a 100%)' }}>
+            {/* Background grid */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #58a6ff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+            {/* Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, #1f6feb 0%, transparent 70%)' }} />
+
+            <div className="relative max-w-lg w-full text-center space-y-8">
+              {/* Icon */}
+              <div className="relative mx-auto w-24 h-24">
+                <div className="absolute inset-0 rounded-3xl opacity-20 blur-xl" style={{ background: 'linear-gradient(135deg, #1f6feb, #58a6ff)' }} />
+                <div className="relative w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl" style={{ background: 'linear-gradient(135deg, #111827, #1a2234)', border: '1px solid rgba(88,166,255,0.2)' }}>
+                  <FileText size={40} style={{ color: '#58a6ff' }} />
+                </div>
               </div>
-              <div className="space-y-4">
-                <h2 className="text-5xl font-black tracking-tighter">PDF Studio</h2>
-                <p className="text-[#8b949e] font-medium text-lg leading-relaxed">
-                  Professional PDF editing, annotation, and manipulation. All in your browser.
+
+              <div className="space-y-3">
+                <h2 className="text-4xl font-black tracking-tighter text-white">PDF Studio</h2>
+                <p className="text-sm font-medium leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  Edit text, images, tables & forms. Sign, stamp, fill, merge, secure.
                 </p>
               </div>
-              <div className="pt-4">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileSelect} 
-                  accept=".pdf" 
-                  className="hidden" 
-                />
-                <button 
+
+              {/* Feature badges */}
+              <div className="flex flex-wrap justify-center gap-2">
+                {['Edit Text', 'Fill Forms', 'Sign & Stamp', 'Merge/Split', 'Redact', 'Secure'].map(f => (
+                  <span key={f} className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                    style={{ background: 'rgba(31,111,235,0.12)', border: '1px solid rgba(31,111,235,0.25)', color: '#58a6ff' }}>
+                    {f}
+                  </span>
+                ))}
+              </div>
+
+              <div>
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".pdf" className="hidden" />
+                <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full bg-[#1f6feb] text-white py-6 rounded-[32px] font-black text-xl hover:bg-[#30363d] transition-all shadow-xl shadow-[#c5d8ef] flex items-center justify-center gap-3"
+                  className="w-full py-4 rounded-2xl font-black text-base text-white flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  style={{ background: 'linear-gradient(135deg, #1f6feb 0%, #2d7ff9 100%)', boxShadow: '0 8px 32px rgba(31,111,235,0.3)' }}
                 >
-                  <Plus size={24} /> Select PDF File
+                  <Plus size={20} /> Open PDF File
                 </button>
+                <p className="text-[11px] font-medium mt-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  Or drag & drop a PDF anywhere on this page
+                </p>
               </div>
             </div>
           </div>
@@ -945,28 +967,31 @@ export default function PDFTools() {
           {sidebarOpen && !!pdfDoc && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 300, opacity: 1 }}
+              animate={{ width: 280, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="bg-[#161b22] border-r border-[#30363d] flex flex-col overflow-hidden z-20 shadow-xl"
+              className="flex flex-col overflow-hidden z-20 shadow-2xl flex-shrink-0"
+              style={{ background: '#0d1117', borderRight: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <div className="flex items-center p-4 border-b border-[#21262d] bg-[#0d1117]/50 gap-2">
+              <div className="flex items-center p-3 gap-2 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}>
                 <button
                   onClick={() => setActivePanel('thumbnails')}
                   title="Thumbnails"
-                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
-                    activePanel === 'thumbnails' ? 'bg-[#1f6feb] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#21262d]'
+                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg text-xs font-bold ${
+                    activePanel === 'thumbnails' ? 'text-[#58a6ff]' : 'text-white/30 hover:text-white/70 hover:bg-white/5'
                   }`}
+                  style={activePanel === 'thumbnails' ? { background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.25)' } : {}}
                 >
-                  <Layers size={18} />
+                  <Layers size={15} />
                 </button>
                 <button
                   onClick={() => setActivePanel('outline')}
                   title="Outline"
-                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg ${
-                    activePanel === 'outline' ? 'bg-[#1f6feb] text-white shadow-lg shadow-[#c5d8ef]' : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#21262d]'
+                  className={`flex-1 flex items-center justify-center py-2 transition-all rounded-lg text-xs font-bold ${
+                    activePanel === 'outline' ? 'text-[#58a6ff]' : 'text-white/30 hover:text-white/70 hover:bg-white/5'
                   }`}
+                  style={activePanel === 'outline' ? { background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.25)' } : {}}
                 >
-                  <FileText size={18} />
+                  <FileText size={15} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -987,14 +1012,15 @@ export default function PDFTools() {
           )}
         </AnimatePresence>
 
-        <div className="flex-1 relative overflow-auto bg-[#30363d] p-8 flex justify-center items-start">
+        <div className="flex-1 relative overflow-auto p-8 flex justify-center items-start" style={{ background: 'linear-gradient(135deg, #080d14 0%, #0d1117 100%)' }}>
           <AnimatePresence>
             {searchOpen && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="absolute top-4 left-1/2 -translate-x-1/2 w-96 bg-[#161b22] rounded-2xl shadow-2xl border border-[#30363d] p-4 z-20"
+                className="absolute top-4 left-1/2 -translate-x-1/2 w-96 rounded-2xl shadow-2xl p-4 z-20"
+                style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)' }}
               >
                 <div className="flex items-center gap-3">
                   <Search size={18} className="text-[#8b949e]" />
@@ -1467,31 +1493,30 @@ export default function PDFTools() {
 
       {/* Digital Sign Center Modal */}
       {showSignCenter && (
-        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#161b22] dark:bg-[#161b22] rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden border border-[#30363d] dark:border-[#30363d]">
-            <div className="px-6 py-4 border-bottom border-[#30363d] dark:border-[#30363d] flex items-center justify-between bg-zinc-50 dark:bg-[#161b22]/50">
-              <div>
-                <h2 className="text-xl font-semibold text-white dark:text-white">Digital Signature Center</h2>
-                <p className="text-sm text-[#8b949e] dark:text-[#8b949e]">Capture and apply your professional signature</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)' }}>
+          <div className="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1f6feb, #58a6ff)' }}>
+                  <Pen size={15} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-black text-white">Digital Signature</h2>
+                  <p className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>Draw or upload your signature</p>
+                </div>
               </div>
-              <button 
-                onClick={() => setShowSignCenter(false)}
-                className="p-2 hover:bg-zinc-200 dark:hover:bg-[#21262d] rounded-full transition-colors"
-              >
-                <X className="w-6 h-6 text-[#8b949e]" />
+              <button onClick={() => setShowSignCenter(false)} className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-white/10">
+                <X size={14} className="text-white/50" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <SignaturePad 
+            <div className="p-6">
+              <SignaturePad
                 onSave={(signature) => {
                   const newElement: EditElement = {
                     id: Math.random().toString(36).substr(2, 9),
                     type: 'image',
                     page: currentPage,
-                    x: 50,
-                    y: 50,
-                    width: 200,
-                    height: 100,
+                    x: 50, y: 50, width: 200, height: 100,
                     content: signature
                   };
                   const newElements = [...editElements, newElement];
@@ -1499,7 +1524,7 @@ export default function PDFTools() {
                   pushState(pdfData!, fileName, 'Insert Signature', newElements);
                   setSelectedElementId(newElement.id);
                   setShowSignCenter(false);
-                }} 
+                }}
                 onCancel={() => setShowSignCenter(false)}
               />
             </div>
