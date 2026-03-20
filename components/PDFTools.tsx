@@ -37,7 +37,8 @@ import {
   FileDown,
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TextFormatToolbar } from './TextFormatToolbar';
@@ -151,6 +152,7 @@ export default function PDFTools() {
   const [textBlocks, setTextBlocks] = useState<TextBlock[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [selectedTextBlockId, setSelectedTextBlockId] = useState<string | null>(null);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<'pages' | 'edit' | 'actions' | 'form'>('pages');
   const [isDetectingText, setIsDetectingText] = useState(false);
@@ -1208,25 +1210,29 @@ export default function PDFTools() {
               setSelectedElementId(newElement.id);
             }}
             onClick={(e) => {
+              // Clicking bare canvas clears editing
+              if (editingTextId) { setEditingTextId(null); }
               if (currentTool === 'text') {
                 const rect = containerRef.current?.getBoundingClientRect();
                 if (rect) {
                   const x = (e.clientX - rect.left) / zoom;
                   const y = (e.clientY - rect.top) / zoom;
+                  const newId = Math.random().toString(36).substr(2, 9);
                   const newElement: EditElement = {
-                    id: Math.random().toString(36).substr(2, 9),
+                    id: newId,
                     type: 'text',
                     page: currentPage,
                     x,
                     y,
-                    content: 'New Text',
+                    content: '',
                     fontSize: 12,
                     color: '#000000'
                   };
                   const newElements = [...editElements, newElement];
                   setEditElements(newElements);
                   pushState(pdfData!, fileName, 'Add Text', newElements);
-                  setSelectedElementId(newElement.id);
+                  setSelectedElementId(newId);
+                  setEditingTextId(newId); // auto-enter edit mode
                   setCurrentTool('select');
                 }
               } else if (currentFormFieldType) {
@@ -1433,6 +1439,9 @@ export default function PDFTools() {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (editingTextId && editingTextId !== el.id) {
+                    setEditingTextId(null);
+                  }
                   setSelectedElementId(el.id);
                 }}
                 className={`absolute cursor-move group ${selectedElementId === el.id ? 'ring-2 ring-[#1f6feb] ring-offset-2' : ''}`}
@@ -1442,50 +1451,195 @@ export default function PDFTools() {
                   zIndex: 10
                 }}
               >
-                {selectedElementId === el.id && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#161b22] rounded-lg shadow-xl border border-[#30363d] p-1 flex items-center gap-1 z-20">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newElements = editElements.filter(item => item.id !== el.id);
-                        setEditElements(newElements);
-                        pushState(pdfData!, fileName, 'Delete Element', newElements);
-                        setSelectedElementId(null);
-                      }}
-                      className="p-1.5 hover:bg-red-50 text-red-500 rounded transition-colors"
+                {selectedElementId === el.id && el.type === 'text' && (
+                  /* ── Rich text toolbar for text elements ── */
+                  <div
+                    className="absolute z-50 flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-2xl"
+                    style={{
+                      bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                      background: '#0a0f1a',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Font family */}
+                    <select
+                      value={el.fontFamily || 'Arial'}
+                      onChange={e => { const ne = editElements.map(i => i.id === el.id ? { ...i, fontFamily: e.target.value } : i); setEditElements(ne); }}
+                      className="text-[11px] font-bold rounded-lg px-1.5 py-1 outline-none"
+                      style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', maxWidth: 100 }}
                     >
-                      <Trash2 size={14} />
-                    </button>
-                    <div className="w-[1px] h-4 bg-[#30363d] mx-1" />
-                    <button className="p-1.5 hover:bg-[#21262d] text-[#e6edf3] rounded transition-colors">
-                      <Settings size={14} />
-                    </button>
+                      {['Arial','Times New Roman','Courier New','Georgia','Verdana','Helvetica','Trebuchet MS'].map(f =>
+                        <option key={f} value={f}>{f.split(' ')[0]}</option>
+                      )}
+                    </select>
+
+                    {/* Font size */}
+                    <select
+                      value={el.fontSize || 12}
+                      onChange={e => { const ne = editElements.map(i => i.id === el.id ? { ...i, fontSize: parseInt(e.target.value) } : i); setEditElements(ne); }}
+                      className="text-[11px] font-bold rounded-lg px-1.5 py-1 outline-none w-14"
+                      style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                    >
+                      {[8,9,10,11,12,14,16,18,20,24,28,32,36,48,72].map(s =>
+                        <option key={s} value={s}>{s}</option>
+                      )}
+                    </select>
+
+                    <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+                    {/* Bold */}
+                    <button
+                      onClick={() => { const ne = editElements.map(i => i.id === el.id ? { ...i, fontWeight: i.fontWeight === 'bold' ? 'normal' : 'bold' } : i); setEditElements(ne); }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[13px] font-black transition-all"
+                      style={{ background: el.fontWeight === 'bold' ? 'rgba(88,166,255,0.2)' : 'transparent', color: el.fontWeight === 'bold' ? '#58a6ff' : 'rgba(255,255,255,0.5)', border: el.fontWeight === 'bold' ? '1px solid rgba(88,166,255,0.3)' : '1px solid transparent' }}
+                      title="Bold"
+                    >B</button>
+
+                    {/* Italic */}
+                    <button
+                      onClick={() => { const ne = editElements.map(i => i.id === el.id ? { ...i, fontStyle: i.fontStyle === 'italic' ? 'normal' : 'italic' } : i); setEditElements(ne); }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[13px] font-black italic transition-all"
+                      style={{ background: el.fontStyle === 'italic' ? 'rgba(88,166,255,0.2)' : 'transparent', color: el.fontStyle === 'italic' ? '#58a6ff' : 'rgba(255,255,255,0.5)', border: el.fontStyle === 'italic' ? '1px solid rgba(88,166,255,0.3)' : '1px solid transparent' }}
+                      title="Italic"
+                    >I</button>
+
+                    {/* Underline */}
+                    <button
+                      onClick={() => { const ne = editElements.map(i => i.id === el.id ? { ...i, textDecoration: i.textDecoration === 'underline' ? 'none' : 'underline' } : i); setEditElements(ne); }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-[13px] font-black underline transition-all"
+                      style={{ background: el.textDecoration === 'underline' ? 'rgba(88,166,255,0.2)' : 'transparent', color: el.textDecoration === 'underline' ? '#58a6ff' : 'rgba(255,255,255,0.5)', border: el.textDecoration === 'underline' ? '1px solid rgba(88,166,255,0.3)' : '1px solid transparent' }}
+                      title="Underline"
+                    >U</button>
+
+                    <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+                    {/* Font color */}
+                    <label className="relative w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer transition-all hover:bg-white/10" title="Font Color">
+                      <span className="text-[11px] font-black" style={{ color: el.color || '#000000' }}>A</span>
+                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full" style={{ background: el.color || '#000000' }} />
+                      <input type="color" value={el.color || '#000000'}
+                        onChange={e => { const ne = editElements.map(i => i.id === el.id ? { ...i, color: e.target.value } : i); setEditElements(ne); }}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                    </label>
+
+                    <div className="w-px h-5 bg-white/10 mx-0.5" />
+
+                    {/* Delete */}
+                    <button
+                      onClick={e => { e.stopPropagation(); const ne = editElements.filter(i => i.id !== el.id); setEditElements(ne); pushState(pdfData!, fileName, 'Delete Text', ne); setSelectedElementId(null); setEditingTextId(null); }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:bg-red-500/15"
+                      style={{ color: 'rgba(248,113,113,0.7)' }}
+                      title="Delete"
+                    ><Trash2 size={12} /></button>
+
+                    {/* ✓ Done */}
+                    <button
+                      onClick={e => { e.stopPropagation(); setEditingTextId(null); setSelectedElementId(null); pushState(pdfData!, fileName, 'Edit Text', editElements); }}
+                      className="flex items-center gap-1.5 px-3 h-7 rounded-lg text-[11px] font-black transition-all ml-1"
+                      style={{ background: 'linear-gradient(135deg,#1f6feb,#2d7ff9)', color: 'white', border: 'none' }}
+                      title="Done"
+                    ><Check size={12} /> Done</button>
+                  </div>
+                )}
+
+                {selectedElementId === el.id && el.type !== 'text' && (
+                  /* ── Simple toolbar for non-text elements ── */
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 rounded-xl shadow-xl flex items-center gap-1 p-1.5 z-20"
+                    style={{ background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.12)' }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); const ne = editElements.filter(i => i.id !== el.id); setEditElements(ne); pushState(pdfData!, fileName, 'Delete Element', ne); setSelectedElementId(null); }}
+                      className="p-1.5 rounded-lg transition-colors hover:bg-red-500/15"
+                      style={{ color: '#f87171' }}
+                    ><Trash2 size={13} /></button>
                   </div>
                 )}
 
                 {el.type === 'text' && (
-                  <div 
-                    style={{ 
-                      fontSize: (el.fontSize || 12) * zoom, 
-                      color: el.color,
-                      fontFamily: el.fontFamily,
-                      fontWeight: el.fontWeight,
-                      fontStyle: el.fontStyle,
-                      textDecoration: el.textDecoration,
-                      textAlign: el.textAlign,
-                      lineHeight: el.lineHeight,
-                      letterSpacing: el.letterSpacing ? `${el.letterSpacing * zoom}px` : undefined,
-                      backgroundColor: el.boxStyle?.backgroundColor,
-                      borderColor: el.boxStyle?.borderColor,
-                      borderWidth: (el.boxStyle?.borderWidth || 0) * zoom,
-                      padding: (el.boxStyle?.padding || 0) * zoom,
-                      borderRadius: (el.boxStyle?.borderRadius || 0) * zoom,
-                      opacity: el.boxStyle?.opacity,
-                      minWidth: '20px',
-                      minHeight: '1em'
+                  <div
+                    style={{
+                      position: 'relative',
+                      minWidth: 20,
+                      minHeight: '1em',
                     }}
-                    dangerouslySetInnerHTML={{ __html: el.content || '' }}
-                  />
+                    onDoubleClick={e => { e.stopPropagation(); setEditingTextId(el.id); setSelectedElementId(el.id); }}
+                  >
+                    {editingTextId === el.id ? (
+                      /* ── Transparent inline textarea ── */
+                      <textarea
+                        autoFocus
+                        value={el.content || ''}
+                        onChange={e => {
+                          const ne = editElements.map(i => i.id === el.id ? { ...i, content: e.target.value } : i);
+                          setEditElements(ne);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Escape') { setEditingTextId(null); }
+                          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { setEditingTextId(null); }
+                          e.stopPropagation();
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          resize: 'none',
+                          overflow: 'hidden',
+                          padding: 0,
+                          margin: 0,
+                          display: 'block',
+                          fontSize: (el.fontSize || 12) * zoom,
+                          color: el.color || '#000000',
+                          fontFamily: el.fontFamily || 'Arial',
+                          fontWeight: el.fontWeight || 'normal',
+                          fontStyle: el.fontStyle || 'normal',
+                          textDecoration: el.textDecoration || 'none',
+                          textAlign: el.textAlign || 'left',
+                          lineHeight: el.lineHeight || 1.4,
+                          letterSpacing: el.letterSpacing ? `${el.letterSpacing * zoom}px` : undefined,
+                          minWidth: 40,
+                          minHeight: '1em',
+                          width: el.width ? `${el.width * zoom}px` : 'auto',
+                          caretColor: el.color || '#000000',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
+                        rows={1}
+                        onInput={e => {
+                          // Auto-grow height
+                          const t = e.target as HTMLTextAreaElement;
+                          t.style.height = 'auto';
+                          t.style.height = t.scrollHeight + 'px';
+                        }}
+                      />
+                    ) : (
+                      /* ── Display mode: fully transparent, shows text only ── */
+                      <div
+                        style={{
+                          fontSize: (el.fontSize || 12) * zoom,
+                          color: el.color || '#000000',
+                          fontFamily: el.fontFamily || 'Arial',
+                          fontWeight: el.fontWeight || 'normal',
+                          fontStyle: el.fontStyle || 'normal',
+                          textDecoration: el.textDecoration || 'none',
+                          textAlign: el.textAlign || 'left',
+                          lineHeight: el.lineHeight || 1.4,
+                          letterSpacing: el.letterSpacing ? `${el.letterSpacing * zoom}px` : undefined,
+                          background: 'transparent',
+                          minWidth: 20,
+                          minHeight: '1em',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          cursor: 'move',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {el.content || <span style={{ opacity: 0.35, fontStyle: 'italic' }}>Double-click to edit</span>}
+                      </div>
+                    )}
+                  </div>
                 )}
                 {el.type === 'image' && el.content && (
                   <img 
