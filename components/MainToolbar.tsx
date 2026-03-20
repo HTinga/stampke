@@ -8,7 +8,7 @@ import {
   AlignCenter, AlignRight, Bold, Italic, Table, BarChart2, Link, Bookmark,
   Lock, Unlock, Shield, Printer, Share2, Copy, Clipboard, Hash, SlidersHorizontal,
   MousePointer, Move, Crop, Wand2, Palette, Grid3X3, Settings2, Minimize2,
-  PanelTopClose, PanelTopOpen, Maximize2
+  PanelTopClose, PanelTopOpen, Maximize2, ClipboardEdit
 } from 'lucide-react';
 import {
   useFormStore, useEditingStore, useAnnotationStore, AnnotationTool, EditingMode,
@@ -73,6 +73,7 @@ interface MainToolbarProps {
   onInsertStamp?: () => void;
   onSignDocument?: () => void;
   onInsertFormField?: (type: string) => void;
+  onFillDocument?: () => void;
 }
 
 type ToolbarTab = 'file' | 'home' | 'insert' | 'layout' | 'review' | 'form' | 'view' | 'security';
@@ -124,7 +125,7 @@ export function MainToolbar({
   redoActionName, onResetToOriginal, onCloseDocument, canResetToOriginal,
   onToggleSidebar, onSetViewMode, onToggleSearch, onExportFormData,
   onImportFormData, onFlattenForm, onResetForm, onApplyRedactions, onInsertImage,
-  onSaveAsTemplate, onInsertStamp, onSignDocument, onInsertFormField, onExportWithFormat,
+  onSaveAsTemplate, onInsertStamp, onSignDocument, onInsertFormField, onExportWithFormat, onFillDocument,
 }: MainToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -179,8 +180,12 @@ export function MainToolbar({
   };
 
   const handleToolClick = (tool: AnnotationTool) => {
-    if (editingMode !== 'none') setEditingMode('none');
-    setCurrentTool(currentTool === tool ? 'select' : tool);
+    const newTool = currentTool === tool ? 'select' : tool;
+    setCurrentTool(newTool);
+    // Wire editing store modes
+    if (newTool === 'text') setEditingMode('text');
+    else if (newTool === 'image') setEditingMode('image');
+    else setEditingMode('none');
   };
 
   const tabs: { id: ToolbarTab; label: string }[] = [
@@ -282,27 +287,31 @@ export function MainToolbar({
 
           {/* FILE TAB */}
           {activeTab === 'file' && (<>
-            <div className="relative">
-              <Btn icon={Save} label="Export" accent onClick={() => setExportMenuOpen(o => !o)} disabled={!hasDocument} />
-              {exportMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-2xl z-50 overflow-hidden"
-                  style={{ background: '#0f1520', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="relative group">
+              <Btn icon={Save} label="Export" accent onClick={onExport} disabled={!hasDocument} />
+              {/* Hover dropdown */}
+              <div className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-2xl z-50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none group-hover:pointer-events-auto"
+                style={{ background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <div className="py-1.5">
                   {[
-                    { fmt: 'pdf', label: 'PDF Document', icon: FileText },
-                    { fmt: 'word', label: 'Word (.docx)', icon: FileText },
-                    { fmt: 'excel', label: 'Excel (.xlsx)', icon: FileText },
-                    { fmt: 'powerpoint', label: 'PowerPoint (.pptx)', icon: FileText },
-                    { fmt: 'image', label: 'Image (.png)', icon: ImageIcon },
-                  ].map(({ fmt, label, icon: Icon }) => (
+                    { fmt: 'pdf', label: 'Save as PDF', icon: FileText, color: '#58a6ff' },
+                    { fmt: 'word', label: 'Export to Word (.docx)', icon: FileText, color: '#60a5fa' },
+                    { fmt: 'excel', label: 'Export to Excel (.xlsx)', icon: FileText, color: '#34d399' },
+                    { fmt: 'powerpoint', label: 'Export to PowerPoint', icon: FileText, color: '#f97316' },
+                    { fmt: 'image', label: 'Export as Image (.png)', icon: ImageIcon, color: '#a78bfa' },
+                  ].map(({ fmt, label, icon: Icon, color }) => (
                     <button key={fmt}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-white/60 hover:bg-white/8 hover:text-white transition-all"
-                      onClick={() => { fmt === 'pdf' ? onExport() : onExportWithFormat?.(fmt); setExportMenuOpen(false); }}>
-                      <Icon size={14} className="text-[#58a6ff]" />
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all hover:bg-white/8"
+                      style={{ color: 'rgba(255,255,255,0.6)' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = color)}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+                      onClick={() => { fmt === 'pdf' ? onExport() : onExportWithFormat?.(fmt); }}>
+                      <Icon size={14} style={{ color }} />
                       {label}
                     </button>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
             <Btn icon={Printer} label="Print" disabled={!hasDocument} onClick={() => window.print()} />
             <Btn icon={Share2} label="Share" disabled={!hasDocument} />
@@ -325,6 +334,7 @@ export function MainToolbar({
             <Div />
             <Btn icon={Stamp} label="Stamp" accent onClick={onInsertStamp} disabled={!hasDocument} />
             <Btn icon={Pen} label="Sign" accent onClick={onSignDocument} disabled={!hasDocument} />
+            <Btn icon={ClipboardEdit} label="Fill Doc" accent onClick={onFillDocument} disabled={!hasDocument} title="Fill Document — drag text fields onto document" />
           </>)}
 
           {/* INSERT TAB */}

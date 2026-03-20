@@ -137,7 +137,7 @@ export default function PDFTools() {
   const { annotations, addAnnotation, deleteAnnotation, updateAnnotation, currentTool, setCurrentTool, selectedAnnotationId, selectAnnotation, getAllAnnotations } = useAnnotationStore();
   const { push: pushAnnotationHistory, undo: undoAnnotation, redo: redoAnnotation, canUndo: canUndoAnnotation, canRedo: canRedoAnnotation } = useAnnotationHistoryStore();
   const { fields, setFields, resetToOriginal: resetForm, clearForm } = useFormStore();
-  const { redactions, markRedactionApplied } = useEditingStore();
+  const { redactions, markRedactionApplied, setMode: setEditingMode } = useEditingStore();
   const { pushState, undo: undoHistory, redo: redoHistory, canUndo: canUndoHistory, canRedo: canRedoHistory, getUndoActionName, getRedoActionName, setOriginalDocument, getOriginalDocument, undoRedoInProgress, setUndoRedoInProgress } = useHistoryStore();
 
   // Local State
@@ -156,6 +156,7 @@ export default function PDFTools() {
   const [isDetectingText, setIsDetectingText] = useState(false);
   const [showStampStudio, setShowStampStudio] = useState(false);
   const [showSignCenter, setShowSignCenter] = useState(false);
+  const [showFillPanel, setShowFillPanel] = useState(false);
   const { config: stampConfig } = useStampStore();
   const [inlineEditingBlockId, setInlineEditingBlockId] = useState<string | null>(null);
   const [inlineEditContent, setInlineEditContent] = useState<string>('');
@@ -908,6 +909,8 @@ export default function PDFTools() {
         onInsertStamp={() => setShowStampStudio(true)}
         onSignDocument={() => setShowSignCenter(true)}
         onInsertFormField={handleInsertFormField}
+        onFillDocument={() => setShowFillPanel(p => !p)}
+        onExportWithFormat={handleExportWithFormat}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -1012,6 +1015,137 @@ export default function PDFTools() {
           )}
         </AnimatePresence>
 
+        {/* ── Fill Document Panel (right sidebar) ── */}
+        <AnimatePresence>
+          {showFillPanel && !!pdfDoc && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="flex-shrink-0 flex flex-col overflow-hidden z-20 order-last"
+              style={{ background: '#0d1117', borderLeft: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #1f6feb, #58a6ff)' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </div>
+                  <span className="text-xs font-black text-white">Fill Document</span>
+                </div>
+                <button onClick={() => setShowFillPanel(false)}
+                  className="w-6 h-6 flex items-center justify-center rounded-md text-white/30 hover:text-white hover:bg-white/10 transition-all">
+                  <X size={12} />
+                </button>
+              </div>
+
+              {/* Instructions */}
+              <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <p className="text-[10px] font-medium leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Drag a field onto the document to place it. Click placed fields to edit.
+                </p>
+              </div>
+
+              {/* Draggable field types */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <p className="text-[9px] font-black uppercase tracking-widest px-1 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  Field Types
+                </p>
+
+                {[
+                  { type: 'text', label: 'Text Field', desc: 'Single-line text input', icon: 'T', color: '#58a6ff' },
+                  { type: 'multiline', label: 'Multiline Text', desc: 'Paragraph / notes', icon: '¶', color: '#60a5fa' },
+                  { type: 'date', label: 'Date Field', desc: 'Date picker', icon: '📅', color: '#34d399' },
+                  { type: 'checkbox', label: 'Checkbox', desc: 'Yes / No toggle', icon: '☑', color: '#a78bfa' },
+                  { type: 'signature', label: 'Signature', desc: 'Draw or upload signature', icon: '✍', color: '#f59e0b' },
+                  { type: 'stamp', label: 'Stamp', desc: 'Official stamp placement', icon: '🔖', color: '#f97316' },
+                  { type: 'image', label: 'Image / Logo', desc: 'Drag an image onto doc', icon: '🖼', color: '#ec4899' },
+                  { type: 'number', label: 'Number', desc: 'Numeric value', icon: '#', color: '#10b981' },
+                ].map(field => (
+                  <div
+                    key={field.type}
+                    draggable
+                    onDragStart={e => {
+                      e.dataTransfer.setData('fillFieldType', field.type);
+                      e.dataTransfer.setData('fillFieldLabel', field.label);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-grab active:cursor-grabbing transition-all select-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: `1px solid rgba(255,255,255,0.07)`,
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.background = `${field.color}12`;
+                      (e.currentTarget as HTMLElement).style.borderColor = `${field.color}40`;
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)';
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-black"
+                      style={{ background: `${field.color}18`, color: field.color, border: `1px solid ${field.color}30` }}>
+                      {field.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white leading-tight">{field.label}</p>
+                      <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{field.desc}</p>
+                    </div>
+                    <svg className="flex-shrink-0 ml-auto" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                      <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>
+                    </svg>
+                  </div>
+                ))}
+
+                {/* Placed fields list */}
+                {editElements.filter(e => e.page === currentPage && e.type === 'form').length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest px-1 mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                      Placed on Page {currentPage}
+                    </p>
+                    {editElements.filter(e => e.page === currentPage && e.type === 'form').map(el => (
+                      <div key={el.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1 cursor-pointer transition-all"
+                        style={{ background: selectedElementId === el.id ? 'rgba(31,111,235,0.15)' : 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        onClick={() => setSelectedElementId(el.id)}>
+                        <span className="text-[10px] font-bold text-white/60 capitalize">{el.formType}</span>
+                        <span className="text-[10px] text-white/30 truncate ml-auto">{el.fieldName}</span>
+                        <button onClick={e => { e.stopPropagation(); const ne = editElements.filter(i => i.id !== el.id); setEditElements(ne); }}
+                          className="text-white/20 hover:text-red-400 transition-colors flex-shrink-0">
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer actions */}
+              <div className="p-3 flex-shrink-0 space-y-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <button
+                  onClick={handleFlattenForm}
+                  disabled={!editElements.some(e => e.type === 'form')}
+                  className="w-full py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
+                  style={{ background: 'rgba(31,111,235,0.15)', border: '1px solid rgba(31,111,235,0.3)', color: '#58a6ff' }}>
+                  Flatten & Save Fields
+                </button>
+                <button
+                  onClick={handleExport}
+                  disabled={!pdfData}
+                  className="w-full py-2 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-30"
+                  style={{ background: 'linear-gradient(135deg, #1f6feb, #2d7ff9)' }}>
+                  Export Filled PDF
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex-1 relative overflow-auto p-8 flex justify-center items-start" style={{ background: 'linear-gradient(135deg, #080d14 0%, #0d1117 100%)' }}>
           <AnimatePresence>
             {searchOpen && (
@@ -1041,7 +1175,38 @@ export default function PDFTools() {
 
           <div 
             ref={containerRef}
-            className="bg-[#161b22] shadow-2xl relative"
+            className="shadow-2xl relative"
+            style={{ background: 'white' }}
+            onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+            onDrop={e => {
+              e.preventDefault();
+              const fieldType = e.dataTransfer.getData('fillFieldType');
+              const fieldLabel = e.dataTransfer.getData('fillFieldLabel');
+              if (!fieldType) return;
+              const rect = containerRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              const x = (e.clientX - rect.left) / zoom;
+              const y = (e.clientY - rect.top) / zoom;
+              const isCheckbox = fieldType === 'checkbox';
+              const isSmall = ['checkbox', 'number'].includes(fieldType);
+              const newElement: EditElement = {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'form',
+                page: currentPage,
+                x, y,
+                width: isCheckbox ? 20 : isSmall ? 80 : 160,
+                height: isCheckbox ? 20 : fieldType === 'multiline' ? 60 : fieldType === 'signature' ? 50 : 28,
+                formType: (fieldType === 'multiline' || fieldType === 'date' || fieldType === 'number' ? 'text' : fieldType) as any,
+                fieldName: `${fieldType}_${Date.now()}`,
+                value: '',
+                color: '#000000',
+                content: fieldType === 'text' || fieldType === 'multiline' ? '' : undefined,
+              };
+              const newElements = [...editElements, newElement];
+              setEditElements(newElements);
+              pushState(pdfData!, fileName, `Add ${fieldLabel}`, newElements);
+              setSelectedElementId(newElement.id);
+            }}
             onClick={(e) => {
               if (currentTool === 'text') {
                 const rect = containerRef.current?.getBoundingClientRect();
@@ -1331,94 +1496,85 @@ export default function PDFTools() {
                   />
                 )}
                 {el.type === 'form' && (
-                  <div 
-                    style={{ 
-                      width: (el.width || 100) * zoom, 
+                  <div
+                    style={{
+                      width: (el.width || 100) * zoom,
                       height: (el.height || 40) * zoom,
-                      border: '1px dashed #4f46e5',
-                      backgroundColor: el.formType === 'checkbox' || el.formType === 'radio' ? 'transparent' : '#f8fafc',
-                      borderRadius: '4px',
-                      padding: '4px',
-                      fontSize: '12px',
-                      color: '#000',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      border: selectedElementId === el.id ? '2px solid #1f6feb' : '1.5px dashed rgba(31,111,235,0.5)',
+                      borderRadius: el.formType === 'checkbox' ? '3px' : '4px',
+                      background: el.formType === 'checkbox' ? 'rgba(255,255,255,0.9)' : 'rgba(239,246,255,0.85)',
+                      backdropFilter: 'blur(2px)',
+                      display: 'flex', alignItems: 'center',
+                      overflow: 'hidden',
+                      position: 'relative',
                     }}
+                    onClick={e => e.stopPropagation()}
                   >
-                    {el.formType === 'text' && (
-                      <input 
-                        type="text" 
-                        placeholder="Enter text" 
-                        defaultValue={el.value || ''}
-                        onChange={(e) => {
-                          // Update element value on change
-                          const newElements = editElements.map(item => 
-                            item.id === el.id ? { ...item, value: e.target.value } : item
-                          );
-                          setEditElements(newElements);
+                    {/* Field type label */}
+                    <div style={{
+                      position: 'absolute', top: -16, left: 0,
+                      background: '#1f6feb', color: 'white',
+                      fontSize: 8, fontWeight: 800, padding: '1px 5px',
+                      borderRadius: '3px 3px 0 0', textTransform: 'uppercase',
+                      letterSpacing: '0.05em', whiteSpace: 'nowrap',
+                      pointerEvents: 'none', zIndex: 10,
+                    }}>{el.formType}</div>
+
+                    {(el.formType === 'text' || !el.formType) && (
+                      <input
+                        type="text"
+                        placeholder={el.fieldName?.split('_')[0] || 'Enter text…'}
+                        value={el.value || ''}
+                        onChange={e => setEditElements(editElements.map(i => i.id === el.id ? { ...i, value: e.target.value } : i))}
+                        style={{
+                          width: '100%', height: '100%', border: 'none', background: 'transparent',
+                          outline: 'none', padding: `${3 * zoom}px ${6 * zoom}px`,
+                          fontSize: Math.max(10, 11 * zoom), color: '#000',
+                          fontFamily: 'inherit',
                         }}
-                        style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none' }}
                       />
                     )}
                     {el.formType === 'checkbox' && (
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={el.value === 'true'}
-                        onChange={(e) => {
-                          const newElements = editElements.map(item => 
-                            item.id === el.id ? { ...item, value: e.target.checked ? 'true' : 'false' } : item
-                          );
-                          setEditElements(newElements);
-                        }}
+                        onChange={e => setEditElements(editElements.map(i => i.id === el.id ? { ...i, value: e.target.checked ? 'true' : 'false' } : i))}
+                        style={{ width: '100%', height: '100%', cursor: 'pointer', margin: 0 }}
                       />
                     )}
-                    {el.formType === 'radio' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {(el.options || ['Option 1', 'Option 2', 'Option 3']).map((option, idx) => (
-                          <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input 
-                              type="radio" 
-                              name={el.fieldName}
-                              checked={el.value === option}
-                              onChange={() => {
-                                const newElements = editElements.map(item => 
-                                  item.id === el.id ? { ...item, value: option } : item
-                                );
-                                setEditElements(newElements);
-                              }}
-                            />
-                            <span>{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    {el.formType === 'dropdown' && (
-                      <select 
-                        value={el.value || ''}
-                        onChange={(e) => {
-                          const newElements = editElements.map(item => 
-                            item.id === el.id ? { ...item, value: e.target.value } : item
-                          );
-                          setEditElements(newElements);
-                        }}
-                        style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none' }}
-                      >
-                        <option value="">Select...</option>
-                        {(el.options || ['Option 1', 'Option 2', 'Option 3']).map((option, idx) => (
-                          <option key={idx} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    )}
                     {el.formType === 'signature' && (
-                      <div style={{ textAlign: 'center', color: '#6b7280', fontStyle: 'italic' }}>
-                        [Signature Field]
+                      <div
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6 }}
+                        onClick={() => setShowSignCenter(true)}
+                      >
+                        {el.value ? (
+                          <img src={el.value} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1f6feb" strokeWidth="2"><path d="M20 20H7L3 3"/><path d="m6 12 6-9 4 7"/></svg>
+                            <span style={{ fontSize: Math.max(9, 10 * zoom), color: '#1f6feb', fontWeight: 700 }}>Click to sign</span>
+                          </>
+                        )}
                       </div>
                     )}
                     {el.formType === 'stamp' && (
-                      <div style={{ textAlign: 'center', color: '#6b7280', fontStyle: 'italic' }}>
-                        [Stamp Field]
+                      <div
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6 }}
+                        onClick={() => setShowStampStudio(true)}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span style={{ fontSize: Math.max(9, 10 * zoom), color: '#f97316', fontWeight: 700 }}>Click to stamp</span>
                       </div>
+                    )}
+                    {el.formType === 'dropdown' && (
+                      <select
+                        value={el.value || ''}
+                        onChange={e => setEditElements(editElements.map(i => i.id === el.id ? { ...i, value: e.target.value } : i))}
+                        style={{ width: '100%', height: '100%', border: 'none', background: 'transparent', outline: 'none', padding: `0 ${4 * zoom}px`, fontSize: Math.max(10, 11 * zoom) }}
+                      >
+                        <option value="">Select…</option>
+                        {(el.options || ['Option 1', 'Option 2', 'Option 3']).map((opt, i) => <option key={i}>{opt}</option>)}
+                      </select>
                     )}
                   </div>
                 )}
