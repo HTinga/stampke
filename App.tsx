@@ -561,6 +561,7 @@ const App: React.FC = () => {
               </motion.div>
             </AnimatePresence>
           </div>
+          </div>
 
           {/* Hidden SVG ref */}
           <div className="fixed -left-[9999px] -top-[9999px] invisible pointer-events-none">
