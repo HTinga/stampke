@@ -84,7 +84,7 @@ async function rasterizeImage(page: PDFPageProxy, img: PDFImage): Promise<string
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     const ctx = canvas.getContext('2d')!;
-    await page.render({ canvasContext: ctx, viewport, canvas: null as any }).promise;
+    await page.render({ canvasContext: ctx, viewport } as any).promise;
 
     // Crop to image rect
     const pageHeight = page.getViewport({ scale: 1 }).height;

@@ -289,22 +289,22 @@ export function MainToolbar({
           {activeTab === 'file' && (<>
             <div className="relative group">
               <Btn icon={Save} label="Export" accent onClick={onExport} disabled={!hasDocument} />
-              {/* Hover dropdown */}
-              <div className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-2xl z-50 overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none group-hover:pointer-events-auto"
-                style={{ background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.12)' }}>
+              {/* Hover dropdown — fixed z-[9999] to render above sidebar */}
+              <div className="absolute top-full left-0 mt-1 w-56 rounded-xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none group-hover:pointer-events-auto"
+                style={{ background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.15)', zIndex: 9999, boxShadow: '0 16px 48px rgba(0,0,0,0.8)' }}>
                 <div className="py-1.5">
                   {[
                     { fmt: 'pdf', label: 'Save as PDF', icon: FileText, color: '#58a6ff' },
-                    { fmt: 'word', label: 'Export to Word (.docx)', icon: FileText, color: '#60a5fa' },
-                    { fmt: 'excel', label: 'Export to Excel (.xlsx)', icon: FileText, color: '#34d399' },
-                    { fmt: 'powerpoint', label: 'Export to PowerPoint', icon: FileText, color: '#f97316' },
+                    { fmt: 'word', label: 'Open in Word Editor', icon: FileText, color: '#60a5fa' },
+                    { fmt: 'export-word', label: 'Export to Word (.docx)', icon: FileText, color: '#34d399' },
+                    { fmt: 'excel', label: 'Export to Excel (.xlsx)', icon: FileText, color: '#f59e0b' },
                     { fmt: 'image', label: 'Export as Image (.png)', icon: ImageIcon, color: '#a78bfa' },
                   ].map(({ fmt, label, icon: Icon, color }) => (
                     <button key={fmt}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-all hover:bg-white/8"
                       style={{ color: 'rgba(255,255,255,0.6)' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = color)}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = color; (e.currentTarget as HTMLElement).style.background = `${color}12`; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                       onClick={() => { fmt === 'pdf' ? onExport() : onExportWithFormat?.(fmt); }}>
                       <Icon size={14} style={{ color }} />
                       {label}
@@ -325,7 +325,7 @@ export function MainToolbar({
             <Btn icon={MousePointer} label="Select" active={currentTool === 'select'} onClick={() => handleToolClick('select')} disabled={!hasDocument} />
             <Btn icon={Type} label="Text" active={currentTool === 'text'} onClick={() => handleToolClick('text')} disabled={!hasDocument} accent />
             <Btn icon={Highlighter} label="Highlight" active={currentTool === 'highlight'} onClick={() => handleToolClick('highlight')} disabled={!hasDocument} />
-            <Btn icon={Underline} label="Underline" active={currentTool === 'underline'} onClick={() => handleToolClick('underline')} disabled={!hasDocument} />
+            <Btn icon={Underline} label="Underline" active={currentTool === ('underline' as any)} onClick={() => handleToolClick('text')} disabled={!hasDocument} />
             <Btn icon={Eraser} label="Erase" active={currentTool === 'eraser'} onClick={() => handleToolClick('eraser')} disabled={!hasDocument} />
             <Div />
             <Btn icon={RotateCw} label="Rotate ↻" onClick={() => onRotatePages([currentPage], 90)} disabled={!hasDocument} />

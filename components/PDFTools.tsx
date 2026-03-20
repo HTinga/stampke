@@ -49,6 +49,7 @@ import { MainToolbar } from './MainToolbar';
 import { OutlinePanel } from './PDFViewer/OutlinePanel';
 import { ThumbnailPanel } from './PDFViewer/ThumbnailPanel';
 import StampStudio from './StampStudio';
+import WordEditor from './WordEditor';
 import { SignaturePad } from './DigitalSignCenter';
 import { 
   useUIStore, 
@@ -159,6 +160,8 @@ export default function PDFTools() {
   const [showStampStudio, setShowStampStudio] = useState(false);
   const [showSignCenter, setShowSignCenter] = useState(false);
   const [showFillPanel, setShowFillPanel] = useState(false);
+  const [showWordEditor, setShowWordEditor] = useState(false);
+  const [wordEditorContent, setWordEditorContent] = useState('');
   const { config: stampConfig } = useStampStore();
   const [inlineEditingBlockId, setInlineEditingBlockId] = useState<string | null>(null);
   const [inlineEditContent, setInlineEditContent] = useState<string>('');
@@ -563,30 +566,160 @@ export default function PDFTools() {
   }, [saveEditedPdf, fileName]);
 
   const handleExportWithFormat = useCallback(async (format: string) => {
-    const editedData = await saveEditedPdf();
-    if (!editedData) return;
-    
-    switch (format) {
-      case 'pdf':
-        await downloadPDF(editedData, fileName ? fileName.replace(/\.pdf$/i, '_exported.pdf') : 'exported.pdf');
-        break;
-      case 'word':
-        // Mock Word export - would require actual conversion library
-        alert('Word export would require server-side conversion. Feature coming soon!');
-        break;
-      case 'excel':
-        alert('Excel export would require server-side conversion. Feature coming soon!');
-        break;
-      case 'powerpoint':
-        alert('PowerPoint export would require server-side conversion. Feature coming soon!');
-        break;
-      case 'image':
-        alert('Image export would require server-side conversion. Feature coming soon!');
-        break;
-      default:
-        await downloadPDF(editedData, fileName || 'edited.pdf');
+    const onOpenWordEditor = async () => {
+      // Extract text from PDF to pre-populate Word editor
+      let content = '<p></p>';
+      if (pdfDoc) {
+        try {
+          let html = '';
+          for (let i = 1; i <= Math.min(numPages, 5); i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            let lastY = -1;
+            let para = '';
+            (textContent.items as any[]).forEach((item: any) => {
+              if ('str' in item && item.str.trim()) {
+                const y = Math.round(item.transform[5]);
+                if (lastY !== -1 && Math.abs(y - lastY) > 3) {
+                  if (para) html += `<p>${para}</p>`;
+                  para = item.str;
+                } else {
+                  para += item.str;
+                }
+                lastY = y;
+              }
+            });
+            if (para) html += `<p>${para}</p>`;
+          }
+          content = html || '<p></p>';
+        } catch { content = '<p></p>'; }
+      }
+      setWordEditorContent(content);
+      setShowWordEditor(true);
+    };
+    if (format === 'pdf') {
+      const editedData = await saveEditedPdf();
+      if (editedData) await downloadPDF(editedData, fileName ? fileName.replace(/\.pdf$/i, '_exported.pdf') : 'exported.pdf');
+      return;
     }
-  }, [saveEditedPdf, fileName]);
+
+    if (format === 'word') {
+      // Open in Word editor tab
+      onOpenWordEditor?.();
+      return;
+    }
+
+    if (format === 'export-word') {
+      // Export current PDF text content as a .docx
+      try {
+        if (!pdfDoc) return;
+        const { Document, Paragraph, TextRun, HeadingLevel, Packer } = await import('docx');
+        const paras: InstanceType<typeof Paragraph>[] = [];
+
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const content = await page.getTextContent();
+          const lines: string[] = [];
+          let lastY = -1;
+          let line = '';
+
+          (content.items as any[]).forEach(item => {
+            if ('str' in item) {
+              const y = Math.round(item.transform[5]);
+              if (lastY !== -1 && Math.abs(y - lastY) > 2) {
+                if (line.trim()) lines.push(line.trim());
+                line = item.str;
+              } else {
+                line += item.str;
+              }
+              lastY = y;
+            }
+          });
+          if (line.trim()) lines.push(line.trim());
+
+          if (i > 1) paras.push(new Paragraph({ text: '', spacing: { before: 400 } }));
+          paras.push(new Paragraph({
+            text: `Page ${i}`,
+            heading: HeadingLevel.HEADING_2,
+          }));
+          lines.forEach(l => paras.push(new Paragraph({ children: [new TextRun({ text: l, size: 24 })] })));
+
+          // Also add any custom text elements
+          editElements.filter(el => el.page === i && el.type === 'text').forEach(el => {
+            paras.push(new Paragraph({
+              children: [new TextRun({
+                text: el.content || '',
+                bold: el.fontWeight === 'bold',
+                italics: el.fontStyle === 'italic',
+                size: (el.fontSize || 12) * 2,
+              })]
+            }));
+          });
+        }
+
+        const doc = new Document({ sections: [{ properties: {}, children: paras }] });
+        const blob = await Packer.toBlob(doc);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (fileName || 'document').replace(/\.pdf$/i, '') + '.docx';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        console.error('Word export error:', err);
+        alert('Word export failed. Please try again.');
+      }
+      return;
+    }
+
+    if (format === 'image') {
+      // Export each page as PNG using canvas
+      try {
+        if (!pdfDoc) return;
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d')!;
+          await page.render({ canvasContext: ctx, viewport } as any).promise;
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = `${(fileName || 'page').replace(/\.pdf$/i, '')}_page${i}.png`;
+          a.click();
+        }
+      } catch (err) { console.error('Image export error:', err); }
+      return;
+    }
+
+    if (format === 'excel') {
+      // Extract tables/data from PDF as CSV (basic)
+      try {
+        if (!pdfDoc) return;
+        let csv = '';
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const content = await page.getTextContent();
+          const rows: string[] = [];
+          let lastY = -1; let row = '';
+          (content.items as any[]).forEach(item => {
+            if ('str' in item) {
+              const y = Math.round(item.transform[5]);
+              if (lastY !== -1 && Math.abs(y - lastY) > 2) { if (row.trim()) rows.push(row.trim()); row = item.str; }
+              else { row += '\t' + item.str; }
+              lastY = y;
+            }
+          });
+          if (row.trim()) rows.push(row.trim());
+          csv += rows.map(r => r.split('\t').map(c => `"${c}"`).join(',')).join('\n') + '\n';
+        }
+        const a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = (fileName || 'data').replace(/\.pdf$/i, '') + '.csv';
+        a.click();
+      } catch (err) { console.error('Excel export error:', err); }
+    }
+  }, [saveEditedPdf, fileName, pdfDoc, numPages, editElements]);
 
   // Search Logic
   useEffect(() => {
@@ -1420,35 +1553,59 @@ export default function PDFTools() {
             ))}
 
             {/* Edit Elements */}
-            {editElements.filter(el => el.page === currentPage).map(el => (
-              <motion.div
+            {editElements.filter(el => el.page === currentPage).map(el => {
+              const isSelected = selectedElementId === el.id;
+              const isEditingThis = editingTextId === el.id;
+
+              const handleMouseDown = (e: React.MouseEvent) => {
+                if (isEditingThis) return; // don't drag while typing
+                e.stopPropagation();
+                setSelectedElementId(el.id);
+                if (editingTextId && editingTextId !== el.id) setEditingTextId(null);
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const origX = el.x;
+                const origY = el.y;
+
+                const onMove = (me: MouseEvent) => {
+                  const dx = (me.clientX - startX) / zoom;
+                  const dy = (me.clientY - startY) / zoom;
+                  setEditElements(prev => prev.map(item =>
+                    item.id === el.id ? { ...item, x: origX + dx, y: origY + dy } : item
+                  ));
+                };
+                const onUp = (me: MouseEvent) => {
+                  window.removeEventListener('mousemove', onMove);
+                  window.removeEventListener('mouseup', onUp);
+                  const dx = (me.clientX - startX) / zoom;
+                  const dy = (me.clientY - startY) / zoom;
+                  const finalElements = editElements.map(item =>
+                    item.id === el.id ? { ...item, x: origX + dx, y: origY + dy } : item
+                  );
+                  setEditElements(finalElements);
+                  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                    pushState(pdfData!, fileName, 'Move Element', finalElements);
+                  }
+                };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onUp);
+              };
+
+              return (
+              <div
                 key={el.id}
-                drag
-                dragMomentum={false}
-                onDragEnd={(_, info) => {
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  if (rect) {
-                    const newElements = editElements.map(item => 
-                      item.id === el.id 
-                        ? { ...item, x: item.x + info.offset.x / zoom, y: item.y + info.offset.y / zoom }
-                        : item
-                    );
-                    setEditElements(newElements);
-                    pushState(pdfData!, fileName, 'Move Element', newElements);
-                  }
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (editingTextId && editingTextId !== el.id) {
-                    setEditingTextId(null);
-                  }
-                  setSelectedElementId(el.id);
-                }}
-                className={`absolute cursor-move group ${selectedElementId === el.id ? 'ring-2 ring-[#1f6feb] ring-offset-2' : ''}`}
+                onMouseDown={handleMouseDown}
                 style={{
+                  position: 'absolute',
                   left: el.x * zoom,
                   top: el.y * zoom,
-                  zIndex: 10
+                  zIndex: isSelected ? 20 : 10,
+                  cursor: isEditingThis ? 'text' : 'move',
+                  userSelect: isEditingThis ? 'text' : 'none',
+                  outline: isSelected && !isEditingThis ? '2px solid #1f6feb' : 'none',
+                  outlineOffset: 2,
+                  borderRadius: 2,
                 }}
               >
                 {selectedElementId === el.id && el.type === 'text' && (
@@ -1740,8 +1897,9 @@ export default function PDFTools() {
                     border: '1px dashed #ccc'
                   }} />
                 )}
-              </motion.div>
-            ))}
+              </div>
+              );
+            })}
 
             {/* Annotations */}
             {getAllAnnotations().filter(ann => ann.page === currentPage).map(ann => (
@@ -1776,6 +1934,15 @@ export default function PDFTools() {
         accept="image/*" 
         className="hidden" 
       />
+
+      {/* Word Editor */}
+      {showWordEditor && (
+        <WordEditor
+          initialContent={wordEditorContent}
+          fileName={fileName}
+          onClose={() => setShowWordEditor(false)}
+        />
+      )}
 
       {/* Stamp Studio Modal */}
       {showStampStudio && (
