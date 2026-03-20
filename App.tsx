@@ -11,7 +11,7 @@ import { DEFAULT_CONFIG, TEMPLATES } from './constants';
 import SVGPreview from './components/SVGPreview';
 import TemplateLibrary from './components/TemplateLibrary';
 import EditorControls from './components/EditorControls';
-import DocuSealSignCenter from './components/esign/DocuSealSignCenter';
+import TohoSignCenter from './components/esign/DocuSealSignCenter';
 import PDFTools from './components/PDFTools';
 import StampApplier from './components/StampApplier';
 import EmployeeQRTracker from './components/hr/EmployeeQRTracker';
@@ -35,7 +35,7 @@ const NAVIGATION_GROUPS = [
 const NAVIGATION_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'stamp-studio', label: 'Stamp Designer', icon: PenTool },
-  { id: 'esign', label: 'Sign Center', icon: CheckCircle2 },
+  { id: 'esign', label: 'Toho Sign', icon: CheckCircle2 },
   { id: 'apply-stamp', label: 'Stamp Applier', icon: FileText },
   { id: 'convert', label: 'AI Scan', icon: Camera },
   { id: 'pdf-forge', label: 'PDF Editor', icon: Wrench },
@@ -242,10 +242,10 @@ const App: React.FC = () => {
                 className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                 <div className="p-16 space-y-10">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6">
+                    <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6">
                       <ShieldCheck size={32} />
                     </div>
-                    <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Sahihi' : 'Welcome Back'}</h3>
+                    <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
                     <p className="text-slate-500 dark:text-slate-400 font-medium text-base">
                       {isSignUp ? 'Create your professional digital authority account.' : 'Sign in to your workspace.'}
                     </p>
@@ -264,12 +264,12 @@ const App: React.FC = () => {
                         placeholder="••••••••" />
                     </div>
                     {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
-                    <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
+                    <button type="submit" className="w-full bg-[#041628] dark:bg-[#134589] text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
                       {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={22} />
                     </button>
                   </form>
                   <div className="flex items-center justify-between">
-                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-blue-600 transition-all text-sm">
+                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-[#134589] transition-all text-sm">
                       {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                     </button>
                     <button onClick={() => setShowLoginModal(false)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors"><X size={18} /></button>
@@ -290,8 +290,8 @@ const App: React.FC = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-60 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[100] flex-shrink-0">
         <div className="p-5 flex items-center gap-3 cursor-pointer" onClick={() => nav('dashboard')}>
-          <div className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={18} /></div>
-          <h1 className="text-lg font-black tracking-tighter">Sahihi</h1>
+          <div className="bg-[#134589] text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={18} /></div>
+          <h1 className="text-lg font-black tracking-tighter">Tomo</h1>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-5">
           {NAVIGATION_GROUPS.map(group => (
@@ -303,11 +303,11 @@ const App: React.FC = () => {
                 return (
                   <button key={item.id} onClick={() => nav(item.id as ActiveTab)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${
-                      activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-[#134589]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}>
                     <item.icon size={15} />
                     <span className="flex-1 text-left">{item.label}</span>
-                    {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                    {activeTab === item.id && <div className="w-1.5 h-1.5 rounded-full bg-[#134589]" />}
                   </button>
                 );
               })}
@@ -315,7 +315,7 @@ const App: React.FC = () => {
           ))}
         </nav>
         <div className="p-4 space-y-3">
-          <button onClick={() => nav('landing')} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+          <button onClick={() => nav('landing')} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-[#134589] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
             <Sparkles size={14} /> Landing Page
           </button>
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 text-white">
@@ -335,8 +335,8 @@ const App: React.FC = () => {
               className="lg:hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[200] flex flex-col">
               <div className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="bg-blue-600 text-white p-2 rounded-xl"><Plus size={16} /></div>
-                  <h1 className="text-lg font-black tracking-tighter">Sahihi</h1>
+                  <div className="bg-[#134589] text-white p-2 rounded-xl"><Plus size={16} /></div>
+                  <h1 className="text-lg font-black tracking-tighter">Tomo</h1>
                 </div>
                 <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><X size={18} /></button>
               </div>
@@ -349,7 +349,7 @@ const App: React.FC = () => {
                       if (!item) return null;
                       return (
                         <button key={item.id} onClick={() => { nav(item.id as ActiveTab); setIsSidebarOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-[#134589]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                           <item.icon size={15} /><span className="flex-1 text-left">{item.label}</span>
                         </button>
                       );
@@ -370,7 +370,7 @@ const App: React.FC = () => {
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><Menu size={18} /></button>
             <div className="hidden md:flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
               <LayoutDashboard size={12} />
-              <span>Sahihi</span>
+              <span>Tomo</span>
               <ChevronRight size={12} />
               <span className="text-slate-900 dark:text-white capitalize">{activeTab.replace(/-/g, ' ')}</span>
             </div>
@@ -389,12 +389,12 @@ const App: React.FC = () => {
                   <p className="text-xs font-black">{user?.name}</p>
                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{userRole}</p>
                 </div>
-                <button onClick={handleLogout} className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs hover:bg-blue-700 transition-all">
+                <button onClick={handleLogout} className="w-8 h-8 rounded-xl bg-[#134589] text-white flex items-center justify-center font-black text-xs hover:bg-[#0e3a72] transition-all">
                   {user?.name.charAt(0).toUpperCase()}
                 </button>
               </div>
             ) : (
-              <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="bg-slate-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all">
+              <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="bg-[#041628] dark:bg-[#134589] text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:opacity-90 transition-all">
                 Sign In
               </button>
             )}
@@ -453,7 +453,7 @@ const App: React.FC = () => {
                         {/* Canvas */}
                         <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`} style={{minHeight:'380px'}}>
                           <div className="absolute top-4 left-4 flex gap-2">
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>Vector SVG</span>
+                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-blue-50 text-[#134589] border-blue-100'}`}>Vector SVG</span>
                             <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>High Resolution</span>
                           </div>
                           <div className="w-full max-w-xs aspect-square flex items-center justify-center relative">
@@ -475,7 +475,7 @@ const App: React.FC = () => {
                           </div>
                           <div className="grid grid-cols-3 gap-3">
                             {[
-                              { format: 'svg' as const, Icon: FileType, label: 'SVG', desc: 'Vector', hover: 'hover:border-blue-400 text-blue-600' },
+                              { format: 'svg' as const, Icon: FileType, label: 'SVG', desc: 'Vector', hover: 'hover:border-blue-400 text-[#134589]' },
                               { format: 'png' as const, Icon: ImageIcon, label: 'PNG', desc: '2000×2000', hover: 'hover:border-emerald-400 text-emerald-600' },
                               { format: 'pdf' as const, Icon: FileIcon, label: 'PDF', desc: 'Print', hover: 'hover:border-orange-400 text-orange-600' },
                             ].map(({ format, Icon, label, desc, hover }) => (
@@ -502,7 +502,7 @@ const App: React.FC = () => {
                         </div>
                         <button onClick={() => nav('convert')}
                           className={`w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl font-black text-sm transition-all hover:scale-[1.02] active:scale-95 border-2 ${isDark ? 'bg-slate-800/50 border-slate-700 text-white hover:bg-slate-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-                          <Camera size={18} className="text-blue-600" /> AI Scan & Vectorize Existing Stamp
+                          <Camera size={18} className="text-[#134589]" /> AI Scan & Vectorize Existing Stamp
                         </button>
                         {openedFromSignCenter && (
                           <button onClick={() => { nav('esign'); setOpenedFromSignCenter(false); }}
@@ -516,7 +516,7 @@ const App: React.FC = () => {
                 )}
 
                 {activeTab === 'esign' && (
-                  <DocuSealSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); nav('stamp-studio'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive={activeTab === 'esign'} />
+                  <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); nav('stamp-studio'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive={activeTab === 'esign'} />
                 )}
                 {activeTab === 'pdf-forge' && <PDFTools />}
                 {activeTab === 'qr-tracker' && <EmployeeQRTracker />}
@@ -543,7 +543,7 @@ const App: React.FC = () => {
                         <p className="text-xl font-black mb-1">Upload Photo</p>
                         <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Select from gallery</p>
                       </label>
-                      <label className="group relative bg-slate-900 dark:bg-slate-800 text-white rounded-3xl p-12 text-center cursor-pointer overflow-hidden border-4 border-transparent hover:border-blue-500 transition-all">
+                      <label className="group relative bg-[#041628] dark:bg-slate-800 text-white rounded-3xl p-12 text-center cursor-pointer overflow-hidden border-4 border-transparent hover:border-blue-500 transition-all">
                         <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <Camera size={40} className="mx-auto text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
                         <p className="text-xl font-black mb-1">Live Camera</p>
@@ -566,13 +566,13 @@ const App: React.FC = () => {
           <footer className={`border-t py-8 px-6 mt-12 ${isDark ? 'bg-slate-950 border-slate-900' : 'bg-white border-slate-100'}`}>
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="bg-blue-600 text-white p-1.5 rounded-lg"><Plus size={14} /></div>
-                <span className="font-black text-base tracking-tighter">Sahihi</span>
+                <div className="bg-[#134589] text-white p-1.5 rounded-lg"><Plus size={14} /></div>
+                <span className="font-black text-base tracking-tighter">Tomo</span>
               </div>
               <p className={`font-black text-[9px] uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>© 2024 JijiTechy Innovations · LSK Standards Applied</p>
               <div className="flex gap-4">
                 <Twitter size={16} className="text-slate-400 hover:text-blue-400 cursor-pointer transition-colors" />
-                <Linkedin size={16} className="text-slate-400 hover:text-blue-600 cursor-pointer transition-colors" />
+                <Linkedin size={16} className="text-slate-400 hover:text-[#134589] cursor-pointer transition-colors" />
                 <Github size={16} className="text-slate-400 hover:text-white cursor-pointer transition-colors" />
               </div>
             </div>
@@ -588,8 +588,8 @@ const App: React.FC = () => {
               className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
               <div className="p-16 space-y-10">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6"><ShieldCheck size={32} /></div>
-                  <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Sahihi' : 'Welcome Back'}</h3>
+                  <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6"><ShieldCheck size={32} /></div>
+                  <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
                   <p className="text-slate-500 dark:text-slate-400 font-medium">{isSignUp ? 'Create your account.' : 'Sign in to your workspace.'}</p>
                 </div>
                 <form onSubmit={handleDemoLogin} className="space-y-5">
@@ -602,12 +602,12 @@ const App: React.FC = () => {
                     <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/20 font-bold" placeholder="••••••••" />
                   </div>
                   {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
-                  <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
+                  <button type="submit" className="w-full bg-[#041628] dark:bg-[#134589] text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
                     {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={22} />
                   </button>
                 </form>
                 <div className="flex items-center justify-between">
-                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-blue-600 transition-all text-sm">{isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}</button>
+                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-[#134589] transition-all text-sm">{isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}</button>
                   <button onClick={() => setShowLoginModal(false)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors"><X size={18} /></button>
                 </div>
               </div>

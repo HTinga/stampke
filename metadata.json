@@ -1,6 +1,6 @@
 {
-  "name": "Sahihi",
-  "description": "The ultimate digital authority workspace. Professional rubber stamp builder, bulk document processing, and legally-binding digital signatures.",
+  "name": "Tomo",
+  "description": "The ultimate digital authority workspace. Professional rubber stamp builder, bulk document processing, and legally-binding digital signatures powered by Toho Sign.",
   "requestFramePermissions": [
     "camera"
   ]

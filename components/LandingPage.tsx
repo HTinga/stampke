@@ -132,7 +132,7 @@ const TESTIMONIALS = [
   {
     name: 'Adv. Wanjiku Kamau',
     role: 'Senior Partner, Kamau & Associates',
-    text: 'Sahihi transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',
+    text: 'Tomo transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',
     stars: 5,
     initials: 'WK',
     color: 'bg-blue-600',
@@ -148,7 +148,7 @@ const TESTIMONIALS = [
   {
     name: 'Dr. Amina Hassan',
     role: 'Registrar, Coast Technical University',
-    text: 'We process over 500 certificates a month. Sahihi\'s batch processing and QR tracking is indispensable for our verification process.',
+    text: 'We process over 500 certificates a month. Tomo\'s batch processing and QR tracking is indispensable for our verification process.',
     stars: 5,
     initials: 'AH',
     color: 'bg-purple-600',
@@ -169,7 +169,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
   const isDark = theme === 'dark';
 
   const faqs = [
-    { q: 'Is Sahihi legally compliant in Kenya?', a: 'Yes. Sahihi is built to LSK (Law Society of Kenya) standards and our e-signatures comply with the Kenya Information and Communications Act and Evidence Act requirements for electronic documents.' },
+    { q: 'Is Tomo legally compliant in Kenya?', a: 'Yes. Tomo is built to LSK (Law Society of Kenya) standards and our e-signatures comply with the Kenya Information and Communications Act and Evidence Act requirements for electronic documents.' },
     { q: 'Can I recreate my existing rubber stamp?', a: 'Absolutely. Our AI Digitizer uses Google Gemini Vision to analyze a photo of your physical stamp and recreate it as a precise vector graphic, matching shape, font, text, and color.' },
     { q: 'How does the QR Tracker work?', a: 'Each generated QR code links to a unique tracking page. Every time it\'s scanned, we log the timestamp, location, and device. You can view all events in real-time on your dashboard.' },
     { q: 'Can multiple team members use one account?', a: 'Professional plans include up to 5 seats. Enterprise plans support unlimited users with role-based access control (Admin, Supervisor, Staff).' },
@@ -186,7 +186,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
             <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <Plus size={18} className="text-white" />
             </div>
-            <span className="text-xl font-black tracking-tighter">Sahihi</span>
+            <span className="text-xl font-black tracking-tighter">Tomo</span>
           </div>
 
           <div className="hidden md:flex items-center gap-8">
@@ -454,7 +454,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
             <div className="relative">
               <Award size={48} className="mx-auto mb-6 opacity-80" />
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-6">Ready to go digital?</h2>
-              <p className="text-xl opacity-80 mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust Sahihi for their digital stamp and document authority.</p>
+              <p className="text-xl opacity-80 mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust Tomo for their digital stamp and document authority.</p>
               <button
                 onClick={onGetStarted}
                 className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl"
@@ -473,7 +473,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
             <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
               <Plus size={16} className="text-white" />
             </div>
-            <span className="font-black text-lg tracking-tighter">Sahihi</span>
+            <span className="font-black text-lg tracking-tighter">Tomo</span>
           </div>
           <p className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
             © 2024 JijiTechy Innovations · LSK Standards Applied · Nairobi, Kenya
