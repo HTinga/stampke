@@ -87,7 +87,7 @@ export const useAppStats = create<AppStatsState>((set, get) => ({
   recentActivity: saved?.recentActivity ?? [],
 
   recordStampCreated: (desc = 'New stamp designed') => set((state) => {
-    const activity = createActivity('stamp_created', desc, 'PenTool', 'text-blue-600 bg-blue-50 dark:bg-blue-900/20');
+    const activity = createActivity('stamp_created', desc, 'PenTool', 'text-[#134589] bg-[#eaf2fc] dark:bg-blue-900/20');
     const newState = {
       stampsCreated: state.stampsCreated + 1,
       recentActivity: [activity, ...state.recentActivity].slice(0, 20),
@@ -147,7 +147,7 @@ export const useAppStats = create<AppStatsState>((set, get) => ({
   }),
 
   recordTemplateUsed: (name = 'Template') => set((state) => {
-    const activity = createActivity('template_used', `${name} template applied`, 'Layers', 'text-slate-600 bg-slate-100 dark:bg-slate-800');
+    const activity = createActivity('template_used', `${name} template applied`, 'Layers', 'text-[#224260] bg-[#eaf2fc] dark:bg-[#062040]');
     const newState = {
       templatesUsed: state.templatesUsed + 1,
       recentActivity: [activity, ...state.recentActivity].slice(0, 20),

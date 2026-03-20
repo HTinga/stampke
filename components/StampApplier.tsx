@@ -211,32 +211,32 @@ const StampApplier: React.FC<StampApplierProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 rounded-[40px] overflow-hidden border border-slate-200 dark:border-slate-800">
+    <div className="flex flex-col h-full bg-[#f0f6ff] dark:bg-[#020b18] rounded-[40px] overflow-hidden border border-[#c5d8ef] dark:border-[#0e3a72]">
       {/* Hidden SVG for rendering */}
       <div className="fixed -left-[9999px] -top-[9999px] opacity-0 pointer-events-none">
         <SVGPreview config={config} ref={internalSvgRef} />
       </div>
 
-      <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+      <div className="p-6 border-b border-[#c5d8ef] dark:border-[#0e3a72] bg-white dark:bg-[#041628] flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="bg-blue-600 text-white p-2 rounded-xl">
+          <div className="bg-[#134589] text-white p-2 rounded-xl">
             <Upload size={20} />
           </div>
           <div>
             <h3 className="font-black text-lg">Apply Stamp to Document</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Upload PDF & Place Stamp</p>
+            <p className="text-xs text-[#365874] font-bold uppercase tracking-widest">Upload PDF & Place Stamp</p>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           {!pdfFile ? (
-            <label className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm cursor-pointer hover:bg-blue-700 transition-all flex items-center gap-2">
+            <label className="bg-[#134589] text-white px-6 py-3 rounded-2xl font-black text-sm cursor-pointer hover:bg-[#0e3a72] transition-all flex items-center gap-2">
               <Upload size={18} /> Select PDF
               <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
             </label>
           ) : (
             <>
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl">
+              <div className="flex items-center gap-2 bg-[#eaf2fc] dark:bg-[#062040] px-4 py-2 rounded-xl">
                 <button 
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
@@ -268,23 +268,23 @@ const StampApplier: React.FC<StampApplierProps> = ({
       <div className="flex-1 overflow-hidden flex">
         {/* Sidebar Controls */}
         {pdfFile && (
-          <div className="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 overflow-y-auto">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Placed Stamps</h4>
+          <div className="w-80 border-r border-[#c5d8ef] dark:border-[#0e3a72] bg-white dark:bg-[#041628] p-6 overflow-y-auto">
+            <h4 className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mb-4">Placed Stamps</h4>
             <div className="space-y-3">
               {placedStamps.length === 0 ? (
-                <div className="text-center py-10 px-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl">
-                  <MousePointer size={32} className="mx-auto text-slate-200 mb-2" />
-                  <p className="text-xs font-bold text-slate-400">Click on the document to place your stamp.</p>
+                <div className="text-center py-10 px-4 border-2 border-dashed border-[#eaf2fc] dark:border-[#0e3a72] rounded-3xl">
+                  <MousePointer size={32} className="mx-auto text-[#aaccf2] mb-2" />
+                  <p className="text-xs font-bold text-[#4d7291]">Click on the document to place your stamp.</p>
                 </div>
               ) : (
                 placedStamps.map((s) => (
                   <div 
                     key={s.id} 
                     onClick={() => setSelectedStampId(s.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStampId === s.id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800' : 'bg-slate-50 border-slate-100 dark:bg-slate-800 dark:border-slate-700'}`}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStampId === s.id ? 'bg-[#eaf2fc] border-[#aaccf2] dark:bg-[#062040] dark:border-blue-800' : 'bg-[#f0f6ff] border-[#eaf2fc] dark:bg-[#062040] dark:border-[#134589]'}`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black uppercase text-blue-600">Stamp #{s.id.slice(0, 4)}</span>
+                      <span className="text-[10px] font-black uppercase text-[#134589]">Stamp #{s.id.slice(0, 4)}</span>
                       <button onClick={(e) => { e.stopPropagation(); removeStamp(s.id); }} className="text-red-500 hover:text-red-600">
                         <Trash2 size={14} />
                       </button>
@@ -292,17 +292,17 @@ const StampApplier: React.FC<StampApplierProps> = ({
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <div className="flex justify-between">
-                          <label className="text-[10px] font-bold text-slate-500">Size</label>
-                          <span className="text-[10px] font-bold text-slate-400">{Math.round(s.scale * 100)}%</span>
+                          <label className="text-[10px] font-bold text-[#365874]">Size</label>
+                          <span className="text-[10px] font-bold text-[#4d7291]">{Math.round(s.scale * 100)}%</span>
                         </div>
                         <input 
                           type="range" min="0.1" max="2" step="0.05"
                           value={s.scale}
                           onChange={(e) => updateStamp(s.id, { scale: parseFloat(e.target.value) })}
-                          className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                          className="w-full h-1 bg-[#c5d8ef] dark:bg-[#0a2d5a] rounded-lg appearance-none cursor-pointer accent-[#134589]"
                         />
                       </div>
-                      <p className="text-[10px] font-bold text-slate-400">Page: {s.page}</p>
+                      <p className="text-[10px] font-bold text-[#4d7291]">Page: {s.page}</p>
                     </div>
                   </div>
                 ))
@@ -322,15 +322,15 @@ const StampApplier: React.FC<StampApplierProps> = ({
         )}
 
         {/* PDF Preview Area */}
-        <div className="flex-1 bg-slate-200 dark:bg-slate-900 p-8 overflow-auto flex justify-center items-start custom-scrollbar">
+        <div className="flex-1 bg-[#c5d8ef] dark:bg-[#041628] p-8 overflow-auto flex justify-center items-start custom-scrollbar">
           {!pdfFile ? (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-md">
-              <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-[32px] flex items-center justify-center text-slate-300 mb-6 shadow-xl">
+              <div className="w-20 h-20 bg-white dark:bg-[#062040] rounded-[32px] flex items-center justify-center text-[#7ab3e8] mb-6 shadow-xl">
                 <Upload size={40} />
               </div>
               <h3 className="text-2xl font-black mb-2">No Document Selected</h3>
-              <p className="text-slate-500 font-medium mb-8">Upload a PDF document to start applying your professional stamp.</p>
-              <label className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-lg cursor-pointer hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200">
+              <p className="text-[#365874] font-medium mb-8">Upload a PDF document to start applying your professional stamp.</p>
+              <label className="bg-[#134589] text-white px-10 py-4 rounded-2xl font-black text-lg cursor-pointer hover:bg-[#0e3a72] transition-all shadow-2xl shadow-[#aaccf2]">
                 Select PDF File
                 <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
               </label>
@@ -350,7 +350,7 @@ const StampApplier: React.FC<StampApplierProps> = ({
                   key={s.id}
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={`absolute group ${selectedStampId === s.id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+                  className={`absolute group ${selectedStampId === s.id ? 'ring-2 ring-[#134589] ring-offset-2' : ''}`}
                   style={{ 
                     left: `${s.x}%`, 
                     top: `${s.y}%`, 
@@ -368,18 +368,18 @@ const StampApplier: React.FC<StampApplierProps> = ({
                     {stampPreviewUrl ? (
                       <img src={stampPreviewUrl} className="w-full h-full object-contain drop-shadow-lg" alt="Stamp" />
                     ) : (
-                      <div className="w-full h-full bg-blue-600/10 border-2 border-blue-600/30 rounded-full flex items-center justify-center">
-                        <span className="text-[10px] font-black text-blue-600 uppercase">STAMP</span>
+                      <div className="w-full h-full bg-[#134589]/10 border-2 border-[#134589]/30 rounded-full flex items-center justify-center">
+                        <span className="text-[10px] font-black text-[#134589] uppercase">STAMP</span>
                       </div>
                     )}
                   </div>
                   
                   {/* Controls Overlay */}
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-2 bg-slate-900 text-white px-3 py-1.5 rounded-full shadow-xl z-20">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-2 bg-[#041628] text-white px-3 py-1.5 rounded-full shadow-xl z-20">
                     <button onClick={(e) => { e.stopPropagation(); removeStamp(s.id); }} className="p-1 hover:text-red-400">
                       <Trash2 size={14} />
                     </button>
-                    <div className="w-px h-3 bg-slate-700" />
+                    <div className="w-px h-3 bg-[#0a2d5a]" />
                     <button onClick={(e) => { e.stopPropagation(); updateStamp(s.id, { scale: Math.min(2, s.scale + 0.1) }); }} className="p-1 hover:text-blue-400">
                       <Maximize size={14} />
                     </button>

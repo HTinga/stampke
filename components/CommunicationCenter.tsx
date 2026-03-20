@@ -139,18 +139,18 @@ export default function CommunicationCenter() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-[850px] flex bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden">
+    <div className="max-w-7xl mx-auto h-[850px] flex bg-white dark:bg-[#041628] rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] shadow-2xl overflow-hidden">
       {/* Sidebar */}
-      <div className="w-80 border-r border-slate-50 dark:border-slate-800 p-8 flex flex-col bg-slate-50/30 dark:bg-slate-900/50">
+      <div className="w-80 border-r border-[#f0f6ff] dark:border-[#0e3a72] p-8 flex flex-col bg-[#f0f6ff]/30 dark:bg-[#041628]/50">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-black tracking-tighter">Comm <span className="text-blue-600">Hub</span></h2>
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+          <h2 className="text-2xl font-black tracking-tighter">Comm <span className="text-[#134589]">Hub</span></h2>
+          <div className="flex items-center gap-2 px-3 py-1 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-full text-[10px] font-black uppercase tracking-widest">
             <Shield size={12} /> {userRole}
           </div>
         </div>
         
         <nav className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-4">Communication</p>
+          <p className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mb-4 ml-4">Communication</p>
           {[
             { id: 'Inbox', icon: Mail, label: 'Inbox', count: messages.filter(m => m.category === 'Inbox' && !m.isRead).length },
             { id: 'Chat', icon: MessageSquare, label: 'Local Slack', count: 0 },
@@ -166,7 +166,7 @@ export default function CommunicationCenter() {
             />
           ))}
 
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-8 mb-4 ml-4">Workspace</p>
+          <p className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mt-8 mb-4 ml-4">Workspace</p>
           {[
             { id: 'Tasks', icon: CheckSquare, label: 'Duty Board', count: messages.filter(m => m.category === 'Tasks' && m.status !== 'Completed').length },
             { id: 'Sent', icon: Send, label: 'Sent Items', count: 0 },
@@ -183,16 +183,16 @@ export default function CommunicationCenter() {
           ))}
         </nav>
 
-        <div className="mt-auto pt-8 border-t border-slate-100 dark:border-slate-800">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+        <div className="mt-auto pt-8 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+          <div className="bg-white dark:bg-[#062040] p-6 rounded-3xl shadow-sm border border-[#eaf2fc] dark:border-[#134589]">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black">T</div>
+              <div className="w-10 h-10 bg-[#134589] rounded-xl flex items-center justify-center text-white font-black">T</div>
               <div>
                 <p className="text-sm font-black">Tinga</p>
-                <p className="text-[10px] text-slate-400 font-bold">tinga@company.ke</p>
+                <p className="text-[10px] text-[#4d7291] font-bold">tinga@company.ke</p>
               </div>
             </div>
-            <button className="w-full py-2 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
+            <button className="w-full py-2 bg-[#f0f6ff] dark:bg-[#0a2d5a] text-[#224260] dark:text-[#7ab3e8] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#eaf2fc] transition-all">
               Switch Role
             </button>
           </div>
@@ -200,7 +200,7 @@ export default function CommunicationCenter() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+      <div className="flex-1 flex flex-col bg-white dark:bg-[#041628]">
         <AnimatePresence mode="wait">
           {activeCategory === 'Chat' ? (
             <motion.div 
@@ -210,23 +210,23 @@ export default function CommunicationCenter() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col"
             >
-              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+              <div className="p-8 border-b border-[#f0f6ff] dark:border-[#0e3a72] flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] rounded-2xl flex items-center justify-center">
                     <Hash size={24} />
                   </div>
                   <div>
                     <h3 className="text-xl font-black tracking-tight">#general-workspace</h3>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Local Slack for FreeStamps KE</p>
+                    <p className="text-xs text-[#4d7291] font-bold uppercase tracking-widest">Local Slack for FreeStamps KE</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-3">
                     {[1,2,3,4].map(i => (
-                      <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 flex items-center justify-center text-[10px] font-black">U{i}</div>
+                      <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#020b18] bg-[#c5d8ef] flex items-center justify-center text-[10px] font-black">U{i}</div>
                     ))}
                   </div>
-                  <button className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400">
+                  <button className="p-3 hover:bg-[#f0f6ff] dark:hover:bg-[#062040] rounded-2xl transition-all text-[#4d7291]">
                     <Users size={20} />
                   </button>
                 </div>
@@ -235,15 +235,15 @@ export default function CommunicationCenter() {
               <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                 {chatMessages.map((msg) => (
                   <div key={msg.id} className={`flex gap-4 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}>
-                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-400 font-black text-xs">
+                    <div className="w-10 h-10 bg-[#eaf2fc] dark:bg-[#062040] rounded-xl flex items-center justify-center text-[#4d7291] font-black text-xs">
                       {msg.user.charAt(0)}
                     </div>
                     <div className={`max-w-[70%] ${msg.user === 'You' ? 'items-end' : ''} flex flex-col gap-1`}>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-slate-900 dark:text-white">{msg.user}</span>
-                        <span className="text-[10px] font-bold text-slate-400">{msg.time}</span>
+                        <span className="text-xs font-black text-[#041628] dark:text-white">{msg.user}</span>
+                        <span className="text-[10px] font-bold text-[#4d7291]">{msg.time}</span>
                       </div>
-                      <div className={`p-4 rounded-[24px] text-sm font-medium ${msg.user === 'You' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-tl-none'}`}>
+                      <div className={`p-4 rounded-[24px] text-sm font-medium ${msg.user === 'You' ? 'bg-[#134589] text-white rounded-tr-none' : 'bg-[#eaf2fc] dark:bg-[#062040] text-[#0a2d5a] dark:text-[#7ab3e8] rounded-tl-none'}`}>
                         {msg.text}
                       </div>
                     </div>
@@ -251,18 +251,18 @@ export default function CommunicationCenter() {
                 ))}
               </div>
 
-              <div className="p-8 border-t border-slate-50 dark:border-slate-800">
+              <div className="p-8 border-t border-[#f0f6ff] dark:border-[#0e3a72]">
                 <form onSubmit={handleSendMessage} className="relative">
                   <input 
                     type="text" 
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Message #general-workspace..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-5 pl-6 pr-16 outline-none font-bold focus:ring-4 focus:ring-blue-500/10"
+                    className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-none rounded-2xl py-5 pl-6 pr-16 outline-none font-bold focus:ring-4 focus:ring-[#134589]/10"
                   />
                   <button 
                     type="submit"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-[#134589] text-white rounded-xl hover:bg-[#0e3a72] transition-all shadow-lg shadow-[#aaccf2]"
                   >
                     <SendHorizontal size={20} />
                   </button>
@@ -278,18 +278,18 @@ export default function CommunicationCenter() {
               className="flex-1 flex flex-col"
             >
               {/* Search Bar */}
-              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+              <div className="p-8 border-b border-[#f0f6ff] dark:border-[#0e3a72] flex items-center justify-between">
                 <div className="relative flex-1 max-w-xl">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4d7291]" size={18} />
                   <input 
                     type="text"
                     placeholder={`Search ${activeCategory.toLowerCase()}...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-6 outline-none font-bold"
+                    className="w-full bg-[#f0f6ff] dark:bg-[#062040] border-none rounded-2xl py-4 pl-12 pr-6 outline-none font-bold"
                   />
                 </div>
-                <button className="ml-4 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200">
+                <button className="ml-4 bg-[#134589] text-white px-6 py-4 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#0e3a72] transition-all shadow-xl shadow-[#aaccf2]">
                   <Plus size={18} /> New {activeCategory === 'Tasks' ? 'Duty' : 'Message'}
                 </button>
               </div>
@@ -302,45 +302,45 @@ export default function CommunicationCenter() {
                     onClick={() => setSelectedMessage(msg)}
                     className={`w-full p-8 rounded-[40px] text-left transition-all border group ${
                       msg.isRead 
-                        ? 'bg-white dark:bg-slate-900 border-slate-50 dark:border-slate-800' 
-                        : 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 ring-1 ring-blue-100 dark:ring-blue-900/30 shadow-sm'
+                        ? 'bg-white dark:bg-[#041628] border-[#f0f6ff] dark:border-[#0e3a72]' 
+                        : 'bg-[#eaf2fc]/50 dark:bg-blue-900/10 border-[#d4e6f9] dark:border-blue-900/30 ring-1 ring-blue-100 dark:ring-blue-900/30 shadow-sm'
                     } hover:shadow-2xl hover:-translate-y-1`}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm ${msg.isRead ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white shadow-lg shadow-blue-200'}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm ${msg.isRead ? 'bg-[#eaf2fc] text-[#4d7291]' : 'bg-[#134589] text-white shadow-lg shadow-[#aaccf2]'}`}>
                           {msg.sender.charAt(0)}
                         </div>
                         <div>
-                          <h4 className="font-black text-slate-900 dark:text-white flex items-center gap-2">
+                          <h4 className="font-black text-[#041628] dark:text-white flex items-center gap-2">
                             {msg.sender}
-                            {!msg.isRead && <span className="w-2 h-2 bg-blue-600 rounded-full"></span>}
+                            {!msg.isRead && <span className="w-2 h-2 bg-[#134589] rounded-full"></span>}
                           </h4>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{msg.time}</p>
+                          <p className="text-[10px] font-bold text-[#4d7291] uppercase tracking-widest">{msg.time}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {msg.priority && (
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
                             msg.priority === 'High' ? 'bg-red-50 text-red-600' : 
-                            msg.priority === 'Medium' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
+                            msg.priority === 'Medium' ? 'bg-orange-50 text-orange-600' : 'bg-[#eaf2fc] text-[#134589]'
                           }`}>
                             {msg.priority}
                           </span>
                         )}
                         {msg.status && (
-                          <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          <span className="px-3 py-1 bg-[#eaf2fc] dark:bg-[#062040] text-[#365874] rounded-full text-[10px] font-black uppercase tracking-widest">
                             {msg.status}
                           </span>
                         )}
                       </div>
                     </div>
-                    <h5 className="font-black text-xl text-slate-800 dark:text-slate-200 mb-2 tracking-tight">{msg.subject}</h5>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">{msg.preview}</p>
+                    <h5 className="font-black text-xl text-[#062040] dark:text-[#aaccf2] mb-2 tracking-tight">{msg.subject}</h5>
+                    <p className="text-sm text-[#365874] dark:text-[#4d7291] line-clamp-2 mb-4 leading-relaxed">{msg.preview}</p>
                     
                     <div className="flex flex-wrap gap-2">
                       {msg.tags?.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 text-[10px] font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
+                        <span key={tag} className="flex items-center gap-1 text-[10px] font-black text-[#134589] bg-[#eaf2fc] dark:bg-[#062040] px-2 py-1 rounded-lg">
                           <AtSign size={10} /> {tag.replace('@', '')}
                         </span>
                       ))}
@@ -348,11 +348,11 @@ export default function CommunicationCenter() {
                   </button>
                 )) : (
                   <div className="h-full flex flex-col items-center justify-center text-center p-12">
-                    <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-[40px] flex items-center justify-center text-slate-300 mb-6">
+                    <div className="w-24 h-24 bg-[#f0f6ff] dark:bg-[#062040] rounded-[40px] flex items-center justify-center text-[#7ab3e8] mb-6">
                       <Archive size={48} />
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Workspace Empty</h3>
-                    <p className="text-slate-500 max-w-xs">No active {activeCategory.toLowerCase()} found in your current workspace.</p>
+                    <h3 className="text-2xl font-black text-[#041628] dark:text-white mb-2">Workspace Empty</h3>
+                    <p className="text-[#365874] max-w-xs">No active {activeCategory.toLowerCase()} found in your current workspace.</p>
                   </div>
                 )}
               </div>
@@ -366,21 +366,21 @@ export default function CommunicationCenter() {
               className="flex-1 flex flex-col"
             >
               {/* Header */}
-              <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10 shadow-sm">
+              <div className="p-8 border-b border-[#f0f6ff] dark:border-[#0e3a72] flex items-center justify-between bg-white dark:bg-[#041628] z-10 shadow-sm">
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => setSelectedMessage(null)}
-                    className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                    className="p-3 hover:bg-[#f0f6ff] dark:hover:bg-[#062040] rounded-2xl transition-all"
                   >
                     <ArrowLeft size={20} />
                   </button>
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">{selectedMessage.sender}</h3>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{selectedMessage.time}</p>
+                    <h3 className="text-sm font-black text-[#041628] dark:text-white">{selectedMessage.sender}</h3>
+                    <p className="text-[10px] font-bold text-[#4d7291] uppercase tracking-widest">{selectedMessage.time}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-3 hover:bg-blue-50 text-blue-600 rounded-2xl transition-all"><Star size={20} /></button>
+                  <button className="p-3 hover:bg-[#eaf2fc] text-[#134589] rounded-2xl transition-all"><Star size={20} /></button>
                   <button className="p-3 hover:bg-emerald-50 text-emerald-600 rounded-2xl transition-all"><Share2 size={20} /></button>
                   <button className="p-3 hover:bg-red-50 text-red-600 rounded-2xl transition-all"><Trash2 size={20} /></button>
                 </div>
@@ -391,14 +391,14 @@ export default function CommunicationCenter() {
                 <div className="max-w-4xl mx-auto">
                   <div className="flex items-center justify-between mb-12">
                     <div className="flex items-center gap-6">
-                      <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white text-2xl font-black shadow-2xl shadow-blue-200">
+                      <div className="w-20 h-20 bg-[#134589] rounded-[32px] flex items-center justify-center text-white text-2xl font-black shadow-2xl shadow-[#aaccf2]">
                         {selectedMessage.sender.charAt(0)}
                       </div>
                       <div>
                         <h2 className="text-4xl font-black tracking-tighter mb-2">{selectedMessage.subject}</h2>
                         <div className="flex flex-wrap gap-2">
                           {selectedMessage.tags?.map(tag => (
-                            <span key={tag} className="flex items-center gap-1 text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-xl">
+                            <span key={tag} className="flex items-center gap-1 text-xs font-black text-[#134589] bg-[#eaf2fc] dark:bg-[#062040] px-3 py-1 rounded-xl">
                               <AtSign size={12} /> {tag.replace('@', '')}
                             </span>
                           ))}
@@ -410,28 +410,28 @@ export default function CommunicationCenter() {
                   {selectedMessage.category === 'Tasks' && (
                     <div className="grid grid-cols-3 gap-6 mb-12">
                       <TaskStat icon={<TrendingUp size={18} />} label="Priority" value={selectedMessage.priority || 'Medium'} color="text-red-600" bg="bg-red-50" />
-                      <TaskStat icon={<UserCheck size={18} />} label="Assigned To" value={selectedMessage.assignedTo || 'Unassigned'} color="text-blue-600" bg="bg-blue-50" />
+                      <TaskStat icon={<UserCheck size={18} />} label="Assigned To" value={selectedMessage.assignedTo || 'Unassigned'} color="text-[#134589]" bg="bg-[#eaf2fc]" />
                       <TaskStat icon={<AlertCircle size={18} />} label="Status" value={selectedMessage.status || 'Pending'} color="text-orange-600" bg="bg-orange-50" />
                     </div>
                   )}
                   
                   <div className="prose dark:prose-invert max-w-none mb-16">
-                    <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap font-medium">
+                    <p className="text-xl text-[#224260] dark:text-[#4d7291] leading-relaxed whitespace-pre-wrap font-medium">
                       {selectedMessage.content}
                     </p>
                   </div>
 
                   {selectedMessage.attachments && (
-                    <div className="space-y-6 pt-12 border-t border-slate-100 dark:border-slate-800">
-                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Workspace Assets</h4>
+                    <div className="space-y-6 pt-12 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+                      <h4 className="text-xs font-black text-[#4d7291] uppercase tracking-widest">Workspace Assets</h4>
                       <div className="grid grid-cols-2 gap-4">
                         {selectedMessage.attachments.map((file, i) => (
-                          <div key={i} className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 group cursor-pointer hover:border-blue-400 transition-all">
+                          <div key={i} className="flex items-center justify-between p-6 bg-[#f0f6ff] dark:bg-[#062040] rounded-3xl border border-[#eaf2fc] dark:border-[#134589] group cursor-pointer hover:border-blue-400 transition-all">
                             <div className="flex items-center gap-4">
-                              <div className="p-3 bg-white dark:bg-slate-700 rounded-2xl"><Paperclip size={20} className="text-blue-600" /></div>
+                              <div className="p-3 bg-white dark:bg-[#0a2d5a] rounded-2xl"><Paperclip size={20} className="text-[#134589]" /></div>
                               <span className="font-black text-sm">{file}</span>
                             </div>
-                            <ExternalLink size={18} className="text-slate-300 group-hover:text-blue-600" />
+                            <ExternalLink size={18} className="text-[#7ab3e8] group-hover:text-[#134589]" />
                           </div>
                         ))}
                       </div>
@@ -441,28 +441,28 @@ export default function CommunicationCenter() {
               </div>
 
               {/* Footer Actions */}
-              <div className="p-8 border-t border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-4">
+              <div className="p-8 border-t border-[#f0f6ff] dark:border-[#0e3a72] bg-white dark:bg-[#041628] flex gap-4">
                 {selectedMessage.category === 'Tasks' ? (
                   <>
                     <button 
                       onClick={() => updateTaskStatus(selectedMessage.id, 'In Progress')}
-                      className="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-lg hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200"
+                      className="flex-1 bg-[#134589] text-white py-5 rounded-3xl font-black text-lg hover:bg-[#0e3a72] transition-all shadow-2xl shadow-[#aaccf2]"
                     >
                       Accept Duty
                     </button>
                     <button 
                       onClick={() => updateTaskStatus(selectedMessage.id, 'Completed')}
-                      className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 transition-all"
+                      className="flex-1 bg-[#041628] dark:bg-[#062040] text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 transition-all"
                     >
                       Mark Completed
                     </button>
                   </>
                 ) : (
                   <>
-                    <button className="flex-1 bg-blue-600 text-white py-5 rounded-3xl font-black text-lg hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200">
+                    <button className="flex-1 bg-[#134589] text-white py-5 rounded-3xl font-black text-lg hover:bg-[#0e3a72] transition-all shadow-2xl shadow-[#aaccf2]">
                       Reply Now
                     </button>
-                    <button className="flex-1 bg-slate-900 dark:bg-slate-800 text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 transition-all">
+                    <button className="flex-1 bg-[#041628] dark:bg-[#062040] text-white py-5 rounded-3xl font-black text-lg hover:opacity-90 transition-all">
                       Forward to Team
                     </button>
                   </>
@@ -482,8 +482,8 @@ function SidebarButton({ active, icon: Icon, label, count, onClick }: { active: 
       onClick={onClick}
       className={`w-full flex items-center justify-between px-6 py-4 rounded-[24px] font-black text-sm transition-all ${
         active 
-          ? 'bg-blue-600 text-white shadow-2xl shadow-blue-200' 
-          : 'text-slate-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'
+          ? 'bg-[#134589] text-white shadow-2xl shadow-[#aaccf2]' 
+          : 'text-[#365874] hover:bg-white dark:hover:bg-[#062040] hover:shadow-sm'
       }`}
     >
       <div className="flex items-center gap-4">
@@ -491,7 +491,7 @@ function SidebarButton({ active, icon: Icon, label, count, onClick }: { active: 
         <span className="tracking-tight">{label}</span>
       </div>
       {count > 0 && (
-        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black ${active ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black ${active ? 'bg-white text-[#134589]' : 'bg-[#134589] text-white'}`}>
           {count}
         </span>
       )}
@@ -503,7 +503,7 @@ function TaskStat({ icon, label, value, color, bg }: { icon: any, label: string,
   return (
     <div className={`p-6 ${bg} rounded-[32px] border border-white/50`}>
       <div className={`${color} mb-3`}>{icon}</div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest mb-1">{label}</p>
       <p className={`text-lg font-black ${color} tracking-tight`}>{value}</p>
     </div>
   );

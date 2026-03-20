@@ -31,13 +31,15 @@ function timeAgo(isoString: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// Weekly activity: generate fake-but-realistic sparkline data from total counts
+// Weekly activity: deterministic sparkline data seeded from total (no re-randomize on render)
 function generateWeeklyData(total: number): number[] {
   const days = 7;
+  // Simple deterministic seed based on total value
+  const seed = (n: number, s: number) => ((n * 1664525 + s * 1013904223) & 0x7fffffff) / 0x7fffffff;
   const arr: number[] = [];
   let remaining = Math.max(total, days);
   for (let i = 0; i < days - 1; i++) {
-    const v = Math.floor(Math.random() * (remaining / (days - i)) * 1.5);
+    const v = Math.floor(seed(remaining, i + 1) * (remaining / (days - i)) * 1.5);
     arr.push(Math.max(0, v));
     remaining -= v;
   }
@@ -69,9 +71,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
       label: 'Stamps Created',
       value: stats.stampsCreated,
       icon: PenTool,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      border: 'border-blue-100 dark:border-blue-900/40',
+      color: 'text-[#134589]',
+      bg: 'bg-[#eaf2fc] dark:bg-[#062040]',
+      border: 'border-[#d4e6f9] dark:border-blue-900/40',
       accent: '#2563eb',
       tab: 'stamp-studio' as TabType,
       sparkData: generateWeeklyData(stats.stampsCreated),
@@ -141,9 +143,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
       label: 'Templates Used',
       value: stats.templatesUsed,
       icon: Layers,
-      color: 'text-slate-600',
-      bg: 'bg-slate-100 dark:bg-slate-800',
-      border: 'border-slate-200 dark:border-slate-700',
+      color: 'text-[#224260]',
+      bg: 'bg-[#eaf2fc] dark:bg-[#062040]',
+      border: 'border-[#c5d8ef] dark:border-[#134589]',
       accent: '#475569',
       tab: 'templates' as TabType,
       sparkData: generateWeeklyData(stats.templatesUsed),
@@ -181,25 +183,25 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Live Dashboard</span>
+            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>Live Dashboard</span>
           </div>
           <h2 className="text-4xl font-black tracking-tighter mb-1">
             Welcome back{userName ? `, ${userName}` : ''}.
           </h2>
-          <p className={`font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`font-medium ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>
             Here's your real-time activity overview across all Sahihi tools.
           </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => onNavigate('stamp-studio')}
-            className="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+            className="bg-[#134589] text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#0e3a72] transition-all shadow-lg shadow-[#c5d8ef] dark:shadow-none"
           >
             <PenTool size={16} /> New Stamp
           </button>
           <button
             onClick={() => onNavigate('landing')}
-            className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all border ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all border ${isDark ? 'border-[#134589] text-[#7ab3e8] hover:bg-[#062040]' : 'border-[#c5d8ef] text-[#224260] hover:bg-[#f0f6ff]'}`}
           >
             <Sparkles size={16} /> View Plans
           </button>
@@ -211,18 +213,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl border-2 border-dashed p-10 text-center ${isDark ? 'border-slate-700 bg-slate-900/50' : 'border-blue-100 bg-blue-50/50'}`}
+          className={`rounded-3xl border-2 border-dashed p-10 text-center ${isDark ? 'border-[#134589] bg-[#041628]/50' : 'border-[#d4e6f9] bg-[#eaf2fc]/50'}`}
         >
-          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200">
+          <div className="w-14 h-14 bg-[#134589] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#aaccf2]">
             <Zap size={28} className="text-white" />
           </div>
           <h3 className="text-2xl font-black tracking-tight mb-2">Your activity will appear here</h3>
-          <p className={`mb-6 font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`mb-6 font-medium ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>
             Start designing stamps, signing documents, or applying stamps — your stats update in real time.
           </p>
           <button
             onClick={() => onNavigate('stamp-studio')}
-            className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-base hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 inline-flex items-center gap-2"
+            className="bg-[#134589] text-white px-8 py-4 rounded-2xl font-black text-base hover:bg-[#0e3a72] transition-all shadow-lg shadow-[#aaccf2] inline-flex items-center gap-2"
           >
             <PenTool size={18} /> Design Your First Stamp
           </button>
@@ -238,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
             onClick={() => onNavigate(stat.tab)}
-            className={`group text-left p-5 rounded-2xl border transition-all hover:shadow-lg hover:-translate-y-0.5 ${isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'}`}
+            className={`group text-left p-5 rounded-2xl border transition-all hover:shadow-lg hover:-translate-y-0.5 ${isDark ? 'bg-[#041628] border-[#0e3a72] hover:border-[#1a5cad]' : 'bg-white border-[#eaf2fc] hover:border-[#c5d8ef] shadow-sm'}`}
           >
             <div className="flex items-start justify-between mb-4">
               <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.border} border`}>
@@ -248,9 +250,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{stat.label}</p>
+                <p className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{stat.label}</p>
                 <h3 className="text-3xl font-black tracking-tighter leading-none">{stat.value.toLocaleString()}</h3>
-                <p className={`text-[10px] mt-1 font-medium ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{stat.description}</p>
+                <p className={`text-[10px] mt-1 font-medium ${isDark ? 'text-[#224260]' : 'text-[#4d7291]'}`}>{stat.description}</p>
               </div>
               <div className="pb-1">
                 <Sparkline data={stat.sparkData} color={stat.accent} />
@@ -264,24 +266,24 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {/* Recent Activity */}
-        <div className={`lg:col-span-3 rounded-3xl border p-6 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+        <div className={`lg:col-span-3 rounded-3xl border p-6 ${isDark ? 'bg-[#041628] border-[#0e3a72]' : 'bg-white border-[#eaf2fc] shadow-sm'}`}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                <Activity size={16} className="text-slate-500" />
+              <div className="w-8 h-8 bg-[#eaf2fc] dark:bg-[#062040] rounded-xl flex items-center justify-center">
+                <Activity size={16} className="text-[#365874]" />
               </div>
               <h3 className="text-base font-black tracking-tight">Recent Activity</h3>
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#224260]' : 'text-[#4d7291]'}`}>
               {stats.recentActivity.length} events
             </span>
           </div>
 
           {stats.recentActivity.length === 0 ? (
-            <div className={`text-center py-12 ${isDark ? 'text-slate-600' : 'text-slate-300'}`}>
+            <div className={`text-center py-12 ${isDark ? 'text-[#224260]' : 'text-[#7ab3e8]'}`}>
               <Clock size={32} className="mx-auto mb-3" />
               <p className="font-black text-sm">No activity yet</p>
-              <p className={`text-xs mt-1 ${isDark ? 'text-slate-700' : 'text-slate-400'}`}>Your actions will appear here in real time</p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-[#0a2d5a]' : 'text-[#4d7291]'}`}>Your actions will appear here in real time</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -293,7 +295,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className={`flex items-center gap-4 p-3 rounded-2xl transition-colors ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+                    className={`flex items-center gap-4 p-3 rounded-2xl transition-colors ${isDark ? 'hover:bg-[#062040]' : 'hover:bg-[#f0f6ff]'}`}
                   >
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${event.color}`}>
                       <IconComp size={16} />
@@ -301,7 +303,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate">{event.description}</p>
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${isDark ? 'text-[#224260]' : 'text-[#4d7291]'}`}>
                       {timeAgo(event.timestamp)}
                     </span>
                   </motion.div>
@@ -315,16 +317,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
         <div className="lg:col-span-2 flex flex-col gap-6">
 
           {/* Total activity score */}
-          <div className={`rounded-3xl border p-6 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+          <div className={`rounded-3xl border p-6 ${isDark ? 'bg-[#041628] border-[#0e3a72]' : 'bg-white border-[#eaf2fc] shadow-sm'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-                <Target size={16} className="text-blue-600" />
+              <div className="w-8 h-8 bg-[#eaf2fc] dark:bg-[#062040] rounded-xl flex items-center justify-center">
+                <Target size={16} className="text-[#134589]" />
               </div>
               <h3 className="text-base font-black tracking-tight">Session Summary</h3>
             </div>
             <div className="space-y-3">
               {[
-                { label: 'Total Actions', value: totalActions, color: 'bg-blue-600' },
+                { label: 'Total Actions', value: totalActions, color: 'bg-[#134589]' },
                 { label: 'Stamps', value: stats.stampsCreated + stats.stampsApplied + stats.stampsDownloaded, color: 'bg-indigo-500' },
                 { label: 'Documents', value: stats.documentsSigned + stats.pdfEdits, color: 'bg-emerald-500' },
                 { label: 'Tracking & AI', value: stats.qrCodesGenerated + stats.aiScans, color: 'bg-pink-500' },
@@ -333,10 +335,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
                 return (
                   <div key={i}>
                     <div className="flex justify-between items-center mb-1">
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{item.label}</span>
+                      <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{item.label}</span>
                       <span className="text-sm font-black">{item.value}</span>
                     </div>
-                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-[#062040]' : 'bg-[#eaf2fc]'}`}>
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
@@ -351,10 +353,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
           </div>
 
           {/* Quick actions */}
-          <div className={`rounded-3xl border p-6 flex-1 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+          <div className={`rounded-3xl border p-6 flex-1 ${isDark ? 'bg-[#041628] border-[#0e3a72]' : 'bg-white border-[#eaf2fc] shadow-sm'}`}>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                <Zap size={16} className="text-slate-500" />
+              <div className="w-8 h-8 bg-[#eaf2fc] dark:bg-[#062040] rounded-xl flex items-center justify-center">
+                <Zap size={16} className="text-[#365874]" />
               </div>
               <h3 className="text-base font-black tracking-tight">Quick Actions</h3>
             </div>
@@ -363,14 +365,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) =>
                 <button
                   key={i}
                   onClick={() => onNavigate(action.tab)}
-                  className={`group flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all hover:shadow-md hover:-translate-y-0.5 ${isDark ? 'border-slate-800 hover:border-slate-600 bg-slate-800/50' : 'border-slate-100 hover:border-slate-200 bg-slate-50'}`}
+                  className={`group flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all hover:shadow-md hover:-translate-y-0.5 ${isDark ? 'border-[#0e3a72] hover:border-[#1a5cad] bg-[#062040]/50' : 'border-[#eaf2fc] hover:border-[#c5d8ef] bg-[#f0f6ff]'}`}
                 >
                   <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
                     <action.icon size={14} className="text-white" />
                   </div>
                   <div>
                     <p className="text-[11px] font-black leading-tight">{action.label}</p>
-                    <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{action.desc}</p>
+                    <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-[#224260]' : 'text-[#4d7291]'}`}>{action.desc}</p>
                   </div>
                 </button>
               ))}

@@ -30,7 +30,7 @@ const FIELD_TYPES: { type: FieldType; label: string; icon: React.ReactNode; colo
 const STATUS_COLOR: Record<string, string> = {
   completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   sent:       'bg-blue-50 text-[#134589] border-blue-200',
-  draft:      'bg-slate-100 text-slate-600 border-slate-200',
+  draft:      'bg-[#eaf2fc] text-[#224260] border-[#c5d8ef]',
   voided:     'bg-red-50 text-red-700 border-red-200',
   archived:   'bg-gray-100 text-gray-600 border-gray-200',
 };
@@ -76,7 +76,7 @@ const SignaturePad: React.FC<{ onSave:(d:string)=>void; onCancel:()=>void; label
             <h3 className="font-bold text-[#041628]">{label}</h3>
             <p className="text-xs text-[#4d7291]">Sign in the box below</p>
           </div>
-          <button onClick={onCancel} className="p-2 hover:bg-slate-100 rounded-xl"><X size={16} /></button>
+          <button onClick={onCancel} className="p-2 hover:bg-[#eaf2fc] rounded-xl"><X size={16} /></button>
         </div>
         <div className="border-2 border-dashed border-[#c5d8ef] rounded-xl overflow-hidden mb-4 bg-[#f8fafc] touch-none relative">
           <canvas ref={ref} width={560} height={200}

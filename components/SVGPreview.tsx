@@ -782,7 +782,7 @@ const SVGPreview = forwardRef<SVGSVGElement, SVGPreviewProps>(({ config, classNa
       case 'transparent': return 'bg-transparent';
       case 'white': return 'bg-white';
       case 'paper': return 'bg-[#fdfbf7]';
-      default: return 'bg-slate-50 dark:bg-slate-800/50';
+      default: return 'bg-[#f0f6ff] dark:bg-[#062040]/50';
     }
   };
 

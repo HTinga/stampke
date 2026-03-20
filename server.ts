@@ -6,6 +6,23 @@ import axios from "axios";
 
 dotenv.config();
 
+// Validate required environment variables on startup
+function validateEnv() {
+  const required = ['GEMINI_API_KEY'];
+  const optional = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'APP_URL'];
+  const missing = required.filter(k => !process.env[k]);
+  const missingOptional = optional.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    console.error(`[Tomo] ❌ Missing required env vars: ${missing.join(', ')}`);
+    console.error('[Tomo] Create a .env.local file with these variables.');
+    process.exit(1);
+  }
+  if (missingOptional.length > 0) {
+    console.warn(`[Tomo] ⚠️  Optional env vars not set: ${missingOptional.join(', ')} (Google OAuth will be disabled)`);
+  }
+}
+validateEnv();
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -54,6 +71,7 @@ async function startServer() {
 
       // In a real app, you'd save the user to a DB and set a session cookie
       // For this demo, we'll just pass the user info back to the client via postMessage
+      const appOrigin = process.env.APP_URL || 'http://localhost:3000';
       res.send(`
         <html>
           <body>
@@ -62,7 +80,7 @@ async function startServer() {
                 window.opener.postMessage({ 
                   type: 'OAUTH_AUTH_SUCCESS', 
                   user: ${JSON.stringify(profile)} 
-                }, '*');
+                }, ${JSON.stringify(appOrigin)});
                 window.close();
               } else {
                 window.location.href = '/';

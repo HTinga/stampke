@@ -114,39 +114,39 @@ export default function EnterpriseChat() {
   }, [messages]);
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-[48px] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-2xl">
+    <div className="h-full flex flex-col bg-white dark:bg-[#041628] rounded-[48px] border border-[#eaf2fc] dark:border-[#0e3a72] overflow-hidden shadow-2xl">
       {/* Header */}
-      <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 backdrop-blur-xl">
+      <div className="p-8 border-b border-[#eaf2fc] dark:border-[#0e3a72] flex items-center justify-between bg-[#f0f6ff]/50 dark:bg-[#062040]/50 backdrop-blur-xl">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+          <div className="w-12 h-12 bg-[#134589] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#aaccf2]">
             <Hash size={24} />
           </div>
           <div>
             <h3 className="text-xl font-black tracking-tighter capitalize">{activeChannel}</h3>
-            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Enterprise Communication Hub</p>
+            <p className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest">Enterprise Communication Hub</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-800">
-            <Search size={16} className="text-slate-400" />
+          <div className="flex items-center gap-2 bg-white dark:bg-[#041628] px-4 py-2 rounded-xl border border-[#eaf2fc] dark:border-[#0e3a72]">
+            <Search size={16} className="text-[#4d7291]" />
             <input type="text" placeholder="Search messages..." className="bg-transparent border-none outline-none text-xs font-bold w-32" />
           </div>
-          <button className="p-3 hover:bg-white dark:hover:bg-slate-900 rounded-xl transition-all text-slate-400"><Palette size={20} /></button>
-          <button className="p-3 hover:bg-white dark:hover:bg-slate-900 rounded-xl transition-all text-slate-400"><MoreVertical size={20} /></button>
+          <button className="p-3 hover:bg-white dark:hover:bg-[#041628] rounded-xl transition-all text-[#4d7291]"><Palette size={20} /></button>
+          <button className="p-3 hover:bg-white dark:hover:bg-[#041628] rounded-xl transition-all text-[#4d7291]"><MoreVertical size={20} /></button>
         </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 border-r border-slate-100 dark:border-slate-800 p-6 space-y-8 hidden lg:block">
+        <div className="w-64 border-r border-[#eaf2fc] dark:border-[#0e3a72] p-6 space-y-8 hidden lg:block">
           <div>
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Channels</h4>
+            <h4 className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-4">Channels</h4>
             <div className="space-y-1">
               {['general', 'legal-ops', 'finance', 'random'].map(channel => (
                 <button 
                   key={channel}
                   onClick={() => setActiveChannel(channel)}
-                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeChannel === channel ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeChannel === channel ? 'bg-[#eaf2fc] dark:bg-[#062040] text-[#134589]' : 'text-[#365874] hover:bg-[#f0f6ff] dark:hover:bg-[#062040]'}`}
                 >
                   <Hash size={16} /> {channel}
                 </button>
@@ -155,29 +155,29 @@ export default function EnterpriseChat() {
           </div>
 
           <div>
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Direct Messages</h4>
+            <h4 className="text-[10px] font-black uppercase text-[#4d7291] tracking-widest mb-4">Direct Messages</h4>
             <div className="space-y-1">
               {['Sarah Wambui', 'John Kamau', 'Legal Bot'].map(user => (
-                <button key={user} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                <button key={user} className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-bold text-[#365874] hover:bg-[#f0f6ff] dark:hover:bg-[#062040] transition-all">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" /> {user}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
-            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
+          <div className="pt-8 border-t border-[#eaf2fc] dark:border-[#0e3a72]">
+            <div className="bg-[#f0f6ff] dark:bg-[#062040] p-4 rounded-2xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-black uppercase text-slate-400">Sentiment Trend</span>
+                <span className="text-[10px] font-black uppercase text-[#4d7291]">Sentiment Trend</span>
                 <TrendingUp size={14} className="text-emerald-500" />
               </div>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Overall Mood: Positive</p>
+              <p className="text-xs font-bold text-[#224260] dark:text-[#7ab3e8]">Overall Mood: Positive</p>
             </div>
           </div>
         </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-slate-50/30 dark:bg-slate-950/30">
+        <div className="flex-1 flex flex-col bg-[#f0f6ff]/30 dark:bg-[#020b18]/30">
           <div className="flex-1 overflow-y-auto p-8 space-y-6">
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
@@ -187,28 +187,28 @@ export default function EnterpriseChat() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex gap-4 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${msg.isAnonymous ? 'bg-slate-800' : 'bg-blue-600'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${msg.isAnonymous ? 'bg-[#062040]' : 'bg-[#134589]'}`}>
                     {msg.isAnonymous ? <EyeOff size={18} /> : <User size={18} />}
                   </div>
                   <div className={`max-w-[70%] space-y-2 ${msg.user === 'You' ? 'items-end' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-slate-900 dark:text-white">{msg.user}</span>
-                      {msg.role && <span className="text-[8px] font-black uppercase bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-1.5 py-0.5 rounded-md">{msg.role}</span>}
-                      <span className="text-[10px] text-slate-400 font-medium">{msg.time}</span>
+                      <span className="text-xs font-black text-[#041628] dark:text-white">{msg.user}</span>
+                      {msg.role && <span className="text-[8px] font-black uppercase bg-[#eaf2fc] dark:bg-[#062040] text-[#134589] px-1.5 py-0.5 rounded-md">{msg.role}</span>}
+                      <span className="text-[10px] text-[#4d7291] font-medium">{msg.time}</span>
                       {msg.sentiment === 'positive' && <Zap size={12} className="text-amber-500" />}
                     </div>
-                    <div className={`p-4 rounded-3xl shadow-sm border ${msg.user === 'You' ? 'bg-blue-600 text-white border-blue-500 rounded-tr-none' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-tl-none'}`}>
+                    <div className={`p-4 rounded-3xl shadow-sm border ${msg.user === 'You' ? 'bg-[#134589] text-white border-[#1a5cad] rounded-tr-none' : 'bg-white dark:bg-[#041628] border-[#eaf2fc] dark:border-[#0e3a72] rounded-tl-none'}`}>
                       <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
                     </div>
                     <div className="flex items-center gap-3 px-2">
                       <button 
                         onClick={() => handleUpvote(msg.id)}
-                        className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-blue-600 transition-all"
+                        className="flex items-center gap-1.5 text-[10px] font-black text-[#4d7291] hover:text-[#134589] transition-all"
                       >
                         <ThumbsUp size={12} /> {msg.upvotes}
                       </button>
-                      <button className="text-[10px] font-black text-slate-400 hover:text-slate-600 transition-all">Reply</button>
-                      <div className={`w-1.5 h-1.5 rounded-full ${msg.sentiment === 'positive' ? 'bg-emerald-500' : msg.sentiment === 'negative' ? 'bg-rose-500' : 'bg-slate-300'}`} />
+                      <button className="text-[10px] font-black text-[#4d7291] hover:text-[#224260] transition-all">Reply</button>
+                      <div className={`w-1.5 h-1.5 rounded-full ${msg.sentiment === 'positive' ? 'bg-emerald-500' : msg.sentiment === 'negative' ? 'bg-rose-500' : 'bg-[#aaccf2]'}`} />
                     </div>
                   </div>
                 </motion.div>
@@ -218,22 +218,22 @@ export default function EnterpriseChat() {
           </div>
 
           {/* Input Area */}
-          <div className="p-8 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-8 bg-white dark:bg-[#041628] border-t border-[#eaf2fc] dark:border-[#0e3a72]">
             <div className="flex items-center gap-4 mb-4">
               <button 
                 onClick={() => setIsAnonymousMode(!isAnonymousMode)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isAnonymousMode ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isAnonymousMode ? 'bg-[#041628] text-white' : 'bg-[#eaf2fc] text-[#365874] hover:bg-[#c5d8ef]'}`}
               >
                 {isAnonymousMode ? <EyeOff size={14} /> : <User size={14} />}
                 {isAnonymousMode ? 'Anonymous Active' : 'Go Anonymous'}
               </button>
-              <div className="h-4 w-px bg-slate-100 dark:bg-slate-800" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="h-4 w-px bg-[#eaf2fc] dark:bg-[#062040]" />
+              <span className="text-[10px] font-black text-[#4d7291] uppercase tracking-widest">
                 {isAnonymousMode ? 'Your identity is hidden' : 'Posting as Tinga'}
               </span>
             </div>
-            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-2 rounded-[32px] border border-slate-100 dark:border-slate-700">
-              <button className="p-4 hover:bg-white dark:hover:bg-slate-900 rounded-full transition-all text-slate-400"><Paperclip size={20} /></button>
+            <div className="flex items-center gap-4 bg-[#f0f6ff] dark:bg-[#062040] p-2 rounded-[32px] border border-[#eaf2fc] dark:border-[#134589]">
+              <button className="p-4 hover:bg-white dark:hover:bg-[#041628] rounded-full transition-all text-[#4d7291]"><Paperclip size={20} /></button>
               <input 
                 type="text" 
                 value={input}
@@ -242,10 +242,10 @@ export default function EnterpriseChat() {
                 placeholder="Type a message or use / for commands..." 
                 className="flex-1 bg-transparent border-none outline-none font-bold text-sm px-2"
               />
-              <button className="p-4 hover:bg-white dark:hover:bg-slate-900 rounded-full transition-all text-slate-400"><Smile size={20} /></button>
+              <button className="p-4 hover:bg-white dark:hover:bg-[#041628] rounded-full transition-all text-[#4d7291]"><Smile size={20} /></button>
               <button 
                 onClick={handleSend}
-                className="bg-blue-600 text-white p-4 rounded-full shadow-lg shadow-blue-200 hover:scale-110 transition-all active:scale-95"
+                className="bg-[#134589] text-white p-4 rounded-full shadow-lg shadow-[#aaccf2] hover:scale-110 transition-all active:scale-95"
               >
                 <Send size={20} />
               </button>

@@ -66,7 +66,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const savedTemplates = localStorage.getItem('custom_stamp_templates');
     if (savedTemplates) {
-      try { setCustomTemplates(JSON.parse(savedTemplates)); } catch {}
+      try { setCustomTemplates(JSON.parse(savedTemplates)); } catch (err) { console.warn("[Tomo] Non-critical error:", err); }
     }
   }, []);
 
@@ -237,30 +237,30 @@ const App: React.FC = () => {
         />
         <AnimatePresence>
           {showLoginModal && (
-            <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
+            <div className="fixed inset-0 bg-[#020b18]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                className="bg-white w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                 <div className="p-16 space-y-10">
                   <div className="text-center">
                     <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6">
                       <ShieldCheck size={32} />
                     </div>
                     <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-base">
+                    <p className="text-slate-500 dark:text-[#7ab3e8] font-medium text-base">
                       {isSignUp ? 'Create your professional digital authority account.' : 'Sign in to your workspace.'}
                     </p>
                   </div>
                   <form onSubmit={handleDemoLogin} className="space-y-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Email Address</label>
+                      <label className="text-[10px] font-black text-[#7ab3e8] uppercase tracking-widest px-2">Email Address</label>
                       <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/20 font-bold"
+                        className="w-full bg-[#f0f6ff] border border-[#c5d8ef] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/20 font-bold text-[#041628]"
                         placeholder="counsel@firm.ke" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Password</label>
+                      <label className="text-[10px] font-black text-[#7ab3e8] uppercase tracking-widest px-2">Password</label>
                       <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/20 font-bold"
+                        className="w-full bg-[#f0f6ff] border border-[#c5d8ef] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/20 font-bold text-[#041628]"
                         placeholder="••••••••" />
                     </div>
                     {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
@@ -269,10 +269,10 @@ const App: React.FC = () => {
                     </button>
                   </form>
                   <div className="flex items-center justify-between">
-                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-[#134589] transition-all text-sm">
+                    <button onClick={() => setIsSignUp(!isSignUp)} className="text-[#7ab3e8] font-bold hover:text-[#134589] transition-all text-sm">
                       {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
                     </button>
-                    <button onClick={() => setShowLoginModal(false)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors"><X size={18} /></button>
+                    <button onClick={() => setShowLoginModal(false)} className="p-2 text-[#4d7291] hover:text-[#7ab3e8] transition-colors"><X size={18} /></button>
                   </div>
                 </div>
               </motion.div>
@@ -285,10 +285,10 @@ const App: React.FC = () => {
 
   // ─── APP SHELL ────────────────────────────────────────────────────────────
   return (
-    <div className={`h-screen flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`h-screen flex overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#020b18] text-[#eaf3fd]' : 'bg-[#f0f6ff] text-[#041628]'}`}>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[100] flex-shrink-0">
+      <aside className="hidden lg:flex w-60 flex-col bg-[#041628] border-r border-[#0e3a72] z-[100] flex-shrink-0">
         <div className="p-5 flex items-center gap-3 cursor-pointer" onClick={() => nav('dashboard')}>
           <div className="bg-[#134589] text-white p-2 rounded-xl shadow-lg shadow-blue-200 dark:shadow-none"><Plus size={18} /></div>
           <h1 className="text-lg font-black tracking-tighter">Tomo</h1>
@@ -296,14 +296,14 @@ const App: React.FC = () => {
         <nav className="flex-1 overflow-y-auto p-3 space-y-5">
           {NAVIGATION_GROUPS.map(group => (
             <div key={group.id}>
-              <h4 className="px-3 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-2">{group.label}</h4>
+              <h4 className="px-3 text-[9px] font-black uppercase tracking-widest text-[#4d93d9] mb-2">{group.label}</h4>
               {group.items.map(itemId => {
                 const item = NAVIGATION_ITEMS.find(i => i.id === itemId);
                 if (!item) return null;
                 return (
                   <button key={item.id} onClick={() => nav(item.id as ActiveTab)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${
-                      activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-[#134589]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-slate-500 dark:text-[#7ab3e8] hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}>
                     <item.icon size={15} />
                     <span className="flex-1 text-left">{item.label}</span>
@@ -315,7 +315,7 @@ const App: React.FC = () => {
           ))}
         </nav>
         <div className="p-4 space-y-3">
-          <button onClick={() => nav('landing')} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-[#134589] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+          <button onClick={() => nav('landing')} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-[#7ab3e8] hover:text-[#134589] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
             <Sparkles size={14} /> Landing Page
           </button>
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 text-white">
@@ -330,26 +330,26 @@ const App: React.FC = () => {
       <AnimatePresence>
         {isSidebarOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150]" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-[#020b18]/70 backdrop-blur-sm z-[150]" />
             <motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="lg:hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-[200] flex flex-col">
+              className="lg:hidden fixed inset-y-0 left-0 w-64 bg-[#041628] border-r border-[#0e3a72] z-[200] flex flex-col">
               <div className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="bg-[#134589] text-white p-2 rounded-xl"><Plus size={16} /></div>
                   <h1 className="text-lg font-black tracking-tighter">Tomo</h1>
                 </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><X size={18} /></button>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 hover:bg-[#0e3a72] rounded-lg"><X size={18} /></button>
               </div>
               <nav className="flex-1 overflow-y-auto p-3 space-y-5">
                 {NAVIGATION_GROUPS.map(group => (
                   <div key={group.id}>
-                    <h4 className="px-3 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{group.label}</h4>
+                    <h4 className="px-3 text-[9px] font-black uppercase tracking-widest text-[#7ab3e8] mb-2">{group.label}</h4>
                     {group.items.map(itemId => {
                       const item = NAVIGATION_ITEMS.find(i => i.id === itemId);
                       if (!item) return null;
                       return (
                         <button key={item.id} onClick={() => { nav(item.id as ActiveTab); setIsSidebarOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-blue-50 dark:bg-blue-900/20 text-[#134589]' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold transition-all text-sm mb-0.5 ${activeTab === item.id ? 'bg-[#0e3a72] text-[#00c8ff]' : 'text-slate-500 dark:text-[#7ab3e8] hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                           <item.icon size={15} /><span className="flex-1 text-left">{item.label}</span>
                         </button>
                       );
@@ -365,29 +365,29 @@ const App: React.FC = () => {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl z-50 px-5 flex items-center justify-between flex-shrink-0">
+        <header className="h-14 border-b border-[#0e3a72] bg-[#041628]/95 backdrop-blur-xl z-50 px-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"><Menu size={18} /></button>
-            <div className="hidden md:flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-[#0e3a72] rounded-lg"><Menu size={18} /></button>
+            <div className="hidden md:flex items-center gap-2 text-[#7ab3e8] font-bold text-[10px] uppercase tracking-widest">
               <LayoutDashboard size={12} />
               <span>Tomo</span>
               <ChevronRight size={12} />
-              <span className="text-slate-900 dark:text-white capitalize">{activeTab.replace(/-/g, ' ')}</span>
+              <span className="text-white capitalize">{activeTab.replace(/-/g, ' ')}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <Search size={12} className="text-slate-400 mr-2" />
+            <div className="hidden md:flex items-center bg-[#062040] px-3 py-1.5 rounded-xl border border-[#134589]">
+              <Search size={12} className="text-[#7ab3e8] mr-2" />
               <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-xs font-bold w-32 lg:w-40" />
             </div>
-            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-slate-500">
+            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="p-2 hover:bg-[#0e3a72] rounded-xl transition-all text-[#7ab3e8]">
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             {isLoggedIn ? (
               <div className="flex items-center gap-2">
                 <div className="hidden sm:block text-right">
-                  <p className="text-xs font-black">{user?.name}</p>
-                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{userRole}</p>
+                  <p className="text-xs font-black text-[#eaf3fd]">{user?.name}</p>
+                  <p className="text-[9px] text-[#7ab3e8] font-bold uppercase tracking-widest">{userRole}</p>
                 </div>
                 <button onClick={handleLogout} className="w-8 h-8 rounded-xl bg-[#134589] text-white flex items-center justify-center font-black text-xs hover:bg-[#0e3a72] transition-all">
                   {user?.name.charAt(0).toUpperCase()}
@@ -402,7 +402,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Page */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+        <main className="flex-1 overflow-y-auto bg-[#f0f6ff]">
           <div className="p-5 md:p-8">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}>
@@ -423,24 +423,24 @@ const App: React.FC = () => {
                           </div>
                           <h2 className="text-3xl font-black tracking-tighter">Stamp Studio</h2>
                         </div>
-                        <p className={`text-sm font-medium ml-11 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Design your professional vector stamp with real-time preview</p>
+                        <p className={`text-sm font-medium ml-11 ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Design your professional vector stamp with real-time preview</p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black border ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400' : 'bg-white border-slate-100 text-slate-500'}`}>
+                        <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black text-[#eaf3fd] border ${isDark ? 'bg-slate-800 border-slate-700 text-[#7ab3e8]' : 'bg-[#f0f6ff] border-[#c5d8ef] text-slate-500'}`}>
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           Vector SVG · 2K PNG · PDF
                         </div>
-                        <button onClick={() => nav('dashboard')} className={`p-2 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-400'}`}><X size={20} /></button>
+                        <button onClick={() => nav('dashboard')} className={`p-2 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-[#7ab3e8]' : 'hover:bg-slate-100 text-[#7ab3e8]'}`}><X size={20} /></button>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                       {/* Controls */}
                       <div className="lg:col-span-4">
-                        <div className={`rounded-3xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+                        <div className={`rounded-3xl border overflow-hidden ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`}>
                           <div className={`px-5 py-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-50 bg-slate-50/80'}`}>
                             <h3 className="text-sm font-black">Stamp Configuration</h3>
-                            <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Customize every detail</p>
+                            <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Customize every detail</p>
                           </div>
                           <div className="p-4 overflow-y-auto max-h-[calc(100vh-260px)]">
                             <EditorControls config={stampConfig} onChange={(u) => setStampConfig(prev => ({ ...prev, ...u }))} isLoggedIn={isLoggedIn} onSaveTemplate={handleSaveTemplate} />
@@ -451,10 +451,10 @@ const App: React.FC = () => {
                       {/* Preview + Actions */}
                       <div className="lg:col-span-8 flex flex-col gap-5">
                         {/* Canvas */}
-                        <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`} style={{minHeight:'380px'}}>
+                        <div className={`relative rounded-3xl border flex flex-col items-center justify-center p-8 md:p-12 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`} style={{minHeight:'380px'}}>
                           <div className="absolute top-4 left-4 flex gap-2">
                             <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-blue-50 text-[#134589] border-blue-100'}`}>Vector SVG</span>
-                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>High Resolution</span>
+                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${isDark ? 'bg-slate-800 text-[#7ab3e8] border-slate-700' : 'bg-slate-50 text-[#7ab3e8] border-slate-100'}`}>High Resolution</span>
                           </div>
                           <div className="w-full max-w-xs aspect-square flex items-center justify-center relative">
                             <div className={`absolute inset-0 rounded-3xl border-2 border-dashed ${isDark ? 'border-slate-700' : 'border-slate-200'}`} />
@@ -465,12 +465,12 @@ const App: React.FC = () => {
                         </div>
 
                         {/* Download */}
-                        <div className={`rounded-2xl border p-5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+                        <div className={`rounded-2xl border p-5 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f0f6ff] border-[#c5d8ef] shadow-sm'}`}>
                           <div className="flex items-center justify-between mb-4">
-                            <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Export Stamp</h4>
+                            <h4 className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Export Stamp</h4>
                             <div className="flex items-center gap-1.5">
                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>Ready</span>
+                              <span className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>Ready</span>
                             </div>
                           </div>
                           <div className="grid grid-cols-3 gap-3">
@@ -483,7 +483,7 @@ const App: React.FC = () => {
                                 className={`flex flex-col items-center gap-1.5 p-4 rounded-2xl border-2 transition-all group ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-transparent'} ${hover}`}>
                                 <Icon size={22} className="group-hover:scale-110 transition-transform" />
                                 <span className="text-[11px] font-black uppercase">{label}</span>
-                                <span className={`text-[9px] font-bold ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>{desc}</span>
+                                <span className={`text-[9px] font-bold ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>{desc}</span>
                               </button>
                             ))}
                           </div>
@@ -524,7 +524,7 @@ const App: React.FC = () => {
                 {activeTab === 'templates' && (
                   <div className="max-w-7xl mx-auto py-8">
                     <h2 className="text-3xl font-black tracking-tighter mb-1">Authentic Templates</h2>
-                    <p className={`font-medium mb-10 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Professionally captured from real Kenyan rubber stamp samples.</p>
+                    <p className={`font-medium mb-10 ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Professionally captured from real Kenyan rubber stamp samples.</p>
                     <TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} />
                   </div>
                 )}
@@ -535,19 +535,19 @@ const App: React.FC = () => {
                       <Camera size={40} />
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">AI Stamp Digitizer</h2>
-                    <p className={`text-lg font-medium mb-12 max-w-lg mx-auto ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Photograph your old rubber stamp — our AI recreates it as a perfect digital vector in seconds.</p>
+                    <p className={`text-lg font-medium mb-12 max-w-lg mx-auto ${isDark ? 'text-[#7ab3e8]' : 'text-slate-500'}`}>Photograph your old rubber stamp — our AI recreates it as a perfect digital vector in seconds.</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <label className={`group relative rounded-3xl border-4 border-dashed p-12 text-center hover:border-blue-400 transition-all cursor-pointer ${isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}>
                         <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <ImageIcon size={40} className={`mx-auto mb-4 transition-colors group-hover:text-blue-500 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
                         <p className="text-xl font-black mb-1">Upload Photo</p>
-                        <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Select from gallery</p>
+                        <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-[#7ab3e8]'}`}>Select from gallery</p>
                       </label>
                       <label className="group relative bg-[#041628] dark:bg-slate-800 text-white rounded-3xl p-12 text-center cursor-pointer overflow-hidden border-4 border-transparent hover:border-blue-500 transition-all">
                         <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <Camera size={40} className="mx-auto text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
                         <p className="text-xl font-black mb-1">Live Camera</p>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Snap a picture now</p>
+                        <p className="text-xs text-[#7ab3e8] font-bold uppercase tracking-widest">Snap a picture now</p>
                       </label>
                     </div>
                   </div>
@@ -563,17 +563,17 @@ const App: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <footer className={`border-t py-8 px-6 mt-12 ${isDark ? 'bg-slate-950 border-slate-900' : 'bg-white border-slate-100'}`}>
+          <footer className={`border-t py-8 px-6 mt-12 ${isDark ? 'bg-[#020b18] border-[#0e3a72]' : 'bg-[#f0f6ff] border-[#c5d8ef]'}`}>
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="bg-[#134589] text-white p-1.5 rounded-lg"><Plus size={14} /></div>
                 <span className="font-black text-base tracking-tighter">Tomo</span>
               </div>
-              <p className={`font-black text-[9px] uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>© 2024 JijiTechy Innovations · LSK Standards Applied</p>
+              <p className={`font-black text-[9px] uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-[#7ab3e8]'}`}>© 2024 JijiTechy Innovations · LSK Standards Applied</p>
               <div className="flex gap-4">
-                <Twitter size={16} className="text-slate-400 hover:text-blue-400 cursor-pointer transition-colors" />
-                <Linkedin size={16} className="text-slate-400 hover:text-[#134589] cursor-pointer transition-colors" />
-                <Github size={16} className="text-slate-400 hover:text-white cursor-pointer transition-colors" />
+                <Twitter size={16} className="text-[#7ab3e8] hover:text-blue-400 cursor-pointer transition-colors" />
+                <Linkedin size={16} className="text-[#7ab3e8] hover:text-[#134589] cursor-pointer transition-colors" />
+                <Github size={16} className="text-[#7ab3e8] hover:text-white cursor-pointer transition-colors" />
               </div>
             </div>
           </footer>
@@ -583,23 +583,23 @@ const App: React.FC = () => {
       {/* Login Modal */}
       <AnimatePresence>
         {showLoginModal && (
-          <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
+          <div className="fixed inset-0 bg-[#020b18]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
             <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+              className="bg-white w-full max-w-xl rounded-[64px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
               <div className="p-16 space-y-10">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-[#134589] rounded-[28px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-blue-200 mb-6"><ShieldCheck size={32} /></div>
                   <h3 className="text-4xl font-black tracking-tighter mb-2">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">{isSignUp ? 'Create your account.' : 'Sign in to your workspace.'}</p>
+                  <p className="text-slate-500 dark:text-[#7ab3e8] font-medium">{isSignUp ? 'Create your account.' : 'Sign in to your workspace.'}</p>
                 </div>
                 <form onSubmit={handleDemoLogin} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Email Address</label>
-                    <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/20 font-bold" placeholder="counsel@firm.ke" />
+                    <label className="text-[10px] font-black text-[#7ab3e8] uppercase tracking-widest px-2">Email Address</label>
+                    <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#f0f6ff] border border-[#c5d8ef] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/20 font-bold text-[#041628]" placeholder="counsel@firm.ke" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Password</label>
-                    <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-blue-500/20 font-bold" placeholder="••••••••" />
+                    <label className="text-[10px] font-black text-[#7ab3e8] uppercase tracking-widest px-2">Password</label>
+                    <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-[#f0f6ff] border border-[#c5d8ef] rounded-2xl py-4 px-6 outline-none focus:ring-4 focus:ring-[#134589]/20 font-bold text-[#041628]" placeholder="••••••••" />
                   </div>
                   {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
                   <button type="submit" className="w-full bg-[#041628] dark:bg-[#134589] text-white py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
@@ -607,8 +607,8 @@ const App: React.FC = () => {
                   </button>
                 </form>
                 <div className="flex items-center justify-between">
-                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-slate-400 font-bold hover:text-[#134589] transition-all text-sm">{isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}</button>
-                  <button onClick={() => setShowLoginModal(false)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors"><X size={18} /></button>
+                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-[#7ab3e8] font-bold hover:text-[#134589] transition-all text-sm">{isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}</button>
+                  <button onClick={() => setShowLoginModal(false)} className="p-2 text-[#4d7291] hover:text-[#7ab3e8] transition-colors"><X size={18} /></button>
                 </div>
               </div>
             </motion.div>

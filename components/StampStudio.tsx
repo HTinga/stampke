@@ -38,12 +38,12 @@ const SignaturePad = ({ onSave, onCancel }: { onSave:(u:string)=>void; onCancel:
   const stop = () => { drawing.current = false; };
   return (
     <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-slate-200">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-[#c5d8ef]">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-slate-900">Draw your signature</h4>
-          <button onClick={onCancel} className="p-1 hover:bg-slate-100 rounded-full"><X size={16} /></button>
+          <h4 className="font-bold text-[#041628]">Draw your signature</h4>
+          <button onClick={onCancel} className="p-1 hover:bg-[#eaf2fc] rounded-full"><X size={16} /></button>
         </div>
-        <div className="border-2 border-dashed border-slate-300 rounded-xl overflow-hidden mb-4 bg-slate-50 touch-none">
+        <div className="border-2 border-dashed border-[#aaccf2] rounded-xl overflow-hidden mb-4 bg-[#f0f6ff] touch-none">
           <canvas ref={ref} width={340} height={160}
             onMouseDown={start} onMouseUp={stop} onMouseMove={move}
             onTouchStart={start} onTouchEnd={stop} onTouchMove={move}
@@ -51,7 +51,7 @@ const SignaturePad = ({ onSave, onCancel }: { onSave:(u:string)=>void; onCancel:
         </div>
         <div className="flex gap-2">
           <button onClick={() => { const c = ref.current; c?.getContext('2d')?.clearRect(0,0,c.width,c.height); }}
-            className="flex-1 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1">
+            className="flex-1 py-2 border border-[#c5d8ef] rounded-xl text-sm font-medium text-[#224260] hover:bg-[#f0f6ff] flex items-center justify-center gap-1">
             <Eraser size={14} /> Clear
           </button>
           <button onClick={() => { if (ref.current) onSave(ref.current.toDataURL('image/png')); }}

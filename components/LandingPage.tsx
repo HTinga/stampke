@@ -76,8 +76,8 @@ const PRICING = [
     price: 'Free',
     period: '',
     desc: 'Perfect for individuals and freelancers.',
-    color: 'border-slate-200 dark:border-slate-700',
-    btnClass: 'bg-slate-900 dark:bg-slate-700 text-white hover:opacity-90',
+    color: 'border-[#c5d8ef] dark:border-[#134589]',
+    btnClass: 'bg-[#041628] dark:bg-[#0a2d5a] text-white hover:opacity-90',
     features: [
       '5 stamps per month',
       'SVG & PNG export',
@@ -92,8 +92,8 @@ const PRICING = [
     price: 'KES 2,499',
     period: '/month',
     desc: 'For law firms, SMEs, and growing teams.',
-    color: 'border-blue-500 ring-4 ring-blue-100 dark:ring-blue-900/30',
-    btnClass: 'bg-blue-600 text-white hover:bg-blue-700',
+    color: 'border-[#1a5cad] ring-4 ring-blue-100 dark:ring-blue-900/30',
+    btnClass: 'bg-[#134589] text-white hover:bg-[#0e3a72]',
     badge: 'Most Popular',
     features: [
       'Unlimited stamps',
@@ -112,8 +112,8 @@ const PRICING = [
     price: 'Custom',
     period: '',
     desc: 'For large organizations and government agencies.',
-    color: 'border-slate-800 dark:border-slate-600',
-    btnClass: 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white hover:opacity-90',
+    color: 'border-[#0e3a72] dark:border-[#1a5cad]',
+    btnClass: 'bg-[#041628] dark:bg-white dark:text-[#041628] text-white hover:opacity-90',
     features: [
       'Everything in Professional',
       'White-label branding',
@@ -135,7 +135,7 @@ const TESTIMONIALS = [
     text: 'Tomo transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',
     stars: 5,
     initials: 'WK',
-    color: 'bg-blue-600',
+    color: 'bg-[#134589]',
   },
   {
     name: 'James Otieno',
@@ -177,13 +177,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
   ];
 
   return (
-    <div className={`min-h-screen font-sans ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
+    <div className={`min-h-screen font-sans ${isDark ? 'bg-[#020b18] text-white' : 'bg-white text-[#041628]'}`}>
       
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 ${isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-100'} backdrop-blur-xl border-b`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 ${isDark ? 'bg-[#020b18]/90 border-[#0e3a72]' : 'bg-white/90 border-[#eaf2fc]'} backdrop-blur-xl border-b`}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <div className="w-8 h-8 bg-[#134589] rounded-xl flex items-center justify-center shadow-lg shadow-[#aaccf2]">
               <Plus size={18} className="text-white" />
             </div>
             <span className="text-xl font-black tracking-tighter">Tomo</span>
@@ -191,14 +191,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
 
           <div className="hidden md:flex items-center gap-8">
             {['Features', 'Pricing', 'Testimonials', 'FAQ'].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`} className={`text-sm font-bold transition-colors ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}>{item}</a>
+              <a key={item} href={`#${item.toLowerCase()}`} className={`text-sm font-bold transition-colors ${isDark ? 'text-[#4d7291] hover:text-white' : 'text-[#365874] hover:text-[#041628]'}`}>{item}</a>
             ))}
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={onGetStarted}
-              className="hidden md:block bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+              className="hidden md:block bg-[#134589] text-white px-5 py-2.5 rounded-xl font-black text-sm hover:bg-[#0e3a72] transition-all shadow-lg shadow-[#aaccf2] dark:shadow-none"
             >
               Get Started Free
             </button>
@@ -208,11 +208,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
           </div>
         </div>
         {mobileMenuOpen && (
-          <div className={`md:hidden ${isDark ? 'bg-slate-900' : 'bg-white'} border-t ${isDark ? 'border-slate-800' : 'border-slate-100'} px-6 py-4 space-y-3`}>
+          <div className={`md:hidden ${isDark ? 'bg-[#041628]' : 'bg-white'} border-t ${isDark ? 'border-[#0e3a72]' : 'border-[#eaf2fc]'} px-6 py-4 space-y-3`}>
             {['Features', 'Pricing', 'Testimonials', 'FAQ'].map(item => (
               <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold py-2">{item}</a>
             ))}
-            <button onClick={onGetStarted} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-sm mt-2">Get Started Free</button>
+            <button onClick={onGetStarted} className="w-full bg-[#134589] text-white py-3 rounded-xl font-black text-sm mt-2">Get Started Free</button>
           </div>
         )}
       </nav>
@@ -221,13 +221,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       <section className="pt-32 pb-24 px-6 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#eaf2fc]0/10 rounded-full blur-3xl" />
           <div className="absolute top-1/2 -left-24 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
           <div className={`absolute inset-0 ${isDark ? 'opacity-5' : 'opacity-[0.03]'}`} style={{backgroundImage: 'radial-gradient(circle, #1e40af 1px, transparent 1px)', backgroundSize: '40px 40px'}} />
         </div>
 
         <div className="max-w-5xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-8 border border-blue-100 dark:border-blue-800">
+          <div className="inline-flex items-center gap-2 bg-[#eaf2fc] dark:bg-blue-900/30 text-[#134589] dark:text-blue-400 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-8 border border-[#d4e6f9] dark:border-blue-800">
             <Sparkles size={12} />
             Kenya's #1 Digital Stamp & Document Platform
           </div>
@@ -240,29 +240,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
             </span>
           </h1>
           
-          <p className={`text-xl md:text-2xl font-medium max-w-2xl mx-auto mb-12 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-xl md:text-2xl font-medium max-w-2xl mx-auto mb-12 ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>
             Design, apply, and manage professional digital stamps and e-signatures — built for Kenyan law firms, enterprises, and institutions.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <button
               onClick={onGetStarted}
-              className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center gap-3 hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200 dark:shadow-blue-900/50 hover:scale-105 active:scale-95"
+              className="bg-[#134589] text-white px-10 py-5 rounded-2xl font-black text-lg flex items-center gap-3 hover:bg-[#0e3a72] transition-all shadow-2xl shadow-[#aaccf2] dark:shadow-blue-900/50 hover:scale-105 active:scale-95"
             >
               Start for Free <ArrowRight size={22} />
             </button>
             <button
               onClick={onGetStarted}
-              className={`px-10 py-5 rounded-2xl font-black text-lg flex items-center gap-3 border-2 transition-all hover:scale-105 ${isDark ? 'border-slate-700 text-white hover:bg-slate-800' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+              className={`px-10 py-5 rounded-2xl font-black text-lg flex items-center gap-3 border-2 transition-all hover:scale-105 ${isDark ? 'border-[#134589] text-white hover:bg-[#062040]' : 'border-[#c5d8ef] text-[#0a2d5a] hover:bg-[#f0f6ff]'}`}
             >
-              <Camera size={20} className="text-blue-600" /> AI Demo →
+              <Camera size={20} className="text-[#134589]" /> AI Demo →
             </button>
           </div>
 
           {/* Social proof bar */}
-          <div className={`flex flex-wrap items-center justify-center gap-6 text-sm font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+          <div className={`flex flex-wrap items-center justify-center gap-6 text-sm font-bold ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>
             <span className="flex items-center gap-2"><Shield size={14} className="text-emerald-500" /> LSK Compliant</span>
-            <span className="flex items-center gap-2"><Lock size={14} className="text-blue-500" /> Bank-grade Encryption</span>
+            <span className="flex items-center gap-2"><Lock size={14} className="text-[#1a5cad]" /> Bank-grade Encryption</span>
             <span className="flex items-center gap-2"><Globe size={14} className="text-purple-500" /> Kenya & East Africa</span>
             <span className="flex items-center gap-2"><Zap size={14} className="text-yellow-500" /> No CC Required</span>
           </div>
@@ -270,17 +270,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       </section>
 
       {/* Stats */}
-      <section className={`py-16 px-6 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+      <section className={`py-16 px-6 ${isDark ? 'bg-[#041628]/50' : 'bg-[#f0f6ff]'}`}>
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {STATS.map((stat, i) => (
             <div key={i} className="text-center">
               <div className="flex justify-center mb-3">
-                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
-                  <stat.icon size={20} className="text-blue-600" />
+                <div className="w-10 h-10 bg-[#eaf2fc] dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
+                  <stat.icon size={20} className="text-[#134589]" />
                 </div>
               </div>
               <div className="text-3xl md:text-4xl font-black tracking-tighter mb-1">{stat.value}</div>
-              <div className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{stat.label}</div>
+              <div className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{stat.label}</div>
             </div>
           ))}
         </div>
@@ -290,16 +290,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       <section id="features" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Everything You Need</div>
+            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-[#134589]'}`}>Everything You Need</div>
             <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-6">One platform.<br />Total document authority.</h2>
-            <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Eight powerful tools, seamlessly integrated. No juggling between apps.</p>
+            <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>Eight powerful tools, seamlessly integrated. No juggling between apps.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map((feature, i) => (
               <div
                 key={i}
-                className={`group p-6 rounded-3xl border transition-all duration-300 hover:shadow-xl cursor-pointer hover:-translate-y-1 ${isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-600' : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'}`}
+                className={`group p-6 rounded-3xl border transition-all duration-300 hover:shadow-xl cursor-pointer hover:-translate-y-1 ${isDark ? 'bg-[#041628] border-[#0e3a72] hover:border-[#1a5cad]' : 'bg-white border-[#eaf2fc] hover:border-[#c5d8ef] shadow-sm'}`}
                 onClick={onGetStarted}
               >
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
@@ -307,10 +307,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
                 </div>
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="font-black text-base">{feature.title}</h3>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-400'}`}>{feature.badge}</span>
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${isDark ? 'bg-[#062040] text-[#4d7291]' : 'bg-[#f0f6ff] text-[#4d7291]'}`}>{feature.badge}</span>
                 </div>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{feature.desc}</p>
-                <div className={`mt-4 flex items-center gap-1 text-xs font-black text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>{feature.desc}</p>
+                <div className={`mt-4 flex items-center gap-1 text-xs font-black text-[#134589] opacity-0 group-hover:opacity-100 transition-opacity`}>
                   Try it now <ChevronRight size={12} />
                 </div>
               </div>
@@ -320,25 +320,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       </section>
 
       {/* How it works */}
-      <section className={`py-24 px-6 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+      <section className={`py-24 px-6 ${isDark ? 'bg-[#041628]/50' : 'bg-[#f0f6ff]'}`}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Simple Workflow</div>
+            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-[#134589]'}`}>Simple Workflow</div>
             <h2 className="text-5xl font-black tracking-tighter">From rubber stamp<br />to signed document</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: '01', title: 'Design or Digitize', desc: 'Build your stamp from scratch using our designer, or photograph your existing stamp and let AI recreate it.', icon: PenTool, color: 'bg-blue-600' },
+              { step: '01', title: 'Design or Digitize', desc: 'Build your stamp from scratch using our designer, or photograph your existing stamp and let AI recreate it.', icon: PenTool, color: 'bg-[#134589]' },
               { step: '02', title: 'Apply to Documents', desc: 'Drag and drop your stamp onto any PDF. Apply it individually or batch-stamp an entire folder instantly.', icon: FileText, color: 'bg-emerald-600' },
               { step: '03', title: 'Sign & Track', desc: 'Collect legally binding e-signatures, generate QR-tracked certificates, and maintain a full audit log.', icon: CheckCircle2, color: 'bg-purple-600' },
             ].map((step, i) => (
-              <div key={i} className={`relative p-8 rounded-3xl ${isDark ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-100 shadow-sm'}`}>
+              <div key={i} className={`relative p-8 rounded-3xl ${isDark ? 'bg-[#041628] border border-[#0e3a72]' : 'bg-white border border-[#eaf2fc] shadow-sm'}`}>
                 <div className={`absolute -top-4 -left-4 w-10 h-10 ${step.color} rounded-2xl flex items-center justify-center shadow-lg`}>
                   <step.icon size={18} className="text-white" />
                 </div>
-                <div className={`text-6xl font-black tracking-tighter mb-4 ${isDark ? 'text-slate-800' : 'text-slate-100'}`}>{step.step}</div>
+                <div className={`text-6xl font-black tracking-tighter mb-4 ${isDark ? 'text-[#062040]' : 'text-[#d4e6f9]'}`}>{step.step}</div>
                 <h3 className="text-xl font-black mb-3">{step.title}</h3>
-                <p className={`text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{step.desc}</p>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>{step.desc}</p>
               </div>
             ))}
           </div>
@@ -349,23 +349,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       <section id="testimonials" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Trusted by Professionals</div>
+            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-[#134589]'}`}>Trusted by Professionals</div>
             <h2 className="text-5xl font-black tracking-tighter">What our users say</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((t, i) => (
-              <div key={i} className={`p-8 rounded-3xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 shadow-sm'}`}>
+              <div key={i} className={`p-8 rounded-3xl border ${isDark ? 'bg-[#041628] border-[#0e3a72]' : 'bg-white border-[#eaf2fc] shadow-sm'}`}>
                 <div className="flex gap-1 mb-6">
                   {Array.from({length: t.stars}).map((_, j) => (
                     <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className={`text-sm leading-relaxed mb-8 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>"{t.text}"</p>
+                <p className={`text-sm leading-relaxed mb-8 ${isDark ? 'text-[#7ab3e8]' : 'text-[#224260]'}`}>"{t.text}"</p>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 ${t.color} rounded-xl flex items-center justify-center text-white font-black text-sm`}>{t.initials}</div>
                   <div>
                     <div className="font-black text-sm">{t.name}</div>
-                    <div className={`text-[11px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{t.role}</div>
+                    <div className={`text-[11px] font-bold ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{t.role}</div>
                   </div>
                 </div>
               </div>
@@ -375,27 +375,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className={`py-24 px-6 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+      <section id="pricing" className={`py-24 px-6 ${isDark ? 'bg-[#041628]/50' : 'bg-[#f0f6ff]'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Transparent Pricing</div>
+            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-[#134589]'}`}>Transparent Pricing</div>
             <h2 className="text-5xl font-black tracking-tighter">Start free. Scale as you grow.</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {PRICING.map((plan, i) => (
-              <div key={i} className={`relative p-8 rounded-3xl border-2 ${plan.color} ${isDark ? 'bg-slate-900' : 'bg-white'} transition-all`}>
+              <div key={i} className={`relative p-8 rounded-3xl border-2 ${plan.color} ${isDark ? 'bg-[#041628]' : 'bg-white'} transition-all`}>
                 {plan.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#134589] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full">
                     {plan.badge}
                   </div>
                 )}
                 <div className="mb-6">
                   <h3 className="text-xl font-black mb-2">{plan.name}</h3>
-                  <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{plan.desc}</p>
+                  <p className={`text-sm ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{plan.desc}</p>
                 </div>
                 <div className="mb-8">
                   <span className="text-4xl font-black tracking-tighter">{plan.price}</span>
-                  <span className={`text-sm font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{plan.period}</span>
+                  <span className={`text-sm font-bold ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{plan.period}</span>
                 </div>
                 <button onClick={onGetStarted} className={`w-full py-4 rounded-2xl font-black text-sm transition-all mb-8 ${plan.btnClass}`}>
                   {plan.name === 'Enterprise' ? 'Contact Sales' : 'Get Started'}
@@ -404,13 +404,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
                   {plan.features.map((f, j) => (
                     <div key={j} className="flex items-center gap-3">
                       <Check size={14} className="text-emerald-500 flex-shrink-0" />
-                      <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{f}</span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-[#7ab3e8]' : 'text-[#224260]'}`}>{f}</span>
                     </div>
                   ))}
                   {plan.missing.map((f, j) => (
                     <div key={j} className="flex items-center gap-3 opacity-40">
                       <X size={14} className="flex-shrink-0" />
-                      <span className={`text-sm font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{f}</span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -424,21 +424,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       <section id="faq" className="py-24 px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
-            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Got Questions?</div>
+            <div className={`text-xs font-black uppercase tracking-widest mb-4 ${isDark ? 'text-blue-400' : 'text-[#134589]'}`}>Got Questions?</div>
             <h2 className="text-5xl font-black tracking-tighter">Frequently Asked</h2>
           </div>
           <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className={`rounded-2xl border overflow-hidden transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+              <div key={i} className={`rounded-2xl border overflow-hidden transition-all ${isDark ? 'bg-[#041628] border-[#0e3a72]' : 'bg-white border-[#eaf2fc]'}`}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between p-6 text-left"
                 >
                   <span className="font-black text-sm pr-4">{faq.q}</span>
-                  <ChevronDown size={18} className={`flex-shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''} text-slate-400`} />
+                  <ChevronDown size={18} className={`flex-shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''} text-[#4d7291]`} />
                 </button>
                 {openFaq === i && (
-                  <div className={`px-6 pb-6 text-sm leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{faq.a}</div>
+                  <div className={`px-6 pb-6 text-sm leading-relaxed ${isDark ? 'text-[#4d7291]' : 'text-[#365874]'}`}>{faq.a}</div>
                 )}
               </div>
             ))}
@@ -457,7 +457,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
               <p className="text-xl opacity-80 mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust Tomo for their digital stamp and document authority.</p>
               <button
                 onClick={onGetStarted}
-                className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl"
+                className="bg-white text-[#134589] px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl"
               >
                 Get Started — It's Free
               </button>
@@ -467,21 +467,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, theme })
       </section>
 
       {/* Footer */}
-      <footer className={`border-t ${isDark ? 'border-slate-800 bg-slate-950' : 'border-slate-100 bg-slate-50'} py-12 px-6`}>
+      <footer className={`border-t ${isDark ? 'border-[#0e3a72] bg-[#020b18]' : 'border-[#eaf2fc] bg-[#f0f6ff]'} py-12 px-6`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#134589] rounded-xl flex items-center justify-center">
               <Plus size={16} className="text-white" />
             </div>
             <span className="font-black text-lg tracking-tighter">Tomo</span>
           </div>
-          <p className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+          <p className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-[#224260]' : 'text-[#4d7291]'}`}>
             © 2024 JijiTechy Innovations · LSK Standards Applied · Nairobi, Kenya
           </p>
-          <div className={`flex gap-6 text-sm font-bold ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            <a href="#" className="hover:text-blue-600 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Terms</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Contact</a>
+          <div className={`flex gap-6 text-sm font-bold ${isDark ? 'text-[#365874]' : 'text-[#4d7291]'}`}>
+            <a href="#" className="hover:text-[#134589] transition-colors">Privacy</a>
+            <a href="#" className="hover:text-[#134589] transition-colors">Terms</a>
+            <a href="#" className="hover:text-[#134589] transition-colors">Contact</a>
           </div>
         </div>
       </footer>
