@@ -1,57 +1,47 @@
-require('dotenv').config();
-const express  = require('express');
-const cors     = require('cors');
-const morgan   = require('morgan');
-const rateLimit = require('express-rate-limit');
+require('module-alias/register');
+require('dotenv').config({ path: '.env' });
+require('dotenv').config({ path: '.env.local' });
+
 const mongoose = require('mongoose');
-const routes   = require('./routes');
+const path     = require('path');
+const { globSync } = require('glob');
 
-const app = express();
+// Require Node 18+
+const [major] = process.versions.node.split('.').map(Number);
+if (major < 18) {
+  console.error('❌  Please upgrade Node.js to v18 or higher.');
+  process.exit(1);
+}
 
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true,
-}));
-app.use(express.json({ limit: '10mb' }));   // 10 MB for base64 portfolio images
-app.use(express.urlencoded({ extended: true }));
-if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
+// Validate required env vars
+const required = ['MONGODB_URI', 'JWT_SECRET'];
+const missing  = required.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error(`❌  Missing required env vars: ${missing.join(', ')}`);
+  console.error('    Copy .env.example to .env and fill in the values.');
+  process.exit(1);
+}
 
-// Rate limiting: 200 requests / 15 min per IP
-app.use('/api', rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  message: { success: false, message: 'Too many requests, slow down.' },
-}));
-
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api', routes);
-
-// ── 404 ───────────────────────────────────────────────────────────────────────
-app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.path} not found.` }));
-
-// ── Error handler ─────────────────────────────────────────────────────────────
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  console.error('[Error]', err.message);
-  const status = err.status || 500;
-  res.status(status).json({
-    success: false,
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong.' : err.message,
-  });
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI);
+mongoose.connection.on('connected', () => console.log('✅  MongoDB connected'));
+mongoose.connection.on('error',     (e) => {
+  console.error('❌  MongoDB error:', e.message);
+  console.error('    Check your MONGODB_URI in .env');
 });
 
-// ── Database + Start ──────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 4000;
+// Auto-register all models (glob like idurar)
+const modelFiles = globSync('./src/models/**/*.js', { cwd: __dirname });
+for (const filePath of modelFiles) {
+  require(path.resolve(__dirname, filePath));
+}
 
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Tomo API running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+// Start Express
+const app    = require('./app');
+const PORT   = process.env.PORT || 4000;
+const server = app.listen(PORT, () => {
+  console.log(`🚀  Tomo API running on port ${PORT}`);
+  console.log(`    Health: http://localhost:${PORT}/api/health`);
+});
 
-module.exports = app;
+module.exports = server;
