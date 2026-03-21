@@ -97,25 +97,42 @@ Extract all information from this receipt/invoice and return ONLY a valid JSON o
   "items": [{"name":"item name","qty":1,"price":100,"total":100}],
   "note": "any important notes"
 }
-Rules: Return ONLY the JSON object. No markdown. No explanation. If you can't find a value, use empty string or 0. Never make up data.`
+Rules: Return ONLY the JSON object. No markdown. No explanation. If you cannot find a value, use empty string or 0. Never make up data.`
   });
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content }],
-    }),
-  });
-
-  const data = await response.json();
-  const text = data.content?.find((b: any) => b.type === 'text')?.text || '{}';
   try {
-    const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-  } catch { return {}; }
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`API error ${response.status}: ${err.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.find((b: any) => b.type === 'text')?.text || '{}';
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      // Ensure items is always an array
+      if (!Array.isArray(parsed.items)) parsed.items = [];
+      // Ensure total is a number
+      parsed.total = parseFloat(parsed.total) || 0;
+      return parsed;
+    } catch { return { items: [], total: 0 }; }
+  } catch (err: any) {
+    throw new Error(err.message || 'Analysis failed. Check your connection.');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -279,7 +296,7 @@ export default function SmartInvoice() {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + (t.total || 0), 0);
   const byCat = CATEGORIES.map(c => ({
     ...c,
-    total: transactions.filter(t => t.category === c.code && t.type === 'expense').reduce((s, t) => s + t.total, 0),
+    total: transactions.filter(t => t.category === c.code && t.type === 'expense').reduce((s, t) => s + (t.total || 0), 0),
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
 
   // ── Export CSV ──
@@ -549,10 +566,10 @@ export default function SmartInvoice() {
                 {/* Items */}
                 {(formData.items || []).length > 0 && (
                   <div>
-                    <label style={S.label}>Detected Items ({formData.items!.length})</label>
+                    <label style={S.label}>Detected Items ({(formData.items || []).length})</label>
                     <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
-                      {formData.items!.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: i < formData.items!.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                      {(formData.items || []).map((item, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: i < (formData.items || []).length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                           <Package size={12} style={{ color: 'rgba(255,255,255,0.25)', flexShrink: 0 }} />
                           <span style={{ flex: 1, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{item.name}</span>
                           {item.qty && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>×{item.qty}</span>}

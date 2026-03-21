@@ -3,7 +3,7 @@ import {
   Plus, Image as ImageIcon, CheckCircle2, Menu, X, ArrowRight, ShieldCheck,
   Camera, User, PenTool, Twitter, Linkedin, Github, FileText, Wrench,
   LayoutDashboard, Sun, Moon, ChevronRight, Search, FileType, FileIcon,
-  Layers, QrCode, Share2, Sparkles, Save, Receipt
+  Layers, QrCode, Share2, Sparkles, Save, Receipt, BookOpen
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { StampConfig, StampTemplate, StampShape } from './types';
@@ -19,17 +19,18 @@ import SocialHub from './components/SocialHub';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
+import DocumentsHub from './components/DocumentsHub';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
 import { useAppStats } from './src/appStatsStore';
 
-type ActiveTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
+type ActiveTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice' | 'documents-hub';
 
 const NAVIGATION_GROUPS = [
   { id: 'apps', label: 'Core Workspace', items: ['dashboard'] },
   { id: 'authority', label: 'Digital Authority', items: ['stamp-studio', 'esign', 'apply-stamp', 'convert'] },
-  { id: 'productivity', label: 'Productivity Suite', items: ['pdf-forge', 'templates', 'smart-invoice'] },
+  { id: 'productivity', label: 'Productivity Suite', items: ['pdf-forge', 'documents-hub', 'templates', 'smart-invoice'] },
   { id: 'management', label: 'Enterprise Management', items: ['qr-tracker', 'social-hub'] }
 ];
 
@@ -40,6 +41,7 @@ const NAVIGATION_ITEMS = [
   { id: 'apply-stamp', label: 'Stamp Applier', icon: FileText },
   { id: 'convert', label: 'AI Scan', icon: Camera },
   { id: 'pdf-forge', label: 'PDF Editor', icon: Wrench },
+  { id: 'documents-hub', label: 'Documents', icon: BookOpen },
   { id: 'templates', label: 'Templates', icon: FileText },
   { id: 'smart-invoice', label: 'Smart Invoice', icon: Receipt },
   { id: 'qr-tracker', label: 'QR Tracker', icon: QrCode },
@@ -536,6 +538,7 @@ const App: React.FC = () => {
                 {activeTab === 'qr-tracker' && <EmployeeQRTracker />}
                 {activeTab === 'social-hub' && <SocialHub />}
                 {activeTab === 'smart-invoice' && <SmartInvoice />}
+                {activeTab === 'documents-hub' && <DocumentsHub />}
                 {activeTab === 'templates' && (
                   <div className="max-w-7xl mx-auto py-8">
                     <h2 className="text-3xl font-black tracking-tighter mb-1">Authentic Templates</h2>
