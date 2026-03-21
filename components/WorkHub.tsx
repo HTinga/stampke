@@ -1,0 +1,676 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Briefcase, Plus, Search, MapPin, Clock, ChevronRight, X, Check,
+  User, Star, Phone, Mail, Filter, Tag, Zap, Users, CheckCircle2,
+  AlertCircle, Calendar, DollarSign, Edit3, Trash2, Eye, Send,
+  ChevronDown, ChevronUp, Bookmark, Share2, Award, MoreVertical,
+  UserPlus, ThumbsUp, ThumbsDown, MessageSquare, FileText
+} from 'lucide-react';
+
+/* ─── TYPES ──────────────────────────────────────────────── */
+type JobType = 'quick-gig' | 'temporary' | 'permanent' | 'contract';
+type JobStatus = 'open' | 'in-progress' | 'completed' | 'cancelled';
+type ApplicantStatus = 'pending' | 'shortlisted' | 'hired' | 'rejected';
+type WorkerView = 'find-work' | 'my-gigs';
+type RecruiterView = 'post-job' | 'my-jobs' | 'find-worker';
+type ActiveView = WorkerView | RecruiterView | 'browse';
+
+interface Job {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  type: JobType;
+  location: string;
+  pay: string;
+  duration: string;
+  postedBy: string;
+  postedAt: string;
+  status: JobStatus;
+  applicants: Applicant[];
+  urgent: boolean;
+  skills: string[];
+}
+
+interface Applicant {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  skills: string[];
+  rating: number;
+  completedJobs: number;
+  availability: string;
+  note: string;
+  status: ApplicantStatus;
+  appliedAt: string;
+}
+
+interface WorkerProfile {
+  id: string;
+  name: string;
+  phone: string;
+  skills: string[];
+  category: string;
+  location: string;
+  rating: number;
+  completedJobs: number;
+  availability: string;
+  bio: string;
+  hourlyRate: string;
+  verified: boolean;
+}
+
+/* ─── SEED DATA ──────────────────────────────────────────── */
+const JOB_CATEGORIES = [
+  'Electrician', 'Plumber', 'Painter', 'Carpenter', 'Mason',
+  'Driver', 'Security Guard', 'Cleaner', 'Cashier', 'Waiter',
+  '3D Signage', 'Graphic Designer', 'Photographer', 'Delivery',
+  'Errands', 'Data Entry', 'Receptionist', 'Sales Agent', 'Other'
+];
+
+const TYPE_LABELS: Record<JobType, string> = {
+  'quick-gig': '⚡ Quick Gig',
+  'temporary': '📅 Temporary',
+  'permanent': '🏢 Permanent',
+  'contract': '📋 Contract',
+};
+
+const TYPE_COLORS: Record<JobType, string> = {
+  'quick-gig':  'bg-orange-500/20 text-orange-300 border-orange-500/30',
+  'temporary':  'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  'permanent':  'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  'contract':   'bg-purple-500/20 text-purple-300 border-purple-500/30',
+};
+
+const STATUS_COLORS: Record<JobStatus, string> = {
+  'open':        'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  'in-progress': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  'completed':   'bg-[#21262d] text-[#8b949e] border-[#30363d]',
+  'cancelled':   'bg-red-500/20 text-red-400 border-red-500/30',
+};
+
+const SEED_WORKERS: WorkerProfile[] = [
+  { id: 'w1', name: 'John Kamau', phone: '0712 345 678', skills: ['Electrician', 'Wiring', 'Solar'], category: 'Electrician', location: 'Nairobi CBD', rating: 4.8, completedJobs: 34, availability: 'Available now', bio: 'Licensed electrician with 7 years experience. Specialise in residential and commercial wiring.', hourlyRate: 'KES 800/hr', verified: true },
+  { id: 'w2', name: 'Grace Wanjiku', phone: '0723 456 789', skills: ['3D Signage', 'Vinyl', 'Branding'], category: '3D Signage', location: 'Industrial Area', rating: 4.9, completedJobs: 58, availability: 'Available now', bio: 'Expert in 3D signage fabrication and installation. Serving Nairobi businesses since 2018.', hourlyRate: 'KES 1,200/hr', verified: true },
+  { id: 'w3', name: 'Peter Odhiambo', phone: '0734 567 890', skills: ['Driver', 'PSV', 'Logistics'], category: 'Driver', location: 'Westlands', rating: 4.6, completedJobs: 112, availability: 'Available tomorrow', bio: 'Professional driver with PSV license. Available for deliveries, airport transfers and errands.', hourlyRate: 'KES 600/hr', verified: true },
+  { id: 'w4', name: 'Mary Njeri', phone: '0745 678 901', skills: ['Cashier', 'M-Pesa', 'Customer Service'], category: 'Cashier', location: 'Westlands', rating: 4.5, completedJobs: 22, availability: 'Available now', bio: 'Experienced cashier and shop attendant. Fast and accurate with good customer service skills.', hourlyRate: 'KES 500/hr', verified: false },
+  { id: 'w5', name: 'James Mutua', phone: '0756 789 012', skills: ['Painter', 'Interior', 'Exterior'], category: 'Painter', location: 'Kilimani', rating: 4.7, completedJobs: 41, availability: 'Available in 2 days', bio: 'Interior and exterior painter. Provide materials or I source them. Neat finish guaranteed.', hourlyRate: 'KES 700/hr', verified: true },
+  { id: 'w6', name: 'Faith Atieno', phone: '0767 890 123', skills: ['Cleaner', 'Office', 'Residential'], category: 'Cleaner', location: 'Parklands', rating: 4.4, completedJobs: 67, availability: 'Available now', bio: 'Reliable cleaner for offices and homes. Own cleaning equipment. References available.', hourlyRate: 'KES 400/hr', verified: false },
+];
+
+/* ─── HELPERS ────────────────────────────────────────────── */
+const timeAgo = (iso: string) => {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (d < 1) return 'just now';
+  if (d < 60) return `${d}m ago`;
+  if (d < 1440) return `${Math.floor(d / 60)}h ago`;
+  return `${Math.floor(d / 1440)}d ago`;
+};
+
+const newJob = (): Job => ({
+  id: Math.random().toString(36).slice(2, 9),
+  title: '', description: '', category: '', type: 'quick-gig',
+  location: '', pay: '', duration: '', postedBy: 'You',
+  postedAt: new Date().toISOString(), status: 'open',
+  applicants: [], urgent: false, skills: [],
+});
+
+/* ─── JOB CARD ───────────────────────────────────────────── */
+const JobCard: React.FC<{ job: Job; onClick: () => void; onApply?: () => void; mine?: boolean }> = ({ job, onClick, onApply, mine }) => (
+  <div onClick={onClick} className="bg-[#161b22] border border-[#30363d] hover:border-[#58a6ff]/50 rounded-2xl p-5 cursor-pointer transition-all hover:bg-[#1c2128] group">
+    <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          {job.urgent && <span className="text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full uppercase tracking-wide">🔥 Urgent</span>}
+          <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${TYPE_COLORS[job.type]}`}>{TYPE_LABELS[job.type]}</span>
+        </div>
+        <h3 className="font-bold text-white text-base truncate group-hover:text-[#58a6ff] transition-colors">{job.title}</h3>
+        <p className="text-sm text-[#8b949e] mt-0.5">{job.postedBy}</p>
+      </div>
+      <span className={`text-[10px] font-bold border px-2 py-1 rounded-xl flex-shrink-0 ${STATUS_COLORS[job.status]}`}>{job.status}</span>
+    </div>
+    <p className="text-sm text-[#8b949e] line-clamp-2 mb-3">{job.description || 'No description provided.'}</p>
+    <div className="flex flex-wrap gap-2 mb-3">
+      {job.skills.slice(0, 3).map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}
+      {job.skills.length > 3 && <span className="text-[10px] text-[#8b949e]">+{job.skills.length - 3}</span>}
+    </div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4 text-xs text-[#8b949e]">
+        {job.location && <span className="flex items-center gap-1"><MapPin size={11} /> {job.location}</span>}
+        {job.duration && <span className="flex items-center gap-1"><Clock size={11} /> {job.duration}</span>}
+        {job.pay && <span className="flex items-center gap-1 text-emerald-400 font-semibold"><DollarSign size={11} /> {job.pay}</span>}
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] text-[#8b949e]">{timeAgo(job.postedAt)}</span>
+        {mine ? (
+          <span className="text-[10px] text-[#58a6ff] font-semibold">{job.applicants.length} applicant{job.applicants.length !== 1 ? 's' : ''}</span>
+        ) : onApply ? (
+          <button onClick={e => { e.stopPropagation(); onApply(); }} className="px-3 py-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white text-xs font-bold rounded-xl transition-colors">Apply Now</button>
+        ) : null}
+      </div>
+    </div>
+  </div>
+);
+
+/* ─── WORKER CARD ────────────────────────────────────────── */
+const WorkerCard: React.FC<{ worker: WorkerProfile; onHire: () => void }> = ({ worker, onHire }) => (
+  <div className="bg-[#161b22] border border-[#30363d] hover:border-[#58a6ff]/50 rounded-2xl p-5 transition-all hover:bg-[#1c2128]">
+    <div className="flex items-start gap-3 mb-3">
+      <div className="w-12 h-12 bg-[#1f6feb] rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+        {worker.name.charAt(0)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h3 className="font-bold text-white text-sm">{worker.name}</h3>
+          {worker.verified && <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded-full">✓ Verified</span>}
+        </div>
+        <p className="text-xs text-[#58a6ff]">{worker.category}</p>
+        <div className="flex items-center gap-3 mt-1 text-xs text-[#8b949e]">
+          <span className="flex items-center gap-0.5"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {worker.rating}</span>
+          <span>{worker.completedJobs} jobs done</span>
+          <span className="flex items-center gap-0.5"><MapPin size={10} /> {worker.location}</span>
+        </div>
+      </div>
+    </div>
+    <p className="text-xs text-[#8b949e] line-clamp-2 mb-3">{worker.bio}</p>
+    <div className="flex flex-wrap gap-1 mb-3">
+      {worker.skills.map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}
+    </div>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-xs text-emerald-400 font-semibold">{worker.hourlyRate}</p>
+        <p className={`text-[10px] ${worker.availability.includes('now') ? 'text-emerald-400' : 'text-yellow-400'}`}>{worker.availability}</p>
+      </div>
+      <div className="flex gap-2">
+        <a href={`tel:${worker.phone}`} onClick={e => e.stopPropagation()} className="p-2 bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white rounded-xl transition-colors" title={worker.phone}>
+          <Phone size={14} />
+        </a>
+        <button onClick={onHire} className="flex items-center gap-1.5 px-3 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white text-xs font-bold rounded-xl transition-colors">
+          <UserPlus size={13} /> Hire
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ─── POST JOB FORM ──────────────────────────────────────── */
+const PostJobForm: React.FC<{ onSave: (job: Job) => void; initial?: Job; onCancel: () => void }> = ({ onSave, initial, onCancel }) => {
+  const [form, setForm] = useState<Job>(initial || newJob());
+  const [skillInput, setSkillInput] = useState('');
+  const upd = (u: Partial<Job>) => setForm(f => ({ ...f, ...u }));
+
+  const addSkill = () => {
+    const s = skillInput.trim();
+    if (s && !form.skills.includes(s)) { upd({ skills: [...form.skills, s] }); setSkillInput(''); }
+  };
+
+  const valid = form.title.trim() && form.category && form.location.trim() && form.pay.trim();
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-white mb-1">{initial ? 'Edit Job' : 'Post a Job'}</h2>
+        <p className="text-sm text-[#8b949e]">Find the right person in minutes, not days.</p>
+      </div>
+
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 space-y-5">
+        {/* Title */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Job Title *</label>
+          <input value={form.title} onChange={e => upd({ title: e.target.value })} placeholder="e.g. Need an electrician urgently"
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+        </div>
+
+        {/* Category & Type */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Category *</label>
+            <select value={form.category} onChange={e => upd({ category: e.target.value })}
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]">
+              <option value="">Select category</option>
+              {JOB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Job Type</label>
+            <select value={form.type} onChange={e => upd({ type: e.target.value as JobType })}
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]">
+              <option value="quick-gig">⚡ Quick Gig</option>
+              <option value="temporary">📅 Temporary</option>
+              <option value="contract">📋 Contract</option>
+              <option value="permanent">🏢 Permanent</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Location & Duration */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Location *</label>
+            <input value={form.location} onChange={e => upd({ location: e.target.value })} placeholder="e.g. Westlands, Nairobi"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Duration</label>
+            <input value={form.duration} onChange={e => upd({ duration: e.target.value })} placeholder="e.g. 1 day, 2 weeks"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+          </div>
+        </div>
+
+        {/* Pay */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Pay / Rate *</label>
+          <input value={form.pay} onChange={e => upd({ pay: e.target.value })} placeholder="e.g. KES 1,500/day or KES 800/hr"
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Description</label>
+          <textarea value={form.description} onChange={e => upd({ description: e.target.value })} rows={3} placeholder="Describe the job, any requirements, tools needed..."
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e] resize-none" />
+        </div>
+
+        {/* Skills */}
+        <div>
+          <label className="text-xs font-bold uppercase tracking-widest text-[#8b949e] block mb-2">Required Skills</label>
+          <div className="flex gap-2 mb-2">
+            <input value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())} placeholder="Type a skill and press Enter"
+              className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+            <button onClick={addSkill} className="px-4 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">Add</button>
+          </div>
+          {form.skills.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {form.skills.map(s => (
+                <span key={s} className="flex items-center gap-1.5 bg-[#21262d] text-[#e6edf3] text-xs px-3 py-1 rounded-xl">
+                  {s}
+                  <button onClick={() => upd({ skills: form.skills.filter(x => x !== s) })} className="text-[#8b949e] hover:text-red-400 transition-colors"><X size={10} /></button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Urgent toggle */}
+        <label className="flex items-center justify-between p-4 bg-[#0d1117] rounded-xl border border-[#30363d] cursor-pointer hover:border-[#58a6ff] transition-colors">
+          <div>
+            <p className="text-sm font-semibold text-white">🔥 Mark as Urgent</p>
+            <p className="text-xs text-[#8b949e]">Gets highlighted and shown first to available workers</p>
+          </div>
+          <button onClick={() => upd({ urgent: !form.urgent })} className={`w-11 h-6 rounded-full transition-all flex-shrink-0 ${form.urgent ? 'bg-orange-500' : 'bg-[#30363d]'}`}>
+            <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${form.urgent ? 'translate-x-5' : ''}`} />
+          </button>
+        </label>
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={onCancel} className="flex-1 py-3 border border-[#30363d] text-[#8b949e] hover:text-white hover:bg-[#21262d] rounded-xl text-sm font-semibold transition-colors">Cancel</button>
+        <button onClick={() => valid && onSave(form)} disabled={!valid}
+          className="flex-1 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+          <Send size={15} /> {initial ? 'Save Changes' : 'Post Job'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* ─── JOB DETAIL MODAL ───────────────────────────────────── */
+const JobDetail: React.FC<{ job: Job; onClose: () => void; onApply?: () => void; onUpdateApplicant?: (jobId: string, appId: string, status: ApplicantStatus) => void; mine?: boolean }> = ({ job, onClose, onApply, onUpdateApplicant, mine }) => {
+  const [tab, setTab] = useState<'details' | 'applicants'>('details');
+  return (
+    <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-[#161b22] border border-[#30363d] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="flex items-start justify-between p-5 border-b border-[#30363d]">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              {job.urgent && <span className="text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full">🔥 Urgent</span>}
+              <span className={`text-[10px] font-bold border px-2 py-0.5 rounded-full ${TYPE_COLORS[job.type]}`}>{TYPE_LABELS[job.type]}</span>
+            </div>
+            <h2 className="text-lg font-bold text-white">{job.title}</h2>
+            <p className="text-sm text-[#8b949e]">{job.postedBy} · {timeAgo(job.postedAt)}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] hover:text-white"><X size={18} /></button>
+        </div>
+
+        {mine && (
+          <div className="flex border-b border-[#30363d]">
+            {(['details', 'applicants'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className={`flex-1 py-3 text-sm font-semibold capitalize transition-colors ${tab === t ? 'text-white border-b-2 border-[#1f6feb]' : 'text-[#8b949e] hover:text-white'}`}>
+                {t === 'applicants' ? `Applicants (${job.applicants.length})` : t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto p-5">
+          {tab === 'details' && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Category', value: job.category },
+                  { label: 'Location', value: job.location || '—' },
+                  { label: 'Pay', value: job.pay, green: true },
+                  { label: 'Duration', value: job.duration || '—' },
+                ].map(f => (
+                  <div key={f.label} className="bg-[#0d1117] rounded-xl p-3">
+                    <p className="text-[10px] text-[#8b949e] uppercase tracking-widest mb-1">{f.label}</p>
+                    <p className={`text-sm font-semibold ${f.green ? 'text-emerald-400' : 'text-white'}`}>{f.value}</p>
+                  </div>
+                ))}
+              </div>
+              {job.description && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#8b949e] mb-2">Description</p>
+                  <p className="text-sm text-[#e6edf3] leading-relaxed">{job.description}</p>
+                </div>
+              )}
+              {job.skills.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#8b949e] mb-2">Required Skills</p>
+                  <div className="flex flex-wrap gap-2">{job.skills.map(s => <span key={s} className="text-xs bg-[#21262d] text-[#e6edf3] px-3 py-1 rounded-xl">{s}</span>)}</div>
+                </div>
+              )}
+              {!mine && onApply && (
+                <button onClick={onApply} className="w-full py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                  <UserPlus size={16} /> Apply for this Job
+                </button>
+              )}
+            </div>
+          )}
+
+          {tab === 'applicants' && (
+            <div className="space-y-3">
+              {job.applicants.length === 0 ? (
+                <div className="text-center py-10">
+                  <Users size={32} className="text-[#30363d] mx-auto mb-3" />
+                  <p className="text-[#8b949e] text-sm">No applicants yet. Share this job to attract workers.</p>
+                </div>
+              ) : job.applicants.map(app => (
+                <div key={app.id} className="bg-[#0d1117] rounded-2xl p-4 border border-[#30363d]">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-semibold text-white text-sm">{app.name}</p>
+                      <div className="flex items-center gap-3 mt-0.5 text-xs text-[#8b949e]">
+                        <span className="flex items-center gap-0.5"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {app.rating}</span>
+                        <span>{app.completedJobs} jobs done</span>
+                        <a href={`tel:${app.phone}`} className="flex items-center gap-0.5 text-[#58a6ff] hover:underline"><Phone size={10} /> {app.phone}</a>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-xl border ${
+                      app.status === 'hired' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                      app.status === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                      app.status === 'rejected' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                      'bg-[#21262d] text-[#8b949e] border-[#30363d]'
+                    }`}>{app.status}</span>
+                  </div>
+                  {app.note && <p className="text-xs text-[#8b949e] mb-3 italic">"{app.note}"</p>}
+                  <div className="flex flex-wrap gap-1 mb-3">{app.skills.map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}</div>
+                  {app.status === 'pending' && onUpdateApplicant && (
+                    <div className="flex gap-2">
+                      <button onClick={() => onUpdateApplicant(job.id, app.id, 'shortlisted')} className="flex-1 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-500/30 transition-colors flex items-center justify-center gap-1"><ThumbsUp size={12} /> Shortlist</button>
+                      <button onClick={() => onUpdateApplicant(job.id, app.id, 'hired')} className="flex-1 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-500/30 transition-colors flex items-center justify-center gap-1"><Check size={12} /> Hire</button>
+                      <button onClick={() => onUpdateApplicant(job.id, app.id, 'rejected')} className="py-2 px-3 bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl text-xs font-bold hover:bg-red-500/30 transition-colors"><ThumbsDown size={12} /></button>
+                    </div>
+                  )}
+                  {app.status === 'shortlisted' && onUpdateApplicant && (
+                    <button onClick={() => onUpdateApplicant(job.id, app.id, 'hired')} className="w-full py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-500/30 transition-colors flex items-center justify-center gap-1"><Check size={12} /> Confirm Hire</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── APPLY MODAL ────────────────────────────────────────── */
+const ApplyModal: React.FC<{ job: Job; onApply: (a: Applicant) => void; onClose: () => void }> = ({ job, onApply, onClose }) => {
+  const [form, setForm] = useState({ name: '', phone: '', skills: '', note: '' });
+  const valid = form.name.trim() && form.phone.trim();
+  const submit = () => {
+    if (!valid) return;
+    const app: Applicant = {
+      id: Math.random().toString(36).slice(2, 9),
+      name: form.name, phone: form.phone, email: '',
+      skills: form.skills.split(',').map(s => s.trim()).filter(Boolean),
+      rating: 4.5, completedJobs: 0,
+      availability: 'Available now', note: form.note,
+      status: 'pending', appliedAt: new Date().toISOString(),
+    };
+    onApply(app);
+  };
+  return (
+    <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <div><h3 className="font-bold text-white">Apply for Job</h3><p className="text-sm text-[#8b949e]">{job.title}</p></div>
+          <button onClick={onClose} className="p-1 hover:bg-[#21262d] rounded-xl"><X size={16} className="text-[#8b949e]" /></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-[#8b949e] font-bold uppercase tracking-widest block mb-1.5">Your Name *</label>
+            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="John Kamau"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+          </div>
+          <div>
+            <label className="text-xs text-[#8b949e] font-bold uppercase tracking-widest block mb-1.5">Phone Number *</label>
+            <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="0712 345 678" type="tel"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+          </div>
+          <div>
+            <label className="text-xs text-[#8b949e] font-bold uppercase tracking-widest block mb-1.5">Your Skills (comma-separated)</label>
+            <input value={form.skills} onChange={e => setForm(f => ({ ...f, skills: e.target.value }))} placeholder="Electrician, Wiring, Solar"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]" />
+          </div>
+          <div>
+            <label className="text-xs text-[#8b949e] font-bold uppercase tracking-widest block mb-1.5">Short Message (optional)</label>
+            <textarea value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} rows={2} placeholder="Why are you the right person for this job?"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e] resize-none" />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-3 border border-[#30363d] text-[#8b949e] rounded-xl text-sm font-semibold hover:bg-[#21262d] transition-colors">Cancel</button>
+          <button onClick={submit} disabled={!valid} className="flex-1 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+            <Send size={14} /> Submit Application
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── MAIN WORK HUB ──────────────────────────────────────── */
+interface WorkHubProps { initialView?: 'post-job' | 'browse' | 'find-worker' | 'my-jobs'; }
+
+export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
+  const [view, setView] = useState<ActiveView>(initialView);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [workers] = useState<WorkerProfile[]>(SEED_WORKERS);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [applyingJob, setApplyingJob] = useState<Job | null>(null);
+  const [searchQ, setSearchQ] = useState('');
+  const [filterCat, setFilterCat] = useState('');
+  const [filterType, setFilterType] = useState<JobType | ''>('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Filter jobs
+  const filteredJobs = jobs.filter(j => {
+    const matchQ = !searchQ || j.title.toLowerCase().includes(searchQ.toLowerCase()) || j.category.toLowerCase().includes(searchQ.toLowerCase()) || j.location.toLowerCase().includes(searchQ.toLowerCase());
+    const matchCat = !filterCat || j.category === filterCat;
+    const matchType = !filterType || j.type === filterType;
+    return matchQ && matchCat && matchType;
+  });
+
+  const myJobs = jobs; // In production, filter by current user
+  const openJobs = filteredJobs.filter(j => j.status === 'open');
+
+  const saveJob = (job: Job) => {
+    setJobs(prev => {
+      const idx = prev.findIndex(j => j.id === job.id);
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = job; return copy; }
+      return [job, ...prev];
+    });
+    setEditingJob(null);
+    setView('my-jobs');
+  };
+
+  const deleteJob = (id: string) => setJobs(prev => prev.filter(j => j.id !== id));
+
+  const applyToJob = (jobId: string, applicant: Applicant) => {
+    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, applicants: [...j.applicants, applicant] } : j));
+    setApplyingJob(null);
+    setSelectedJob(null);
+  };
+
+  const updateApplicant = (jobId: string, appId: string, status: ApplicantStatus) => {
+    setJobs(prev => prev.map(j => j.id === jobId ? {
+      ...j,
+      applicants: j.applicants.map(a => a.id === appId ? { ...a, status } : a),
+      status: status === 'hired' ? 'in-progress' : j.status,
+    } : j));
+  };
+
+  const hireWorker = (worker: WorkerProfile) => {
+    const job = newJob();
+    job.title = `Hire ${worker.name} — ${worker.category}`;
+    job.category = worker.category;
+    job.location = worker.location;
+    job.pay = worker.hourlyRate;
+    job.skills = worker.skills;
+    setEditingJob(job);
+    setView('post-job');
+  };
+
+  const TABS: { id: ActiveView; label: string; emoji: string }[] = [
+    { id: 'browse',      label: 'Browse Jobs',  emoji: '🔍' },
+    { id: 'find-worker', label: 'Find Worker',  emoji: '👷' },
+    { id: 'my-jobs',     label: 'My Jobs',      emoji: '📋' },
+    { id: 'post-job',    label: 'Post a Job',   emoji: '➕' },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto">
+      {/* Tabs */}
+      <div className="flex gap-1 bg-[#161b22] border border-[#30363d] rounded-2xl p-1 mb-6">
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => { setView(t.id); setEditingJob(null); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${view === t.id ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white hover:bg-[#21262d]'}`}>
+            <span className="hidden sm:inline">{t.emoji}</span> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── BROWSE JOBS ── */}
+      {view === 'browse' && (
+        <div className="space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            <div className="flex-1 min-w-48 flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-xl px-3 py-2.5">
+              <Search size={16} className="text-[#8b949e] flex-shrink-0" />
+              <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search jobs, skills, location..."
+                className="flex-1 bg-transparent text-white text-sm placeholder:text-[#8b949e] focus:outline-none" />
+            </div>
+            <button onClick={() => setShowFilters(f => !f)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors ${showFilters ? 'bg-[#1f6feb] text-white border-[#1f6feb]' : 'bg-[#161b22] text-[#8b949e] border-[#30363d] hover:text-white'}`}>
+              <Filter size={15} /> Filter
+            </button>
+          </div>
+          {showFilters && (
+            <div className="flex gap-3 flex-wrap">
+              <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="bg-[#161b22] border border-[#30363d] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]">
+                <option value="">All Categories</option>
+                {JOB_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={filterType} onChange={e => setFilterType(e.target.value as JobType | '')} className="bg-[#161b22] border border-[#30363d] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]">
+                <option value="">All Types</option>
+                <option value="quick-gig">⚡ Quick Gig</option>
+                <option value="temporary">📅 Temporary</option>
+                <option value="contract">📋 Contract</option>
+                <option value="permanent">🏢 Permanent</option>
+              </select>
+              {(filterCat || filterType) && <button onClick={() => { setFilterCat(''); setFilterType(''); }} className="px-3 py-2 text-[#8b949e] hover:text-white text-sm transition-colors">Clear filters</button>}
+            </div>
+          )}
+
+          {openJobs.length === 0 ? (
+            <div className="text-center py-16 bg-[#161b22] border border-[#30363d] rounded-2xl">
+              <Briefcase size={40} className="text-[#30363d] mx-auto mb-4" />
+              <h3 className="font-bold text-white mb-2">No jobs posted yet</h3>
+              <p className="text-sm text-[#8b949e] mb-6">Be the first to post a job opportunity.</p>
+              <button onClick={() => setView('post-job')} className="px-5 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">Post a Job</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {openJobs.map(job => (
+                <JobCard key={job.id} job={job} onClick={() => setSelectedJob(job)} onApply={() => setApplyingJob(job)} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── FIND WORKER ── */}
+      {view === 'find-worker' && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-xl px-3 py-2.5">
+            <Search size={16} className="text-[#8b949e]" />
+            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search by skill, name, location..."
+              className="flex-1 bg-transparent text-white text-sm placeholder:text-[#8b949e] focus:outline-none" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {workers.filter(w => !searchQ || w.name.toLowerCase().includes(searchQ.toLowerCase()) || w.category.toLowerCase().includes(searchQ.toLowerCase()) || w.skills.some(s => s.toLowerCase().includes(searchQ.toLowerCase())) || w.location.toLowerCase().includes(searchQ.toLowerCase())).map(w => (
+              <WorkerCard key={w.id} worker={w} onHire={() => hireWorker(w)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── MY JOBS ── */}
+      {view === 'my-jobs' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div><h2 className="text-lg font-bold text-white">My Posted Jobs</h2><p className="text-sm text-[#8b949e]">{myJobs.length} job{myJobs.length !== 1 ? 's' : ''} posted</p></div>
+            <button onClick={() => { setEditingJob(newJob()); setView('post-job'); }} className="flex items-center gap-2 px-4 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors"><Plus size={15} /> New Job</button>
+          </div>
+          {myJobs.length === 0 ? (
+            <div className="text-center py-16 bg-[#161b22] border border-[#30363d] rounded-2xl">
+              <FileText size={40} className="text-[#30363d] mx-auto mb-4" />
+              <h3 className="font-bold text-white mb-2">No jobs posted yet</h3>
+              <button onClick={() => { setEditingJob(newJob()); setView('post-job'); }} className="mt-4 px-5 py-2.5 bg-[#1f6feb] text-white rounded-xl text-sm font-bold hover:bg-[#388bfd] transition-colors">Post your first job</button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {myJobs.map(job => (
+                <div key={job.id} className="relative">
+                  <JobCard job={job} mine onClick={() => setSelectedJob(job)} />
+                  <div className="absolute top-4 right-4 flex gap-1">
+                    <button onClick={e => { e.stopPropagation(); setEditingJob(job); setView('post-job'); }} className="p-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white rounded-lg transition-colors"><Edit3 size={13} /></button>
+                    <button onClick={e => { e.stopPropagation(); deleteJob(job.id); }} className="p-1.5 bg-[#21262d] hover:bg-red-900/40 text-[#8b949e] hover:text-red-400 rounded-lg transition-colors"><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── POST JOB ── */}
+      {view === 'post-job' && (
+        <PostJobForm onSave={saveJob} initial={editingJob || undefined} onCancel={() => { setEditingJob(null); setView('my-jobs'); }} />
+      )}
+
+      {/* ── MODALS ── */}
+      {selectedJob && (
+        <JobDetail job={selectedJob} onClose={() => setSelectedJob(null)}
+          onApply={selectedJob.status === 'open' ? () => { setApplyingJob(selectedJob); setSelectedJob(null); } : undefined}
+          onUpdateApplicant={updateApplicant} mine />
+      )}
+      {applyingJob && (
+        <ApplyModal job={applyingJob} onApply={app => applyToJob(applyingJob.id, app)} onClose={() => setApplyingJob(null)} />
+      )}
+    </div>
+  );
+}

@@ -21,6 +21,7 @@ import SocialHub from './components/SocialHub';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
+import WorkHub from './components/WorkHub';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
@@ -399,11 +400,10 @@ const App: React.FC = () => {
       );
     }
 
-    // WORK
-    if (activeView === 'work-my-workers') return <EmployeeQRTracker />;
-    if (activeView === 'work-find' || activeView === 'work-active' || activeView === 'work-completed') {
-      return <ComingSoon title={activeView === 'work-find' ? 'Find Worker' : activeView === 'work-active' ? 'Active Jobs' : 'Completed Jobs'} desc="Worker and job management is coming soon." emoji="👷" />;
-    }
+    // WORK — WorkHub handles all work sub-views
+    if (activeView === 'work-find') return <WorkHub initialView="find-worker" />;
+    if (activeView === 'work-my-workers') return <WorkHub initialView="my-jobs" />;
+    if (activeView === 'work-active' || activeView === 'work-completed') return <WorkHub initialView="browse" />;
 
     // ACTIVITY
     if (activeView === 'activity-all' || activeView === 'activity-notifications') {
