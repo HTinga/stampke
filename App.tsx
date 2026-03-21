@@ -80,8 +80,8 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'money-payments', label: 'Payments',       desc: 'Payment history' },
     { id: 'money-unpaid',   label: 'Unpaid',         desc: 'Outstanding balances' },
     { id: 'money-create',   label: 'Create Invoice', desc: 'New invoice' },
-    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'Stripe & M-Pesa' },
-    { id: 'money-upgrade',  label: '⭐ Upgrade Plan',  desc: 'Stripe & M-Pesa' },
+    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'M-Pesa & Card' },
+    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'M-Pesa & Card' },
   ],
   documents: [
     { id: 'documents-create',       label: 'Create Document',    desc: 'New document or contract' },

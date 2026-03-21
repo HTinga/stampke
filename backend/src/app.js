@@ -1,14 +1,14 @@
 'use strict';
 require('module-alias/register');
 
-const express      = require('express');
-const cors         = require('cors');
-const compression  = require('compression');
-const cookieParser = require('cookie-parser');
-const helmet       = require('helmet');
+const express       = require('express');
+const cors          = require('cors');
+const compression   = require('compression');
+const cookieParser  = require('cookie-parser');
+const helmet        = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const hpp          = require('hpp');
-const rateLimit    = require('express-rate-limit');
+const hpp           = require('hpp');
+const rateLimit     = require('express-rate-limit');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
 const coreApiRouter  = require('./routes/coreRoutes/coreApi');
@@ -19,7 +19,7 @@ const logger         = require('./utils/logger');
 
 const app = express();
 
-// ── #13 CORS ────────────────────────────────────────────────────────────────
+// ── CORS ──────────────────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
@@ -35,69 +35,41 @@ app.use(cors({
   credentials: true,
 }));
 
-// ── Security headers (covers XSS, clickjacking, sniffing) ───────────────────
-app.use(helmet({
-  contentSecurityPolicy: false, // disabled so API responses aren't blocked
-  crossOriginEmbedderPolicy: false,
-}));
-
-// ── #3 Input sanitisation — strip MongoDB operators from req.body/query ──────
+// ── Security ──────────────────────────────────────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(mongoSanitize({ replaceWith: '_' }));
-
-// ── #3 HTTP parameter pollution prevention ───────────────────────────────────
 app.use(hpp());
 
-
-// ── Stripe webhook — raw body required for signature verification (issue #5) ─
-app.post('/api/payment/stripe/webhook',
-  express.raw({ type: 'application/json' }),
-  require('./controllers/appControllers/paymentGatewayController').stripeWebhook
-);
-
-app.use(cookieParser());
-
-// ── Flutterwave webhook (register BEFORE express.json for raw body access) ───
+// ── IntaSend webhook — raw body must come BEFORE express.json ─────────────────
 const paymentGateway = require('./controllers/appControllers/paymentGatewayController');
 const { catchErrors } = require('./handlers/errorHandlers');
-app.post('/api/payments/card/webhook', catchErrors(paymentGateway.cardWebhook));
+app.post('/api/payments/callback', paymentGateway.mpesaCallback);
 
+// ── Body parsing ──────────────────────────────────────────────────────────────
+app.use(cookieParser());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(compression());
 
-// ── #18 Request logging (morgan → winston) ───────────────────────────────────
+// ── Request logging ───────────────────────────────────────────────────────────
 app.use((req, res, next) => {
-  res.on('finish', () => {
-    logger.http(`${req.method} ${req.path} ${res.statusCode}`);
-  });
+  res.on('finish', () => logger.http(`${req.method} ${req.path} ${res.statusCode}`));
   next();
 });
 
-// ── #1 Rate limiting — tiered ────────────────────────────────────────────────
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 min
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+app.use('/api', rateLimit({
+  windowMs: 15 * 60 * 1000, max: 200,
+  standardHeaders: true, legacyHeaders: false,
   message: { success: false, result: null, message: 'Too many requests, slow down.' },
-});
-// Stricter limit on auth routes (prevent brute force)
+}));
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: 15 * 60 * 1000, max: 20,
   message: { success: false, result: null, message: 'Too many auth attempts. Try again in 15 minutes.' },
 });
-
-app.use('/api', limiter);
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 app.use('/api/forgetpassword', authLimiter);
-
-// ── Stripe webhook — raw body required BEFORE express.json ──────────────────
-app.post('/api/payments/stripe/webhook',
-  require('express').raw({ type: 'application/json' }),
-  require('./controllers/appControllers/paymentGatewayController').stripeWebhook
-);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', coreAuthRouter);
