@@ -22,6 +22,7 @@ import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
 import DocumentsHub from './components/DocumentsHub';
+import EmployeeTracking from './components/EmployeeTracking';
 import WorkHub from './components/WorkHub';
 import ClientManager from './components/ClientManager';
 import AdminPanel from './components/AdminPanel';
@@ -40,7 +41,7 @@ type SubView =
   | 'clients-all' | 'clients-add' | 'clients-leads'
   | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
   | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
-  | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed'
+  | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
   | 'activity-all' | 'activity-notifications'
   | 'settings-profile' | 'settings-business'
   | 'admin-panel' | 'worker-portal'
@@ -96,6 +97,7 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'work-my-workers',label: 'My Workers',    desc: 'Your team' },
     { id: 'work-active',    label: 'Active Jobs',   desc: 'In-progress tasks' },
     { id: 'work-completed', label: 'Completed Jobs',desc: 'Done tasks' },
+    { id: 'work-tracking',  label: '📍 GPS Tracking', desc: 'QR check-in & GPS attendance' },
   ],
   activity:  [
     { id: 'activity-all',           label: 'All Actions',    desc: 'Full activity log' },
@@ -442,8 +444,6 @@ const App: React.FC = () => {
         </div>
       );
     }
-    if (activeView === 'documents-presentation') return <DocumentsHub />;
-    if (activeView === 'documents-create') return <DocumentsHub />;
 
     // STAMP STUDIO (documents-stamps)
     if (activeView === 'documents-stamps') {
@@ -509,6 +509,7 @@ const App: React.FC = () => {
     if (activeView === 'work-find') return <WorkHub initialView="find-worker" />;
     if (activeView === 'work-my-workers') return <WorkHub initialView="my-jobs" />;
     if (activeView === 'work-active' || activeView === 'work-completed') return <WorkHub initialView="browse" />;
+    if (activeView === 'work-tracking') return <EmployeeTracking />;
 
     // ACTIVITY
     if (activeView === 'activity-all' || activeView === 'activity-notifications') {

@@ -1,13 +1,14 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Suspense, lazy } from 'react';
 import {
   FileText, Plus, Presentation, File, Download, Trash2, Search,
   ChevronRight, Sparkles, Loader2, X, Check, Edit3, Eye, Copy,
   ArrowLeft, RefreshCw, BookOpen, Layout, BarChart2, Quote,
   Users, Table, Image as ImageIcon, List, Hash, Layers,
   Star, Zap, ChevronDown, ChevronUp, Move, Grid3X3,
-  FileType, FileCode, Maximize2,
+  FileType, FileCode, Maximize2, GalleryHorizontal,
 } from 'lucide-react';
 import WordEditor from './WordEditor';
+import { TEMPLATE_REGISTRY, TEMPLATE_FAMILIES, type TemplateInfo } from './presentation-templates/registry';
 
 // ── Types ────────────────────────────────────────────────────────
 type DocType = 'presentation' | 'word' | 'pdf';
@@ -278,6 +279,8 @@ export default function DocumentsHub() {
   const [wordFileName, setWordFileName] = useState('New Document');
   const [presentationMode, setPresentationMode] = useState(false);
   const [genStep, setGenStep] = useState('');
+  const [selectedTemplateFamily, setSelectedTemplateFamily] = useState('all');
+  const [selectedPrestonTemplate, setSelectedPrestonTemplate] = useState<string | null>(null);
 
   useEffect(() => { setDocs(load()); }, []);
   const persist = (d: DocItem[]) => { setDocs(d); save(d); };
@@ -612,7 +615,7 @@ export default function DocumentsHub() {
               </div>
 
               {/* Blank */}
-              <div style={{ ...S.card, padding: 20 }}>
+              <div style={{ ...S.card, padding: 20, marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <p style={{ color: 'white', fontWeight: 700, fontSize: 14, margin: '0 0 4px' }}>Start from Blank</p>
@@ -620,6 +623,52 @@ export default function DocumentsHub() {
                   </div>
                   <button onClick={createBlankPresentation} style={S.btn(false, true)}><Plus size={13} /> Create</button>
                 </div>
+              </div>
+
+              {/* Presenton Template Gallery */}
+              <div style={{ ...S.card, padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <GalleryHorizontal size={16} style={{ color: '#6366f1' }} />
+                  <p style={{ color: 'white', fontWeight: 800, fontSize: 15, margin: 0 }}>Slide Templates Gallery</p>
+                  <span style={{ fontSize: 10, background: 'rgba(99,102,241,0.15)', color: '#6366f1', borderRadius: 6, padding: '2px 7px', fontWeight: 700 }}>{TEMPLATE_REGISTRY.length} layouts</span>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginBottom: 14 }}>Professional slide templates from the Presenton library — click any to use in your deck</p>
+                {/* Family filters */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                  {['all', ...TEMPLATE_FAMILIES].map(fam => (
+                    <button key={fam} onClick={() => setSelectedTemplateFamily(fam)}
+                      style={{ padding: '4px 10px', borderRadius: 16, fontSize: 10, fontWeight: 700, border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em', background: selectedTemplateFamily === fam ? '#6366f1' : 'rgba(255,255,255,0.07)', color: selectedTemplateFamily === fam ? 'white' : 'rgba(255,255,255,0.4)', transition: 'all 0.12s' }}>
+                      {fam}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 10 }}>
+                  {TEMPLATE_REGISTRY
+                    .filter(t => selectedTemplateFamily === 'all' || t.family === selectedTemplateFamily)
+                    .map(tmpl => (
+                    <div key={tmpl.id}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: `2px solid ${selectedPrestonTemplate === tmpl.id ? '#6366f1' : 'rgba(255,255,255,0.08)'}`, borderRadius: 10, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.12s' }}
+                      onClick={() => setSelectedPrestonTemplate(tmpl.id === selectedPrestonTemplate ? null : tmpl.id)}
+                      onMouseEnter={e => { if (selectedPrestonTemplate !== tmpl.id) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.4)'; }}
+                      onMouseLeave={e => { if (selectedPrestonTemplate !== tmpl.id) (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; }}>
+                      <div style={{ height: 80, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                        <Layout size={24} style={{ color: 'rgba(99,102,241,0.4)' }} />
+                        <span style={{ position: 'absolute', top: 4, right: 4, fontSize: 8, background: 'rgba(99,102,241,0.2)', color: '#6366f1', padding: '1px 5px', borderRadius: 4, fontWeight: 700, textTransform: 'uppercase' }}>{tmpl.family.replace('neo-','')}</span>
+                        {selectedPrestonTemplate === tmpl.id && <div style={{ position: 'absolute', inset: 0, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={20} style={{ color: '#6366f1' }} /></div>}
+                      </div>
+                      <div style={{ padding: '8px 10px' }}>
+                        <p style={{ color: 'white', fontWeight: 700, fontSize: 11, margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tmpl.name}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tmpl.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {selectedPrestonTemplate && (
+                  <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#a5b4fc', fontSize: 12, fontWeight: 600 }}>✓ Template selected: {TEMPLATE_REGISTRY.find(t => t.id === selectedPrestonTemplate)?.name}</span>
+                    <button onClick={() => { createBlankPresentation(); }} style={{ ...S.btn(true, false), padding: '6px 14px', fontSize: 11 }}><Sparkles size={12} /> Use Template</button>
+                  </div>
+                )}
               </div>
             </>)}
 
