@@ -1,405 +1,201 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
-  PenTool, CheckCircle2, FileText, Wrench, QrCode, Share2,
-  Camera, Download, Layers, ChevronRight, TrendingUp,
-  BarChart3, Clock, Zap, ArrowUpRight, Sparkles, Activity,
-  FileCheck, Target
+  DollarSign, Users, FileText, Briefcase, Bell, ArrowUpRight,
+  TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, ChevronRight,
+  PenTool, FileCheck, Send, Stamp, Package
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAppStats } from '../src/appStatsStore';
 
-type TabType = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing';
-
+type NavTab = string;
 interface DashboardProps {
   userName?: string;
-  onNavigate: (tab: TabType) => void;
-  theme: 'light' | 'dark';
+  onNavigate: (tab: NavTab) => void;
+  theme?: 'light' | 'dark';
 }
 
-const ICON_MAP: Record<string, React.ComponentType<{size?: number; className?: string}>> = {
-  PenTool, CheckCircle2, FileText, Wrench, QrCode, Camera, Layers, Download,
-  Share2, BarChart3, Activity, FileCheck,
-};
-
-function timeAgo(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-// Weekly activity: deterministic sparkline data seeded from total (no re-randomize on render)
-function generateWeeklyData(total: number): number[] {
-  const days = 7;
-  // Simple deterministic seed based on total value
-  const seed = (n: number, s: number) => ((n * 1664525 + s * 1013904223) & 0x7fffffff) / 0x7fffffff;
-  const arr: number[] = [];
-  let remaining = Math.max(total, days);
-  for (let i = 0; i < days - 1; i++) {
-    const v = Math.floor(seed(remaining, i + 1) * (remaining / (days - i)) * 1.5);
-    arr.push(Math.max(0, v));
-    remaining -= v;
-  }
-  arr.push(Math.max(0, remaining));
-  return arr;
-}
-
-const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
-  const max = Math.max(...data, 1);
-  const w = 60, h = 24;
-  const step = w / (data.length - 1);
-  const points = data.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
-  return (
-    <svg width={w} height={h} className="overflow-visible">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-};
-
-const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
   const stats = useAppStats();
-  const isDark = theme === 'dark';
+  const first = userName?.split(' ')[0] || 'there';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  const totalActions = stats.stampsCreated + stats.stampsApplied + stats.documentsSigned +
-    stats.pdfEdits + stats.qrCodesGenerated + stats.templatesUsed + stats.aiScans + stats.stampsDownloaded;
+  // Activity feed built from real app stats
+  const recentActivity = stats.recentActivity.slice(0, 6);
+  const totalActions = stats.stampsCreated + stats.stampsApplied + stats.documentsSigned + stats.pdfEdits + stats.stampsDownloaded + stats.aiScans + stats.qrCodesGenerated + stats.templatesUsed;
 
-  const statCards = [
+  const kpiCards = [
     {
       label: 'Stamps Created',
       value: stats.stampsCreated,
+      sub: stats.stampsCreated === 0 ? 'Design your first stamp' : `${stats.stampsDownloaded} downloaded`,
       icon: PenTool,
-      color: 'text-[#58a6ff]',
-      bg: 'bg-[#21262d] dark:bg-[#21262d]',
-      border: 'border-[#d4e6f9] dark:border-blue-900/40',
-      accent: '#2563eb',
-      tab: 'stamp-studio' as TabType,
-      sparkData: generateWeeklyData(stats.stampsCreated),
-      description: 'Designed in Stamp Studio',
-    },
-    {
-      label: 'Stamps Applied',
-      value: stats.stampsApplied,
-      icon: FileText,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50 dark:bg-orange-900/20',
-      border: 'border-orange-100 dark:border-orange-900/40',
-      accent: '#ea580c',
-      tab: 'apply-stamp' as TabType,
-      sparkData: generateWeeklyData(stats.stampsApplied),
-      description: 'Applied to PDF documents',
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10 border-blue-500/20',
+      tab: 'stamp-studio',
     },
     {
       label: 'Documents Signed',
       value: stats.documentsSigned,
+      sub: stats.documentsSigned === 0 ? 'Upload a doc to sign' : 'via Toho Sign',
       icon: CheckCircle2,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-100 dark:border-emerald-900/40',
-      accent: '#059669',
-      tab: 'esign' as TabType,
-      sparkData: generateWeeklyData(stats.documentsSigned),
-      description: 'Signed via Sign Center',
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/10 border-emerald-500/20',
+      tab: 'esign',
     },
     {
       label: 'PDF Edits',
       value: stats.pdfEdits,
-      icon: Wrench,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-100 dark:border-purple-900/40',
-      accent: '#9333ea',
-      tab: 'pdf-forge' as TabType,
-      sparkData: generateWeeklyData(stats.pdfEdits),
-      description: 'Processed in PDF Editor',
+      sub: stats.pdfEdits === 0 ? 'Open PDF Editor' : 'documents edited',
+      icon: FileText,
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/10 border-purple-500/20',
+      tab: 'pdf-forge',
     },
     {
       label: 'QR Codes',
       value: stats.qrCodesGenerated,
-      icon: QrCode,
-      color: 'text-cyan-600',
-      bg: 'bg-cyan-50 dark:bg-cyan-900/20',
-      border: 'border-cyan-100 dark:border-cyan-900/40',
-      accent: '#0891b2',
-      tab: 'qr-tracker' as TabType,
-      sparkData: generateWeeklyData(stats.qrCodesGenerated),
-      description: 'Generated & tracked',
-    },
-    {
-      label: 'AI Scans',
-      value: stats.aiScans,
-      icon: Camera,
-      color: 'text-pink-600',
-      bg: 'bg-pink-50 dark:bg-pink-900/20',
-      border: 'border-pink-100 dark:border-pink-900/40',
-      accent: '#db2777',
-      tab: 'convert' as TabType,
-      sparkData: generateWeeklyData(stats.aiScans),
-      description: 'Stamps digitized via AI',
-    },
-    {
-      label: 'Templates Used',
-      value: stats.templatesUsed,
-      icon: Layers,
-      color: 'text-[#e6edf3]',
-      bg: 'bg-[#21262d] dark:bg-[#21262d]',
-      border: 'border-[#30363d] dark:border-[#58a6ff]',
-      accent: '#475569',
-      tab: 'templates' as TabType,
-      sparkData: generateWeeklyData(stats.templatesUsed),
-      description: 'Applied from library',
-    },
-    {
-      label: 'Downloads',
-      value: stats.stampsDownloaded,
-      icon: Download,
-      color: 'text-indigo-600',
-      bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-      border: 'border-indigo-100 dark:border-indigo-900/40',
-      accent: '#4f46e5',
-      tab: 'stamp-studio' as TabType,
-      sparkData: generateWeeklyData(stats.stampsDownloaded),
-      description: 'Exported as SVG/PNG/PDF',
+      sub: stats.qrCodesGenerated === 0 ? 'Track your workers' : 'codes generated',
+      icon: Package,
+      color: 'text-orange-400',
+      bg: 'bg-orange-500/10 border-orange-500/20',
+      tab: 'qr-tracker',
     },
   ];
 
   const quickActions = [
-    { label: 'Design New Stamp', icon: PenTool, color: 'from-blue-500 to-indigo-600', tab: 'stamp-studio' as TabType, desc: 'Open Stamp Studio' },
-    { label: 'Sign a Document', icon: CheckCircle2, color: 'from-emerald-500 to-teal-600', tab: 'esign' as TabType, desc: 'Open Sign Center' },
-    { label: 'Apply Stamp to PDF', icon: FileText, color: 'from-orange-500 to-amber-600', tab: 'apply-stamp' as TabType, desc: 'Stamp Applier' },
-    { label: 'Edit PDF', icon: Wrench, color: 'from-purple-500 to-violet-600', tab: 'pdf-forge' as TabType, desc: 'PDF Editor' },
-    { label: 'Track with QR', icon: QrCode, color: 'from-cyan-500 to-sky-600', tab: 'qr-tracker' as TabType, desc: 'QR Tracker' },
-    { label: 'AI Scan Stamp', icon: Camera, color: 'from-pink-500 to-rose-600', tab: 'convert' as TabType, desc: 'Digitize Rubber Stamp' },
+    { emoji: '🖋️', label: 'Design Stamp',    tab: 'stamp-studio',  color: 'from-blue-600/20 to-blue-500/10 border-blue-500/30 hover:border-blue-400' },
+    { emoji: '✍️', label: 'Sign Document',   tab: 'esign',          color: 'from-purple-600/20 to-purple-500/10 border-purple-500/30 hover:border-purple-400' },
+    { emoji: '📄', label: 'Edit PDF',        tab: 'pdf-forge',      color: 'from-orange-600/20 to-orange-500/10 border-orange-500/30 hover:border-orange-400' },
+    { emoji: '💰', label: 'Smart Invoice',   tab: 'smart-invoice',  color: 'from-emerald-600/20 to-emerald-500/10 border-emerald-500/30 hover:border-emerald-400' },
   ];
 
-  const isEmpty = totalActions === 0;
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>Live Dashboard</span>
-          </div>
-          <h2 className="text-4xl font-black tracking-tighter mb-1">
-            Welcome back{userName ? `, ${userName}` : ''}.
-          </h2>
-          <p className={`font-medium ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>
-            Here's your real-time activity overview across all Sahihi tools.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => onNavigate('stamp-studio')}
-            className="bg-[#1f6feb] text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#30363d] transition-all shadow-lg shadow-[#c5d8ef] dark:shadow-none"
-          >
-            <PenTool size={16} /> New Stamp
-          </button>
-          <button
-            onClick={() => onNavigate('landing')}
-            className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all border ${isDark ? 'border-[#58a6ff] text-[#8b949e] hover:bg-[#21262d]' : 'border-[#30363d] text-[#e6edf3] hover:bg-[#0d1117]'}`}
-          >
-            <Sparkles size={16} /> View Plans
-          </button>
-        </div>
+    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+
+      {/* Greeting */}
+      <div>
+        <h1 className="text-2xl font-bold text-white">{greeting}, {first} 👋</h1>
+        <p className="text-[#8b949e] text-sm mt-0.5">
+          {totalActions === 0
+            ? "Welcome to Tomo. Start by designing a stamp or uploading a document."
+            : `You've completed ${totalActions} action${totalActions !== 1 ? 's' : ''} so far.`}
+        </p>
       </div>
 
-      {/* Empty state CTA */}
-      {isEmpty && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl border-2 border-dashed p-10 text-center ${isDark ? 'border-[#58a6ff] bg-[#161b22]/50' : 'border-[#d4e6f9] bg-[#21262d]/50'}`}
-        >
-          <div className="w-14 h-14 bg-[#1f6feb] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-black">
-            <Zap size={28} className="text-white" />
-          </div>
-          <h3 className="text-2xl font-black tracking-tight mb-2">Your activity will appear here</h3>
-          <p className={`mb-6 font-medium ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>
-            Start designing stamps, signing documents, or applying stamps — your stats update in real time.
-          </p>
-          <button
-            onClick={() => onNavigate('stamp-studio')}
-            className="bg-[#1f6feb] text-white px-8 py-4 rounded-2xl font-black text-base hover:bg-[#30363d] transition-all shadow-lg shadow-black inline-flex items-center gap-2"
-          >
-            <PenTool size={18} /> Design Your First Stamp
-          </button>
-        </motion.div>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <motion.button
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            onClick={() => onNavigate(stat.tab)}
-            className={`group text-left p-5 rounded-2xl border transition-all hover:shadow-lg hover:-translate-y-0.5 ${isDark ? 'bg-[#161b22] border-[#30363d] hover:border-[#1a5cad]' : 'bg-[#161b22] border-[#21262d] hover:border-[#30363d] shadow-sm'}`}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.border} border`}>
-                <stat.icon size={18} className={stat.color} />
-              </div>
-              <ArrowUpRight size={14} className={`opacity-0 group-hover:opacity-100 transition-opacity mt-1 ${stat.color}`} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiCards.map((card, i) => (
+          <motion.button key={i} onClick={() => onNavigate(card.tab)}
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+            className={`${card.bg} border rounded-2xl p-5 text-left hover:scale-[1.02] transition-all active:scale-[0.98] group`}>
+            <div className="flex items-start justify-between mb-3">
+              <card.icon size={20} className={card.color} />
+              <ArrowUpRight size={14} className="text-[#8b949e] opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>{stat.label}</p>
-                <h3 className="text-3xl font-black tracking-tighter leading-none">{stat.value.toLocaleString()}</h3>
-                <p className={`text-[10px] mt-1 font-medium ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>{stat.description}</p>
-              </div>
-              <div className="pb-1">
-                <Sparkline data={stat.sparkData} color={stat.accent} />
-              </div>
-            </div>
+            <p className="text-2xl font-bold text-white leading-tight">{card.value}</p>
+            <p className="text-xs text-[#8b949e] mt-0.5">{card.label}</p>
+            <p className="text-[10px] text-[#8b949e]/70 mt-0.5">{card.sub}</p>
           </motion.button>
         ))}
       </div>
 
-      {/* Middle row: Activity feed + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Recent Activity */}
-        <div className={`lg:col-span-3 rounded-3xl border p-6 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Activity size={16} className="text-[#8b949e]" />
-              </div>
-              <h3 className="text-base font-black tracking-tight">Recent Activity</h3>
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-              {stats.recentActivity.length} events
-            </span>
+        {/* Quick Actions */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white uppercase tracking-widest">Quick Actions</h2>
+            <span className="text-[10px] text-[#8b949e]">2 clicks max</span>
           </div>
-
-          {stats.recentActivity.length === 0 ? (
-            <div className={`text-center py-12 ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-              <Clock size={32} className="mx-auto mb-3" />
-              <p className="font-black text-sm">No activity yet</p>
-              <p className={`text-xs mt-1 ${isDark ? 'text-white' : 'text-[#8b949e]'}`}>Your actions will appear here in real time</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {stats.recentActivity.slice(0, 8).map((event, i) => {
-                const IconComp = ICON_MAP[event.icon] || Activity;
-                return (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className={`flex items-center gap-4 p-3 rounded-2xl transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-[#0d1117]'}`}
-                  >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${event.color}`}>
-                      <IconComp size={16} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate">{event.description}</p>
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-                      {timeAgo(event.timestamp)}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            {quickActions.map((a, i) => (
+              <motion.button key={i} onClick={() => onNavigate(a.tab)}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 + i * 0.06 }}
+                className={`bg-gradient-to-br ${a.color} border rounded-2xl p-5 text-left hover:scale-[1.03] transition-all active:scale-[0.97]`}>
+                <div className="text-2xl mb-3">{a.emoji}</div>
+                <p className="text-sm font-semibold text-white">{a.label}</p>
+              </motion.button>
+            ))}
+          </div>
         </div>
 
-        {/* Quick Actions + Summary */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-
-          {/* Total activity score */}
-          <div className={`rounded-3xl border p-6 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Target size={16} className="text-[#58a6ff]" />
-              </div>
-              <h3 className="text-base font-black tracking-tight">Session Summary</h3>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: 'Total Actions', value: totalActions, color: 'bg-[#1f6feb]' },
-                { label: 'Stamps', value: stats.stampsCreated + stats.stampsApplied + stats.stampsDownloaded, color: 'bg-indigo-500' },
-                { label: 'Documents', value: stats.documentsSigned + stats.pdfEdits, color: 'bg-emerald-500' },
-                { label: 'Tracking & AI', value: stats.qrCodesGenerated + stats.aiScans, color: 'bg-pink-500' },
-              ].map((item, i) => {
-                const pct = totalActions > 0 ? Math.min(100, Math.round((item.value / totalActions) * 100)) : 0;
-                return (
-                  <div key={i}>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>{item.label}</span>
-                      <span className="text-sm font-black">{item.value}</span>
-                    </div>
-                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-[#21262d]' : 'bg-[#21262d]'}`}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.1 }}
-                        className={`h-full rounded-full ${item.color}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Activity Feed */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white uppercase tracking-widest">Recent Activity</h2>
           </div>
-
-          {/* Quick actions */}
-          <div className={`rounded-3xl border p-6 flex-1 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Zap size={16} className="text-[#8b949e]" />
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden">
+            {recentActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <div className="w-12 h-12 bg-[#21262d] rounded-2xl flex items-center justify-center mb-3">
+                  <TrendingUp size={22} className="text-[#8b949e]" />
+                </div>
+                <p className="text-sm font-semibold text-white mb-1">No activity yet</p>
+                <p className="text-xs text-[#8b949e]">Actions you take — stamps created, documents signed, invoices sent — will appear here.</p>
               </div>
-              <h3 className="text-base font-black tracking-tight">Quick Actions</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {quickActions.map((action, i) => (
-                <button
-                  key={i}
-                  onClick={() => onNavigate(action.tab)}
-                  className={`group flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all hover:shadow-md hover:-translate-y-0.5 ${isDark ? 'border-[#30363d] hover:border-[#1a5cad] bg-[#21262d]/50' : 'border-[#21262d] hover:border-[#30363d] bg-[#0d1117]'}`}
-                >
-                  <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
-                    <action.icon size={14} className="text-white" />
+            ) : (
+              recentActivity.map((item, i) => (
+                <div key={i} className={`flex items-center gap-3 px-4 py-3.5 ${i < recentActivity.length - 1 ? 'border-b border-[#21262d]' : ''} hover:bg-[#21262d]/50 transition-colors`}>
+                  <div className="w-8 h-8 bg-[#1f6feb]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={13} className="text-[#1f6feb]" />
                   </div>
-                  <div>
-                    <p className="text-[11px] font-black leading-tight">{action.label}</p>
-                    <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>{action.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white truncate">{item.description}</p>
+                    <p className="text-[10px] text-[#8b949e] flex items-center gap-1 mt-0.5">
+                      <Clock size={9} /> {new Date(item.timestamp).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Get Started section — shown when there's no activity */}
+      {totalActions === 0 && (
+        <div>
+          <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Get Started</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { step: '1', title: 'Design your stamp', desc: 'Create a professional digital stamp for your business', tab: 'stamp-studio', cta: 'Open Stamp Studio', color: 'border-blue-500/30' },
+              { step: '2', title: 'Upload & sign a document', desc: 'Collect legally binding e-signatures from clients and partners', tab: 'esign', cta: 'Open Toho Sign', color: 'border-purple-500/30' },
+              { step: '3', title: 'Post a work opportunity', desc: 'Find an electrician, driver or errand person in minutes', tab: 'work-find', cta: 'Post a Job', color: 'border-emerald-500/30' },
+            ].map((s, i) => (
+              <div key={i} className={`bg-[#161b22] border ${s.color} rounded-2xl p-5`}>
+                <div className="w-7 h-7 bg-[#1f6feb] rounded-lg flex items-center justify-center text-white text-xs font-bold mb-3">{s.step}</div>
+                <h3 className="font-bold text-white text-sm mb-1">{s.title}</h3>
+                <p className="text-xs text-[#8b949e] mb-4">{s.desc}</p>
+                <button onClick={() => onNavigate(s.tab)} className="text-xs text-[#58a6ff] hover:underline font-semibold flex items-center gap-1">
+                  {s.cta} <ChevronRight size={12} />
                 </button>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Bottom banner */}
-      <div
-        onClick={() => onNavigate('landing')}
-        className="cursor-pointer group relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-700 p-6 flex items-center justify-between"
-      >
-        <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
-        <div className="relative flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#161b22]/20 rounded-xl flex items-center justify-center">
-            <TrendingUp size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="font-black text-white text-base">Unlock unlimited stamps & features</p>
-            <p className="text-white/70 text-sm font-medium">Upgrade to Professional — KES 2,499/month</p>
+      {/* Stats summary — only when there's activity */}
+      {totalActions > 0 && (
+        <div>
+          <h2 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Your Usage</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Stamps Applied', value: stats.stampsApplied, color: 'text-blue-400' },
+              { label: 'AI Scans', value: stats.aiScans, color: 'text-pink-400' },
+              { label: 'Templates Used', value: stats.templatesUsed, color: 'text-yellow-400' },
+              { label: 'Total Actions', value: totalActions, color: 'text-[#58a6ff]' },
+            ].map((s, i) => (
+              <div key={i} className="bg-[#161b22] border border-[#30363d] rounded-xl p-4">
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-[#8b949e] mt-0.5">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="relative flex items-center gap-2 bg-[#161b22] text-blue-700 px-5 py-2.5 rounded-xl font-black text-sm group-hover:scale-105 transition-transform shadow-lg">
-          View Plans <ChevronRight size={14} />
-        </div>
-      </div>
+      )}
+
     </div>
   );
 };
