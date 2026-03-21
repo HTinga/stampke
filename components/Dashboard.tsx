@@ -1,405 +1,159 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
-  PenTool, CheckCircle2, FileText, Wrench, QrCode, Share2,
-  Camera, Download, Layers, ChevronRight, TrendingUp,
-  BarChart3, Clock, Zap, ArrowUpRight, Sparkles, Activity,
-  FileCheck, Target
+  DollarSign, Users, FileText, Briefcase, Bell, ArrowUpRight,
+  TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, ChevronRight,
+  PenTool, FileCheck, Send, Stamp
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useAppStats } from '../src/appStatsStore';
 
-type TabType = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing';
-
+type NavTab = string;
 interface DashboardProps {
   userName?: string;
-  onNavigate: (tab: TabType) => void;
-  theme: 'light' | 'dark';
+  onNavigate: (tab: NavTab) => void;
+  theme?: 'light' | 'dark';
 }
 
-const ICON_MAP: Record<string, React.ComponentType<{size?: number; className?: string}>> = {
-  PenTool, CheckCircle2, FileText, Wrench, QrCode, Camera, Layers, Download,
-  Share2, BarChart3, Activity, FileCheck,
-};
+// Recent activity feed
+const ACTIVITY = [
+  { icon: Send,         label: 'Invoice sent',       sub: 'Kamau & Associates · KES 45,000', time: '2m ago',  color: 'bg-blue-500' },
+  { icon: CheckCircle2, label: 'Document signed',    sub: 'Employment Contract · 3 signers', time: '18m ago', color: 'bg-emerald-500' },
+  { icon: Stamp,        label: 'Stamp applied',      sub: 'Helmarc Brands · 12 pages',      time: '1h ago',  color: 'bg-purple-500' },
+  { icon: Users,        label: 'New client added',   sub: 'Dr. Amina Hassan',                time: '3h ago',  color: 'bg-orange-500' },
+  { icon: FileCheck,    label: 'Payment received',   sub: 'Rift Holdings · KES 120,000',    time: '5h ago',  color: 'bg-emerald-500' },
+];
 
-function timeAgo(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
+const QUICK_ACTIONS = [
+  { emoji: '💰', label: 'Create Invoice',  tab: 'smart-invoice', color: 'from-blue-600/20 to-blue-500/10 border-blue-500/30 hover:border-blue-400' },
+  { emoji: '✍️', label: 'Sign Document',   tab: 'esign',         color: 'from-purple-600/20 to-purple-500/10 border-purple-500/30 hover:border-purple-400' },
+  { emoji: '🖋️', label: 'Design Stamp',    tab: 'stamp-studio',  color: 'from-pink-600/20 to-pink-500/10 border-pink-500/30 hover:border-pink-400' },
+  { emoji: '📄', label: 'Edit PDF',        tab: 'pdf-forge',     color: 'from-orange-600/20 to-orange-500/10 border-orange-500/30 hover:border-orange-400' },
+];
 
-// Weekly activity: deterministic sparkline data seeded from total (no re-randomize on render)
-function generateWeeklyData(total: number): number[] {
-  const days = 7;
-  // Simple deterministic seed based on total value
-  const seed = (n: number, s: number) => ((n * 1664525 + s * 1013904223) & 0x7fffffff) / 0x7fffffff;
-  const arr: number[] = [];
-  let remaining = Math.max(total, days);
-  for (let i = 0; i < days - 1; i++) {
-    const v = Math.floor(seed(remaining, i + 1) * (remaining / (days - i)) * 1.5);
-    arr.push(Math.max(0, v));
-    remaining -= v;
-  }
-  arr.push(Math.max(0, remaining));
-  return arr;
-}
-
-const Sparkline: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
-  const max = Math.max(...data, 1);
-  const w = 60, h = 24;
-  const step = w / (data.length - 1);
-  const points = data.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
-  return (
-    <svg width={w} height={h} className="overflow-visible">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-};
-
-const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate, theme }) => {
-  const stats = useAppStats();
-  const isDark = theme === 'dark';
-
-  const totalActions = stats.stampsCreated + stats.stampsApplied + stats.documentsSigned +
-    stats.pdfEdits + stats.qrCodesGenerated + stats.templatesUsed + stats.aiScans + stats.stampsDownloaded;
-
-  const statCards = [
-    {
-      label: 'Stamps Created',
-      value: stats.stampsCreated,
-      icon: PenTool,
-      color: 'text-[#58a6ff]',
-      bg: 'bg-[#21262d] dark:bg-[#21262d]',
-      border: 'border-[#d4e6f9] dark:border-blue-900/40',
-      accent: '#2563eb',
-      tab: 'stamp-studio' as TabType,
-      sparkData: generateWeeklyData(stats.stampsCreated),
-      description: 'Designed in Stamp Studio',
-    },
-    {
-      label: 'Stamps Applied',
-      value: stats.stampsApplied,
-      icon: FileText,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50 dark:bg-orange-900/20',
-      border: 'border-orange-100 dark:border-orange-900/40',
-      accent: '#ea580c',
-      tab: 'apply-stamp' as TabType,
-      sparkData: generateWeeklyData(stats.stampsApplied),
-      description: 'Applied to PDF documents',
-    },
-    {
-      label: 'Documents Signed',
-      value: stats.documentsSigned,
-      icon: CheckCircle2,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-100 dark:border-emerald-900/40',
-      accent: '#059669',
-      tab: 'esign' as TabType,
-      sparkData: generateWeeklyData(stats.documentsSigned),
-      description: 'Signed via Sign Center',
-    },
-    {
-      label: 'PDF Edits',
-      value: stats.pdfEdits,
-      icon: Wrench,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-100 dark:border-purple-900/40',
-      accent: '#9333ea',
-      tab: 'pdf-forge' as TabType,
-      sparkData: generateWeeklyData(stats.pdfEdits),
-      description: 'Processed in PDF Editor',
-    },
-    {
-      label: 'QR Codes',
-      value: stats.qrCodesGenerated,
-      icon: QrCode,
-      color: 'text-cyan-600',
-      bg: 'bg-cyan-50 dark:bg-cyan-900/20',
-      border: 'border-cyan-100 dark:border-cyan-900/40',
-      accent: '#0891b2',
-      tab: 'qr-tracker' as TabType,
-      sparkData: generateWeeklyData(stats.qrCodesGenerated),
-      description: 'Generated & tracked',
-    },
-    {
-      label: 'AI Scans',
-      value: stats.aiScans,
-      icon: Camera,
-      color: 'text-pink-600',
-      bg: 'bg-pink-50 dark:bg-pink-900/20',
-      border: 'border-pink-100 dark:border-pink-900/40',
-      accent: '#db2777',
-      tab: 'convert' as TabType,
-      sparkData: generateWeeklyData(stats.aiScans),
-      description: 'Stamps digitized via AI',
-    },
-    {
-      label: 'Templates Used',
-      value: stats.templatesUsed,
-      icon: Layers,
-      color: 'text-[#e6edf3]',
-      bg: 'bg-[#21262d] dark:bg-[#21262d]',
-      border: 'border-[#30363d] dark:border-[#58a6ff]',
-      accent: '#475569',
-      tab: 'templates' as TabType,
-      sparkData: generateWeeklyData(stats.templatesUsed),
-      description: 'Applied from library',
-    },
-    {
-      label: 'Downloads',
-      value: stats.stampsDownloaded,
-      icon: Download,
-      color: 'text-indigo-600',
-      bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-      border: 'border-indigo-100 dark:border-indigo-900/40',
-      accent: '#4f46e5',
-      tab: 'stamp-studio' as TabType,
-      sparkData: generateWeeklyData(stats.stampsDownloaded),
-      description: 'Exported as SVG/PNG/PDF',
-    },
-  ];
-
-  const quickActions = [
-    { label: 'Design New Stamp', icon: PenTool, color: 'from-blue-500 to-indigo-600', tab: 'stamp-studio' as TabType, desc: 'Open Stamp Studio' },
-    { label: 'Sign a Document', icon: CheckCircle2, color: 'from-emerald-500 to-teal-600', tab: 'esign' as TabType, desc: 'Open Sign Center' },
-    { label: 'Apply Stamp to PDF', icon: FileText, color: 'from-orange-500 to-amber-600', tab: 'apply-stamp' as TabType, desc: 'Stamp Applier' },
-    { label: 'Edit PDF', icon: Wrench, color: 'from-purple-500 to-violet-600', tab: 'pdf-forge' as TabType, desc: 'PDF Editor' },
-    { label: 'Track with QR', icon: QrCode, color: 'from-cyan-500 to-sky-600', tab: 'qr-tracker' as TabType, desc: 'QR Tracker' },
-    { label: 'AI Scan Stamp', icon: Camera, color: 'from-pink-500 to-rose-600', tab: 'convert' as TabType, desc: 'Digitize Rubber Stamp' },
-  ];
-
-  const isEmpty = totalActions === 0;
+const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
+  const first = userName?.split(' ')[0] || 'there';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>Live Dashboard</span>
-          </div>
-          <h2 className="text-4xl font-black tracking-tighter mb-1">
-            Welcome back{userName ? `, ${userName}` : ''}.
-          </h2>
-          <p className={`font-medium ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>
-            Here's your real-time activity overview across all Sahihi tools.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => onNavigate('stamp-studio')}
-            className="bg-[#1f6feb] text-white px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#30363d] transition-all shadow-lg shadow-[#c5d8ef] dark:shadow-none"
-          >
-            <PenTool size={16} /> New Stamp
-          </button>
-          <button
-            onClick={() => onNavigate('landing')}
-            className={`px-5 py-3 rounded-2xl font-black text-sm flex items-center gap-2 transition-all border ${isDark ? 'border-[#58a6ff] text-[#8b949e] hover:bg-[#21262d]' : 'border-[#30363d] text-[#e6edf3] hover:bg-[#0d1117]'}`}
-          >
-            <Sparkles size={16} /> View Plans
-          </button>
-        </div>
+    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+
+      {/* Greeting */}
+      <div>
+        <h1 className="text-2xl font-bold text-white">{greeting}, {first} 👋</h1>
+        <p className="text-[#8b949e] text-sm mt-0.5">Here's what's happening with your business today.</p>
       </div>
 
-      {/* Empty state CTA */}
-      {isEmpty && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl border-2 border-dashed p-10 text-center ${isDark ? 'border-[#58a6ff] bg-[#161b22]/50' : 'border-[#d4e6f9] bg-[#21262d]/50'}`}
-        >
-          <div className="w-14 h-14 bg-[#1f6feb] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-black">
-            <Zap size={28} className="text-white" />
-          </div>
-          <h3 className="text-2xl font-black tracking-tight mb-2">Your activity will appear here</h3>
-          <p className={`mb-6 font-medium ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>
-            Start designing stamps, signing documents, or applying stamps — your stats update in real time.
-          </p>
-          <button
-            onClick={() => onNavigate('stamp-studio')}
-            className="bg-[#1f6feb] text-white px-8 py-4 rounded-2xl font-black text-base hover:bg-[#30363d] transition-all shadow-lg shadow-black inline-flex items-center gap-2"
-          >
-            <PenTool size={18} /> Design Your First Stamp
-          </button>
-        </motion.div>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <motion.button
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            onClick={() => onNavigate(stat.tab)}
-            className={`group text-left p-5 rounded-2xl border transition-all hover:shadow-lg hover:-translate-y-0.5 ${isDark ? 'bg-[#161b22] border-[#30363d] hover:border-[#1a5cad]' : 'bg-[#161b22] border-[#21262d] hover:border-[#30363d] shadow-sm'}`}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.border} border`}>
-                <stat.icon size={18} className={stat.color} />
-              </div>
-              <ArrowUpRight size={14} className={`opacity-0 group-hover:opacity-100 transition-opacity mt-1 ${stat.color}`} />
+      {/* KPI Cards — what a business owner needs in 5 seconds */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Unpaid Invoices', value: 'KES 284,000', sub: '6 invoices pending',    icon: DollarSign,  color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20',      tab: 'smart-invoice' },
+          { label: 'Paid This Week',  value: 'KES 120,000', sub: '3 payments received',   icon: TrendingUp,  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', tab: 'smart-invoice' },
+          { label: 'Active Clients',  value: '24',          sub: '3 new this month',       icon: Users,       color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20',    tab: 'social-hub' },
+          { label: 'Pending Docs',    value: '7',           sub: '2 awaiting signature',   icon: FileText,    color: 'text-purple-400',  bg: 'bg-purple-500/10 border-purple-500/20', tab: 'esign' },
+        ].map((card, i) => (
+          <motion.button key={i} onClick={() => onNavigate(card.tab)}
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+            className={`${card.bg} border rounded-2xl p-5 text-left hover:scale-[1.02] transition-all active:scale-[0.98] group`}>
+            <div className="flex items-start justify-between mb-3">
+              <card.icon size={20} className={card.color} />
+              <ArrowUpRight size={14} className="text-[#8b949e] opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className={`text-[11px] font-black uppercase tracking-widest mb-1 ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>{stat.label}</p>
-                <h3 className="text-3xl font-black tracking-tighter leading-none">{stat.value.toLocaleString()}</h3>
-                <p className={`text-[10px] mt-1 font-medium ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>{stat.description}</p>
-              </div>
-              <div className="pb-1">
-                <Sparkline data={stat.sparkData} color={stat.accent} />
-              </div>
-            </div>
+            <p className="text-xl font-bold text-white leading-tight">{card.value}</p>
+            <p className="text-xs text-[#8b949e] mt-1">{card.label}</p>
+            <p className="text-[10px] text-[#8b949e]/70 mt-0.5">{card.sub}</p>
           </motion.button>
         ))}
       </div>
 
-      {/* Middle row: Activity feed + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* Recent Activity */}
-        <div className={`lg:col-span-3 rounded-3xl border p-6 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Activity size={16} className="text-[#8b949e]" />
-              </div>
-              <h3 className="text-base font-black tracking-tight">Recent Activity</h3>
-            </div>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-              {stats.recentActivity.length} events
-            </span>
+        {/* Quick Actions */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white uppercase tracking-widest">Quick Actions</h2>
+            <span className="text-[10px] text-[#8b949e]">2 clicks max</span>
           </div>
-
-          {stats.recentActivity.length === 0 ? (
-            <div className={`text-center py-12 ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-              <Clock size={32} className="mx-auto mb-3" />
-              <p className="font-black text-sm">No activity yet</p>
-              <p className={`text-xs mt-1 ${isDark ? 'text-white' : 'text-[#8b949e]'}`}>Your actions will appear here in real time</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {stats.recentActivity.slice(0, 8).map((event, i) => {
-                const IconComp = ICON_MAP[event.icon] || Activity;
-                return (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className={`flex items-center gap-4 p-3 rounded-2xl transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-[#0d1117]'}`}
-                  >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${event.color}`}>
-                      <IconComp size={16} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate">{event.description}</p>
-                    </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>
-                      {timeAgo(event.timestamp)}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            {QUICK_ACTIONS.map((a, i) => (
+              <motion.button key={i} onClick={() => onNavigate(a.tab)}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 + i * 0.06 }}
+                className={`bg-gradient-to-br ${a.color} border rounded-2xl p-5 text-left hover:scale-[1.03] transition-all active:scale-[0.97]`}>
+                <div className="text-2xl mb-3">{a.emoji}</div>
+                <p className="text-sm font-semibold text-white">{a.label}</p>
+              </motion.button>
+            ))}
+          </div>
         </div>
 
-        {/* Quick Actions + Summary */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-
-          {/* Total activity score */}
-          <div className={`rounded-3xl border p-6 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Target size={16} className="text-[#58a6ff]" />
-              </div>
-              <h3 className="text-base font-black tracking-tight">Session Summary</h3>
-            </div>
-            <div className="space-y-3">
-              {[
-                { label: 'Total Actions', value: totalActions, color: 'bg-[#1f6feb]' },
-                { label: 'Stamps', value: stats.stampsCreated + stats.stampsApplied + stats.stampsDownloaded, color: 'bg-indigo-500' },
-                { label: 'Documents', value: stats.documentsSigned + stats.pdfEdits, color: 'bg-emerald-500' },
-                { label: 'Tracking & AI', value: stats.qrCodesGenerated + stats.aiScans, color: 'bg-pink-500' },
-              ].map((item, i) => {
-                const pct = totalActions > 0 ? Math.min(100, Math.round((item.value / totalActions) * 100)) : 0;
-                return (
-                  <div key={i}>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${isDark ? 'text-[#8b949e]' : 'text-[#8b949e]'}`}>{item.label}</span>
-                      <span className="text-sm font-black">{item.value}</span>
-                    </div>
-                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-[#21262d]' : 'bg-[#21262d]'}`}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: i * 0.1 }}
-                        className={`h-full rounded-full ${item.color}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Activity Feed */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-white uppercase tracking-widest">Recent Activity</h2>
+            <button onClick={() => onNavigate('dashboard')} className="text-[10px] text-[#58a6ff] hover:underline flex items-center gap-0.5">View all <ChevronRight size={10} /></button>
           </div>
-
-          {/* Quick actions */}
-          <div className={`rounded-3xl border p-6 flex-1 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-[#161b22] border-[#21262d] shadow-sm'}`}>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 bg-[#21262d] dark:bg-[#21262d] rounded-xl flex items-center justify-center">
-                <Zap size={16} className="text-[#8b949e]" />
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden">
+            {ACTIVITY.map((item, i) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-3.5 ${i < ACTIVITY.length - 1 ? 'border-b border-[#21262d]' : ''} hover:bg-[#21262d]/50 transition-colors`}>
+                <div className={`w-8 h-8 ${item.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <item.icon size={14} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{item.label}</p>
+                  <p className="text-[11px] text-[#8b949e] truncate">{item.sub}</p>
+                </div>
+                <span className="text-[10px] text-[#8b949e] flex-shrink-0 flex items-center gap-1"><Clock size={9} /> {item.time}</span>
               </div>
-              <h3 className="text-base font-black tracking-tight">Quick Actions</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {quickActions.map((action, i) => (
-                <button
-                  key={i}
-                  onClick={() => onNavigate(action.tab)}
-                  className={`group flex flex-col items-start gap-2 p-3 rounded-2xl border transition-all hover:shadow-md hover:-translate-y-0.5 ${isDark ? 'border-[#30363d] hover:border-[#1a5cad] bg-[#21262d]/50' : 'border-[#21262d] hover:border-[#30363d] bg-[#0d1117]'}`}
-                >
-                  <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
-                    <action.icon size={14} className="text-white" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-black leading-tight">{action.label}</p>
-                    <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-[#e6edf3]' : 'text-[#8b949e]'}`}>{action.desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Bottom banner */}
-      <div
-        onClick={() => onNavigate('landing')}
-        className="cursor-pointer group relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-700 p-6 flex items-center justify-between"
-      >
-        <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px'}} />
-        <div className="relative flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#161b22]/20 rounded-xl flex items-center justify-center">
-            <TrendingUp size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="font-black text-white text-base">Unlock unlimited stamps & features</p>
-            <p className="text-white/70 text-sm font-medium">Upgrade to Professional — KES 2,499/month</p>
-          </div>
+      {/* Work summary */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-bold text-white uppercase tracking-widest">Active Work</h2>
+          <button onClick={() => onNavigate('qr-tracker')} className="text-[10px] text-[#58a6ff] hover:underline flex items-center gap-0.5">Manage <ChevronRight size={10} /></button>
         </div>
-        <div className="relative flex items-center gap-2 bg-[#161b22] text-blue-700 px-5 py-2.5 rounded-xl font-black text-sm group-hover:scale-105 transition-transform shadow-lg">
-          View Plans <ChevronRight size={14} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: 'Active Jobs',     value: '4',  icon: Briefcase,   color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+            { label: 'Workers On Site', value: '11', icon: Users,        color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20' },
+            { label: 'Completed Today', value: '2',  icon: CheckCircle2, color: 'text-emerald-400',bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          ].map((s, i) => (
+            <div key={i} className={`${s.bg} border rounded-2xl p-5 flex items-center gap-4`}>
+              <s.icon size={22} className={s.color} />
+              <div>
+                <p className="text-xl font-bold text-white">{s.value}</p>
+                <p className="text-xs text-[#8b949e]">{s.label}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Alerts */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell size={16} className="text-[#1f6feb]" />
+          <h2 className="text-sm font-bold text-white">Needs Attention</h2>
+        </div>
+        <div className="space-y-3">
+          {[
+            { msg: '2 invoices are 14+ days overdue',   action: 'View Unpaid',  tab: 'smart-invoice', urgent: true },
+            { msg: 'Employment contract pending signature from 3 parties', action: 'Review',      tab: 'esign',         urgent: false },
+            { msg: 'Worker QR codes expiring in 3 days', action: 'Renew',       tab: 'qr-tracker',   urgent: false },
+          ].map((alert, i) => (
+            <div key={i} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={14} className={alert.urgent ? 'text-red-400' : 'text-yellow-400'} />
+                <span className="text-sm text-[#e6edf3]">{alert.msg}</span>
+              </div>
+              <button onClick={() => onNavigate(alert.tab)} className="text-[11px] text-[#58a6ff] hover:underline flex-shrink-0">{alert.action}</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 };
