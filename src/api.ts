@@ -1,8 +1,11 @@
 // ─── Tomo API Client ──────────────────────────────────────────────────────────
 // Reads VITE_API_URL from .env — falls back to demo mode when not set
 
+// When VITE_API_URL is empty, use relative /api (works on Vercel — co-located serverless)
+// When VITE_API_URL is set, use that (separate backend)
+// IS_DEMO is never true anymore — /api always works
 const BASE = import.meta.env.VITE_API_URL || '';
-const IS_DEMO = !BASE;
+const IS_DEMO = false;
 
 // ── Token storage ─────────────────────────────────────────────────────────────
 export const tokenStore = {

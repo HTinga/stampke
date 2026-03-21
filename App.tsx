@@ -227,10 +227,11 @@ const App: React.FC = () => {
       return;
     }
     // 2. Try real API if configured
-    const apiUrl = import.meta.env.VITE_API_URL;
-    if (apiUrl && loginEmail && loginPassword) {
+    // Use relative /api path — works on Vercel (co-located) or VITE_API_URL if set
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (loginEmail && loginPassword) {
       try {
-        const res = await fetch(`${apiUrl}/api/auth/login`, {
+        const res = await fetch(`${apiUrl}/api/login`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: loginEmail, password: loginPassword }),
         });
@@ -349,9 +350,8 @@ const App: React.FC = () => {
                     (window as any).google?.accounts?.id?.initialize({
                       client_id: clientId,
                       callback: async (resp: any) => {
-                        const apiUrl = import.meta.env.VITE_API_URL;
-                        if (!apiUrl) { setLoginError('Backend not configured.'); return; }
-                        const r = await fetch(`${apiUrl}/api/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: resp.credential }) });
+                        const apiUrl = import.meta.env.VITE_API_URL || '';
+                        const r = await fetch(`${apiUrl}/api/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: resp.credential }) });
                         const d = await r.json();
                         if (d.success && d.token) { localStorage.setItem('tomo_token', d.token); setUser({ name: d.user.name, email: d.user.email, role: d.user.role }); setIsLoggedIn(true); setShowLoginModal(false); if (d.user.role === 'admin') goTo('settings', 'admin-panel'); else if (d.user.role === 'worker') goTo('settings', 'worker-portal'); else goTo('home'); }
                         else setLoginError(d.message || 'Google sign-in failed.');
