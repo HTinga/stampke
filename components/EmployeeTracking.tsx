@@ -553,7 +553,7 @@ export default function EmployeeTracking() {
 
               {checkinStatus !== 'idle' && (
                 <div style={{ marginTop: 16, padding: 14, borderRadius: 10, background: checkinStatus === 'success' ? 'rgba(34,197,94,0.1)' : checkinStatus === 'error' ? 'rgba(239,68,68,0.1)' : 'rgba(31,111,235,0.1)', border: `1px solid ${checkinStatus === 'success' ? 'rgba(34,197,94,0.3)' : checkinStatus === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(31,111,235,0.3)'}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {checkinStatus === 'checking' && <Loader size={14} style={{ color: '#58a6ff' }} />}
+                  {checkinStatus === 'checking' && <Loader size={14} color="#58a6ff" />}
                   {checkinStatus === 'success' && <CheckCircle2 size={14} style={{ color: '#22c55e' }} />}
                   {checkinStatus === 'error' && <XCircle size={14} style={{ color: '#f87171' }} />}
                   <span style={{ color: checkinStatus === 'success' ? '#22c55e' : checkinStatus === 'error' ? '#f87171' : '#58a6ff', fontSize: 13, fontWeight: 600 }}>{checkinMsg}</span>
@@ -682,7 +682,7 @@ export default function EmployeeTracking() {
 }
 
 // Loader component used inline
-const Loader = ({ size }: { size: number }) => (
+const Loader = ({ size, color }: { size: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
     <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
   </svg>
