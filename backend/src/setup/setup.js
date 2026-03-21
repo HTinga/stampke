@@ -33,8 +33,9 @@ async function setup() {
     owner = await new User({
       name:    'Admin Owner',
       email:   OWNER_EMAIL,
-      role:    'owner',
+      role:    'superadmin',
       enabled: true,
+    emailVerified: true,
       removed: false,
     }).save();
 

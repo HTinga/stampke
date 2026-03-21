@@ -17,13 +17,13 @@ const login = async (req, res, { userModel }) => {
   if (error)
     return res.status(409).json({ success: false, result: null, message: 'Invalid/Missing credentials.' });
 
-  const isOwner = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
   const user    = await UserModel.findOne({ email: email.toLowerCase(), removed: false });
 
   if (!user)
     return res.status(404).json({ success: false, result: null, message: 'No account with this email has been registered.' });
 
-  // Email must be verified (except owner)
+  // Email must be verified (superadmin email bypasses this)
+  const isOwner = user.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
   if (!isOwner && !user.emailVerified)
     return res.status(403).json({
       success: false, result: null,
