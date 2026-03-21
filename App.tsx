@@ -29,14 +29,6 @@ import AdminPanel from './components/AdminPanel';
 import ActivityLog from './components/ActivityLog';
 import SettingsPanel from './components/SettingsPanel';
 import WorkerPortal from './components/WorkerPortal';
-import JobsLandingPage from './components/JobsLandingPage';
-import TrialBanner from './components/TrialBanner';
-import SuperAdminPanel from './components/SuperAdminPanel';
-import { analyzeStampImage } from './services/geminiService';
-import { motion, AnimatePresence } from 'motion/react';
-import { useStampStore } from './src/store';
-import { useAppStats } from './src/appStatsStore';
-
 // ─── Navigation Model (business-owner language) ──────────────────────────────
 type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activity' | 'settings';
 type SubView =
@@ -323,27 +315,127 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // Helper: role-based feature gate
+  // ── Role-based feature gate ─────────────────────────────────────────────────
   const canAccess = (feature: string): boolean => {
     if (userRole === 'superadmin') return true;
     if (userRole === 'admin') {
       const perms = user?.adminPermissions || [];
-      if (feature === 'workers') return perms.includes('workers');
-      if (feature === 'users') return perms.includes('users');
-      if (feature === 'invoices') return perms.includes('invoices');
-      if (feature === 'clients') return perms.includes('clients');
-      if (feature === 'jobs') return perms.includes('jobs');
-      return false;
+      if (['clients-all','clients-add','clients-leads'].includes(feature)) return perms.includes('clients');
+      if (['money-invoices','money-payments','money-unpaid','money-create'].includes(feature)) return perms.includes('invoices');
+      if (['work-find','work-my-workers','work-active','work-completed'].includes(feature)) return perms.includes('jobs');
+      return true;
     }
     if (userRole === 'worker') return ['worker-portal'].includes(feature);
-    // business role
-    const freeFeatures = ['documents-esign', 'documents-stamps', 'documents-templates'];
-    if (freeFeatures.includes(feature)) return true;
-    const hasPlan = user?.plan === 'pro' || user?.plan === 'enterprise';
-    const onTrial = user?.trialActive === true;
-    return hasPlan || onTrial;
+    // business role — eSign + stamps always free
+    const alwaysFree = ['documents-esign','documents-stamps','documents-templates','documents-stamp-applier'];
+    if (alwaysFree.includes(feature)) return true;
+    return user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
   };
 
+  // ── Locked feature placeholder ──────────────────────────────────────────────
+  const renderLocked = (feature: string) => (
+    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-5">
+      <div className="w-16 h-16 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <h3 className="text-lg font-bold text-white mb-2">Premium Feature</h3>
+        <p className="text-sm text-[#8b949e] max-w-sm">{feature} requires a paid plan. Your 7-day free trial covers eSign & Stamps only.</p>
+        <p className="text-xs text-[#58a6ff] mt-3">Contact <strong>hempstonetinga@gmail.com</strong> to upgrade your plan.</p>
+      </div>
+    </div>
+  );
+
+  // ── Auth Modal ──────────────────────────────────────────────────────────────
+  const renderAuthModal = () => (
+    <div className="fixed inset-0 bg-[#0d1117]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92 }}
+        className="bg-[#161b22] w-full max-w-md rounded-3xl shadow-2xl border border-[#30363d] p-8 space-y-5">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-4"><ShieldCheck size={24} /></div>
+          <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? (landingType === 'jobs' ? 'Find Work on Tomo' : 'Join Tomo') : 'Welcome Back'}</h3>
+          <p className="text-[#8b949e] text-sm">{isSignUp ? (landingType === 'jobs' ? 'Create your free worker profile.' : 'Start your 7-day free trial.') : 'Sign in to your account.'}</p>
+        </div>
+
+        {/* Role selector — sign up, main landing only */}
+        {isSignUp && landingType !== 'jobs' && (
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 'business', label: '🏢 Business', desc: 'Tools & invoicing' },
+              { value: 'worker',   label: '👷 Job Seeker', desc: 'Find work & gigs' },
+            ].map(opt => (
+              <button key={opt.value} type="button" onClick={() => setSignUpRole(opt.value as 'business' | 'worker')}
+                className={`p-3 rounded-xl border text-left transition-all ${signUpRole === opt.value ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] hover:border-[#58a6ff]'}`}>
+                <p className="text-sm font-bold text-white">{opt.label}</p>
+                <p className="text-[10px] text-[#8b949e]">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Google */}
+        <button type="button" onClick={() => {
+          const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+          if (!clientId) { setLoginError('Google Sign-In not configured.'); return; }
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.onload = () => {
+            (window as any).google?.accounts?.id?.initialize({
+              client_id: clientId,
+              callback: async (resp: any) => {
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                try {
+                  const r = await fetch(`${apiUrl}/api/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: resp.credential }) });
+                  const d = await r.json();
+                  if (d.success && d.result) {
+                    const u = d.result;
+                    localStorage.setItem('tomo_token', u.token);
+                    setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft });
+                    setIsLoggedIn(true); setShowLoginModal(false);
+                    if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
+                    else if (u.role === 'worker') goTo('settings', 'worker-portal');
+                    else goTo('home');
+                  } else { setLoginError(d.message || 'Google sign-in failed.'); }
+                } catch { setLoginError('Google sign-in failed. Try email instead.'); }
+              }
+            });
+            (window as any).google?.accounts?.id?.prompt();
+          };
+          document.head.appendChild(script);
+        }} className="w-full flex items-center justify-center gap-3 py-3 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continue with Google
+        </button>
+
+        <div className="flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or with email</span><div className="flex-1 h-px bg-[#30363d]"/></div>
+
+        <form onSubmit={handleDemoLogin} className="space-y-3">
+          {isSignUp && (
+            <input type="text" required value={signUpName} onChange={e => setSignUpName(e.target.value)}
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]"
+              placeholder="Full name" />
+          )}
+          <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]"
+            placeholder="you@company.com" />
+          <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
+            className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb] placeholder:text-[#8b949e]"
+            placeholder="••••••••" />
+          {loginError && <p className="text-red-400 text-xs text-center bg-red-500/10 py-2 px-3 rounded-lg">{loginError}</p>}
+          <button type="submit" className="w-full bg-[#1f6feb] hover:bg-[#388bfd] text-white py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+            {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={16} />
+          </button>
+        </form>
+        {isSignUp && <p className="text-[10px] text-[#8b949e] text-center">A verification email will be sent. You must verify before signing in.</p>}
+        <div className="flex items-center justify-between pt-1">
+          <button onClick={() => { setIsSignUp(!isSignUp); setLoginError(''); }} className="text-[#8b949e] text-xs hover:text-[#58a6ff] transition-colors">
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+          </button>
+          <button onClick={() => { setShowLoginModal(false); setLoginError(''); }} className="p-1 text-[#8b949e] hover:text-white transition-colors"><X size={16} /></button>
+        </div>
+      </motion.div>
+    </div>
+  );
   // ─── LANDING PAGE ROUTER ────────────────────────────────────────────────────
   if (activeView === 'landing') {
     // Jobs landing for workers
@@ -376,9 +468,9 @@ const App: React.FC = () => {
       </>
     );
   }
-  }
 
   // ─── MAIN APP SHELL ───────────────────────────────────────────────────────
+
   const renderView = () => {
     // HOME
     if (activeView === 'dashboard' || activeSection === 'home') {
@@ -526,54 +618,209 @@ const App: React.FC = () => {
     return <Dashboard userName={user?.name} onNavigate={navLegacy as any} theme={theme} />;
   };
 
-import { StampConfig, StampTemplate, StampShape } from './types';
-import { DEFAULT_CONFIG } from './constants';
-import SVGPreview from './components/SVGPreview';
-import TemplateLibrary from './components/TemplateLibrary';
-import EditorControls from './components/EditorControls';
-import TohoSignCenter from './components/esign/DocuSealSignCenter';
-import PDFTools from './components/PDFTools';
-import StampApplier from './components/StampApplier';
-import EmployeeQRTracker from './components/hr/EmployeeQRTracker';
-import SocialHub from './components/SocialHub';
-import Dashboard from './components/Dashboard';
-import LandingPage from './components/LandingPage';
-import SmartInvoice from './components/SmartInvoice';
-import DocumentsHub from './components/DocumentsHub';
-import EmployeeTracking from './components/EmployeeTracking';
-import WorkHub from './components/WorkHub';
-import ClientManager from './components/ClientManager';
-import AdminPanel from './components/AdminPanel';
-import ActivityLog from './components/ActivityLog';
-import SettingsPanel from './components/SettingsPanel';
-import WorkerPortal from './components/WorkerPortal';
-import JobsLandingPage from './components/JobsLandingPage';
-import TrialBanner from './components/TrialBanner';
-import SuperAdminPanel from './components/SuperAdminPanel';
-import { analyzeStampImage } from './services/geminiService';
-import { motion, AnimatePresence } from 'motion/react';
-import { useStampStore } from './src/store';
-import { useAppStats } from './src/appStatsStore';
+  const subItems = SUB_MENUS[activeSection] || [];
 
-// ─── Navigation Model (business-owner language) ──────────────────────────────
-type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activity' | 'settings';
-type SubView =
-  | 'dashboard'
-  | 'clients-all' | 'clients-add' | 'clients-leads'
-  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
-  | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
-  | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
-  | 'activity-all' | 'activity-notifications'
-  | 'settings-profile' | 'settings-business'
-  | 'admin-panel' | 'worker-portal'
-  | 'landing';
+  return (
+    <div className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-white">
+      {/* Trial banner */}
+      {isLoggedIn && userRole === 'business' && (user?.trialActive || user?.plan === 'trial') && (
+        <TrialBanner daysLeft={user?.trialDaysLeft || 0} />
+      )}
+      <div className="flex flex-1 overflow-hidden">
 
-// Kept for compatibility with child components that use old tab names
-type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
+      {/* ── Desktop Sidebar ── */}
+      <aside className="hidden lg:flex w-56 flex-col bg-[#161b22] border-r border-[#30363d] flex-shrink-0 z-[100]">
+        {/* Logo */}
+        <button onClick={() => goTo('home')} className="p-5 flex items-center gap-3 hover:bg-[#21262d] transition-colors">
+          <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center"><span className="text-white font-black text-sm">T</span></div>
+          <span className="text-lg font-black tracking-tight text-white">Tomo</span>
+        </button>
 
+        {/* Main nav */}
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {NAV_ITEMS.map(item => (
+            <button key={item.id} onClick={() => goTo(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeSection === item.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
+              <item.icon size={16} className={activeSection === item.id ? 'text-[#1f6feb]' : ''} />
+              <span>{item.label}</span>
+              {activeSection === item.id && subItems.length > 0 && <ChevronRight size={14} className="ml-auto text-[#8b949e]" />}
+            </button>
+          ))}
+        </nav>
 
-// Demo accounts removed — real authentication only
+        {/* Bottom */}
+        <div className="p-3 border-t border-[#30363d] space-y-2">
+          {isLoggedIn ? (
+            <div className="flex items-center gap-2 px-2 py-2">
+              <div className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold">{user?.name?.charAt(0).toUpperCase()}</div>
+              <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-white truncate">{user?.name}</p><p className="text-[10px] text-[#8b949e] capitalize">{userRole}</p></div>
+              <button onClick={handleLogout} className="p-1 text-[#8b949e] hover:text-white transition-colors"><LogOut size={14} /></button>
+            </div>
+          ) : (
+            <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors">
+              <User size={14} /> Sign In
+            </button>
+          )}
+        </div>
+      </aside>
 
-// Admin nav item injected below based on role
+      {/* ── Desktop Sub-sidebar (second level) ── */}
+      {subItems.length > 0 && (
+        <aside className="hidden lg:flex w-48 flex-col bg-[#0d1117] border-r border-[#30363d] flex-shrink-0">
+          <div className="p-4 pb-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#8b949e]">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</p>
+          </div>
+          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+            {subItems.map(item => (
+              <button key={item.id} onClick={() => { setActiveView(item.id); }}
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all ${activeView === item.id ? 'bg-[#21262d] text-white font-semibold' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+      )}
+
+      {/* ── Mobile Drawer ── */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/70 z-[150]" />
+            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="lg:hidden fixed inset-y-0 left-0 w-72 bg-[#161b22] border-r border-[#30363d] z-[200] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-[#30363d]">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 bg-[#1f6feb] rounded-lg flex items-center justify-center"><span className="text-white font-black text-xs">T</span></div>
+                  <span className="font-black text-white">Tomo</span>
+                </div>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-[#30363d] rounded-lg"><X size={18} /></button>
+              </div>
+              <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+                {NAV_ITEMS.map(item => (
+                  <div key={item.id}>
+                    <button onClick={() => { goTo(item.id); if (SUB_MENUS[item.id].length === 0) setIsSidebarOpen(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeSection === item.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:text-white'}`}>
+                      <item.icon size={16} className={activeSection === item.id ? 'text-[#1f6feb]' : ''} />
+                      <span>{item.label}</span>
+                    </button>
+                    {activeSection === item.id && SUB_MENUS[item.id].map(sub => (
+                      <button key={sub.id} onClick={() => { setActiveView(sub.id); setIsSidebarOpen(false); }}
+                        className={`w-full text-left pl-10 pr-3 py-2 rounded-xl text-sm transition-all ${activeView === sub.id ? 'text-white font-semibold' : 'text-[#8b949e] hover:text-white'}`}>
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Topbar */}
+        <header className="h-13 border-b border-[#30363d] bg-[#161b22] px-4 flex items-center justify-between flex-shrink-0 gap-3" style={{ height: 52 }}>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-[#21262d] rounded-lg text-[#8b949e]"><Menu size={18} /></button>
+            {/* Breadcrumb */}
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#8b949e]">
+              <span className="font-semibold">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</span>
+              {subItems.length > 0 && activeView !== 'dashboard' && (
+                <>
+                  <ChevronRight size={12} />
+                  <span className="text-white font-semibold">{subItems.find(s => s.id === activeView)?.label}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Global search */}
+            <div className="hidden md:flex items-center bg-[#21262d] px-3 py-1.5 rounded-xl border border-[#30363d] gap-2">
+              <Search size={13} className="text-[#8b949e]" />
+              <input type="text" placeholder="Search anything..." className="bg-transparent border-none outline-none text-xs text-white w-36 placeholder:text-[#8b949e]" />
+            </div>
+            {/* ➕ Create button */}
+            <div className="relative">
+              <button onClick={() => setShowCreate(c => !c)} className="flex items-center gap-1.5 px-3 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors">
+                <Plus size={15} /> Create
+              </button>
+              <AnimatePresence>
+                {showCreate && (
+                  <motion.div initial={{ opacity: 0, y: -8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.95 }} transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-full mt-2 w-52 bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl z-[300] overflow-hidden">
+                    <div className="p-1">
+                      {CREATE_ACTIONS.map(a => (
+                        <button key={a.sub} onClick={() => { goTo(a.section, a.sub); setShowCreate(false); }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
+                          <span className="text-base">{a.emoji}</span> {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {/* Theme */}
+            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors">
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+            {/* Notifications */}
+            <button className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors"><Bell size={15} /></button>
+            {/* User */}
+            {isLoggedIn ? (
+              <button onClick={handleLogout} className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold" title="Log out">
+                {user?.name?.charAt(0).toUpperCase()}
+              </button>
+            ) : (
+              <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="px-3 py-1.5 bg-[#1f6feb] text-white rounded-xl text-xs font-bold hover:bg-[#388bfd] transition-colors">Sign In</button>
+            )}
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-hidden bg-[#0d1117] flex flex-col" onClick={() => showCreate && setShowCreate(false)}>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-5 md:p-8 min-h-full">
+              <AnimatePresence mode="wait">
+                <motion.div key={activeView} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  {renderView()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </main>
+
+        {/* ── Mobile Bottom Nav ── */}
+        <nav className="lg:hidden flex border-t border-[#30363d] bg-[#161b22] flex-shrink-0">
+          {(['home', 'clients', 'money', 'work'] as MainSection[]).map(s => {
+            const item = NAV_ITEMS.find(n => n.id === s)!;
+            return (
+              <button key={s} onClick={() => goTo(s)}
+                className={`flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-semibold transition-colors ${activeSection === s ? 'text-[#1f6feb]' : 'text-[#8b949e]'}`}>
+                <item.icon size={20} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+          {/* Documents via floating Create */}
+          <button onClick={() => setShowCreate(c => !c)} className="flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-semibold text-[#8b949e]">
+            <Plus size={20} />
+            <span>Create</span>
+          </button>
+        </nav>
+
+        {/* Hidden SVG ref for stamp export */}
+        <div className="fixed -left-[9999px] -top-[9999px] invisible pointer-events-none">
+          <SVGPreview config={stampConfig} ref={svgRef} />
+        </div>
+      </div>
+
+      </div>{/* end flex */}
+      {/* Login Modal (in-app) */}
+      <AnimatePresence>{showLoginModal && renderAuthModal()}</AnimatePresence>
+    </div>
+  );
+};
+
 export default App;
-
