@@ -29,6 +29,9 @@ import AdminPanel from './components/AdminPanel';
 import ActivityLog from './components/ActivityLog';
 import SettingsPanel from './components/SettingsPanel';
 import WorkerPortal from './components/WorkerPortal';
+import JobsLandingPage from './components/JobsLandingPage';
+import TrialBanner from './components/TrialBanner';
+import SuperAdminPanel from './components/SuperAdminPanel';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
@@ -51,12 +54,7 @@ type SubView =
 type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
 
 
-// ─── Demo Accounts ─────────────────────────────────────────────────────────────
-const DEMO_ACCOUNTS = [
-  { email: 'admin@tomo.ke',      password: 'admin123',     name: 'Admin Owner',    role: 'admin' as const },
-  { email: 'recruiter@demo.ke',  password: 'recruit123',   name: 'James Otieno',   role: 'recruiter' as const },
-  { email: 'worker@demo.ke',     password: 'worker123',    name: 'John Kamau',     role: 'worker' as const },
-];
+// Demo accounts removed — real authentication only
 
 // Admin nav item injected below based on role
 const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any>; emoji: string }[] = [
@@ -145,8 +143,12 @@ const App: React.FC = () => {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [user, setUser] = useState<{ name: string; email: string; role?: string } | null>(null);
-  const userRole = user?.role || 'recruiter';
+  const [signUpName, setSignUpName] = useState('');
+  const [signUpRole, setSignUpRole] = useState<'business' | 'worker'>('business');
+  const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[] } | null>(null);
+  const userRole = user?.role || 'business';
+  // Landing page type: 'main' = business tools, 'jobs' = worker portal
+  const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [openedFromPDFEditor, setOpenedFromPDFEditor] = useState(false);
@@ -216,19 +218,31 @@ const App: React.FC = () => {
   const handleDemoLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
-    // 1. Check demo accounts first (always works offline)
-    const demo = DEMO_ACCOUNTS.find(a => a.email === loginEmail && a.password === loginPassword);
-    if (demo) {
-      setUser({ name: demo.name, email: demo.email, role: demo.role });
-      setIsLoggedIn(true); setShowLoginModal(false);
-      if (demo.role === 'admin') goTo('settings', 'admin-panel');
-      else if (demo.role === 'worker') goTo('settings', 'worker-portal');
-      else goTo('home');
-      return;
-    }
-    // 2. Try real API if configured
-    // Use relative /api path — works on Vercel (co-located) or VITE_API_URL if set
     const apiUrl = import.meta.env.VITE_API_URL || '';
+
+    // SIGN UP flow
+    if (isSignUp) {
+      if (!signUpName.trim()) { setLoginError('Please enter your full name.'); return; }
+      try {
+        const role = landingType === 'jobs' ? 'worker' : signUpRole;
+        const res = await fetch(`${apiUrl}/api/register`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: signUpName, email: loginEmail, password: loginPassword, role }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setLoginError('');
+          setShowLoginModal(false);
+          alert('✅ Account created! Please check your email to verify your address before signing in.');
+          setIsSignUp(false);
+          return;
+        }
+        setLoginError(data.message || 'Registration failed.');
+        return;
+      } catch { setLoginError('Network error. Please try again.'); return; }
+    }
+
+    // SIGN IN flow
     if (loginEmail && loginPassword) {
       try {
         const res = await fetch(`${apiUrl}/api/login`, {
@@ -237,28 +251,29 @@ const App: React.FC = () => {
         });
         const data = await res.json();
         if (data.success && data.token) {
-          localStorage.setItem('tomo_token', data.token);
-          setUser({ name: data.user.name, email: data.user.email, role: data.user.role });
+          const u = data.result || data.user || data;
+          localStorage.setItem('tomo_token', u.token || data.token);
+          setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
           setIsLoggedIn(true); setShowLoginModal(false);
-          if (data.user.role === 'admin') goTo('settings', 'admin-panel');
-          else if (data.user.role === 'worker') goTo('settings', 'worker-portal');
+          const r = data.result || data.user || data;
+          if (r.role === 'superadmin' || r.role === 'admin') goTo('settings', 'admin-panel');
+          else if (r.role === 'worker') goTo('settings', 'worker-portal');
           else goTo('home');
           return;
         }
-        if (data.code === 'PENDING') {
-          setLoginError('Your account is pending admin activation. You will receive an email when approved.');
+        if (data.code === 'EMAIL_NOT_VERIFIED') {
+          setLoginError('Please verify your email first. Check your inbox for the verification link.');
+          return;
+        }
+        if (data.code === 'DISABLED') {
+          setLoginError('Your account has been disabled. Contact support.');
           return;
         }
         setLoginError(data.message || 'Login failed.');
         return;
       } catch { /* fall through to local */ }
     }
-    // 3. Generic local login (signup / new account)
-    if (isSignUp || (loginEmail && loginPassword)) {
-      setUser({ name: loginEmail.split('@')[0] || 'User', email: loginEmail, role: 'recruiter' });
-      setIsLoggedIn(true); setShowLoginModal(false);
-      goTo('home');
-    } else { setLoginError('Please enter your credentials.'); }
+    setLoginError('Login failed. Please check your credentials.');
   };
 
   const handleLogout = () => { setUser(null); setIsLoggedIn(false); setActiveView('landing'); };
@@ -308,81 +323,59 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // ─── LANDING PAGE ─────────────────────────────────────────────────────────
+  // Helper: role-based feature gate
+  const canAccess = (feature: string): boolean => {
+    if (userRole === 'superadmin') return true;
+    if (userRole === 'admin') {
+      const perms = user?.adminPermissions || [];
+      if (feature === 'workers') return perms.includes('workers');
+      if (feature === 'users') return perms.includes('users');
+      if (feature === 'invoices') return perms.includes('invoices');
+      if (feature === 'clients') return perms.includes('clients');
+      if (feature === 'jobs') return perms.includes('jobs');
+      return false;
+    }
+    if (userRole === 'worker') return ['worker-portal'].includes(feature);
+    // business role
+    const freeFeatures = ['documents-esign', 'documents-stamps', 'documents-templates'];
+    if (freeFeatures.includes(feature)) return true;
+    const hasPlan = user?.plan === 'pro' || user?.plan === 'enterprise';
+    const onTrial = user?.trialActive === true;
+    return hasPlan || onTrial;
+  };
+
+  // ─── LANDING PAGE ROUTER ────────────────────────────────────────────────────
   if (activeView === 'landing') {
+    // Jobs landing for workers
+    if (landingType === 'jobs') {
+      return (
+        <>
+          <JobsLandingPage
+            onSignUp={() => { setIsSignUp(true); setShowLoginModal(true); }}
+            onSignIn={() => { setIsSignUp(false); setShowLoginModal(true); }}
+          />
+          <AnimatePresence>
+            {showLoginModal && renderAuthModal()}
+          </AnimatePresence>
+        </>
+      );
+    }
     return (
       <>
         <LandingPage onGetStarted={() => { if (isLoggedIn) goTo('home'); else { setIsSignUp(true); setShowLoginModal(true); } }} theme={theme} />
+        {/* Jobs portal link */}
+        <div className="fixed bottom-4 right-4 z-50">
+          <button onClick={() => setLandingType('jobs')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg transition-colors">
+            <ShieldCheck size={15} /> Looking for work?
+          </button>
+        </div>
         <AnimatePresence>
-          {showLoginModal && (
-            <div className="fixed inset-0 bg-[#0d1117]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
-              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="bg-[#161b22] w-full max-w-md rounded-3xl shadow-2xl border border-[#30363d] p-10 space-y-8">
-                <div className="text-center">
-                  <div className="w-14 h-14 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-5"><ShieldCheck size={28} /></div>
-                  <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                  <p className="text-[#8b949e] text-sm">{isSignUp ? 'Create your workspace.' : 'Sign in to continue.'}</p>
-                </div>
-                {/* Demo account quick-login cards */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] text-center">Quick Demo Login</p>
-                  {DEMO_ACCOUNTS.map(a => (
-                    <button key={a.email} type="button" onClick={() => { setLoginEmail(a.email); setLoginPassword(a.password); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:scale-[1.01] ${loginEmail === a.email ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]'}`}>
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500' : a.role === 'worker' ? 'bg-purple-600' : 'bg-[#1f6feb]'}`}>
-                        {a.name.charAt(0)}
-                      </div>
-                      <div className="text-left flex-1">
-                        <p className="text-sm font-semibold text-white">{a.name}</p>
-                        <p className="text-[10px] text-[#8b949e]">{a.email}</p>
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg capitalize ${a.role === 'admin' ? 'bg-red-500/20 text-red-400' : a.role === 'worker' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{a.role}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="relative flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or continue with</span><div className="flex-1 h-px bg-[#30363d]"/></div>
-                <button type="button" onClick={() => {
-                  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-                  if (!clientId) { setLoginError('Google Sign-In not configured yet. Use demo accounts above.'); return; }
-                  // Load Google Identity Services and prompt
-                  const script = document.createElement('script');
-                  script.src = 'https://accounts.google.com/gsi/client';
-                  script.onload = () => {
-                    (window as any).google?.accounts?.id?.initialize({
-                      client_id: clientId,
-                      callback: async (resp: any) => {
-                        const apiUrl = import.meta.env.VITE_API_URL || '';
-                        const r = await fetch(`${apiUrl}/api/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: resp.credential }) });
-                        const d = await r.json();
-                        if (d.success && d.token) { localStorage.setItem('tomo_token', d.token); setUser({ name: d.user.name, email: d.user.email, role: d.user.role }); setIsLoggedIn(true); setShowLoginModal(false); if (d.user.role === 'admin') goTo('settings', 'admin-panel'); else if (d.user.role === 'worker') goTo('settings', 'worker-portal'); else goTo('home'); }
-                        else setLoginError(d.message || 'Google sign-in failed.');
-                      }
-                    });
-                    (window as any).google?.accounts?.id?.prompt();
-                  };
-                  document.head.appendChild(script);
-                }} className="w-full flex items-center justify-center gap-3 py-3 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                  Continue with Google
-                </button>
-                <div className="relative flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or sign in manually</span><div className="flex-1 h-px bg-[#30363d]"/></div>
-                <form onSubmit={handleDemoLogin} className="space-y-3">
-                  <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="you@company.com" />
-                  <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="••••••••" />
-                  {loginError && <p className="text-red-400 text-xs text-center">{loginError}</p>}
-                  <button type="submit" className="w-full bg-[#1f6feb] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#388bfd] transition-colors flex items-center justify-center gap-2">
-                    {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={18} />
-                  </button>
-                </form>
-                <div className="flex items-center justify-between">
-                  <button onClick={() => setIsSignUp(!isSignUp)} className="text-[#8b949e] text-xs hover:text-[#58a6ff] transition-colors">{isSignUp ? 'Already have an account?' : 'Need an account?'}</button>
-                  <button onClick={() => setShowLoginModal(false)} className="p-1 text-[#8b949e] hover:text-white"><X size={16} /></button>
-                </div>
-              </motion.div>
-            </div>
-          )}
+          {showLoginModal && renderAuthModal()}
         </AnimatePresence>
       </>
     );
+  }
   }
 
   // ─── MAIN APP SHELL ───────────────────────────────────────────────────────
@@ -394,11 +387,12 @@ const App: React.FC = () => {
 
     // CLIENTS
     if (activeView === 'clients-leads') return <SocialHub />;
-    if (activeView === 'clients-all') return <ClientManager initialView="all" />;
-    if (activeView === 'clients-add') return <ClientManager initialView="add" />;
+    if (activeView === 'clients-all') { if (userRole === 'business' && !canAccess('clients-all')) return renderLocked('Client Manager'); return <ClientManager initialView="all" />; }
+    if (activeView === 'clients-add') { if (userRole === 'business' && !canAccess('clients-add')) return renderLocked('Client Manager'); return <ClientManager initialView="add" />; }
 
-    // MONEY
+    // MONEY — premium for business (free only esign+stamps)
     if (activeView === 'money-invoices' || activeView === 'money-payments' || activeView === 'money-unpaid' || activeView === 'money-create') {
+      if (userRole === 'business' && !canAccess('money-invoices')) return renderLocked('Smart Invoice');
       return <SmartInvoice />;
     }
 
@@ -406,7 +400,7 @@ const App: React.FC = () => {
     if (activeView === 'documents-esign') {
       return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('documents', 'documents-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
     }
-    if (activeView === 'documents-pdf') return <PDFTools />;
+    if (activeView === 'documents-pdf') { if (userRole === 'business' && !canAccess('documents-pdf')) return renderLocked('PDF Editor'); return <PDFTools />; }
     if (activeView === 'documents-stamp-applier') {
       return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('documents', 'documents-stamps'); }} />;
     }
@@ -517,7 +511,10 @@ const App: React.FC = () => {
     }
 
     // SETTINGS & SPECIAL VIEWS
-    if (activeView === 'admin-panel') return <AdminPanel />;
+    if (activeView === 'admin-panel') {
+      if (userRole === 'superadmin') return <SuperAdminPanel />;
+      return <AdminPanel />;
+    }
     if (activeView === 'worker-portal') return <WorkerPortal workerEmail={user?.email} prefilledName={userRole === 'worker' ? user?.name : undefined} />;
     if (activeView === 'settings-profile') {
       return <SettingsPanel view="settings-profile" user={user} theme={theme} onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} onLogout={handleLogout} />;
@@ -529,237 +526,54 @@ const App: React.FC = () => {
     return <Dashboard userName={user?.name} onNavigate={navLegacy as any} theme={theme} />;
   };
 
-  const subItems = SUB_MENUS[activeSection] || [];
+import { StampConfig, StampTemplate, StampShape } from './types';
+import { DEFAULT_CONFIG } from './constants';
+import SVGPreview from './components/SVGPreview';
+import TemplateLibrary from './components/TemplateLibrary';
+import EditorControls from './components/EditorControls';
+import TohoSignCenter from './components/esign/DocuSealSignCenter';
+import PDFTools from './components/PDFTools';
+import StampApplier from './components/StampApplier';
+import EmployeeQRTracker from './components/hr/EmployeeQRTracker';
+import SocialHub from './components/SocialHub';
+import Dashboard from './components/Dashboard';
+import LandingPage from './components/LandingPage';
+import SmartInvoice from './components/SmartInvoice';
+import DocumentsHub from './components/DocumentsHub';
+import EmployeeTracking from './components/EmployeeTracking';
+import WorkHub from './components/WorkHub';
+import ClientManager from './components/ClientManager';
+import AdminPanel from './components/AdminPanel';
+import ActivityLog from './components/ActivityLog';
+import SettingsPanel from './components/SettingsPanel';
+import WorkerPortal from './components/WorkerPortal';
+import JobsLandingPage from './components/JobsLandingPage';
+import TrialBanner from './components/TrialBanner';
+import SuperAdminPanel from './components/SuperAdminPanel';
+import { analyzeStampImage } from './services/geminiService';
+import { motion, AnimatePresence } from 'motion/react';
+import { useStampStore } from './src/store';
+import { useAppStats } from './src/appStatsStore';
 
-  return (
-    <div className="h-screen flex overflow-hidden bg-[#0d1117] text-white">
+// ─── Navigation Model (business-owner language) ──────────────────────────────
+type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activity' | 'settings';
+type SubView =
+  | 'dashboard'
+  | 'clients-all' | 'clients-add' | 'clients-leads'
+  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
+  | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
+  | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
+  | 'activity-all' | 'activity-notifications'
+  | 'settings-profile' | 'settings-business'
+  | 'admin-panel' | 'worker-portal'
+  | 'landing';
 
-      {/* ── Desktop Sidebar ── */}
-      <aside className="hidden lg:flex w-56 flex-col bg-[#161b22] border-r border-[#30363d] flex-shrink-0 z-[100]">
-        {/* Logo */}
-        <button onClick={() => goTo('home')} className="p-5 flex items-center gap-3 hover:bg-[#21262d] transition-colors">
-          <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center"><span className="text-white font-black text-sm">T</span></div>
-          <span className="text-lg font-black tracking-tight text-white">Tomo</span>
-        </button>
+// Kept for compatibility with child components that use old tab names
+type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
 
-        {/* Main nav */}
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {NAV_ITEMS.map(item => (
-            <button key={item.id} onClick={() => goTo(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeSection === item.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
-              <item.icon size={16} className={activeSection === item.id ? 'text-[#1f6feb]' : ''} />
-              <span>{item.label}</span>
-              {activeSection === item.id && subItems.length > 0 && <ChevronRight size={14} className="ml-auto text-[#8b949e]" />}
-            </button>
-          ))}
-        </nav>
 
-        {/* Bottom */}
-        <div className="p-3 border-t border-[#30363d] space-y-2">
-          {isLoggedIn ? (
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold">{user?.name?.charAt(0).toUpperCase()}</div>
-              <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-white truncate">{user?.name}</p><p className="text-[10px] text-[#8b949e]">Admin</p></div>
-              <button onClick={handleLogout} className="p-1 text-[#8b949e] hover:text-white transition-colors"><LogOut size={14} /></button>
-            </div>
-          ) : (
-            <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors">
-              <User size={14} /> Sign In
-            </button>
-          )}
-        </div>
-      </aside>
+// Demo accounts removed — real authentication only
 
-      {/* ── Desktop Sub-sidebar (second level) ── */}
-      {subItems.length > 0 && (
-        <aside className="hidden lg:flex w-48 flex-col bg-[#0d1117] border-r border-[#30363d] flex-shrink-0">
-          <div className="p-4 pb-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#8b949e]">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</p>
-          </div>
-          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {subItems.map(item => (
-              <button key={item.id} onClick={() => { setActiveView(item.id); }}
-                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all ${activeView === item.id ? 'bg-[#21262d] text-white font-semibold' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-      )}
-
-      {/* ── Mobile Drawer ── */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="lg:hidden fixed inset-0 bg-black/70 z-[150]" />
-            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="lg:hidden fixed inset-y-0 left-0 w-72 bg-[#161b22] border-r border-[#30363d] z-[200] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-[#30363d]">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-[#1f6feb] rounded-lg flex items-center justify-center"><span className="text-white font-black text-xs">T</span></div>
-                  <span className="font-black text-white">Tomo</span>
-                </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-[#30363d] rounded-lg"><X size={18} /></button>
-              </div>
-              <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
-                {NAV_ITEMS.map(item => (
-                  <div key={item.id}>
-                    <button onClick={() => { goTo(item.id); if (SUB_MENUS[item.id].length === 0) setIsSidebarOpen(false); }}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeSection === item.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:text-white'}`}>
-                      <item.icon size={16} className={activeSection === item.id ? 'text-[#1f6feb]' : ''} />
-                      <span>{item.label}</span>
-                    </button>
-                    {activeSection === item.id && SUB_MENUS[item.id].map(sub => (
-                      <button key={sub.id} onClick={() => { setActiveView(sub.id); setIsSidebarOpen(false); }}
-                        className={`w-full text-left pl-10 pr-3 py-2 rounded-xl text-sm transition-all ${activeView === sub.id ? 'text-white font-semibold' : 'text-[#8b949e] hover:text-white'}`}>
-                        {sub.label}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </nav>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ── Main content ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
-        {/* Topbar */}
-        <header className="h-13 border-b border-[#30363d] bg-[#161b22] px-4 flex items-center justify-between flex-shrink-0 gap-3" style={{ height: 52 }}>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-[#21262d] rounded-lg text-[#8b949e]"><Menu size={18} /></button>
-            {/* Breadcrumb */}
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#8b949e]">
-              <span className="font-semibold">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</span>
-              {subItems.length > 0 && activeView !== 'dashboard' && (
-                <>
-                  <ChevronRight size={12} />
-                  <span className="text-white font-semibold">{subItems.find(s => s.id === activeView)?.label}</span>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Global search */}
-            <div className="hidden md:flex items-center bg-[#21262d] px-3 py-1.5 rounded-xl border border-[#30363d] gap-2">
-              <Search size={13} className="text-[#8b949e]" />
-              <input type="text" placeholder="Search anything..." className="bg-transparent border-none outline-none text-xs text-white w-36 placeholder:text-[#8b949e]" />
-            </div>
-            {/* ➕ Create button */}
-            <div className="relative">
-              <button onClick={() => setShowCreate(c => !c)} className="flex items-center gap-1.5 px-3 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors">
-                <Plus size={15} /> Create
-              </button>
-              <AnimatePresence>
-                {showCreate && (
-                  <motion.div initial={{ opacity: 0, y: -8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.95 }} transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-full mt-2 w-52 bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl z-[300] overflow-hidden">
-                    <div className="p-1">
-                      {CREATE_ACTIONS.map(a => (
-                        <button key={a.sub} onClick={() => { goTo(a.section, a.sub); setShowCreate(false); }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
-                          <span className="text-base">{a.emoji}</span> {a.label}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            {/* Theme */}
-            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors">
-              {isDark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-            {/* Notifications */}
-            <button className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors"><Bell size={15} /></button>
-            {/* User */}
-            {isLoggedIn ? (
-              <button onClick={handleLogout} className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold" title="Log out">
-                {user?.name?.charAt(0).toUpperCase()}
-              </button>
-            ) : (
-              <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="px-3 py-1.5 bg-[#1f6feb] text-white rounded-xl text-xs font-bold hover:bg-[#388bfd] transition-colors">Sign In</button>
-            )}
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 overflow-hidden bg-[#0d1117] flex flex-col" onClick={() => showCreate && setShowCreate(false)}>
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-5 md:p-8 min-h-full">
-              <AnimatePresence mode="wait">
-                <motion.div key={activeView} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                  {renderView()}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </main>
-
-        {/* ── Mobile Bottom Nav ── */}
-        <nav className="lg:hidden flex border-t border-[#30363d] bg-[#161b22] flex-shrink-0">
-          {(['home', 'clients', 'money', 'work'] as MainSection[]).map(s => {
-            const item = NAV_ITEMS.find(n => n.id === s)!;
-            return (
-              <button key={s} onClick={() => goTo(s)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-semibold transition-colors ${activeSection === s ? 'text-[#1f6feb]' : 'text-[#8b949e]'}`}>
-                <item.icon size={20} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-          {/* Documents via floating Create */}
-          <button onClick={() => setShowCreate(c => !c)} className="flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-semibold text-[#8b949e]">
-            <Plus size={20} />
-            <span>Create</span>
-          </button>
-        </nav>
-
-        {/* Hidden SVG ref for stamp export */}
-        <div className="fixed -left-[9999px] -top-[9999px] invisible pointer-events-none">
-          <SVGPreview config={stampConfig} ref={svgRef} />
-        </div>
-      </div>
-
-      {/* Login Modal (in-app) */}
-      <AnimatePresence>
-        {showLoginModal && (
-          <div className="fixed inset-0 bg-[#0d1117]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-6">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              className="bg-[#161b22] w-full max-w-md rounded-3xl shadow-2xl border border-[#30363d] p-10 space-y-8">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-4"><ShieldCheck size={24} /></div>
-                <h3 className="text-xl font-black text-white mb-1">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
-                <p className="text-[#8b949e] text-sm">{isSignUp ? 'Create your workspace.' : 'Sign in to continue.'}</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] text-center">Quick Demo Login</p>
-                {DEMO_ACCOUNTS.map(a => (
-                  <button key={a.email} type="button" onClick={() => { setLoginEmail(a.email); setLoginPassword(a.password); }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${loginEmail === a.email ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]'}`}>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500' : a.role === 'worker' ? 'bg-purple-600' : 'bg-[#1f6feb]'}`}>{a.name.charAt(0)}</div>
-                    <div className="text-left flex-1 min-w-0"><p className="text-sm font-semibold text-white truncate">{a.name}</p><p className="text-[10px] text-[#8b949e] truncate">{a.email}</p></div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg capitalize flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500/20 text-red-400' : a.role === 'worker' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{a.role}</span>
-                  </button>
-                ))}
-              </div>
-              <form onSubmit={handleDemoLogin} className="space-y-3">
-                <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="you@company.com" />
-                <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="••••••••" />
-                {loginError && <p className="text-red-400 text-xs text-center">{loginError}</p>}
-                <button type="submit" className="w-full bg-[#1f6feb] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#388bfd] flex items-center justify-center gap-2"><ArrowRight size={16} /> {isSignUp ? 'Create Account' : 'Sign In'}</button>
-              </form>
-              <div className="flex items-center justify-between">
-                <button onClick={() => setIsSignUp(!isSignUp)} className="text-[#8b949e] text-xs hover:text-[#58a6ff]">{isSignUp ? 'Already have an account?' : 'Need an account?'}</button>
-                <button onClick={() => setShowLoginModal(false)} className="p-1 text-[#8b949e] hover:text-white"><X size={16} /></button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
+// Admin nav item injected below based on role
 export default App;
+

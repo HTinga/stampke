@@ -40,6 +40,13 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
         success: false, result: null, message: 'Your account is pending activation by the admin.',
       });
 
+    // Auto-assign superadmin role to owner email if not already set
+    const OWNER = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
+    if (user.email.toLowerCase() === OWNER.toLowerCase() && user.role !== 'superadmin') {
+      user.role = 'superadmin';
+      await user.save();
+    }
+
     // Attach user to request (model-name-aware like idurar)
     const key     = userModel.toLowerCase();
     req[key]      = user;
