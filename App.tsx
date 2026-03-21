@@ -45,6 +45,14 @@ type SubView =
 // Kept for compatibility with child components that use old tab names
 type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
 
+
+// ─── Demo Accounts ─────────────────────────────────────────────────────────────
+const DEMO_ACCOUNTS = [
+  { email: 'admin@tomo.ke',      password: 'admin123',     name: 'Admin Owner',    role: 'admin' as const },
+  { email: 'recruiter@demo.ke',  password: 'recruit123',   name: 'James Otieno',   role: 'recruiter' as const },
+  { email: 'worker@demo.ke',     password: 'worker123',    name: 'John Kamau',     role: 'worker' as const },
+];
+
 // Admin nav item injected below based on role
 const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any>; emoji: string }[] = [
   { id: 'home',      label: 'Home',      icon: Home,       emoji: '🏠' },
@@ -131,7 +139,8 @@ const App: React.FC = () => {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; role?: string } | null>(null);
+  const userRole = user?.role || 'recruiter';
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [openedFromPDFEditor, setOpenedFromPDFEditor] = useState(false);
@@ -200,8 +209,20 @@ const App: React.FC = () => {
 
   const handleDemoLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    // Check demo accounts first
+    const demo = DEMO_ACCOUNTS.find(a => a.email === loginEmail && a.password === loginPassword);
+    if (demo) {
+      setUser({ name: demo.name, email: demo.email, role: demo.role });
+      setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
+      // Route based on role
+      if (demo.role === 'admin') goTo('settings', 'admin-panel');
+      else if (demo.role === 'worker') goTo('settings', 'worker-portal');
+      else goTo('home');
+      return;
+    }
+    // Generic login for any other credentials
     if (isSignUp || (loginEmail && loginPassword)) {
-      setUser({ name: loginEmail.split('@')[0] || 'User', email: loginEmail });
+      setUser({ name: loginEmail.split('@')[0] || 'User', email: loginEmail, role: 'recruiter' });
       setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
       goTo('home');
     } else { setLoginError('Please enter your credentials.'); }
@@ -268,7 +289,25 @@ const App: React.FC = () => {
                   <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
                   <p className="text-[#8b949e] text-sm">{isSignUp ? 'Create your workspace.' : 'Sign in to continue.'}</p>
                 </div>
-                <form onSubmit={handleDemoLogin} className="space-y-4">
+                {/* Demo account quick-login cards */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] text-center">Quick Demo Login</p>
+                  {DEMO_ACCOUNTS.map(a => (
+                    <button key={a.email} type="button" onClick={() => { setLoginEmail(a.email); setLoginPassword(a.password); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:scale-[1.01] ${loginEmail === a.email ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]'}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500' : a.role === 'worker' ? 'bg-purple-600' : 'bg-[#1f6feb]'}`}>
+                        {a.name.charAt(0)}
+                      </div>
+                      <div className="text-left flex-1">
+                        <p className="text-sm font-semibold text-white">{a.name}</p>
+                        <p className="text-[10px] text-[#8b949e]">{a.email}</p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg capitalize ${a.role === 'admin' ? 'bg-red-500/20 text-red-400' : a.role === 'worker' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{a.role}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="relative flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or sign in manually</span><div className="flex-1 h-px bg-[#30363d]"/></div>
+                <form onSubmit={handleDemoLogin} className="space-y-3">
                   <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="you@company.com" />
                   <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="••••••••" />
                   {loginError && <p className="text-red-400 text-xs text-center">{loginError}</p>}
@@ -421,7 +460,7 @@ const App: React.FC = () => {
 
     // SETTINGS & SPECIAL VIEWS
     if (activeView === 'admin-panel') return <AdminPanel />;
-    if (activeView === 'worker-portal') return <WorkerPortal workerEmail={user?.email} />;
+    if (activeView === 'worker-portal') return <WorkerPortal workerEmail={user?.email} prefilledName={userRole === 'worker' ? user?.name : undefined} />;
     if (activeView === 'settings-profile' || activeView === 'settings-business') {
       return <ComingSoon title={activeView === 'settings-profile' ? 'Profile' : 'Business Info'} desc="Settings are coming soon." emoji="⚙️" />;
     }
@@ -632,6 +671,17 @@ const App: React.FC = () => {
                 <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-4"><ShieldCheck size={24} /></div>
                 <h3 className="text-xl font-black text-white mb-1">{isSignUp ? 'Join Tomo' : 'Welcome Back'}</h3>
                 <p className="text-[#8b949e] text-sm">{isSignUp ? 'Create your workspace.' : 'Sign in to continue.'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] text-center">Quick Demo Login</p>
+                {DEMO_ACCOUNTS.map(a => (
+                  <button key={a.email} type="button" onClick={() => { setLoginEmail(a.email); setLoginPassword(a.password); }}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${loginEmail === a.email ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]'}`}>
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500' : a.role === 'worker' ? 'bg-purple-600' : 'bg-[#1f6feb]'}`}>{a.name.charAt(0)}</div>
+                    <div className="text-left flex-1 min-w-0"><p className="text-sm font-semibold text-white truncate">{a.name}</p><p className="text-[10px] text-[#8b949e] truncate">{a.email}</p></div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg capitalize flex-shrink-0 ${a.role === 'admin' ? 'bg-red-500/20 text-red-400' : a.role === 'worker' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'}`}>{a.role}</span>
+                  </button>
+                ))}
               </div>
               <form onSubmit={handleDemoLogin} className="space-y-3">
                 <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="you@company.com" />
