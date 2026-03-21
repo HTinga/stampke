@@ -85,6 +85,7 @@ const CATEGORIES = [
 const CURRENCIES = ['KES', 'USD', 'EUR', 'GBP', 'UGX', 'TZS', 'ZAR', 'NGN'];
 
 const DB_KEY = 'smart_invoice_v1';
+const INVOICE_KEY = 'tomo_invoices_v1';
 const loadData = () => {
   try { return JSON.parse(localStorage.getItem(DB_KEY) || '{"transactions":[],"unsorted":[]}'); }
   catch { return { transactions: [], unsorted: [] }; }
@@ -164,6 +165,140 @@ Rules: Return ONLY the JSON object. No markdown. No explanation. If you cannot f
 }
 
 // ═══════════════════════════════════════════════════════════════
+// InvoiceEditor sub-component (extracted to avoid IIFE-in-JSX)
+// ═══════════════════════════════════════════════════════════════
+interface InvoiceEditorProps {
+  inv: CreatedInvoice;
+  invoices: CreatedInvoice[];
+  S: any;
+  fmt: (n: number, c?: string) => string;
+  CURRENCIES: string[];
+  calcInvoiceTotals: (i: CreatedInvoice) => CreatedInvoice;
+  setEditingInvoice: (i: CreatedInvoice | null) => void;
+  saveInvoices: (inv: CreatedInvoice[]) => void;
+  showToast: (msg: string, type?: 'success' | 'error') => void;
+  setView: (v: any) => void;
+}
+
+function InvoiceEditor({ inv, invoices, S, fmt, CURRENCIES, calcInvoiceTotals, setEditingInvoice, saveInvoices, showToast, setView }: InvoiceEditorProps) {
+  const upd = (u: Partial<CreatedInvoice>) => setEditingInvoice(calcInvoiceTotals({ ...inv, ...u }));
+  const updLine = (id: string, u: Partial<InvoiceLineItem>) => upd({ lineItems: inv.lineItems.map(l => l.id === id ? { ...l, ...u } : l) });
+  const addLine = () => upd({ lineItems: [...inv.lineItems, { id: Math.random().toString(36).slice(2, 7), description: '', qty: 1, unitPrice: 0 }] });
+  const removeLine = (id: string) => { if (inv.lineItems.length > 1) upd({ lineItems: inv.lineItems.filter(l => l.id !== id) }); };
+
+  const saveAndClose = (status: InvoiceStatus) => {
+    const final = calcInvoiceTotals({ ...inv, status });
+    const exists = invoices.find(i => i.id === inv.id);
+    const updated = exists ? invoices.map(i => i.id === inv.id ? final : i) : [final, ...invoices];
+    saveInvoices(updated);
+    setEditingInvoice(null);
+    setView('invoices');
+    showToast(status === 'sent' ? 'Invoice sent! 🎉' : 'Invoice saved as draft');
+  };
+
+  return (
+    <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <button onClick={() => { setEditingInvoice(null); setView('invoices'); }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', color: 'white', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>← Back</button>
+        <h2 style={{ color: 'white', fontWeight: 900, fontSize: 20, margin: 0 }}>
+          {invoices.find(i => i.id === inv.id) ? 'Edit Invoice' : 'New Invoice'} — {inv.invoiceNumber}
+        </h2>
+      </div>
+
+      {/* Business + Client */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div style={{ ...S.card, padding: 18 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#58a6ff', marginBottom: 12 }}>Your Business</p>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+            <div><label style={S.label}>Business Name</label><input value={inv.businessName} onChange={e => upd({ businessName: e.target.value })} style={S.input} placeholder="My Business" /></div>
+            <div><label style={S.label}>Business Email</label><input value={inv.businessEmail} onChange={e => upd({ businessEmail: e.target.value })} style={S.input} placeholder="billing@mybusiness.ke" type="email" /></div>
+          </div>
+        </div>
+        <div style={{ ...S.card, padding: 18 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: '#34d399', marginBottom: 12 }}>Bill To (Client)</p>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+            <div><label style={S.label}>Client Name *</label><input value={inv.clientName} onChange={e => upd({ clientName: e.target.value })} style={S.input} placeholder="Kamau & Associates" /></div>
+            <div><label style={S.label}>Email</label><input value={inv.clientEmail} onChange={e => upd({ clientEmail: e.target.value })} style={S.input} placeholder="client@example.com" type="email" /></div>
+            <div><label style={S.label}>Phone</label><input value={inv.clientPhone} onChange={e => upd({ clientPhone: e.target.value })} style={S.input} placeholder="0712 345 678" /></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dates + Currency */}
+      <div style={{ ...S.card, padding: 18, marginBottom: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+          <div><label style={S.label}>Invoice #</label><input value={inv.invoiceNumber} onChange={e => upd({ invoiceNumber: e.target.value })} style={S.input} /></div>
+          <div><label style={S.label}>Issue Date</label><input value={inv.issuedDate} onChange={e => upd({ issuedDate: e.target.value })} style={S.input} type="date" /></div>
+          <div><label style={S.label}>Due Date</label><input value={inv.dueDate} onChange={e => upd({ dueDate: e.target.value })} style={S.input} type="date" /></div>
+          <div><label style={S.label}>Currency</label>
+            <select value={inv.currency} onChange={e => upd({ currency: e.target.value })} style={{ ...S.input, cursor: 'pointer' }}>
+              {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div><label style={S.label}>Tax Rate (%)</label><input value={inv.taxRate} onChange={e => upd({ taxRate: parseFloat(e.target.value) || 0 })} style={S.input} type="number" min={0} max={100} step={0.1} /></div>
+        </div>
+      </div>
+
+      {/* Line items */}
+      <div style={{ ...S.card, padding: 18, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.35)' }}>Line Items</span>
+          <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', color: 'white', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}><Plus size={12} /> Add Item</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px 100px 28px', gap: 8, marginBottom: 8 }}>
+          {['Description', 'Qty', 'Unit Price', 'Total', ''].map(h => <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.35)' }}>{h}</span>)}
+        </div>
+        {inv.lineItems.map((line, i) => (
+          <div key={line.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 100px 100px 28px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+            <input value={line.description} onChange={e => updLine(line.id, { description: e.target.value })} style={S.input} placeholder={`Item ${i + 1}`} />
+            <input value={line.qty} onChange={e => updLine(line.id, { qty: parseFloat(e.target.value) || 1 })} style={{ ...S.input, textAlign: 'center' as const }} type="number" min={1} />
+            <input value={line.unitPrice} onChange={e => updLine(line.id, { unitPrice: parseFloat(e.target.value) || 0 })} style={{ ...S.input, textAlign: 'right' as const }} type="number" min={0} step={0.01} />
+            <div style={{ textAlign: 'right' as const, color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 700 }}>{fmt(line.qty * line.unitPrice, inv.currency)}</div>
+            <button onClick={() => removeLine(line.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,0.6)', opacity: inv.lineItems.length > 1 ? 1 : 0.3, padding: 2 }}><Trash2 size={13} /></button>
+          </div>
+        ))}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 12, paddingTop: 12 }}>
+          {[
+            { label: 'Subtotal', value: fmt(inv.subtotal, inv.currency), dim: true },
+            { label: `Tax (${inv.taxRate}%)`, value: fmt(inv.taxAmount, inv.currency), dim: true },
+            { label: 'TOTAL', value: fmt(inv.total, inv.currency), dim: false },
+          ].map(row => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ color: row.dim ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>{row.label}</span>
+              <span style={{ color: row.dim ? 'rgba(255,255,255,0.5)' : 'white', fontSize: row.dim ? 13 : 18, fontWeight: 900 }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Note */}
+      <div style={{ ...S.card, padding: 18, marginBottom: 16 }}>
+        <label style={S.label}>Note / Payment Instructions</label>
+        <textarea value={inv.note} onChange={e => upd({ note: e.target.value })} rows={3}
+          style={{ ...S.input, resize: 'none' as const }}
+          placeholder="e.g. Please pay via M-Pesa Till 123456. Payment due within 14 days." />
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={() => saveAndClose('draft')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.07)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+          <Save size={15} /> Save Draft
+        </button>
+        <button onClick={() => saveAndClose('sent')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 2, padding: 12, borderRadius: 10, background: 'linear-gradient(135deg,#059669,#10b981)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
+          <Send size={15} /> Save & Mark as Sent
+        </button>
+      </div>
+      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 10 }}>
+        Reminders track this invoice until it is marked as paid.
+      </p>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Main Component
 // ═══════════════════════════════════════════════════════════════
 export default function SmartInvoice() {
@@ -182,25 +317,30 @@ export default function SmartInvoice() {
   const [editTx, setEditTx] = useState<Transaction | null>(null);
 
   // ── Invoice state ──
-  const INVOICE_KEY = 'tomo_invoices_v1';
-  const loadInvoices = () => { try { return JSON.parse(localStorage.getItem(INVOICE_KEY) || '[]'); } catch { return []; } };
+  const loadInvoices = () => { try { return JSON.parse(localStorage.getItem(INVOICE_KEY) || '[]') as CreatedInvoice[]; } catch { return [] as CreatedInvoice[]; } };
   const [invoices, setInvoices] = React.useState<CreatedInvoice[]>(() => loadInvoices());
   const [editingInvoice, setEditingInvoice] = React.useState<CreatedInvoice | null>(null);
   const [invoiceFilter, setInvoiceFilter] = React.useState<InvoiceStatus | ''>('');
 
   const saveInvoices = (inv: CreatedInvoice[]) => { localStorage.setItem(INVOICE_KEY, JSON.stringify(inv)); setInvoices(inv); };
 
-  const newInvoice = (): CreatedInvoice => ({
+  const newInvoice = (): CreatedInvoice => {
+    let bName = 'My Business', bEmail = '';
+    try {
+      const b = JSON.parse(localStorage.getItem('tomo_business') || '{}');
+      bName = b.name || 'My Business'; bEmail = b.email || '';
+    } catch {}
+    return ({
     id: Math.random().toString(36).slice(2, 9),
     invoiceNumber: `INV-${String(invoices.length + 1).padStart(4, '0')}`,
     clientName: '', clientEmail: '', clientPhone: '', clientAddress: '',
-    businessName: 'My Business', businessEmail: '',
+    businessName: bName, businessEmail: bEmail,
     lineItems: [{ id: '1', description: '', qty: 1, unitPrice: 0 }],
     subtotal: 0, taxRate: 16, taxAmount: 0, total: 0,
     currency: 'KES', issuedDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
     note: '', status: 'draft', reminderCount: 0, createdAt: new Date().toISOString(),
-  });
+  });};
 
   const calcInvoiceTotals = (inv: CreatedInvoice): CreatedInvoice => {
     const subtotal = inv.lineItems.reduce((s, l) => s + l.qty * l.unitPrice, 0);
@@ -214,13 +354,20 @@ export default function SmartInvoice() {
     showToast('Invoice marked as paid! ✅');
   };
 
-  const markInvoiceOverdue = React.useCallback(() => {
+  // Auto-mark overdue invoices on mount using functional setState (no stale closure)
+  React.useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
-    const updated = invoices.map(i => (i.status === 'sent' && i.dueDate < today) ? { ...i, status: 'overdue' as InvoiceStatus } : i);
-    if (JSON.stringify(updated) !== JSON.stringify(invoices)) saveInvoices(updated);
-  }, [invoices]);
-
-  React.useEffect(() => { markInvoiceOverdue(); }, []);
+    setInvoices(prev => {
+      const updated = prev.map(i =>
+        (i.status === 'sent' && i.dueDate < today) ? { ...i, status: 'overdue' as InvoiceStatus } : i
+      );
+      if (JSON.stringify(updated) !== JSON.stringify(prev)) {
+        localStorage.setItem(INVOICE_KEY, JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
+  }, []);
 
   const sendReminder = (id: string) => {
     const inv = invoices.find(i => i.id === id);
@@ -837,120 +984,18 @@ export default function SmartInvoice() {
         )}
 
         {/* ════ CREATE / EDIT INVOICE ════ */}
-        {view === 'create-invoice' && editingInvoice && (() => {
-          const inv = editingInvoice;
-          const upd = (u: Partial<CreatedInvoice>) => setEditingInvoice(prev => prev ? calcInvoiceTotals({ ...prev, ...u }) : prev);
-          const updLine = (id: string, u: Partial<InvoiceLineItem>) => upd({ lineItems: inv.lineItems.map(l => l.id === id ? { ...l, ...u } : l) });
-          const addLine = () => upd({ lineItems: [...inv.lineItems, { id: Math.random().toString(36).slice(2, 7), description: '', qty: 1, unitPrice: 0 }] });
-          const removeLine = (id: string) => upd({ lineItems: inv.lineItems.filter(l => l.id !== id) });
-
-          const saveAndClose = (status: InvoiceStatus) => {
-            const final = calcInvoiceTotals({ ...inv, status });
-            const exists = invoices.find(i => i.id === inv.id);
-            const updated = exists ? invoices.map(i => i.id === inv.id ? final : i) : [final, ...invoices];
-            saveInvoices(updated);
-            setEditingInvoice(null);
-            setView('invoices');
-            showToast(status === 'sent' ? 'Invoice sent! 🎉' : 'Invoice saved as draft');
-          };
-
-          return (
-            <div style={{ maxWidth: 760, margin: '0 auto' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <button onClick={() => { setEditingInvoice(null); setView('invoices'); }} style={{ ...S.btn(), padding: '6px 10px', fontSize: 11 }}>← Back</button>
-                <h2 style={{ color: 'white', fontWeight: 900, fontSize: 20, margin: 0 }}>{invoices.find(i => i.id === inv.id) ? 'Edit Invoice' : 'New Invoice'} — {inv.invoiceNumber}</h2>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                {/* Business info */}
-                <div style={{ ...S.card, padding: 18 }}>
-                  <p style={{ ...S.label, marginBottom: 12, color: '#58a6ff' }}>Your Business</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div><label style={S.label}>Business Name</label><input value={inv.businessName} onChange={e => upd({ businessName: e.target.value })} style={S.input} placeholder="My Business" /></div>
-                    <div><label style={S.label}>Business Email</label><input value={inv.businessEmail} onChange={e => upd({ businessEmail: e.target.value })} style={S.input} placeholder="billing@mybusiness.ke" type="email" /></div>
-                  </div>
-                </div>
-                {/* Client info */}
-                <div style={{ ...S.card, padding: 18 }}>
-                  <p style={{ ...S.label, marginBottom: 12, color: '#34d399' }}>Bill To (Client)</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div><label style={S.label}>Client Name *</label><input value={inv.clientName} onChange={e => upd({ clientName: e.target.value })} style={S.input} placeholder="Kamau & Associates" /></div>
-                    <div><label style={S.label}>Email</label><input value={inv.clientEmail} onChange={e => upd({ clientEmail: e.target.value })} style={S.input} placeholder="client@example.com" type="email" /></div>
-                    <div><label style={S.label}>Phone</label><input value={inv.clientPhone} onChange={e => upd({ clientPhone: e.target.value })} style={S.input} placeholder="0712 345 678" /></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dates + Currency */}
-              <div style={{ ...S.card, padding: 18, marginBottom: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                  <div><label style={S.label}>Invoice Number</label><input value={inv.invoiceNumber} onChange={e => upd({ invoiceNumber: e.target.value })} style={S.input} /></div>
-                  <div><label style={S.label}>Issue Date</label><input value={inv.issuedDate} onChange={e => upd({ issuedDate: e.target.value })} style={S.input} type="date" /></div>
-                  <div><label style={S.label}>Due Date</label><input value={inv.dueDate} onChange={e => upd({ dueDate: e.target.value })} style={S.input} type="date" /></div>
-                  <div><label style={S.label}>Currency</label>
-                    <select value={inv.currency} onChange={e => upd({ currency: e.target.value })} style={{ ...S.input, cursor: 'pointer' }}>
-                      {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div><label style={S.label}>Tax Rate (%)</label><input value={inv.taxRate} onChange={e => upd({ taxRate: parseFloat(e.target.value) || 0 })} style={S.input} type="number" min={0} max={100} step={0.1} /></div>
-                </div>
-              </div>
-
-              {/* Line items */}
-              <div style={{ ...S.card, padding: 18, marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <p style={{ ...S.label, margin: 0 }}>Line Items</p>
-                  <button onClick={addLine} style={{ ...S.btn(), padding: '5px 10px', fontSize: 11 }}><Plus size={12} /> Add Item</button>
-                </div>
-                {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 110px 100px 32px', gap: 8, marginBottom: 8 }}>
-                  {['Description', 'Qty', 'Unit Price', 'Total', ''].map(h => <span key={h} style={S.label}>{h}</span>)}
-                </div>
-                {inv.lineItems.map((line, i) => (
-                  <div key={line.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 110px 100px 32px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
-                    <input value={line.description} onChange={e => updLine(line.id, { description: e.target.value })} style={S.input} placeholder={`Item ${i + 1}`} />
-                    <input value={line.qty} onChange={e => updLine(line.id, { qty: parseFloat(e.target.value) || 1 })} style={{ ...S.input, textAlign: 'center' }} type="number" min={1} step={1} />
-                    <input value={line.unitPrice} onChange={e => updLine(line.id, { unitPrice: parseFloat(e.target.value) || 0 })} style={{ ...S.input, textAlign: 'right' }} type="number" min={0} step={0.01} />
-                    <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 700 }}>{fmt(line.qty * line.unitPrice, inv.currency)}</div>
-                    <button onClick={() => inv.lineItems.length > 1 && removeLine(line.id)} style={{ background: 'none', border: 'none', cursor: inv.lineItems.length > 1 ? 'pointer' : 'not-allowed', color: 'rgba(239,68,68,0.6)', opacity: inv.lineItems.length > 1 ? 1 : 0.3, padding: 4 }}><Trash2 size={13} /></button>
-                  </div>
-                ))}
-                {/* Totals */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 12, paddingTop: 12 }}>
-                  {[
-                    { label: 'Subtotal', value: fmt(inv.subtotal, inv.currency), dim: true },
-                    { label: `Tax (${inv.taxRate}%)`, value: fmt(inv.taxAmount, inv.currency), dim: true },
-                    { label: 'TOTAL', value: fmt(inv.total, inv.currency), dim: false },
-                  ].map(row => (
-                    <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ color: row.dim ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{row.label}</span>
-                      <span style={{ color: row.dim ? 'rgba(255,255,255,0.5)' : 'white', fontSize: row.dim ? 13 : 18, fontWeight: 900 }}>{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Note */}
-              <div style={{ ...S.card, padding: 18, marginBottom: 16 }}>
-                <label style={S.label}>Note / Payment Instructions</label>
-                <textarea value={inv.note} onChange={e => upd({ note: e.target.value })} rows={3} style={{ ...S.input, resize: 'none', height: 'auto' }} placeholder="e.g. Please pay via M-Pesa Till 123456. Payment due within 14 days." />
-              </div>
-
-              {/* Action buttons */}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => saveAndClose('draft')} style={{ ...S.btn(), flex: 1, justifyContent: 'center', padding: 12 }}>
-                  <Save size={15} /> Save Draft
-                </button>
-                <button onClick={() => saveAndClose('sent')} style={{ ...S.btn(true), flex: 2, justifyContent: 'center', padding: 12, background: 'linear-gradient(135deg,#059669,#10b981)', fontSize: 13 }}>
-                  <Send size={15} /> Save & Mark as Sent
-                </button>
-              </div>
-              <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 10 }}>
-                Reminders are sent automatically until the invoice is marked as paid. You can also reconcile automatically by uploading a matching receipt.
-              </p>
-            </div>
-          );
-        })()}
+        {view === 'create-invoice' && editingInvoice && <InvoiceEditor
+          inv={editingInvoice}
+          invoices={invoices}
+          S={S}
+          fmt={fmt}
+          CURRENCIES={CURRENCIES}
+          calcInvoiceTotals={calcInvoiceTotals}
+          setEditingInvoice={setEditingInvoice}
+          saveInvoices={saveInvoices}
+          showToast={showToast}
+          setView={setView}
+        />}
 
         {view === 'stats' && (
           <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>

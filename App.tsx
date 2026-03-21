@@ -23,7 +23,10 @@ import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
 import DocumentsHub from './components/DocumentsHub';
 import WorkHub from './components/WorkHub';
+import ClientManager from './components/ClientManager';
 import AdminPanel from './components/AdminPanel';
+import ActivityLog from './components/ActivityLog';
+import SettingsPanel from './components/SettingsPanel';
 import WorkerPortal from './components/WorkerPortal';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
@@ -99,10 +102,10 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'activity-notifications', label: 'Notifications',  desc: 'Alerts & updates' },
   ],
   settings:  [
-    { id: 'settings-profile',  label: 'Profile',       desc: 'Your account' },
-    { id: 'settings-business', label: 'Business Info', desc: 'Company details' },
-    { id: 'admin-panel',       label: '⚡ Admin Panel', desc: 'Platform management (owner only)' },
-    { id: 'worker-portal',    label: '👷 Worker Portal', desc: 'Register as a worker' },
+    { id: 'settings-profile',  label: 'Profile',         desc: 'Your account' },
+    { id: 'settings-business', label: 'Business Info',   desc: 'Company details & billing' },
+    { id: 'admin-panel',       label: '⚡ Admin Panel',  desc: 'Platform management (owner only)' },
+    { id: 'worker-portal',     label: '👷 Worker Portal',desc: 'Register as a worker' },
   ],
 };
 
@@ -208,23 +211,49 @@ const App: React.FC = () => {
     alert('Template saved!');
   };
 
-  const handleDemoLogin = (e: React.FormEvent) => {
+  const handleDemoLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Check demo accounts first
+    setLoginError('');
+    // 1. Check demo accounts first (always works offline)
     const demo = DEMO_ACCOUNTS.find(a => a.email === loginEmail && a.password === loginPassword);
     if (demo) {
       setUser({ name: demo.name, email: demo.email, role: demo.role });
-      setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
-      // Route based on role
+      setIsLoggedIn(true); setShowLoginModal(false);
       if (demo.role === 'admin') goTo('settings', 'admin-panel');
       else if (demo.role === 'worker') goTo('settings', 'worker-portal');
       else goTo('home');
       return;
     }
-    // Generic login for any other credentials
+    // 2. Try real API if configured
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (apiUrl && loginEmail && loginPassword) {
+      try {
+        const res = await fetch(`${apiUrl}/api/auth/login`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        });
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem('tomo_token', data.token);
+          setUser({ name: data.user.name, email: data.user.email, role: data.user.role });
+          setIsLoggedIn(true); setShowLoginModal(false);
+          if (data.user.role === 'admin') goTo('settings', 'admin-panel');
+          else if (data.user.role === 'worker') goTo('settings', 'worker-portal');
+          else goTo('home');
+          return;
+        }
+        if (data.code === 'PENDING') {
+          setLoginError('Your account is pending admin activation. You will receive an email when approved.');
+          return;
+        }
+        setLoginError(data.message || 'Login failed.');
+        return;
+      } catch { /* fall through to local */ }
+    }
+    // 3. Generic local login (signup / new account)
     if (isSignUp || (loginEmail && loginPassword)) {
       setUser({ name: loginEmail.split('@')[0] || 'User', email: loginEmail, role: 'recruiter' });
-      setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
+      setIsLoggedIn(true); setShowLoginModal(false);
       goTo('home');
     } else { setLoginError('Please enter your credentials.'); }
   };
@@ -307,6 +336,32 @@ const App: React.FC = () => {
                     </button>
                   ))}
                 </div>
+                <div className="relative flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or continue with</span><div className="flex-1 h-px bg-[#30363d]"/></div>
+                <button type="button" onClick={() => {
+                  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                  if (!clientId) { setLoginError('Google Sign-In not configured yet. Use demo accounts above.'); return; }
+                  // Load Google Identity Services and prompt
+                  const script = document.createElement('script');
+                  script.src = 'https://accounts.google.com/gsi/client';
+                  script.onload = () => {
+                    (window as any).google?.accounts?.id?.initialize({
+                      client_id: clientId,
+                      callback: async (resp: any) => {
+                        const apiUrl = import.meta.env.VITE_API_URL;
+                        if (!apiUrl) { setLoginError('Backend not configured.'); return; }
+                        const r = await fetch(`${apiUrl}/api/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: resp.credential }) });
+                        const d = await r.json();
+                        if (d.success && d.token) { localStorage.setItem('tomo_token', d.token); setUser({ name: d.user.name, email: d.user.email, role: d.user.role }); setIsLoggedIn(true); setShowLoginModal(false); if (d.user.role === 'admin') goTo('settings', 'admin-panel'); else if (d.user.role === 'worker') goTo('settings', 'worker-portal'); else goTo('home'); }
+                        else setLoginError(d.message || 'Google sign-in failed.');
+                      }
+                    });
+                    (window as any).google?.accounts?.id?.prompt();
+                  };
+                  document.head.appendChild(script);
+                }} className="w-full flex items-center justify-center gap-3 py-3 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
+                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                  Continue with Google
+                </button>
                 <div className="relative flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or sign in manually</span><div className="flex-1 h-px bg-[#30363d]"/></div>
                 <form onSubmit={handleDemoLogin} className="space-y-3">
                   <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1f6feb]" placeholder="you@company.com" />
@@ -337,9 +392,8 @@ const App: React.FC = () => {
 
     // CLIENTS
     if (activeView === 'clients-leads') return <SocialHub />;
-    if (activeView === 'clients-all' || activeView === 'clients-add') {
-      return <ComingSoon title={activeView === 'clients-all' ? 'All Clients' : 'Add Client'} desc="Client management is coming soon. You can track leads via the Leads view." emoji="👥" />;
-    }
+    if (activeView === 'clients-all') return <ClientManager initialView="all" />;
+    if (activeView === 'clients-add') return <ClientManager initialView="add" />;
 
     // MONEY
     if (activeView === 'money-invoices' || activeView === 'money-payments' || activeView === 'money-unpaid' || activeView === 'money-create') {
@@ -363,6 +417,8 @@ const App: React.FC = () => {
         </div>
       );
     }
+    if (activeView === 'documents-presentation') return <DocumentsHub />;
+    if (activeView === 'documents-create') return <DocumentsHub />;
     if (activeView === 'documents-ai-scan') {
       return (
         <div className="max-w-3xl mx-auto py-10 text-center">
@@ -456,14 +512,17 @@ const App: React.FC = () => {
 
     // ACTIVITY
     if (activeView === 'activity-all' || activeView === 'activity-notifications') {
-      return <ComingSoon title={activeView === 'activity-all' ? 'All Activity' : 'Notifications'} desc="Activity logs and notifications are coming soon." emoji="📊" />;
+      return <ActivityLog view={activeView} />;
     }
 
     // SETTINGS & SPECIAL VIEWS
     if (activeView === 'admin-panel') return <AdminPanel />;
     if (activeView === 'worker-portal') return <WorkerPortal workerEmail={user?.email} prefilledName={userRole === 'worker' ? user?.name : undefined} />;
-    if (activeView === 'settings-profile' || activeView === 'settings-business') {
-      return <ComingSoon title={activeView === 'settings-profile' ? 'Profile' : 'Business Info'} desc="Settings are coming soon." emoji="⚙️" />;
+    if (activeView === 'settings-profile') {
+      return <SettingsPanel view="settings-profile" user={user} theme={theme} onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} onLogout={handleLogout} />;
+    }
+    if (activeView === 'settings-business') {
+      return <SettingsPanel view="settings-business" user={user} theme={theme} onThemeToggle={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} onLogout={handleLogout} />;
     }
 
     return <Dashboard userName={user?.name} onNavigate={navLegacy as any} theme={theme} />;
