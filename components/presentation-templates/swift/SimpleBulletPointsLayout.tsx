@@ -7,7 +7,7 @@ const layoutDescription = "Bullet Points with title and description"
 
 const PointSchema = z
   .object({
-    title: z.string().min(6)).default("Your Title Here"),
+    title: z.string().min(6).max(60).default("Your Title Here"),
     body: z
       .string()
       .min(30)
@@ -20,7 +20,7 @@ const PointSchema = z
 
 const Schema = z
   .object({
-    title: z.string().min(4)).default("Our Commitment"),
+    title: z.string().min(4).max(36).default("Our Commitment"),
     statement: z
       .string()
       .min(20)
@@ -33,7 +33,7 @@ const Schema = z
       .min(1)
       .max(4)
       .default([PointSchema.parse({}), PointSchema.parse({}), PointSchema.parse({}), PointSchema.parse({ title: "Your Title Here", body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa." })]),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
     title: "Our Commitment to Innovation",

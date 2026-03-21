@@ -1,18 +1,18 @@
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()).default('Image with Description & Metrix'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M.'),
+    title: z.string().max(25).describe('The main title of the slide').default('Image with Description & Metrix'),
+    description: z.string().max(120).describe('A brief description or context for the slide content').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M.'),
     metrics: z.array(z.object({
         icon: z.object({
             __icon_url__: z.string(),
-            __icon_query__: z.string()),
-        }),
-        label: z.string()),
-        value: z.string().max(6),
-        subText: z.string()),
-    })).max(4).default([
+            __icon_query__: z.string().max(30),
+        }).describe('Icon representing the metric'),
+        label: z.string().max(12).describe('The category or label of the metric'),
+        value: z.string().max(6).describe('The numerical or statistical value'),
+        subText: z.string().max(12).describe('Additional detail or challenge related to the metric'),
+    })).max(4).describe('A list of up to 4 metric items').default([
         {
             icon: { __icon_url__: 'https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/placeholder.svg', __icon_query__: 'search' },
             label: 'Research',
@@ -40,8 +40,8 @@ export const Schema = z.object({
     ]),
     mainImage: z.object({
         __image_url__: z.string(),
-        __image_prompt__: z.string()),
-    }).default({
+        __image_prompt__: z.string().max(100),
+    }).describe('The primary visual image on the right').default({
         __image_url__: 'https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png',
         __image_prompt__: 'Hands of business people stacked together in unity'
     }),

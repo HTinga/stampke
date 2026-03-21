@@ -1,15 +1,15 @@
 import * as z from "zod";
 import React from "react";
 export const Schema = z.object({
-    title: z.string()).default('Campaign Performance Snapshot'),
+    title: z.string().max(30).describe('The main heading of the slide').default('Campaign Performance Snapshot'),
 
     cards: z.array(z.object({
-        metric: z.string()),
-        label: z.string()),
-        subtext: z.string()),
-        isHighlighted: z.boolean()),
+        metric: z.string().describe('Primary value or statistic displayed').max(20),
+        label: z.string().describe('Title or name of the card item').max(30),
+        subtext: z.string().describe('Secondary text or additional data').max(30),
+        isHighlighted: z.boolean().describe('Whether the card uses highlighted styling').default(false),
     })).max(8).min(3)
-        .default([
+        .describe('Array of metric cards for the grid').default([
             { metric: '342 SQLs', label: 'Enterprise ABM Launch', subtext: '28% CONVERSION RATE', isHighlighted: false },
             { metric: '$1.8M pipeline', label: 'Product Feature Release', subtext: '4.7X ROAS', isHighlighted: false },
             { metric: '156 Deals', label: 'Industry Summit Sponsorship', subtext: '42% MEETING RATE', isHighlighted: true },

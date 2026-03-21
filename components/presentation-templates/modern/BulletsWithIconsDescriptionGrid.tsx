@@ -1,5 +1,5 @@
 import React from "react";
-import { RemoteSvgIcon } from "@/app/hooks/useRemoteSvgIcon";
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import * as z from "zod";
 import { IconSchema } from "../defaultSchemes";
 
@@ -10,7 +10,7 @@ export const layoutDescription =
 
 const bulletWithIconsDescriptionGridSlideSchema = z.object({
 
-  title: z.string().min(3)).default("Businesses struggle"),
+  title: z.string().min(3).max(25).default("Businesses struggle"),
   mainDescription: z
     .string()
     .min(20)
@@ -22,8 +22,8 @@ const bulletWithIconsDescriptionGridSlideSchema = z.object({
   sections: z
     .array(
       z.object({
-        title: z.string().min(3)),
-        description: z.string().min(5)),
+        title: z.string().min(3).max(30),
+        description: z.string().min(5).max(70),
         icon: IconSchema.optional(),
       }),
     )

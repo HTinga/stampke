@@ -1,13 +1,13 @@
 import React from "react";
 import * as z from "zod";
 import { ImageSchema, IconSchema } from "../defaultSchemes";
-import { RemoteSvgIcon } from "@/app/hooks/useRemoteSvgIcon";
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 export const layoutId = "bullet-with-icons";
 export const layoutName = "Bullet With Icons Slide Layout";
 export const layoutDescription = "Bullets with icons slide layout";
 const bulletWithIconsSlideSchema = z.object({
-  title: z.string().min(3)).default("Problem"),
+  title: z.string().min(3).max(20).default("Problem"),
   description: z
     .string()
     .min(50)
@@ -19,8 +19,8 @@ const bulletWithIconsSlideSchema = z.object({
   problemCategories: z
     .array(
       z.object({
-        title: z.string().min(3)),
-        description: z.string()).max(100),
+        title: z.string().min(3).max(30),
+        description: z.string().min(20).max(100),
         icon: IconSchema.optional(),
       }),
     )

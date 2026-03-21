@@ -12,7 +12,7 @@ const IconSchema = z
       .default(
         "https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/clipboard-text-bold.svg"
       ),
-    __icon_query__: z.string().min(0)).default("timeline icon"),
+    __icon_query__: z.string().min(0).max(80).default("timeline icon"),
   })
   .default({
     __icon_url__:
@@ -23,7 +23,7 @@ const IconSchema = z
 const ItemSchema = z
   .object({
     year: z.string().min(3).max(6).default("2018"),
-    heading: z.string().min(3)).default("Founded in 2020"),
+    heading: z.string().min(3).max(28).default("Founded in 2020"),
     body: z
       .string()
       .min(10)
@@ -57,7 +57,7 @@ const Schema = z
         ItemSchema.parse({ year: "2020", heading: "Key Milestone in 2022", body: "Lorem ipsum dolor" }),
         ItemSchema.parse({ year: "2021", heading: "Global Expansion in 2024", body: "Lorem ipsum dolor" }),
       ]),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
     title: "Our Journey at a Glance",

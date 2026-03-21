@@ -8,7 +8,7 @@ const layoutDescription = "Intro slide with header, title, subtitle, body, image
 const ImageSchema = z
   .object({
     __image_url__: z.string().url().default("https://images.unsplash.com/photo-1522199710521-72d69614c702?w=1200&q=80&auto=format&fit=crop"),
-    __image_prompt__: z.string().min(0)).default("abstract gradient background"),
+    __image_prompt__: z.string().min(0).max(120).default("abstract gradient background"),
   })
   .default({
     __image_url__:
@@ -26,8 +26,8 @@ const Schema = z
       .default("Pitch Deck")
       ,
 
-    subtitlePrefix: z.string().min(3)).default("Presentation"),
-    subtitleAccent: z.string().min(3)).default("Template"),
+    subtitlePrefix: z.string().min(3).max(40).default("Presentation"),
+    subtitleAccent: z.string().min(3).max(40).default("Template"),
 
     paragraph: z
       .string()
@@ -45,9 +45,9 @@ const Schema = z
 
     introCard: z
       .object({
-        enabled: z.boolean()),
-        name: z.string().min(3)).default("John Doe"),
-        date: z.string().min(4)).default("Jan 1, 2025"),
+        enabled: z.boolean().default(false),
+        name: z.string().min(3).max(40).default("John Doe"),
+        date: z.string().min(4).max(40).default("Jan 1, 2025"),
       })
       .default({ enabled: true, name: "John Doe", date: "Jan 1, 2025" }),
 

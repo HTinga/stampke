@@ -2,16 +2,16 @@ import * as z from "zod";
 
 
 export const Schema = z.object({
-    title: z.string()).default("Word of Wisdom"),
-    quote: z.string()).default("\"Success is not final, failure is not fatal: it is the courage to continue that counts. The future belongs to those who believe in the beauty of their dreams.\""),
+    title: z.string().describe('The main heading of the slide').max(20).default("Word of Wisdom"),
+    quote: z.string().describe('Quotation text displayed').max(200).default("\"Success is not final, failure is not fatal: it is the courage to continue that counts. The future belongs to those who believe in the beauty of their dreams.\""),
     backgroundImage: z.object({
-        __image_url__: z.string()),
-        __image_prompt__: z.string()),
+        __image_url__: z.string().describe('URL of the background image').default('https://images.pexels.com/photos/33508509/pexels-photo-33508509.jpeg?auto=compress&cs=tinysrgb&h=650&w=940'),
+        __image_prompt__: z.string().describe('Prompt description for the image').default('Inspirational mountain landscape with dramatic sky and clouds'),
     }).default({
         __image_url__: 'https://images.pexels.com/photos/33508509/pexels-photo-33508509.jpeg?auto=compress&cs=tinysrgb&h=650&w=940',
         __image_prompt__: 'Inspirational mountain landscape with dramatic sky and clouds',
     }),
-    author: z.string()).default("-Winston Churchill"),
+    author: z.string().describe('Attribution name for the quote').max(30).default("-Winston Churchill"),
 });
 
 export const layoutId = 'left-align-quote';

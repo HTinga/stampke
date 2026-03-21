@@ -23,29 +23,29 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string()).default("Barchart with Description & metrix"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(40).describe("The main title of the slide").default("Barchart with Description & metrix"),
+    description: z.string().max(250).describe("The description of the slide").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     metrics: z.array(z.object({
-        value: z.string().max(5),
-        label: z.string())
-    })).max(4).default([
+        value: z.string().max(5).describe("The numerical value or percentage"),
+        label: z.string().max(40).describe("The label describing the metric")
+    })).max(4).describe("Four metric boxes displayed in a grid").default([
         { value: "85%", label: "Main Challenge: Delayed Client" },
         { value: "85%", label: "Main Challenge: Delayed Client" },
         { value: "85%", label: "Main Challenge: Delayed Client" },
         { value: "85%", label: "Main Challenge: Delayed Client" }
     ]),
     chart: z.object({
-        title: z.string()),
-        topLabel: z.string()),
-        bottomLabel: z.string()),
-        chartType: chartTypeEnum,
-        seriesNames: z.array(z.string()).max(2),
+        title: z.string().max(20).describe("The text in the green highlight box above the chart"),
+        topLabel: z.string().max(20).describe("Secondary label at the top right of the chart area"),
+        bottomLabel: z.string().max(20).describe("Secondary label at the bottom right of the chart area"),
+        chartType: chartTypeEnum.describe('Type of chart to display'),
+        seriesNames: z.array(z.string()).max(2).describe("The names of the two data series for the legend"),
         data: z.array(z.object({
-            label: z.string()),
-            value1: z.number(),
-            value2: z.number())")
-        })).max(4)
-    }).default({
+            label: z.string().max(20).describe("Category label on the X-axis"),
+            value1: z.number().describe("Value for the first series"),
+            value2: z.number().optional().describe("Value for the second series (optional for single-series charts)")
+        })).max(4).describe("Data points for the chart")
+    }).describe("Configuration for the chart").default({
         title: "Campaign A",
         topLabel: "Top Campaign",
         bottomLabel: "Engangment Rate",

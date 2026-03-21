@@ -1,11 +1,11 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default("TABLE"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(12).describe("The main heading of the slide").default("TABLE"),
+    description: z.string().max(250).describe("Supporting description text").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     table: z.object({
-        columns: z.array(z.string())).max(3),
-        rows: z.array(z.array(z.string())).max(3)).max(3)
+        columns: z.array(z.string().max(15)).max(3).describe("Column headers for the table"),
+        rows: z.array(z.array(z.string().max(60)).max(3)).max(3).describe("Data rows for the table")
     }).default({
         columns: ["Problem", "Description", "Solution"],
         rows: [

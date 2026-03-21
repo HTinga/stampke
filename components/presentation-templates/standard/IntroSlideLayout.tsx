@@ -3,12 +3,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
     __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-    __image_prompt__: z.string()).max(150).default("High-quality illustrative image for the left panel of a pitch deck cover"),
+    __image_prompt__: z.string().min(10).max(150).default("High-quality illustrative image for the left panel of a pitch deck cover"),
 })
 
 const IconSchema = z.object({
     __icon_url__: z.string().default("https://static.thenounproject.com/png/5563447-200.png"),
-    __icon_query__: z.string().min(3)).default("image placeholder icon"),
+    __icon_query__: z.string().min(3).max(40).default("image placeholder icon"),
 })
 
 const layoutId = "header-counter-two-column-image-text-slide"
@@ -46,16 +46,16 @@ const Schema = z.object({
         },
     }),
 
-    title: z.string()).max(30).default("Introduction Our Pitchdeck"),
-    titleBreakAfter: z.number().min(1)).default(12),
+    title: z.string().min(12).max(30).default("Introduction Our Pitchdeck"),
+    titleBreakAfter: z.number().min(1).max(25).default(12),
 
-    paragraph: z.string()).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris"),
+    paragraph: z.string().min(50).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris"),
 
     introCard: z.object({
-        enabled: z.boolean()),
+        enabled: z.boolean().default(false),
         initials: z.string().min(2).max(3).default("PDT"),
-        name: z.string().min(3)).default("Pitch Deck Team"),
-        date: z.string().min(6)).default("December 22, 2025"),
+        name: z.string().min(3).max(40).default("Pitch Deck Team"),
+        date: z.string().min(6).max(40).default("December 22, 2025"),
     }).default({
         enabled: true,
         initials: "PDT",

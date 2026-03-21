@@ -24,27 +24,27 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string()).default("Barchart with Description & metrix"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(25).describe("The main heading of the slide").default("Barchart with Description & metrix"),
+    description: z.string().max(180).describe("Supporting description text").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     metricCards: z.array(z.object({
-        heading: z.string()),
-        value: z.string().max(8)
-    })).max(4).default([
+        heading: z.string().max(25).describe("Label text for the metric card"),
+        value: z.string().max(8).describe("Value displayed in the metric card")
+    })).max(4).describe("List of metric cards displayed in a grid").default([
         { heading: "Main Challenge: Delayed Client", value: "85%" },
         { heading: "Total Registered Users", value: ">500 M" },
     ]),
-    chartTitle: z.string()).default("Campaign A"),
-    chartCategory: z.string()).default("Top Campaign"),
-    chartFooterLabel: z.string()).default("Engangment Rate"),
-    chartType: chartTypeEnum,
+    chartTitle: z.string().max(12).describe("Title text for the chart").default("Campaign A"),
+    chartCategory: z.string().max(12).describe("Secondary label text").default("Top Campaign"),
+    chartFooterLabel: z.string().max(15).describe("Footer label text for the chart").default("Engangment Rate"),
+    chartType: chartTypeEnum.describe('Type of chart to display'),
     chartData: z.object({
-        columns: z.array(z.string()).max(2),
+        columns: z.array(z.string()).max(2).describe("Names of the chart data series"),
         rows: z.array(z.object({
-            label: z.string(),
-            value1: z.number(),
-            value2: z.number())")
-        })).max(4)
-    }).default({
+            label: z.string().describe("The x-axis category label"),
+            value1: z.number().describe("The first series value"),
+            value2: z.number().optional().describe("The second series value (optional for single-series charts)")
+        })).max(4).describe("The data rows for the chart")
+    }).describe("The data used to render the chart").default({
         columns: ["Planned Budget", "Actual Budget"],
         rows: [
             { label: "Paid Social", value1: 920, value2: 485 },

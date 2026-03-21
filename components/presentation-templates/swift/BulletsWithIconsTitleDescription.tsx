@@ -2,7 +2,7 @@ import React from "react"
 import * as z from "zod"
 
 import { IconSchema } from '../defaultSchemes';
-import { RemoteSvgIcon } from "@/app/hooks/useRemoteSvgIcon";
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 const layoutId = "bullet-with-icons-title-description"
 const layoutName = "Bullet With Icons Title Description"
@@ -11,7 +11,7 @@ const layoutDescription = "Bullet with icons with title and description and titl
 const ItemSchema = z
   .object({
     icon: IconSchema,
-    title: z.string().min(3)).default("Lorem ipsum dolor"),
+    title: z.string().min(3).max(40).default("Lorem ipsum dolor"),
     description: z
       .string()
       .min(0)
@@ -37,7 +37,7 @@ const Schema = z
       .min(3)
       .max(60)
       .default("Our Infographic"),
-    sideHeading: z.string().min(0)).default("Lorem ipsum dolor sit amet,"),
+    sideHeading: z.string().min(0).max(60).default("Lorem ipsum dolor sit amet,"),
     sideParagraph: z
       .string()
       .min(0)
@@ -91,7 +91,7 @@ const Schema = z
             "Concise supporting text under the fourth icon explaining the point.",
         },
       ]),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
     title: "Our Infographic",

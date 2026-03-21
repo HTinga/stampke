@@ -5,7 +5,7 @@
 import React from 'react'
 import * as z from "zod";
 import { IconSchema } from '../defaultSchemes';
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, ScatterChart, Scatter,
@@ -33,7 +33,7 @@ const simpleDataSchema = z.object({
 // Multi-series data
 const multiSeriesDataSchema = z.object({
     name: z.string(),
-    values: z.any()"),
+    values: z.any(),
 });
 
 // Diverging data
@@ -50,8 +50,8 @@ const scatterDataSchema = z.object({
 });
 
 const chartWithBulletsSlideSchema = z.object({
-    title: z.string().min(3)).default('Market Size'),
-    description: z.string()).max(150)),
+    title: z.string().min(3).max(40).default('Market Size'),
+    description: z.string().min(10).max(150).default('Businesses face challenges with outdated technology and rising costs, limiting efficiency and growth in competitive markets.'),
     chartData: z.object({
         type: z.enum([
             'bar',
@@ -93,11 +93,11 @@ const chartWithBulletsSlideSchema = z.object({
         ],
         colorPalette: 'vibrant',
     }),
-    showLegend: z.boolean()),
-    showTooltip: z.boolean()),
+    showLegend: z.boolean().default(false),
+    showTooltip: z.boolean().default(true),
     bulletPoints: z.array(z.object({
-        title: z.string().min(2)),
-        description: z.string()).max(150),
+        title: z.string().min(2).max(80),
+        description: z.string().min(10).max(150),
         icon: IconSchema,
     })).min(1).max(3).default([
         {

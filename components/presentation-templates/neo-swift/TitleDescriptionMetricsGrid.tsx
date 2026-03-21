@@ -1,13 +1,13 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string().default("Executive Summary"),
-    description: z.string().default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().describe("The main heading of the slide").default("Executive Summary"),
+    description: z.string().describe("A brief summary or descriptive paragraph").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     metrics: z.array(z.object({
-        label: z.string()),
-        value: z.string()),
-        description: z.string()),
-    })).max(8)).fill({
+        label: z.string().describe("The label for the metric").max(20),
+        value: z.string().describe("The primary numerical or text value").max(15),
+        description: z.string().describe("A supporting detail or challenge description").max(50),
+    })).max(8).describe("A list of up to 8 cards showing key metrics").default(Array(8).fill({
         label: "Research",
         value: "8,450",
         description: "Main Challenge: Delayed Client"

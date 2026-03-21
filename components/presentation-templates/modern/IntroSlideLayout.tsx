@@ -7,7 +7,7 @@ export const layoutName = "Intro Pitch Deck Slide";
 export const layoutDescription =
   "A visually appealing introduction slide for a pitch deck, featuring a large title, company name, date, and contact information with a modern design. This Slide is always the first slide in a pitch deck, setting the tone for the presentation with a clean and professional look.";
 const introPitchDeckSchema = z.object({
-  title: z.string().min(2)).default("Pitch Deck"),
+  title: z.string().min(2).max(15).default("Pitch Deck"),
   description: z
     .string()
     .min(1)
@@ -16,9 +16,9 @@ const introPitchDeckSchema = z.object({
     ,
   introCard: z
     .object({
-      enabled: z.boolean()),
-      name: z.string().min(1)).default("John Doe"),
-      date: z.string().min(1)).default("December 2025"),
+      enabled: z.boolean().default(true),
+      name: z.string().min(1).max(60).default("John Doe"),
+      date: z.string().min(1).max(60).default("December 2025"),
     })
     .default({ enabled: true, name: "John Doe", date: "December 2025" })
     ,

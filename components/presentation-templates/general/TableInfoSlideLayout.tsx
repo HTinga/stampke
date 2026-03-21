@@ -6,10 +6,10 @@ export const layoutName = 'Table with Info'
 export const layoutDescription = 'A slide layout with a title at the top, structured table in the middle, and descriptive text at the bottom.'
 
 const tableInfoSlideSchema = z.object({
-    title: z.string().min(3)).default('Market Comparison'),
+    title: z.string().min(3).max(40).default('Market Comparison'),
     tableData: z.object({
-        headers: z.array(z.string().min(1))).min(2).max(5),
-        rows: z.array(z.array(z.string().min(1)))).min(2).max(6)
+        headers: z.array(z.string().min(1).max(30)).min(2).max(5),
+        rows: z.array(z.array(z.string().min(1).max(50))).min(2).max(6)
     }).default({
         headers: ['Company', 'Revenue', 'Growth', 'Market Share'],
         rows: [
@@ -19,7 +19,7 @@ const tableInfoSlideSchema = z.object({
             ['Our Company', '$1.2M', '35%', '12%']
         ]
     }),
-    description: z.string()).max(200))
+    description: z.string().min(10).max(200).default('This comparison shows our competitive position in the market. While we currently have a smaller market share, our growth rate significantly exceeds competitors, indicating strong potential for future expansion.')
 })
 
 export const Schema = tableInfoSlideSchema

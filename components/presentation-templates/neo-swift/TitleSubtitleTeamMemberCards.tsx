@@ -2,17 +2,17 @@ import * as z from 'zod';
 import React from 'react';
 
 export const Schema = z.object({
-    title: z.string()),
-    subtitle: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().describe('The main heading of the slide').default('Our Team Members'),
+    subtitle: z.string().max(300).describe('A descriptive sub-heading explaining the team\'s focus').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     teamMembers: z.array(z.object({
-        name: z.string()),
-        designation: z.string()),
+        name: z.string().max(30).describe('Name of the team member'),
+        designation: z.string().max(40).describe('Job title or role of the team member'),
         image: z.object({
             __image_url__: z.string(),
-            __image_prompt__: z.string())
-        }),
-        summary: z.string())
-    })).max(4).default([
+            __image_prompt__: z.string().max(100)
+        }).describe('Profile picture of the team member'),
+        summary: z.string().max(100).describe('Short summary or focus area of the team member')
+    })).max(4).describe('List of team members').default([
         {
             name: 'Hannah Morales',
             designation: 'Founder & CEO',

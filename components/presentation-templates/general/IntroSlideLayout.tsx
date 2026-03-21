@@ -7,10 +7,10 @@ export const layoutName = 'Intro Slide'
 export const layoutDescription = 'A clean slide layout with title, description text, presenter info, and a supporting image.'
 
 const introSlideSchema = z.object({
-    title: z.string().min(3)).default('Product Overview'),
-    description: z.string()).max(150)),
-    presenterName: z.string().min(2)).default('John Doe'),
-    presentationDate: z.string().min(2)).default('December 2025'),
+    title: z.string().min(3).max(40).default('Product Overview'),
+    description: z.string().min(10).max(150).default('Our product offers customizable dashboards for real-time reporting and data-driven decisions. It integrates with third-party tools to enhance operations and scales with business growth for improved efficiency.'),
+    presenterName: z.string().min(2).max(50).default('John Doe'),
+    presentationDate: z.string().min(2).max(50).default('December 2025'),
     image: ImageSchema.default({
         __image_url__: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         __image_prompt__: 'Business team in meeting room discussing product features and solutions'
@@ -28,7 +28,7 @@ interface IntroSlideLayoutProps {
 const IntroSlideLayout: React.FC<IntroSlideLayoutProps> = ({ data: slideData }) => {
     // Generate initials from presenter name
     const getInitials = (name: string) => {
-        return name.split(' ').map(word => word.charAt(0))).join('');
+        return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
     };
 
     const presenterInitials = getInitials(slideData?.presenterName || 'John Doe');

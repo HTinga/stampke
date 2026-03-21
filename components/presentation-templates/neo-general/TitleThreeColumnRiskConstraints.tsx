@@ -3,12 +3,12 @@ import * as z from "zod";
  * Zod Schema for the slide content.
  */
 export const Schema = z.object({
-    title: z.string()).default('Risks & Constraints'),
+    title: z.string().max(20).describe('The main heading of the slide').default('Risks & Constraints'),
     items: z.array(z.object({
-        bgTitle: z.string()).default('MARKET'),
-        subtitle: z.string()).default('Market Saturation'),
-        description: z.string()).default('Increasing competition in key verticals may pressure conversion rates and CAC')
-    })).max(3).default([
+        bgTitle: z.string().max(10).describe('Large category label displayed prominently').default('MARKET'),
+        subtitle: z.string().max(20).describe('Secondary heading for the item').default('Market Saturation'),
+        description: z.string().max(70).describe('Detailed description text for the item').default('Increasing competition in key verticals may pressure conversion rates and CAC')
+    })).max(3).describe('List of category items with details').default([
         {
             bgTitle: 'MARKETbaba',
             subtitle: 'Market Saturation',

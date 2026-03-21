@@ -1,13 +1,13 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()).default('Simple Bullet Points'),
-    tagline: z.string()).default('Leads'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(30).describe('The main title of the slide').default('Simple Bullet Points'),
+    tagline: z.string().max(15).describe('A short tagline or label displayed with a bullet').default('Leads'),
+    description: z.string().max(300).describe('The main paragraph description on the left side of the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     steps: z.array(z.object({
-        title: z.string()),
-        description: z.string())
-    })).max(4).default([
+        title: z.string().max(30).describe('The title for this step'),
+        description: z.string().max(100).describe('The detailed description for this step')
+    })).max(4).describe('A list of up to 4 numbered steps with titles and descriptions').default([
         { title: 'Order Placement', description: 'Customers choose products and confirm purchase online.' },
         { title: 'Payment Process', description: 'Payment is made through card, bank transfer, or e-wallet.' },
         { title: 'Order Verification', description: 'The system validates transaction details before processing.' },

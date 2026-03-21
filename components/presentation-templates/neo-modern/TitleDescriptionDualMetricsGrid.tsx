@@ -4,20 +4,20 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Description and Metrix'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().describe('The main heading of the slide').max(30).default('Description and Metrix'),
+    description: z.string().describe('Supporting description text').max(250).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     primaryMetrics: z.array(z.object({
-        label: z.string()),
-        value: z.string().max(8)
-    })).max(3).default([
+        label: z.string().max(25).describe('Label text for the metric'),
+        value: z.string().max(8).describe('Value displayed for the metric')
+    })).max(3).describe('List of primary metrics displayed').default([
         { label: 'Main Challenge: Delayed Client', value: '85%' },
         { label: 'Main Challenge: Delayed Client', value: '85%' },
         { label: 'Main Challenge: Delayed Client', value: '85%' }
     ]),
     secondaryMetrics: z.array(z.object({
-        label: z.string()),
-        value: z.string().max(8)
-    })).max(3).default([
+        label: z.string().max(25).describe('Label text for the metric'),
+        value: z.string().max(8).describe('Value displayed for the metric')
+    })).max(3).describe('List of secondary metrics displayed').default([
         { label: 'Total Registered Users', value: '>500 M' },
         { label: 'Total Registered Users', value: '>500 M' },
         { label: 'Total Registered Users', value: '>500 M' }

@@ -8,7 +8,7 @@ export const layoutDescription =
   "Metrics with description slide layout with an image as whole for the slide";
 
 const marketSizeSlideSchema = z.object({
-  title: z.string().min(3)).default("Market Size"),
+  title: z.string().min(3).max(15).default("Market Size"),
 
 
   mapImage: ImageSchema.default({
@@ -19,9 +19,9 @@ const marketSizeSlideSchema = z.object({
   marketStats: z
     .array(
       z.object({
-        label: z.string().min(3)),
-        value: z.string().min(3)),
-        description: z.string().min(3)),
+        label: z.string().min(3).max(30),
+        value: z.string().min(3).max(30),
+        description: z.string().min(3).max(130),
       }),
     )
     .min(1)

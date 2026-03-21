@@ -4,25 +4,25 @@
  */
 import * as z from 'zod';
 import React from 'react'
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 export const Schema = z.object({
-    title: z.string()).default('Customer Proof / Case Snapshot'),
-    challengeSectionTitle: z.string()).default('CHALLENGE'),
-    challengeContent: z.string()).default('Fragmented marketing operations across 12 regions leading to inefficient spend allocation and inconsistent messaging. CAC increased 43% YoY.'),
-    outcomeSectionTitle: z.string()).default('OUTCOME'),
-    outcomePoints: z.array(z.string())).min(1).max(5).default([
+    title: z.string().max(30).describe('The main heading of the slide').default('Customer Proof / Case Snapshot'),
+    challengeSectionTitle: z.string().max(12).describe('Heading for the first content section').default('CHALLENGE'),
+    challengeContent: z.string().max(140).describe('Descriptive text for the first section').default('Fragmented marketing operations across 12 regions leading to inefficient spend allocation and inconsistent messaging. CAC increased 43% YoY.'),
+    outcomeSectionTitle: z.string().max(12).describe('Heading for the second content section').default('OUTCOME'),
+    outcomePoints: z.array(z.string().max(40)).min(1).max(5).describe('List of bullet points for the second section').default([
         '34% reduction in CAC within 6 months',
         'Unified operations across all regions',
         '$4.2M additional pipeline generated'
     ]),
-    customerName: z.string()).default('TechCorp Global'),
-    customerSubTitle: z.string()).default('Fortune 500 Technology Company'),
-    metricValue: z.string().max(6)),
-    metricLabel: z.string()).default('incremental pipeline in Q4'),
+    customerName: z.string().max(15).describe('Primary name or title in the card').default('TechCorp Global'),
+    customerSubTitle: z.string().max(26).describe('Subtitle or secondary text in the card').default('Fortune 500 Technology Company'),
+    metricValue: z.string().max(6).describe('The primary metric or statistic value').default('$4.2M'),
+    metricLabel: z.string().max(26).describe('Label describing the metric').default('incremental pipeline in Q4'),
     metricIcon: z.object({
         __icon_url__: z.string(),
-        __icon_query__: z.string()),
-    }).default({
+        __icon_query__: z.string().max(30),
+    }).describe('Icon displayed with the metric').default({
         __icon_url__: 'https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/placeholder.svg',
         __icon_query__: 'circle',
     }),

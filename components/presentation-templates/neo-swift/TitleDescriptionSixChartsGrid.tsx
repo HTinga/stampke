@@ -46,13 +46,13 @@ const ChartTypeEnum = z.enum([
     'scatter',
 ]);
 export const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).describe("Chart title").default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(z.object({ name: z.string(), value: z.number() })),
         z.array(z.object({
             name: z.string(),
-            values: z.any(),
+            values: z.any().describe("Object with series names as keys and numbers as values"),
         })),
         z.array(z.object({
             name: z.string(),
@@ -62,7 +62,7 @@ export const ChartItemSchema = z.object({
         z.array(z.object({
             x: z.number(),
             y: z.number(),
-            name: z.string()),
+            name: z.string().optional(),
         })),
     ]).default([
         { name: 'Q1', value: 45 },
@@ -70,7 +70,7 @@ export const ChartItemSchema = z.object({
         { name: 'Q3', value: 58 },
         { name: 'Q4', value: 89 },
     ]),
-    series: z.array(z.string()).optional(),
+    series: z.array(z.string()).optional().describe("Series names for grouped/stacked charts"),
     colorPalette: z.enum(['vibrant', 'ocean', 'forest', 'sunset', 'professional']).default('vibrant'),
 });
 
@@ -120,12 +120,12 @@ const renderPieLabel = (props: any) => {
 };
 
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
-    charts: z.array(ChartItemSchema).min(1).max(6)),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
-    footerWebsite: z.string()).default('www.hello.com'),
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard').describe('Main title of the slide'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.').describe('Description text below the title'),
+    charts: z.array(ChartItemSchema).min(1).max(6).default(defaultCharts).describe('Array of 1–6 charts'),
+    showLegend: z.boolean().default(true).describe('Whether to show chart legends'),
+    showGrid: z.boolean().default(true).describe('Whether to show chart grid lines'),
+    footerWebsite: z.string().max(30).default('www.hello.com').describe('Footer website URL'),
 });
 
 export const layoutId = 'title-description-six-charts-grid';

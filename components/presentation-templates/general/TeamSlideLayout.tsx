@@ -7,15 +7,15 @@ export const layoutName = 'Team Slide'
 export const layoutDescription = 'A slide layout showcasing team members with photos, names, positions, and descriptions alongside company information.'
 
 const teamMemberSchema = z.object({
-    name: z.string().min(2)),
-    position: z.string().min(2)),
-    description: z.string())"),
+    name: z.string().min(2).max(50),
+    position: z.string().min(2).max(50),
+    description: z.string().max(150),
     image: ImageSchema
 });
 
 const teamSlideSchema = z.object({
-    title: z.string().min(3)).default('Our Team Members'),
-    companyDescription: z.string()).max(150)),
+    title: z.string().min(3).max(40).default('Our Team Members'),
+    companyDescription: z.string().min(10).max(150).default('Ginyard International Co. is a leading provider of innovative digital solutions tailored for businesses. Our mission is to empower organizations to achieve their goals through cutting-edge technology and strategic partnerships.'),
     teamMembers: z.array(teamMemberSchema).min(2).max(4).default([
         {
             name: 'Juliana Silva',

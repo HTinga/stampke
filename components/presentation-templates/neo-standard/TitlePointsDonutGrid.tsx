@@ -37,18 +37,18 @@ const RadialProgress = ({ value, size = 110, strokeWidth = 12 }: { value: number
 };
 
 export const Schema = z.object({
-    title: z.string().default("Executive Summary"),
-    points: z.array(z.string())).max(3).default([
+    title: z.string().describe("The main title of the slide").default("Executive Summary"),
+    points: z.array(z.string().max(200)).max(3).describe("A list of key summary points").default([
         "Exceeded revenue target by 12% ($2.4M vs $2.1M target), driven by strong performance in paid search and email campaigns",
         "Marketing influenced 68% of total pipeline value, up from 52% last quarter",
         "Paid Search ROI improved to 5.8x (from 4.1x), making it our most efficient channel"
     ]),
     cards: z.array(z.object({
-        heading: z.string()),
-        percentageValue: z.number(),
-        footerHeading: z.string()),
-        footerDescription: z.string())
-    })).min(2).max(6)).fill({
+        heading: z.string().max(20).describe("The heading for each card"),
+        percentageValue: z.number().describe("The percentage value to be shown in the donut chart"),
+        footerHeading: z.string().max(30).describe("The descriptive label in the card footer"),
+        footerDescription: z.string().max(30).describe("The specific detail in the card footer")
+    })).min(2).max(6).describe("A list of up to 6 data cards").default(Array(6).fill({
         heading: "Research",
         percentageValue: 99,
         footerHeading: "Main Challenge:",

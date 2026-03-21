@@ -5,11 +5,11 @@ import * as z from "zod";
  * Zod Schema for the slide content.
  */
 export const Schema = z.object({
-    title: z.string()).default('Timeline'),
+    title: z.string().max(20).describe('The main heading of the slide').default('Timeline'),
     milestones: z.array(z.object({
-        year: z.string().max(4),
-        description: z.string()),
-    })).min(2).max(6).default([
+        year: z.string().max(4).describe('Time period or date label'),
+        description: z.string().max(100).describe('Description text for the milestone'),
+    })).min(2).max(6).describe('List of milestone items for the timeline').default([
         { year: '2017', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed facilisis lacinia dictum.' },
         { year: '2018', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed facilisis lacinia dictum.' },
         { year: '2019', description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed facilisis lacinia dictum.' },

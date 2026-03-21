@@ -2,19 +2,19 @@ import * as z from 'zod';
 import React from 'react';
 
 export const Schema = z.object({
-    title: z.string()).default('Key Takeaways'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(30).describe('The main title of the slide').default('Key Takeaways'),
+    description: z.string().max(300).describe('The main paragraph description on the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     bullets: z.array(z.object({
-        heading: z.string()),
-        description: z.string()),
-    })).max(5).default([
+        heading: z.string().max(40).describe('The heading for this bullet point'),
+        description: z.string().max(120).describe('The description for this bullet point'),
+    })).max(5).describe('A list of up to 5 bullet points, each with a heading and description').default([
         { heading: 'Market expansion', description: 'Prioritize high-growth verticals and geographic regions with strong demand.' },
         { heading: 'Customer retention', description: 'Reduce churn through proactive support and tailored success programs.' },
         { heading: 'Product innovation', description: 'Ship features that align with top customer requests and usage data.' },
         { heading: 'Operational efficiency', description: 'Automate repetitive workflows to free capacity for strategic work.' },
         { heading: 'Team enablement', description: 'Invest in training and tools so teams can execute at scale.' },
     ]),
-    footerWebsite: z.string()).default('www.hello.com'),
+    footerWebsite: z.string().max(30).describe('The website URL displayed in the footer').default('www.hello.com'),
 });
 
 export const layoutId = 'title-description-bullet-list';

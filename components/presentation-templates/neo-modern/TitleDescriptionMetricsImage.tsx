@@ -2,12 +2,12 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default("Title Description Metrics Image"),
-    description: z.string()).default("A clean professional slide featuring a title, description, a 2x2 grid of highlight metrics, and a large vertical image on the right."),
+    title: z.string().max(25).describe("The main heading of the slide").default("Title Description Metrics Image"),
+    description: z.string().max(150).describe("Supporting description text").default("A clean professional slide featuring a title, description, a 2x2 grid of highlight metrics, and a large vertical image on the right."),
     metrics: z.array(z.object({
-        label: z.string()),
-        value: z.string())
-    })).max(4).default([
+        label: z.string().max(15).describe("Label text for the metric"),
+        value: z.string().max(10).describe("Value displayed for the metric")
+    })).max(4).describe("Collection of metric items displayed in a grid").default([
         { label: "Main Challenge: Delayed Client", value: "85%" },
         { label: "Total Registered Users", value: ">500 M" },
         { label: "Main Challenge: Delayed Client", value: "85%" },
@@ -15,11 +15,11 @@ export const Schema = z.object({
     ]),
     image: z.object({
         __image_url__: z.string(),
-        __image_prompt__: z.string())
+        __image_prompt__: z.string().max(100)
     }).default({
         __image_url__: 'https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png',
         __image_prompt__: 'A professional business collaboration scene with people putting their hands together in the center.'
-    })
+    }).describe("The primary visual image displayed on the right side of the slide.")
 })
 
 // Layout ID, Name and Description

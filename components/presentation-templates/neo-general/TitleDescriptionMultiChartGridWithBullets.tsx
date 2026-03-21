@@ -55,7 +55,7 @@ const SimpleDataPointSchema = z.object({
 // Multi-series data point
 const MultiSeriesDataPointSchema = z.object({
     name: z.string(),
-    values: z.any()"),
+    values: z.any().describe("Object with series names as keys and numbers as values (e.g., { 'Product A': 45, 'Product B': 62 })"),
 });
 
 // Diverging data point
@@ -69,12 +69,12 @@ const DivergingDataPointSchema = z.object({
 const ScatterDataPointSchema = z.object({
     x: z.number(),
     y: z.number(),
-    name: z.string()),
+    name: z.string().optional(),
 });
 
 // Individual chart schema
 const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).describe("Chart title").default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(SimpleDataPointSchema),
@@ -87,15 +87,15 @@ const ChartItemSchema = z.object({
         { name: 'Q3', value: 58 },
         { name: 'Q4', value: 89 },
     ]),
-    series: z.array(z.string()).optional(),
+    series: z.array(z.string()).optional().describe("Series names for grouped/stacked charts"),
     colorPalette: z.enum(['vibrant', 'ocean', 'forest', 'sunset', 'professional']).default('vibrant'),
 });
 
 // Main schema
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
-    bullets: z.array(z.string())).max(6).default([
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.'),
+    bullets: z.array(z.string().max(80)).max(6).default([
         'Pipeline coverage above 3x target lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.',
         'CAC payback under 6 months',
         'Enterprise conversion improved QoQ',
@@ -150,9 +150,9 @@ export const Schema = z.object({
             ],
             colorPalette: 'sunset',
         },
-    ])"),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
+    ]),
+    showLegend: z.boolean().default(true),
+    showGrid: z.boolean().default(true),
 });
 
 export type MultiChartGridWithBulletsSlideData = z.infer<typeof Schema>;

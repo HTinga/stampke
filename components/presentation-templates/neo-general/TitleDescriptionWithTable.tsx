@@ -6,15 +6,15 @@ import React from "react";
 
 
 export const Schema = z.object({
-    title: z.string()).default('Go-to-Market Strategy'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(50).describe('The main heading of the slide').default('Go-to-Market Strategy'),
+    description: z.string().max(400).describe('Supporting description text for the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     sections: z.array(z.object({
-        heading: z.string()),
+        heading: z.string().max(15).describe('Heading for the column section'),
         bulletPoints: z.array(z.object({
-            title: z.string()),
-            description: z.string()),
-        })).max(5)
-    })).max(3).default([
+            title: z.string().max(10).describe('Title label for the bullet point'),
+            description: z.string().max(20).describe('Description text for the bullet point'),
+        })).max(5).describe('List of bullet points in the section')
+    })).max(3).describe('Column sections containing bullet points').default([
         {
             heading: 'Paid Channels',
             bulletPoints: [

@@ -7,14 +7,14 @@ export const layoutName = 'Title Image With Numbered Points'
 export const layoutDescription = 'A layout featuring a large title with accent line, a supporting image in the upper right, and 1-3 numbered bullet points in a two-column grid below. Each point has a large number prefix, title, and description.'
 
 const numberedBulletsSlideSchema = z.object({
-    title: z.string().min(3)).default('Market Validation'),
+    title: z.string().min(3).max(40).default('Market Validation'),
     image: ImageSchema.default({
         __image_url__: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         __image_prompt__: 'Business people analyzing charts and data on wall'
     }),
     bulletPoints: z.array(z.object({
-        title: z.string().min(2)),
-        description: z.string()).max(150),
+        title: z.string().min(2).max(80),
+        description: z.string().min(10).max(150),
     })).min(1).max(3).default([
         {
             title: 'Customer Insights',

@@ -10,15 +10,15 @@ export const layoutDescription =
 const imageListWithDescriptionSlideSchema = z.object({
 
 
-  title: z.string().min(3)).default("Product Overview"),
+  title: z.string().min(3).max(40).default("Product Overview"),
   // removed mainDescription
   products: z
     .array(
       z.object({
-        title: z.string().min(3)),
-        description: z.string()).max(100),
+        title: z.string().min(3).max(50),
+        description: z.string().min(30).max(100),
         image: ImageSchema,
-        isBlueBackground: z.boolean()),
+        isBlueBackground: z.boolean().default(false),
       }),
     )
     .min(1)

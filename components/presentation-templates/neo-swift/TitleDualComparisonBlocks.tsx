@@ -1,13 +1,13 @@
 import * as z from 'zod'
 export const Schema = z.object({
-    title: z.string()).default('Text Comparison'),
+    title: z.string().max(20).describe('The main title of the slide').default('Text Comparison'),
     comparisonBlocks: z.array(
         z.object({
-            index: z.string().max(2),
-            heading: z.string()),
-            description: z.string()),
+            index: z.string().max(2).describe('The sequence number or index of the block'),
+            heading: z.string().max(20).describe('The title of item'),
+            description: z.string().max(200).describe('The descriptive text of item'),
         })
-    ).max(2).default([
+    ).max(2).describe('List of items').default([
         {
             index: '1',
             heading: 'Problem',

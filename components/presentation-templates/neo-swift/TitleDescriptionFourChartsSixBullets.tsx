@@ -60,13 +60,13 @@ const ChartTypeEnum = z.enum([
 
 
 const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).describe("Chart title").default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(z.object({ name: z.string(), value: z.number() })),
         z.array(z.object({
             name: z.string(),
-            values: z.any(),
+            values: z.any().describe("Object with series names as keys and numbers as values"),
         })),
         z.array(z.object({
             name: z.string(),
@@ -76,7 +76,7 @@ const ChartItemSchema = z.object({
         z.array(z.object({
             x: z.number(),
             y: z.number(),
-            name: z.string()),
+            name: z.string().optional(),
         })),
     ]).default([
         { name: 'Q1', value: 45 },
@@ -84,24 +84,24 @@ const ChartItemSchema = z.object({
         { name: 'Q3', value: 58 },
         { name: 'Q4', value: 89 },
     ]),
-    series: z.array(z.string()).optional(),
+    series: z.array(z.string()).optional().describe("Series names for grouped/stacked charts"),
     colorPalette: z.enum(['vibrant', 'ocean', 'forest', 'sunset', 'professional']).default('vibrant'),
 });
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
-    bullets: z.array(z.string())).max(6).default([
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard').describe('Main title of the slide'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.').describe('Description text below the title'),
+    bullets: z.array(z.string().max(80)).max(6).default([
         'Pipeline coverage above 3x target with strong enterprise adoption.',
         'CAC payback under 6 months across segments.',
         'Enterprise conversion improved quarter over quarter.',
         'Expansion revenue driving overall growth.',
         'Retention above 95% across key cohorts.',
         'Forecast accuracy improved this quarter.',
-    ]),
-    charts: z.array(ChartItemSchema).min(1).max(4)),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
-    footerWebsite: z.string()).default('www.hello.com'),
+    ]).describe('Up to 6 bullet points'),
+    charts: z.array(ChartItemSchema).min(1).max(4).default(defaultCharts).describe('Array of 1–4 charts'),
+    showLegend: z.boolean().default(true).describe('Whether to show chart legends'),
+    showGrid: z.boolean().default(true).describe('Whether to show chart grid lines'),
+    footerWebsite: z.string().max(30).default('www.hello.com').describe('Footer website URL'),
 });
 
 

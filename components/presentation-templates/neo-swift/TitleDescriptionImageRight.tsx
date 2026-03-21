@@ -2,12 +2,12 @@ import * as z from 'zod';
 
 
 export const Schema = z.object({
-    title: z.string()).default('Executive Summary'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(20).describe('The main title of the slide').default('Executive Summary'),
+    description: z.string().max(250).describe('The main descriptive text').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     image: z.object({
         __image_url__: z.string(),
-        __image_prompt__: z.string()),
-    }).default({
+        __image_prompt__: z.string().max(100),
+    }).describe('The primary image on the right side of the slide').default({
         __image_url__: 'https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png',
         __image_prompt__: 'A diverse team of professionals in business suits stacking their hands together in the center for a team huddle, symbolizing unity and partnership.',
     }),

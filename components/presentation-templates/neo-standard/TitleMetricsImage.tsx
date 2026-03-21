@@ -4,12 +4,12 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()).default('Image with Description & Metrix'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M .'),
+    title: z.string().max(40).describe('The main heading of the slide').default('Image with Description & Metrix'),
+    description: z.string().max(150).describe('The secondary description text below the title').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M .'),
     metrics: z.array(z.object({
-        value: z.string().max(5),
-        label: z.string())
-    })).max(4).default([
+        value: z.string().max(5).describe('The percentage or numeric value of the metric'),
+        label: z.string().max(40).describe('The description label for the metric')
+    })).max(4).describe('A list of up to 4 metric cards').default([
         { value: '85%', label: 'Main Challenge: Delayed Client' },
         { value: '85%', label: 'Main Challenge: Delayed Client' },
         { value: '85%', label: 'Main Challenge: Delayed Client' },
@@ -17,8 +17,8 @@ export const Schema = z.object({
     ]),
     mainImage: z.object({
         __image_url__: z.string(),
-        __image_prompt__: z.string()),
-    }).default({
+        __image_prompt__: z.string().max(100),
+    }).describe('The large image featured on the right side of the slide').default({
         __image_url__: 'https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png',
         __image_prompt__: 'A professional business setting showing collaboration or success.',
     }),

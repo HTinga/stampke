@@ -1,12 +1,12 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()).default("Thank you"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(20).describe("The main heading of the slide").default("Thank you"),
+    description: z.string().max(300).describe("A brief description or concluding text").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     contactItems: z.array(z.object({
-        label: z.string()),
-        value: z.string())
-    })).max(3)).default([
+        label: z.string().max(20).describe("The label of the item"),
+        value: z.string().max(50).describe("The value of the item")
+    })).max(3).optional().describe("A list of items").default([
         { label: "Email", value: "presenton@gmail.com" },
         { label: "Phone", value: "+977-9800789088" },
         { label: "Website", value: "www.hello@gmail.com" }

@@ -1,11 +1,11 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()),
+    title: z.string().describe('The main title of the slide').default('Text Comparison'),
     comparisonSections: z.array(z.object({
-        number: z.string().max(2),
-        heading: z.string()),
-        description: z.string()),
+        number: z.string().describe('The numeric index or step number').max(2),
+        heading: z.string().describe('The heading or title of the section').max(15),
+        description: z.string().describe('The detailed text content of the section').max(200),
     })).max(2).default([
         {
             number: '1',

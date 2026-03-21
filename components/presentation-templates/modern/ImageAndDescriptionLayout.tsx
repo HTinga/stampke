@@ -8,7 +8,7 @@ export const layoutDescription =
   "A slide layout with a title, a description, and an image.";
 
 const imageWithDescriptionSlideSchema = z.object({
-  title: z.string().min(3)).default("Image With Description"),
+  title: z.string().min(3).max(30).default("Image With Description"),
   content: z
     .string()
     .min(25)
@@ -22,7 +22,7 @@ const imageWithDescriptionSlideSchema = z.object({
     __image_url__:
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
     __image_prompt__: "Abstract business background",
-  })"),
+  }),
 });
 
 export const Schema = imageWithDescriptionSlideSchema;

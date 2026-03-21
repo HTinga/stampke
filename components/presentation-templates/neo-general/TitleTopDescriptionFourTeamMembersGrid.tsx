@@ -3,17 +3,17 @@
  */
 import * as z from "zod";
 export const Schema = z.object({
-    title: z.string()).default('Our Team Members'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(30).describe('The main heading of the slide').default('Our Team Members'),
+    description: z.string().max(400).describe('Supporting description text for the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     teamMembers: z.array(z.object({
-        name: z.string()),
-        designation: z.string()),
+        name: z.string().max(40).describe('Name of the person'),
+        designation: z.string().max(50).describe('Role or position title'),
         image: z.object({
             __image_url__: z.string(),
-            __image_prompt__: z.string()),
-        }),
-        bio: z.string()),
-    })).max(4).default([
+            __image_prompt__: z.string().max(100),
+        }).describe('Profile image of the person'),
+        bio: z.string().max(100).describe('Brief biography or description text'),
+    })).max(4).describe('List of person cards, up to 4 items').default([
         {
             name: 'Hannah Morales',
             designation: 'Founder & CEO',

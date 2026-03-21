@@ -1,11 +1,11 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Timeline'),
+    title: z.string().max(20).describe('The main title of the slide').default('Timeline'),
     items: z.array(z.object({
-        heading: z.string()),
-        description: z.string())
-    })).max(7).default([
+        heading: z.string().max(10).describe('The heading or year for the timeline event'),
+        description: z.string().max(150).describe('A brief description of the event')
+    })).max(7).describe('A list of up to 7 timeline events').default([
         { heading: '2014', description: 'Business processes should have clear objectives, be as detailed as possible, and produce consistent results.' },
         { heading: '2014', description: 'Business processes should have clear objectives, be as detailed as possible, and produce consistent results.' },
         { heading: '2014', description: 'Business processes should have clear objectives, be as detailed as possible, and produce consistent results.' },

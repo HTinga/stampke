@@ -3,15 +3,15 @@ import React from "react";
 
 
 export const Schema = z.object({
-    title: z.string()).default('Target Audience Breakdown'),
+    title: z.string().max(30).describe('The main heading of the slide').default('Target Audience Breakdown'),
     columns: z.array(z.object({
-        index: z.string().max(2)),
-        heading: z.string()).default('C-Suite Executives'),
-        labelOne: z.string()).default('KEY NEED'),
-        contentOne: z.string()).default('Strategic growth & competitive advantage'),
-        labelTwo: z.string()).default('PRIMARY CHANNEL'),
-        contentTwo: z.string()).default('LinkedIn, executive events'),
-    })).max(3).default([
+        index: z.string().max(2).describe('Display number or index for the column').default('01'),
+        heading: z.string().max(20).describe('Primary heading of the column').default('C-Suite Executives'),
+        labelOne: z.string().max(12).describe('Label for the first content block').default('KEY NEED'),
+        contentOne: z.string().max(50).describe('Content for the first block').default('Strategic growth & competitive advantage'),
+        labelTwo: z.string().max(12).describe('Label for the second content block').default('PRIMARY CHANNEL'),
+        contentTwo: z.string().max(50).describe('Content for the second block').default('LinkedIn, executive events'),
+    })).max(3).describe('Array of columns with indexed content').default([
         {
             index: '01',
             heading: 'C-Suite Executives',

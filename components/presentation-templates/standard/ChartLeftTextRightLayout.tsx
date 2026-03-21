@@ -21,8 +21,8 @@ const layoutName = 'Chart Left Text Right'
 const layoutDescription = 'A slide with header label, a left-side inline bar chart, and right-side title with paragraph.'
 
 const ChartDatumSchema = z.object({
-  label: z.string().min(1)).default('A'),
-  value: z.number().min(0)).default(60),
+  label: z.string().min(1).max(12).default('A'),
+  value: z.number().min(0).max(100).default(60),
 })
 
 const Schema = z.object({
@@ -32,7 +32,7 @@ const Schema = z.object({
     .min(16)
     .max(64)
     .default('Insights At A Glance')
-    '),
+    ,
   paragraph: z
     .string()
     .min(50)
@@ -51,7 +51,7 @@ const Schema = z.object({
         { label: 'D', value: 30 },
       ]),
 
-      showLabels: z.boolean()),
+      showLabels: z.boolean().default(true),
     })
     .default({
       type: 'line',

@@ -23,24 +23,24 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string()).default("Competitive Comparison"),
+    title: z.string().max(50).describe("The main title of the slide").default("Competitive Comparison"),
     comparisonCards: z.array(z.object({
-        heading: z.string()),
-        subHeading: z.string()).optional(),
-        footerText: z.string()),
-        chartType: chartTypeEnum,
+        heading: z.string().max(20).describe("The title of the item"),
+        subHeading: z.string().max(20).optional().describe("An optional badge or subtitle"),
+        footerText: z.string().max(25).describe("The text displayed at the bottom of the chart area"),
+        chartType: chartTypeEnum.describe('Type of chart to display'),
         chart: z.object({
-            columns: z.array(z.string()).max(5),
+            columns: z.array(z.string()).max(5).describe("The labels for the X-axis categories"),
             rows: z.array(
                 z.array(
                     z.object({
-                        label: z.string()),
-                        value: z.number()
+                        label: z.string().max(30).describe("The name of the data series"),
+                        value: z.number().describe("The numerical value for this series segment")
                     })
-                ).min(1).max(2)
-            ).max(5)
+                ).min(1).max(2).describe("1 or 2 series per category; second series is optional for single-series charts")
+            ).max(5).describe("Data for the chart. Each inner array represents a category on the X-axis with multiple series.")
         })
-    })).max(2).default([
+    })).max(2).describe("A list of up to 2 items").default([
         {
             heading: "Campaign A",
             subHeading: "Top Campaign",

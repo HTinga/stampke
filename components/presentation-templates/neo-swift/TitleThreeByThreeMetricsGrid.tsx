@@ -1,12 +1,12 @@
 import * as z from 'zod';
 export const Schema = z.object({
-    title: z.string()).default('Comparision Snapshot'),
+    title: z.string().max(40).describe('The main title of the slide').default('Comparision Snapshot'),
     items: z.array(z.object({
-        label: z.string()),
-        value: z.string()),
-        detail: z.string()),
-        isHighlighted: z.boolean()),
-    })).max(9).default([
+        label: z.string().max(12).describe('The small label at the top of the card'),
+        value: z.string().max(10).describe('The large central value or metric'),
+        detail: z.string().max(25).describe('A short description or challenge detail'),
+        isHighlighted: z.boolean().describe('Whether the card should be highlighted').default(false),
+    })).max(9).describe('A list of 1-9 comparison metrics').default([
         { label: 'Research', value: '8,450', detail: 'Main Challenge: Delayed Client', isHighlighted: false },
         { label: 'Research', value: '8,450', detail: 'Main Challenge: Delayed Client', isHighlighted: false },
         { label: 'Research', value: '8,450', detail: 'Main Challenge: Delayed Client', isHighlighted: false },

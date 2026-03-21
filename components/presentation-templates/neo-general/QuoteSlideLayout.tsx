@@ -7,9 +7,9 @@ export const layoutName = 'Centered Text On Image Overlay'
 export const layoutDescription = 'A full-screen layout with background image, semi-transparent overlay, centered heading with accent line, large quote icon, quote text, and author attribution with decorative lines.'
 
 const quoteSlideSchema = z.object({
-    heading: z.string().min(3)).default('Words of Wisdom'),
-    quote: z.string()).max(200)),
-    author: z.string().min(2)).default('Winston Churchill'),
+    heading: z.string().min(3).max(60).default('Words of Wisdom'),
+    quote: z.string().min(10).max(200).default('Success is not final, failure is not fatal: it is the courage to continue that counts. The future belongs to those who believe in the beauty of their dreams.'),
+    author: z.string().min(2).max(50).default('Winston Churchill'),
     backgroundImage: ImageSchema.default({
         __image_url__: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2000&q=80',
         __image_prompt__: 'Inspirational mountain landscape with dramatic sky and clouds'

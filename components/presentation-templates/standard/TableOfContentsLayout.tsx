@@ -7,7 +7,7 @@ const layoutDescription = "Header with brand marker, title, optional description
 
 const ToCItemSchema = z
   .object({
-    title: z.string().min(4)).default("Introduction"),
+    title: z.string().min(4).max(50).default("Introduction"),
   })
   .default({
     title: "Introduction",
@@ -54,7 +54,7 @@ const Schema = z
         { title: "Financials" },
         { title: "Ask" },
       ])
-      "),
+      ,
   })
   .default({
     topBar: { marker: "2" },

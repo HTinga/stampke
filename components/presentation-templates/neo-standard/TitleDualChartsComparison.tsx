@@ -23,20 +23,20 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string().default("Competitive Comparison"),
+    title: z.string().describe("The main heading of the slide").default("Competitive Comparison"),
     comparisonSections: z.array(z.object({
-        heading: z.string()),
-        tagline: z.string()).optional(),
-        footerLabel: z.string()),
-        chartType: chartTypeEnum,
-        legendItems: z.array(z.string())).max(2),
+        heading: z.string().max(10).describe("The heading for this comparison section"),
+        tagline: z.string().max(10).optional().describe("An optional tagline or status text for the section"),
+        footerLabel: z.string().max(15).describe("Label displayed at the bottom of the chart area"),
+        chartType: chartTypeEnum.describe('Type of chart to display'),
+        legendItems: z.array(z.string().max(10)).max(2).describe("Labels for the two data series in the legend"),
         graph: z.object({
             rows: z.array(z.object({
-                label: z.string(),
-                value1: z.number(),
-                value2: z.number())")
-            })).max(4)
-        })
+                label: z.string().describe("The label for the individual category"),
+                value1: z.number().describe("The first value"),
+                value2: z.number().optional().describe("The second value (optional for single-series charts)")
+            })).max(4).describe("Data rows for the chart")
+        }).describe("Data for the graph in this section")
     })).max(2).default([
         {
             heading: "Campaign A",

@@ -1,14 +1,14 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('KPI Snapshot'),
+    title: z.string().max(30).describe('The main heading of the slide').default('KPI Snapshot'),
     kpiCards: z.array(z.object({
-        topLabel: z.string()),
-        topSuffix: z.string()).optional(),
-        bottomLabel: z.string()),
-        isHighlighted: z.boolean(),
-        isValueFirst: z.boolean(),
-    })).max(8).default([
+        topLabel: z.string().max(20).describe('Text or value at the top of the card'),
+        topSuffix: z.string().max(20).describe('Optional text next to the top label').optional(),
+        bottomLabel: z.string().max(25).describe('Text or value at the bottom of the card'),
+        isHighlighted: z.boolean().describe('Whether the card uses highlighted styling'),
+        isValueFirst: z.boolean().describe('Whether the top label uses large/bold styling'),
+    })).max(8).describe('Array of metric card objects').default([
         { topLabel: 'Revenue Increased', bottomLabel: '15%', isHighlighted: false, isValueFirst: false },
         { topLabel: 'Social Media Engagement Grew', bottomLabel: '22%', isHighlighted: true, isValueFirst: false },
         { topLabel: '10', bottomLabel: 'Projects Successfully Completed', isHighlighted: false, isValueFirst: true },

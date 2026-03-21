@@ -4,12 +4,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.unsplash.com/photo-1503264116251-35a269479413?q=80&w=1200&auto=format&fit=crop"),
-  __image_prompt__: z.string()).max(200).default("Elegant abstract green themed background for a presentation slide, minimal shapes, soft lighting"),
+  __image_prompt__: z.string().min(10).max(200).default("Elegant abstract green themed background for a presentation slide, minimal shapes, soft lighting"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().default("https://static.thenounproject.com/png/1783767-200.png"),
-  __icon_query__: z.string().min(3)).default("leaf growth"),
+  __icon_query__: z.string().min(3).max(40).default("leaf growth"),
 })
 
 const layoutId = "header-tagline-cards-grid-slide"
@@ -19,8 +19,8 @@ const layoutDescription = "A slide with a top utility row, a header, a tagline, 
 const CardSchema = z.object({
   number: z.string().min(1).max(5).default("45"),
   numberSymbol: z.string().min(0).max(3).default("%"),
-  subtitle: z.string().min(8)).default("Subtitle Here"),
-  body: z.string()).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do."),
+  subtitle: z.string().min(8).max(28).default("Subtitle Here"),
+  body: z.string().min(20).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do."),
   icon: IconSchema.default({
     __icon_url__: "https://static.thenounproject.com/png/1783767-200.png",
     __icon_query__: "progress indicator",
@@ -29,8 +29,8 @@ const CardSchema = z.object({
 
 const Schema = z.object({
 
-  title: z.string()).max(70).default("Scaling New Heights Together"),
-  tagline: z.string()).max(120).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
+  title: z.string().min(12).max(70).default("Scaling New Heights Together"),
+  tagline: z.string().min(40).max(120).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
   decorativeLine: ImageSchema.default({
     __image_url__: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='2' viewBox='0 0 220 2'><rect width='220' height='2' rx='1' fill='%230B8E26'/></svg>",
     __image_prompt__: "Thin green horizontal line divider, 220x2, rounded ends",
@@ -78,7 +78,7 @@ const Schema = z.object({
       body: "Committed to sustainability through significant carbon reduction and environmental initiatives.",
       icon: { __icon_url__: "https://static.thenounproject.com/png/1783767-200.png", __icon_query__: "leaf sustainability icon" },
     },
-  ])"),
+  ]),
   // chart and diagram removed
 })
 

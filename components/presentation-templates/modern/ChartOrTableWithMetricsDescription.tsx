@@ -36,9 +36,9 @@ const tractionSchema = z.object({
       "Traction is a period where the company is feeling momentum during its development period. If traction momentum is not harnessed, sales figures can decline and the customer base can shrink. In general, companies will judge success by the amount of revenue and new customers they receive.",
     )
     ,
-  tableMode: z.boolean()),
-  tableColumns: z.array(z.string().min(1))).min(2)).default(["Metric", "Value"]),
-  tableRows: z.array(z.array(z.string().min(0))).min(2))).min(1)).default([["Users", "10K+"], ["Revenue", "$1.2M"], ["Satisfaction", "95%"]]),
+  tableMode: z.boolean().default(false),
+  tableColumns: z.array(z.string().min(1).max(40)).min(2).max(10).default(["Metric", "Value"]),
+  tableRows: z.array(z.array(z.string().min(0).max(200)).min(2).max(10)).min(1).max(30).default([["Users", "10K+"], ["Revenue", "$1.2M"], ["Satisfaction", "95%"]]),
   // growthStats is a list of objects, each with a 'year' and any number of metric keys (all numbers)
   growthStats: z
     .array(growthStatsSchema)

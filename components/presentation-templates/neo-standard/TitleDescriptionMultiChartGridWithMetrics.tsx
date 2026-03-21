@@ -66,11 +66,11 @@ const DivergingDataPointSchema = z.object({
 const ScatterDataPointSchema = z.object({
     x: z.number(),
     y: z.number(),
-    name: z.string()),
+    name: z.string().optional(),
 });
 
 const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(SimpleDataPointSchema),
@@ -88,11 +88,11 @@ const ChartItemSchema = z.object({
 });
 
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.'),
     metrics: z.array(z.object({
-        value: z.string()).default('$3.5M'),
-        label: z.string()).default('Pipeline'),
+        value: z.string().max(12).default('$3.5M'),
+        label: z.string().max(24).default('Pipeline'),
     })).max(4).default([
         { value: '$3.5M', label: 'Pipeline' },
         { value: '28%', label: 'Conversion' },
@@ -107,8 +107,8 @@ export const Schema = z.object({
         { title: 'Product Comparison', type: 'bar-clustered', data: [{ name: 'Q1', values: { 'Product A': 45, 'Product B': 62 } }, { name: 'Q2', values: { 'Product A': 58, 'Product B': 71 } }, { name: 'Q3', values: { 'Product A': 72, 'Product B': 65 } }], series: ['Product A', 'Product B'], colorPalette: 'vibrant' },
         { title: 'Customer Feedback', type: 'bar-diverging', data: [{ name: 'Quality', positive: 78, negative: 22 }, { name: 'Service', positive: 65, negative: 35 }, { name: 'Price', positive: 42, negative: 58 }], series: ['Satisfied', 'Unsatisfied'], colorPalette: 'professional' },
     ]),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
+    showLegend: z.boolean().default(true),
+    showGrid: z.boolean().default(true),
 });
 
 export type MultiChartGridSlideData = z.infer<typeof Schema>;

@@ -2,14 +2,14 @@ import * as z from 'zod';
 import React from 'react';
 
 export const Schema = z.object({
-    title: z.string()).default('Funnel Performance'),
-    metricValue: z.string()).default('0.24%'),
-    metricLabel: z.string()).default('Overall\nVisit → Customer'),
+    title: z.string().max(30).describe('The main heading of the slide').default('Funnel Performance'),
+    metricValue: z.string().max(10).describe('Primary metric value displayed').default('0.24%'),
+    metricLabel: z.string().max(100).describe('Label describing the metric').default('Overall\nVisit → Customer'),
     funnelStages: z.array(z.object({
-        label: z.string()),
-        value: z.string()),
-        conversionRate: z.string()).optional(),
-    })).max(5).default([
+        label: z.string().max(30).describe('Label for the stage'),
+        value: z.string().max(15).describe('Value displayed for this stage'),
+        conversionRate: z.string().max(10).describe('Rate value shown for the stage').optional(),
+    })).max(5).describe('Data points for the funnel visualization').default([
         { label: 'Visitors', value: '124,500', conversionRate: '10%' },
         { label: 'Leads', value: '12,450', conversionRate: '10%' },
         { label: 'Marketing Qualified', value: '4,356', conversionRate: '35%' },

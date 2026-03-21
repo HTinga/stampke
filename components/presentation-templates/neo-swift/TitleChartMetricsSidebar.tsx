@@ -43,15 +43,15 @@ const chartTypeEnum = z.enum([
 ]).default('pie');
 
 export const Schema = z.object({
-    title: z.string()).default("Spend & ROI"),
-    chartType: chartTypeEnum.default('bar'),
+    title: z.string().max(15).describe("The main title of the slide").default("Spend & ROI"),
+    chartType: chartTypeEnum.describe('Type of chart to display').default('bar'),
     chart: z.object({
-        columns: z.array(z.string()).max(2).default(["Revenue", "Spend"]),
+        columns: z.array(z.string()).max(2).describe("The labels for the data series, e.g., Revenue and Spend").default(["Revenue", "Spend"]),
         rows: z.array(z.object({
-            label: z.string().max(3).default("Jan"),
-            value: z.number()),
-            value2: z.number()),
-        })).max(3),
+            label: z.string().max(3).describe("The X-axis label, e.g., Month names").default("Jan"),
+            value: z.number().describe("The primary metric value for this label").default(520),
+            value2: z.number().optional().describe("The secondary metric value for this label"),
+        })).max(3).describe("The data points for the graph"),
     }).default({
         columns: ["Revenue", "Spend"],
         rows: [
@@ -59,12 +59,12 @@ export const Schema = z.object({
             { label: "Feb", value: 670, value2: 250 },
             { label: "Mar", value: 980, value2: 400 },
         ],
-    }),
+    }).describe("Configuration and data for the chart"),
     metrics: z.array(z.object({
-        heading: z.string()),
-        value: z.string()).default("8,450"),
-        description: z.string()).default("Main Challenge: Delayed Client"),
-    })).max(4).default([
+        heading: z.string().max(15).describe("Top label of the metric card"),
+        value: z.string().max(10).describe("Main numerical value of the metric").default("8,450"),
+        description: z.string().max(35).describe("Bottom description or challenge text").default("Main Challenge: Delayed Client"),
+    })).max(4).describe("List of metric cards shown on the right side").default([
         { heading: "Research", value: "8,450", description: "Main Challenge: Delayed Client" },
         { heading: "Research", value: "8,450", description: "Main Challenge: Delayed Client" },
         { heading: "Research", value: "8,450", description: "Main Challenge: Delayed Client" },

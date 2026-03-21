@@ -6,8 +6,8 @@ export const layoutName = 'Numbered List With Side Metrics'
 export const layoutDescription = 'A two-column layout with bold title, accent bar, and numbered bullet point list on the left, paired with 3 large vertical metrics on the right. Each metric shows value with label and accent dot.'
 
 export const Schema = z.object({
-    title: z.string()).default('Executive Summary'),
-    bulletPoints: z.array(z.string())).max(6).default([
+    title: z.string().max(30).describe('The main heading of the slide').default('Executive Summary'),
+    bulletPoints: z.array(z.string().max(160)).max(6).describe('List of bullet point text items').default([
         'Exceeded revenue target by 12% ($2.4M vs $2.1M target), driven by strong performance in paid search and email campaigns',
         'Marketing influenced 68% of total pipeline value, up from 52% last quarter',
         'Paid Search ROI improved to 5.8x (from 4.1x), making it our most efficient channel',
@@ -17,9 +17,9 @@ export const Schema = z.object({
         'Paid Search ROI improved to 5.8x (from 4.1x), making it our most efficient channel',
     ]),
     metrics: z.array(z.object({
-        value: z.string().max(8),
-        label: z.string())
-    })).default([
+        value: z.string().max(8).describe('Value displayed for the metric'),
+        label: z.string().max(10).describe('Label text for the metric')
+    })).describe('Metric items displayed on the right side').default([
         { value: '8,450', label: 'Leads' },
         { value: '2,680', label: 'MQLS' },
         { value: '$2400', label: 'Revenue' }

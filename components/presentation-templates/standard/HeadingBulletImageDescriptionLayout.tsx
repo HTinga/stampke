@@ -4,12 +4,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-  __image_prompt__: z.string()).max(150).default("Small decorative photo partially behind the card showing a business theme"),
+  __image_prompt__: z.string().min(10).max(150).default("Small decorative photo partially behind the card showing a business theme"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().default(""),
-  __icon_query__: z.string().min(3)).default(""),
+  __icon_query__: z.string().min(3).max(30).default(""),
 })
 
 const layoutId = "split-left-strip-header-title-subtitle-cards-slide"
@@ -17,18 +17,18 @@ const layoutName = "Heading Bullet Image Description"
 const layoutDescription = "A slide with a left strip, top label with rule, right header, right description, floating small image, and a centered card with ...cards."
 
 const Schema = z.object({
-  metaMaxWords: z.number()),
+  metaMaxWords: z.number().default(200),
   pageNumber: z.string().min(1).max(3).default("7"),
 
-  heading: z.string()).max(38).default("A Blueprint for\nSuccess"),
-  subheading: z.string()).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
+  heading: z.string().min(16).max(38).default("A Blueprint for\nSuccess"),
+  subheading: z.string().min(60).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
   smallImage: ImageSchema.default({
     __image_url__: "https://images.pexels.com/photos/327533/pexels-photo-327533.jpeg",
     __image_prompt__: "A small landscape image suitable for a business slide"
   }),
   cards: z.array(z.object({
-    title: z.string().min(8)).default("Strategy 01"),
-    body: z.string()).max(160).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"),
+    title: z.string().min(8).max(16).default("Strategy 01"),
+    body: z.string().min(60).max(160).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"),
   })).min(1).max(4).default([
     { title: "Strategy 01", body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" },
     { title: "Strategy 02", body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" },

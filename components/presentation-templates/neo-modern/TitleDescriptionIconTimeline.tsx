@@ -1,17 +1,17 @@
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Process / Workflow Flow'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(40).describe('The main heading of the slide').default('Process / Workflow Flow'),
+    description: z.string().max(300).describe('Supporting description text').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     processItems: z.array(z.object({
         icon: z.object({
             __icon_url__: z.string(),
-            __icon_query__: z.string())
-        }),
-        heading: z.string()),
-        subDescription: z.string())
-    })).max(5).default([
+            __icon_query__: z.string().max(30)
+        }).describe('The icon representing the item'),
+        heading: z.string().max(10).describe('The heading of the item'),
+        subDescription: z.string().max(100).describe('The sub description of the item')
+    })).max(5).describe('A list of up to 5 items').default([
         {
             icon: { __icon_url__: 'https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/checks-bold.svg', __icon_query__: 'growth chart' },
             heading: '2021',

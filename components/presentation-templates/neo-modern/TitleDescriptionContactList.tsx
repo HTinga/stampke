@@ -1,20 +1,20 @@
 /**
  * Zod Schema for the Thank You / Contact slide.
  */
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Thank you'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(20).describe('The title of the slide').default('Thank you'),
+    description: z.string().max(350).describe('The description of the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     contactItems: z.array(z.object({
         icon: z.object({
             __icon_url__: z.string(),
-            __icon_query__: z.string()),
+            __icon_query__: z.string().max(30),
         }),
-        label: z.string()),
-        value: z.string()),
-    })).max(3).default([
+        label: z.string().max(20).describe('The label of item'),
+        value: z.string().max(50).describe('The value of item'),
+    })).max(3).describe('A list of items').default([
         {
             icon: {
                 __icon_url__: 'https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/checks-bold.svg',

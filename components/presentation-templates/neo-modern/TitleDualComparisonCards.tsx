@@ -4,13 +4,13 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    mainTitle: z.string()).default("Text Comparison"),
+    mainTitle: z.string().max(30).describe("The main heading of the slide").default("Text Comparison"),
     comparisonSections: z.array(
         z.object({
-            heading: z.string()),
-            description: z.string()),
+            heading: z.string().max(20).describe("The title for the item"),
+            description: z.string().max(200).describe("The detailed text description for the item"),
         })
-    ).max(2).default([
+    ).max(2).describe("A list of up to 2 items").default([
         {
             heading: "Problem",
             description: "Presentation are communication tools that can be used as demontrations, lectures, reports, and more. it is mostly presented before an audience."

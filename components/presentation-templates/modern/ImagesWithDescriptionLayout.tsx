@@ -8,15 +8,15 @@ export const layoutDescription =
   "Images with description slide layout";
 
 const imagesWithDescriptionSlideSchema = z.object({
-  name: z.string().min(2)),
-  description: z.string()).max(120),
+  name: z.string().min(2).max(50),
+  description: z.string().min(20).max(120),
   image: ImageSchema,
-  linkedIn: z.string())"),
+  linkedIn: z.string().optional(),
 });
 
 const imagesWithDescriptionSlideSchema2 = z.object({
-  title: z.string().min(3)).default("Our Team"),
-  subtitle: z.string()).max(120)),
+  title: z.string().min(3).max(40).default("Our Team"),
+  subtitle: z.string().min(10).max(120).optional(),
   teamMembers: z
     .array(imagesWithDescriptionSlideSchema)
     .min(2)

@@ -22,18 +22,18 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string()).default('Barchart'),
-    badgeText: z.string()).default('Campaign A'),
-    topDescription: z.string()).default('Top Campaign'),
-    bottomDescription: z.string()).default('Engangment Rate'),
-    chartType: chartTypeEnum,
+    title: z.string().max(10).describe('The main heading of the slide').default('Barchart'),
+    badgeText: z.string().max(12).describe('The text displayed within the colored box').default('Campaign A'),
+    topDescription: z.string().max(20).describe('The textual label at the top right of the chart').default('Top Campaign'),
+    bottomDescription: z.string().max(25).describe('The textual label at the bottom right of the chart').default('Engangment Rate'),
+    chartType: chartTypeEnum.describe('Type of chart to display'),
     graphData: z.object({
-        columns: z.array(z.string()).max(3),
+        columns: z.array(z.string()).max(3).describe('Labels for the data categories and legend items'),
         rows: z.array(z.object({
-            label: z.string()),
-            value1: z.number()'),
-            value2: z.number())')
-        })).max(4)
+            label: z.string().max(12).describe('The name of the category shown on the X-axis'),
+            value1: z.number().describe('Value for the first series (bottom part of stack)'),
+            value2: z.number().optional().describe('Value for the second series (optional for single-series charts)')
+        })).max(4).describe('Array of data points for the chart')
     }).default({
         columns: ["Category", "Planned Budget",],
         rows: [

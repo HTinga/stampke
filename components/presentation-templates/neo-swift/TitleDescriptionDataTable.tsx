@@ -3,12 +3,12 @@ import React from 'react';
 
 
 export const Schema = z.object({
-    title: z.string()).default("TABLE"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(12).describe("The main title of the slide displayed at the top left").default("TABLE"),
+    description: z.string().max(180).describe("The overview description paragraph displayed at the top right").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     table: z.object({
-        columns: z.array(z.string())).max(3),
-        rows: z.array(z.array(z.string())).max(3)).max(3),
-    }).default({
+        columns: z.array(z.string().max(15)).max(3).describe("The headers for the table columns"),
+        rows: z.array(z.array(z.string().max(60)).max(3)).max(3).describe("The data rows for the table with max 3 cells per row"),
+    }).describe("The main table content with headings and cell data").default({
         columns: ["Problem", "Description", "Solution"],
         rows: [
             ["Self-motivation\nReference: Book and Inspirational Videos", "Self-motivation\nReference: Book and Inspirational Videos", "Self-motivation\nReference: Book and Inspirational Videos"],

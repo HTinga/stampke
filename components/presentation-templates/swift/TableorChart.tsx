@@ -21,13 +21,13 @@ const layoutName = "Table Or Chart"
 const layoutDescription = "Swift: Generic data table with option to render a chart (bar, horizontalBar, line, pie)"
 
 const ChartDatumSchema = z.object({
-  label: z.string().min(1)).default("A"),
-  value: z.number().min(0)).default(60),
+  label: z.string().min(1).max(12).default("A"),
+  value: z.number().min(0).max(1000000).default(60),
 })
 
 const TableRowSchema = z.object({
   cells: z
-    .array(z.string().min(0)))
+    .array(z.string().min(0).max(200))
     .min(2)
     .max(10)
     .default(["Row 1", "Value", "Value"])
@@ -36,7 +36,7 @@ const TableRowSchema = z.object({
 
 const Schema = z
   .object({
-    title: z.string().min(6)).default("Data Table or Chart"),
+    title: z.string().min(6).max(60).default("Data Table or Chart"),
     description: z
       .string()
       .min(20)
@@ -49,7 +49,7 @@ const Schema = z
 
     // Table configuration (generic)
     columns: z
-      .array(z.string().min(1)))
+      .array(z.string().min(1).max(40))
       .min(2)
       .max(10)
       .default(["Column 1", "Column 2", "Column 3"]),
@@ -67,14 +67,14 @@ const Schema = z
     chart: z
       .object({
         type: z.enum(["bar", "horizontalBar", "line", "pie"]).default("line"),
-        data: z.array(ChartDatumSchema).min(3)).default([
+        data: z.array(ChartDatumSchema).min(3).max(12).default([
           { label: "A", value: 60 },
           { label: "B", value: 42 },
           { label: "C", value: 75 },
           { label: "D", value: 30 },
         ]),
 
-        showLabels: z.boolean()),
+        showLabels: z.boolean().default(true),
       })
       .default({
         type: "line",
@@ -88,7 +88,7 @@ const Schema = z
         showLabels: true,
       }),
 
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
     title: "Data Table or Chart",

@@ -27,7 +27,7 @@ const ImageSchema = z
 
 const ItemSchema = z
   .object({
-    title: z.string().min(2)).default("Sample Title"),
+    title: z.string().min(2).max(40).default("Sample Title"),
     description: z
       .string()
       .min(10)
@@ -43,8 +43,8 @@ const ItemSchema = z
 
 const Schema = z
   .object({
-    titleLine1: z.string().min(3)).default("Meet Our"),
-    titleLine2: z.string().min(3)).default("Team"),
+    titleLine1: z.string().min(3).max(24).default("Meet Our"),
+    titleLine2: z.string().min(3).max(24).default("Team"),
     description: z
       .string()
       .min(20)
@@ -61,7 +61,7 @@ const Schema = z
         ItemSchema.parse({ title: "Another Item", description: "Concise supporting text.", image: ImageSchema.parse({}) }),
         ItemSchema.parse({ title: "Third Item", description: "Concise supporting text.", image: ImageSchema.parse({}) }),
       ]),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
 

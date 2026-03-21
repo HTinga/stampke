@@ -7,12 +7,12 @@ export const layoutDescription =
   "A clean table of contents layout with up to 10 items, each with a short description, styled to match the modern template.";
 
 const TocItemSchema = z.object({
-  title: z.string().min(3))"),
-  description: z.string()).max(80),
+  title: z.string().min(3).max(40),
+  description: z.string().min(10).max(80),
 });
 
 const tableOfContentsSchema = z.object({
-  title: z.string().min(3)).default("Table Of Contents"),
+  title: z.string().min(3).max(40).default("Table Of Contents"),
   items: z
     .array(TocItemSchema)
     .min(2)

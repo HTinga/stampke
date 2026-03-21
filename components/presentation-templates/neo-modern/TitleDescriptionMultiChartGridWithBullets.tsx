@@ -66,11 +66,11 @@ const DivergingDataPointSchema = z.object({
 const ScatterDataPointSchema = z.object({
     x: z.number(),
     y: z.number(),
-    name: z.string()),
+    name: z.string().optional(),
 });
 
 const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(SimpleDataPointSchema),
@@ -88,9 +88,9 @@ const ChartItemSchema = z.object({
 });
 
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
-    bullets: z.array(z.string())).max(6).default([
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.'),
+    bullets: z.array(z.string().max(80)).max(6).default([
         'Pipeline coverage above 3x target.',
         'CAC payback under 6 months.',
         'Enterprise conversion improved QoQ.',
@@ -104,8 +104,8 @@ export const Schema = z.object({
         { title: 'Growth Trend', type: 'line', data: [{ name: 'Jan', value: 30 }, { name: 'Feb', value: 45 }, { name: 'Mar', value: 52 }, { name: 'Apr', value: 48 }, { name: 'May', value: 67 }, { name: 'Jun', value: 82 }], colorPalette: 'professional' },
         { title: 'Department Performance', type: 'bar-horizontal', data: [{ name: 'Sales', value: 87 }, { name: 'Marketing', value: 72 }, { name: 'Engineering', value: 95 }, { name: 'Support', value: 68 }], colorPalette: 'sunset' },
     ]),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
+    showLegend: z.boolean().default(true),
+    showGrid: z.boolean().default(true),
 });
 
 export type MultiChartGridSlideData = z.infer<typeof Schema>;

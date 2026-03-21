@@ -23,19 +23,19 @@ const chartTypeEnum = z.enum([
 ]).default('bar');
 
 export const Schema = z.object({
-    title: z.string().max(8).default("Barchart"),
-    subtitleLeft: z.string()).default("Campaign A"),
-    subtitleRight: z.string()).default("Top Campaign"),
-    footerLabel: z.string()).default("Engangment Rate"),
-    chartType: chartTypeEnum,
+    title: z.string().max(8).describe("The main heading of the slide").default("Barchart"),
+    subtitleLeft: z.string().max(10).describe("Left subtitle text").default("Campaign A"),
+    subtitleRight: z.string().max(12).describe("Right subtitle text").default("Top Campaign"),
+    footerLabel: z.string().max(15).describe("Footer label text").default("Engangment Rate"),
+    chartType: chartTypeEnum.describe('Type of chart to display'),
     graphData: z.object({
-        columns: z.array(z.string())).max(2),
+        columns: z.array(z.string().max(16)).max(2).describe("Names of the data series"),
         rows: z.array(z.object({
-            label: z.string()),
-            value: z.number(),
-            value2: z.number())"),
-        })).max(4)
-    }).default({
+            label: z.string().max(12).describe("The category label for the bar"),
+            value: z.number().describe("The value for the first series"),
+            value2: z.number().optional().describe("The value for the second series (optional for single-series charts)"),
+        })).max(4).describe("The data rows for the chart")
+    }).describe("The data for the chart").default({
         columns: ["Planned Budget", "Actual Budget"],
         rows: [
             { label: "Paid Social", value: 520, value2: 485 },

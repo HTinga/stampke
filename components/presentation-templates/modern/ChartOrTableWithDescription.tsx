@@ -24,7 +24,7 @@ export const layoutDescription =
 const businessModelSchema = z
   .object({
 
-    title: z.string().min(3)).default("Data Table or Chart"),
+    title: z.string().min(3).max(60).default("Data Table or Chart"),
     description: z
       .string()
       .default(
@@ -36,7 +36,7 @@ const businessModelSchema = z
 
     // Table configuration (generic)
     columns: z
-      .array(z.string().min(1)))
+      .array(z.string().min(1).max(40))
       .min(2)
       .max(10)
       .default(["Column 1", "Column 2", "Column 3"]),
@@ -44,7 +44,7 @@ const businessModelSchema = z
       .array(
         z.object({
           cells: z
-            .array(z.string().min(0)))
+            .array(z.string().min(0).max(200))
             .min(2)
             .max(10)
             .default(["Row 1", "Value", "Value"]),
@@ -63,7 +63,7 @@ const businessModelSchema = z
       .object({
         type: z.enum(["bar", "horizontalBar", "line", "pie"]).default("line"),
         data: z
-          .array(z.object({ label: z.string().min(1)), value: z.number() }))
+          .array(z.object({ label: z.string().min(1).max(12), value: z.number() }))
           .min(3)
           .max(12)
           .default([
@@ -73,7 +73,7 @@ const businessModelSchema = z
             { label: "D", value: 30 },
           ]),
 
-        showLabels: z.boolean()),
+        showLabels: z.boolean().default(true),
       })
       .default({
         type: "line",

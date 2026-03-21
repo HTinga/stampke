@@ -4,21 +4,21 @@ export const Schema = z.object({
     title: z
         .string()
         .max(17)
-        
+        .describe("The heading of the slide")
         .default("Executive Summary"),
     description: z
         .string()
         .max(226)
-        
+        .describe("The main textual content of the slide")
         .default(
             "Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."
         ),
     image: z
         .object({
             __image_url__: z.string(),
-            __image_prompt__: z.string()),
+            __image_prompt__: z.string().max(100),
         })
-        
+        .describe("The vertical image displayed on the right side")
         .default({
             __image_url__:
                 "https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png",

@@ -42,15 +42,15 @@ const chartTypeEnum = z.enum([
 ]).default('pie');
 
 export const Schema = z.object({
-    title: z.string()).default("Spend & ROI"),
-    chartType: chartTypeEnum.default('horizontalBar'),
+    title: z.string().max(20).describe("The main title of the slide").default("Spend & ROI"),
+    chartType: chartTypeEnum.describe('Type of chart to display').default('horizontalBar'),
     graph: z.object({
-        columns: z.array(z.string())).max(2),
+        columns: z.array(z.string().max(10)).max(2).describe("Columns for the chart data"),
         rows: z.array(z.object({
-            label: z.string()),
-            value: z.number(),
-        })).max(5)
-    }).default({
+            label: z.string().max(10).describe("Label for the data segment"),
+            value: z.number().describe("Numerical value for the data segment"),
+        })).max(5).describe("Rows of data for the chart")
+    }).describe("Chart data").default({
         columns: ["Label", "Value"],
         rows: [
             { label: "Jan", value: 24 },

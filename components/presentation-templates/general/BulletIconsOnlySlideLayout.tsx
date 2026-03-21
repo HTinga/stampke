@@ -1,21 +1,21 @@
 import React from 'react'
 import * as z from "zod";
 import { ImageSchema, IconSchema } from '../defaultSchemes';
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 export const layoutId = 'bullet-icons-only-slide'
 export const layoutName = 'Bullet Icons Only'
 export const layoutDescription = 'A slide layout with title, grid of bullet points (title and description) with icons, and a supporting image.'
 
 const bulletIconsOnlySlideSchema = z.object({
-    title: z.string().min(3)).default('Solutions'),
+    title: z.string().min(3).max(40).default('Solutions'),
     image: ImageSchema.default({
         __image_url__: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         __image_prompt__: 'Business professionals collaborating and discussing solutions'
     }),
     bulletPoints: z.array(z.object({
-        title: z.string().min(2)),
-        subtitle: z.string().min(5)).optional(),
+        title: z.string().min(2).max(80),
+        subtitle: z.string().min(5).max(150).optional(),
         icon: IconSchema,
     })).min(2).max(3).default([
         {

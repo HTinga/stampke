@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 export const Schema = z.object({
-    title: z.string()).default("Executive Summary"),
-    label: z.string().max(5).default("Leads"),
-    description: z.string()).default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().max(17).describe("The main heading of the slide").default("Executive Summary"),
+    label: z.string().max(5).describe("A short subtitle or category label").default("Leads"),
+    description: z.string().max(205).describe("The primary body text explaining the summary").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     stats: z.array(z.object({
-        value: z.string().max(4),
-        heading: z.string()),
-        content: z.string())
-    })).max(3).default([
+        value: z.string().max(4).describe("The numerical or percentage value"),
+        heading: z.string().max(21).describe("The title of the statistic"),
+        content: z.string().max(45).describe("The descriptive text for the statistic")
+    })).max(3).describe("A list of 3 statistics cards").default([
         { value: "10K", heading: "USERS", content: "Active users across multiple industries" },
         { value: "90%", heading: "REVENUE GROWTH", content: "Year-over-year revenue growth" },
         { value: "150%", heading: "CUSTOMER SATISFACTION", content: "Retention rate with an average rating of 4.8/5" }

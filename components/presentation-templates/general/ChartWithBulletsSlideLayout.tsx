@@ -1,7 +1,7 @@
 import React from 'react'
 import * as z from "zod";
 import { IconSchema } from '../defaultSchemes';
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 export const layoutId = 'chart-with-bullets-slide'
@@ -21,12 +21,12 @@ const scatterChartDataSchema = z.object({
     data: z.array(z.object({
         x: z.number(),
         y: z.number(),
-    })).min(2))
+    })).min(2).max(20)
 })
 
 const chartWithBulletsSlideSchema = z.object({
-    title: z.string().min(3)).default('Market Size'),
-    description: z.string()).max(150)),
+    title: z.string().min(3).max(40).default('Market Size'),
+    description: z.string().min(10).max(150).default('Businesses face challenges with outdated technology and rising costs, limiting efficiency and growth in competitive markets.'),
     chartData: z.union([barPieLineAreaChartDataSchema, scatterChartDataSchema]).default({
         type: 'bar',
         data: [
@@ -37,11 +37,11 @@ const chartWithBulletsSlideSchema = z.object({
     }
     ),
 
-    showLegend: z.boolean()),
-    showTooltip: z.boolean()),
+    showLegend: z.boolean().default(false),
+    showTooltip: z.boolean().default(true),
     bulletPoints: z.array(z.object({
-        title: z.string().min(2)),
-        description: z.string()).max(150),
+        title: z.string().min(2).max(80),
+        description: z.string().min(10).max(150),
         icon: IconSchema,
     })).min(1).max(3).default([
         {

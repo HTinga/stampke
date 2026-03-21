@@ -32,8 +32,8 @@ const DEFAULT_CHART_COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF44
 
 // Series schema for multi-series charts
 const SeriesSchema = z.object({
-    name: z.string()),
-    color: z.string()),
+    name: z.string().max(32),
+    color: z.string().optional(),
     values: z.array(z.number()).min(1),
 });
 
@@ -47,9 +47,9 @@ const DivergingDataSchema = z.object({
 });
 
 export const Schema = z.object({
-    title: z.string()).default('Spend & ROI Dashbo       ard'),
+    title: z.string().max(30).describe('The main title of the slide').default('Spend & ROI Dashbo       ard'),
     chart: z.object({
-        title: z.string()).optional(),
+        title: z.string().max(64).optional(),
         type: z.enum([
             'line',
             'bar',
@@ -65,13 +65,13 @@ export const Schema = z.object({
             'pie',
             'donut',
         ]).default('bar'),
-        categories: z.array(z.string())).min(1),
+        categories: z.array(z.string().max(16)).min(1),
         series: z.array(SeriesSchema).min(1),
         // For diverging charts
         divergingData: z.array(DivergingDataSchema).optional(),
         divergingLabels: z.tuple([z.string(), z.string()]).optional(),
 
-    }).default({
+    }).describe('Chart configuration to render on the slide').default({
         title: 'Revenue vs Spend',
         type: 'bar',
         categories: ['Jan', 'Feb', 'Mar'],

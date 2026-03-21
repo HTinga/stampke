@@ -1,4 +1,4 @@
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 import React from 'react'
 // charts removed
 import * as z from "zod";
@@ -6,12 +6,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-  __image_prompt__: z.string()).max(180).default("Decorative abstract office scene photo placed at lower right on the band"),
+  __image_prompt__: z.string().min(10).max(180).default("Decorative abstract office scene photo placed at lower right on the band"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().default("https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/fediverse-logo-bold.svg"),
-  __icon_query__: z.string().min(2)).default("info icon"),
+  __icon_query__: z.string().min(2).max(20).default("info icon"),
 })
 
 const layoutId = "header-bullets-title-description-image-slide"
@@ -19,12 +19,12 @@ const layoutName = "Icon Bullet Description"
 const layoutDescription = "A slide with a small header label and number, a left card of ...cards with round symbols and titles with descriptions, a large heading with supporting text, and a decorative image on a mid-page band"
 
 const Schema = z.object({
-  metaMaxWords: z.number()),
+  metaMaxWords: z.number().default(240),
 
 
   headerNumber: z.string().min(1).max(3).default("6"),
-  rightTitle: z.string()).max(72).default("Disrupting the\nIndustry"),
-  rightDescription: z.string()).max(240).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
+  rightTitle: z.string().min(24).max(72).default("Disrupting the\nIndustry"),
+  rightDescription: z.string().min(120).max(240).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna"),
   // decorative image removed
   cards: z.array(z.object({
     symbolText: z.string().min(1).max(1).default("i"),
@@ -32,8 +32,8 @@ const Schema = z.object({
       __icon_url__: "https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/fediverse-logo-bold.png",
       __icon_query__: "info icon",
     }),
-    title: z.string()).max(38).default("Visionary Leadership"),
-    description: z.string()).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"),
+    title: z.string().min(16).max(38).default("Visionary Leadership"),
+    description: z.string().min(50).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"),
   })).min(1).max(4).default([
     {
       symbolText: "i",

@@ -1,11 +1,11 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Table of Content'),
+    title: z.string().max(20).describe('The main title of the slide').default('Table of Content'),
     items: z.array(z.object({
-        heading: z.string()),
-        description: z.string())
-    })).max(10).default([
+        heading: z.string().max(30).describe('The title of each list item'),
+        description: z.string().max(100).describe('A short description for each list item')
+    })).max(10).describe('List of content items to display').default([
         { heading: 'Order Placement', description: 'Customers choose products and confirm purchase online.' },
         { heading: 'Payment Process', description: 'Payment is made through card, bank transfer, or e-wallet.' },
         { heading: 'Order Verification', description: 'The system validates transaction details before processing.' },

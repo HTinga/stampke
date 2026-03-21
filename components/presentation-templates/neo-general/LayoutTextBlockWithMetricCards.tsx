@@ -5,36 +5,36 @@ export const Schema = z.object({
     title: z
         .string()
         .max(30)
-        
+        .describe("The main heading of the slide")
         .default("Business Objective & KPIs"),
     objectiveTitle: z
         .string()
         .max(80)
-        
+        .describe("Subheading or objective statement")
         .default(
             "Accelerate enterprise customer acquisition across EMEA and North America"
         ),
     description: z
         .string()
         .max(300)
-        
+        .describe("Supporting description text")
         .default(
             "Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."
         ),
     kpis: z
         .array(
             z.object({
-                name: z.string()),
-                value: z.string()),
-                targetValue: z.string()),
-                targetLabel: z.string()),
+                name: z.string().max(30).describe("Name of the metric card"),
+                value: z.string().max(10).describe("Current value displayed"),
+                targetValue: z.string().max(10).describe("Target value displayed"),
+                targetLabel: z.string().max(15).describe("Label text for target"),
                 progressPercentage: z
                     .number()
                     .min(0)
                     .max(100)
-                    ,
-                color: z.string(),
-                footerLabel: z.string()),
+                    .describe("Progress percentage value"),
+                color: z.string().describe("Color hex code for progress bar"),
+                footerLabel: z.string().max(15).describe("Footer label text"),
             })
         )
         .default([

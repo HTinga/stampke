@@ -8,8 +8,8 @@ export const layoutDescription = 'A professional table of contents layout with n
 const tableOfContentsSlideSchema = z.object({
     sections: z.array(z.object({
         number: z.number().min(1),
-        title: z.string().min(1)),
-        pageNumber: z.string().min(1))
+        title: z.string().min(1).max(80),
+        pageNumber: z.string().min(1).max(10)
     })).default([
         { number: 1, title: "Problem", pageNumber: "03" },
         { number: 2, title: "Solution", pageNumber: "04" },

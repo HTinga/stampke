@@ -1,22 +1,22 @@
 import React from 'react'
 import * as z from "zod";
 import { ImageSchema, IconSchema } from '../defaultSchemes';
-import { RemoteSvgIcon } from '@/app/hooks/useRemoteSvgIcon';
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 export const layoutId = 'bullet-with-icons-slide'
 export const layoutName = 'Image With Icon Bullets'
 export const layoutDescription = 'A two-section layout with a full-width title, left-side image with decorative grid pattern, and right-side content featuring description text and 1-3 icon-enhanced bullet points. Each bullet has an icon badge, title, accent line, and description.'
 
 const bulletWithIconsSlideSchema = z.object({
-    title: z.string().min(3)).default('Problem'),
-    description: z.string()).default('Businesses face challenges with outdated technology and rising costs, limiting efficiency and growth in competitive markets.'),
+    title: z.string().min(3).max(40).default('Problem'),
+    description: z.string().max(150).default('Businesses face challenges with outdated technology and rising costs, limiting efficiency and growth in competitive markets.'),
     image: ImageSchema.default({
         __image_url__: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         __image_prompt__: 'Business people analyzing documents and charts in office'
     }),
     bulletPoints: z.array(z.object({
-        title: z.string().min(2)),
-        description: z.string()).max(100),
+        title: z.string().min(2).max(60),
+        description: z.string().min(10).max(100),
         icon: IconSchema,
     })).min(1).max(3).default([
         {

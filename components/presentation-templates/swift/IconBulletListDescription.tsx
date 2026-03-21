@@ -1,6 +1,6 @@
 import React from "react"
 import * as z from "zod"
-import { RemoteSvgIcon } from "@/app/hooks/useRemoteSvgIcon";
+import { RemoteSvgIcon } from '../hooks/useRemoteSvgIcon';
 
 const layoutId = "icon-bullet-list-description-slide"
 const layoutName = "Icon Bullet List Description"
@@ -13,7 +13,7 @@ const IconSchema = z
       .default(
         "https://presenton-public.s3.ap-southeast-1.amazonaws.com/static/icons/bold/file-text-bold.svg"
       ),
-    __icon_query__: z.string().min(0)).default("feature icon"),
+    __icon_query__: z.string().min(0).max(80).default("feature icon"),
   })
   .default({
     __icon_url__:
@@ -23,7 +23,7 @@ const IconSchema = z
 
 const FeatureSchema = z
   .object({
-    title: z.string().min(4)).default("Customizable Workflows"),
+    title: z.string().min(4).max(28).default("Customizable Workflows"),
     body: z
       .string()
       .min(20)
@@ -83,7 +83,7 @@ const Schema = z
           }),
         },
       ]),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
   })
   .default({
 

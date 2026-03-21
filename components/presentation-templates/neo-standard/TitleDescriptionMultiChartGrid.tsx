@@ -67,11 +67,11 @@ const DivergingDataPointSchema = z.object({
 const ScatterDataPointSchema = z.object({
     x: z.number(),
     y: z.number(),
-    name: z.string()),
+    name: z.string().optional(),
 });
 
 const ChartItemSchema = z.object({
-    title: z.string()).default("Chart Title"),
+    title: z.string().max(40).default("Chart Title"),
     type: ChartTypeEnum.default('bar-vertical'),
     data: z.union([
         z.array(SimpleDataPointSchema),
@@ -89,8 +89,8 @@ const ChartItemSchema = z.object({
 });
 
 export const Schema = z.object({
-    title: z.string().min(3)).default('Data Analytics Dashboard'),
-    description: z.string()).max(200)),
+    title: z.string().min(3).max(50).default('Data Analytics Dashboard'),
+    description: z.string().min(10).max(200).default('Comprehensive overview of key metrics and performance indicators across multiple data dimensions.'),
     charts: z.array(ChartItemSchema).min(1).max(6).default([
         { title: 'Revenue by Quarter', type: 'bar-vertical', data: [{ name: 'Q1', value: 125000 }, { name: 'Q2', value: 158000 }, { name: 'Q3', value: 142000 }, { name: 'Q4', value: 189000 }], colorPalette: 'vibrant' },
         { title: 'Market Distribution', type: 'donut', data: [{ name: 'North America', value: 35 }, { name: 'Europe', value: 28 }, { name: 'Asia Pacific', value: 25 }, { name: 'Others', value: 12 }], colorPalette: 'ocean' },
@@ -99,8 +99,8 @@ export const Schema = z.object({
         { title: 'Product Comparison', type: 'bar-clustered', data: [{ name: 'Q1', values: { 'Product A': 45, 'Product B': 62 } }, { name: 'Q2', values: { 'Product A': 58, 'Product B': 71 } }, { name: 'Q3', values: { 'Product A': 72, 'Product B': 65 } }], series: ['Product A', 'Product B'], colorPalette: 'vibrant' },
         { title: 'Customer Feedback', type: 'bar-diverging', data: [{ name: 'Quality', positive: 78, negative: 22 }, { name: 'Service', positive: 65, negative: 35 }, { name: 'Price', positive: 42, negative: 58 }], series: ['Satisfied', 'Unsatisfied'], colorPalette: 'professional' },
     ]),
-    showLegend: z.boolean()),
-    showGrid: z.boolean()),
+    showLegend: z.boolean().default(true),
+    showGrid: z.boolean().default(true),
 });
 
 export type MultiChartGridSlideData = z.infer<typeof Schema>;

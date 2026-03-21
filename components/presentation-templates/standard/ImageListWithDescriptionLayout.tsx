@@ -4,12 +4,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-  __image_prompt__: z.string()).max(160).default("Portrait of a professional team member with subtle background, soft light, business attire"),
+  __image_prompt__: z.string().min(10).max(160).default("Portrait of a professional team member with subtle background, soft light, business attire"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().url().default("https://static.thenounproject.com/png/1137401-200.png"),
-  __icon_query__: z.string().min(3)).default("photo image placeholder"),
+  __icon_query__: z.string().min(3).max(30).default("photo image placeholder"),
 })
 
 const layoutId = "header-smallbar-title-team-cards-slide"
@@ -32,10 +32,10 @@ const Schema = z.object({
       __icon_query__: "green line separator",
     },
   }),
-  title: z.string()).max(50).default("Our Professional Team"),
+  title: z.string().min(10).max(50).default("Our Professional Team"),
   cards: z.array(z.object({
-    name: z.string().min(3)).default("Sam Rawlings"),
-    role: z.string()).max(50).default("Marketing specialist with brand and growth experience"),
+    name: z.string().min(3).max(30).default("Sam Rawlings"),
+    role: z.string().min(20).max(50).default("Marketing specialist with brand and growth experience"),
     photo: ImageSchema,
   })).min(1).max(4).default([
     {

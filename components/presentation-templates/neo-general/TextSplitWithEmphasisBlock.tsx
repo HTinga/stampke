@@ -2,9 +2,9 @@ import * as z from "zod";
 import React from "react";
 
 export const Schema = z.object({
-    title: z.string()).default('Key Insights & Learnings'),
-    insightTitle: z.string()).default('CONTENT + PAID SOCIAL COMBINATION DRIVES HIGHEST QUALITY LEADS'),
-    insightDescription: z.string()).default('Leads from integrated campaigns had 47% faster time-to-close and 28% higher average contract value.')
+    title: z.string().max(25).describe('The main heading of the slide').default('Key Insights & Learnings'),
+    insightTitle: z.string().max(63).describe('Heading for the highlighted card').default('CONTENT + PAID SOCIAL COMBINATION DRIVES HIGHEST QUALITY LEADS'),
+    insightDescription: z.string().max(99).describe('Description text for the highlighted card').default('Leads from integrated campaigns had 47% faster time-to-close and 28% higher average contract value.')
 });
 
 export const layoutId = 'title-side-insight-slide';

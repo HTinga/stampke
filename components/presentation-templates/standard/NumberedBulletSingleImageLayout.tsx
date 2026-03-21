@@ -4,12 +4,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-  __image_prompt__: z.string()).max(90).default("Professional business meeting scene for roadmap presentation image"),
+  __image_prompt__: z.string().min(10).max(90).default("Professional business meeting scene for roadmap presentation image"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().default(""),
-  __icon_query__: z.string().min(3)).default(""),
+  __icon_query__: z.string().min(3).max(30).default(""),
 })
 
 const layoutId = "header-bullets-image-split-slide"
@@ -17,7 +17,7 @@ const layoutName = "Numbered Bullet Single Image"
 const layoutDescription = "A slide with a top bar, left column with numbered bullets, middle image panel, and right stacked heading with paragraph"
 
 const Schema = z.object({
-  metaMaxWords: z.number()),
+  metaMaxWords: z.number().default(18),
   topBar: z.object({
 
     lineIcon: IconSchema.default({
@@ -34,8 +34,8 @@ const Schema = z.object({
   leftBullets: z.array(
     z.object({
       numberText: z.string().min(2).max(2).default("01"),
-      title: z.string()).max(36).default("Strategic Execution"),
-      body: z.string()).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."),
+      title: z.string().min(10).max(36).default("Strategic Execution"),
+      body: z.string().min(60).max(100).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor."),
     })
   ).min(1).max(4).default([
     {
@@ -64,8 +64,8 @@ const Schema = z.object({
     __image_prompt__: "Professional business meeting scene for roadmap presentation image",
   }),
   rightHeader: z.object({
-    heading: z.string().min(6)).default("Our Journey"),
-    paragraph: z.string()).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore."),
+    heading: z.string().min(6).max(30).default("Our Journey"),
+    paragraph: z.string().min(80).max(200).default("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore."),
   }).default({
     heading: "Our Journey",
     paragraph: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore.",

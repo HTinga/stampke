@@ -39,8 +39,8 @@ const ChartLegend: React.FC<{ series: z.infer<typeof SeriesSchema>[], colors: st
 );
 
 const SeriesSchema = z.object({
-    name: z.string()),
-    color: z.string()),
+    name: z.string().max(32),
+    color: z.string().optional(),
     values: z.array(z.number()).min(1),
 });
 
@@ -52,10 +52,10 @@ const DivergingDataSchema = z.object({
 });
 
 export const Schema = z.object({
-    title: z.string()).default('Spend & ROI Overview'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(21).describe('The main heading of the slide').default('Spend & ROI Overview'),
+    description: z.string().max(100).describe('Supporting description text for the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     chart: z.object({
-        title: z.string()).optional(),
+        title: z.string().max(64).optional(),
         type: z.enum([
             'line',
             'bar',
@@ -71,12 +71,12 @@ export const Schema = z.object({
             'pie',
             'donut',
         ]).default('bar-stacked-horizontal'),
-        categories: z.array(z.string())).min(1),
+        categories: z.array(z.string().max(16)).min(1),
         series: z.array(SeriesSchema).min(1),
         divergingData: z.array(DivergingDataSchema).optional(),
         divergingLabels: z.tuple([z.string(), z.string()]).optional(),
         colorPalette: z.enum(['vibrant', 'ocean', 'professional']).default('vibrant'),
-    }).default({
+    }).describe('Chart configuration to render on the slide').default({
         title: 'Revenue vs Spend',
         type: 'line',
         categories: ['Jan', 'Feb', 'Mar'],
@@ -88,8 +88,8 @@ export const Schema = z.object({
     }),
     metrics: z.array(
         z.object({
-            value: z.string().max(7),
-            label: z.string()),
+            value: z.string().max(7).describe('The displayed metric value'),
+            label: z.string().max(13).describe('Label describing the metric'),
         })
     ).max(6).default([
         { value: '$1,800K', label: 'Total Planned' },

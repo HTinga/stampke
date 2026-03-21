@@ -8,8 +8,8 @@ const layoutDescription = "Swift: Our Impact in Numbers with three stacked metri
 const MetricSchema = z
   .object({
     value: z.string().min(1).max(8).default("10K+"),
-    line1: z.string().min(2)).default("Total"),
-    line2: z.string().min(0)).default("Users"),
+    line1: z.string().min(2).max(22).default("Total"),
+    line2: z.string().min(0).max(22).default("Users"),
     description: z
       .string()
       .min(10)
@@ -42,7 +42,7 @@ const Schema = z
       .default(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
       ),
-    website: z.string().min(6)).default("www.yourwebsite.com"),
+    website: z.string().min(6).max(60).default("www.yourwebsite.com"),
     metrics: z
       .array(MetricSchema)
       .min(1)

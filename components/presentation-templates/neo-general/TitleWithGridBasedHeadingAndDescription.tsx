@@ -1,12 +1,12 @@
 import * as z from "zod";
 import React from "react";
 export const Schema = z.object({
-    title: z.string()).default('Key Insights & Learnings'),
+    title: z.string().max(25).describe('The main heading of the slide').default('Key Insights & Learnings'),
 
     cards: z.array(z.object({
-        heading: z.string()),
-        description: z.string()),
-    })).default([
+        heading: z.string().max(56).describe('Heading text for the card'),
+        description: z.string().max(46).describe('Description text for the card'),
+    })).describe('Array of cards with heading and description').default([
         {
             heading: 'ENTERPRISE ABM DELIVERS 3.2X HIGHER CONVERSION RATES',
             description: 'Account-based campaigns targeting enterprises.',

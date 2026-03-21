@@ -1,12 +1,12 @@
 import * as z from 'zod'
 
 export const Schema = z.object({
-    title: z.string()).default('Image with Description'),
-    description: z.string()).default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
+    title: z.string().max(50).describe('The main title of the slide').default('Image with Description'),
+    description: z.string().max(350).describe('The body text or description of the slide').default('Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies.'),
     image: z.object({
-        __image_url__: z.string(),
-        __image_prompt__: z.string())
-    }).default({
+        __image_url__: z.string().describe('The URL of the featured image'),
+        __image_prompt__: z.string().max(100).describe('A description for generating a replacement image')
+    }).describe('The large image displayed on the right side of the slide').default({
         __image_url__: 'https://presenton-public-assets.s3.ap-southeast-1.amazonaws.com/replaceable_template_image.png',
         __image_prompt__: 'Close up of diverse business hands joined together in a circle, representing teamwork and partnership.'
     })

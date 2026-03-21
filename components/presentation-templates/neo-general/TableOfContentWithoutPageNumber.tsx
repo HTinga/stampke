@@ -5,11 +5,11 @@
 import * as z from 'zod';
 
 export const Schema = z.object({
-    title: z.string()).default('Table of Content'),
+    title: z.string().max(30).describe('The main heading of the slide').default('Table of Content'),
     items: z.array(z.object({
-        number: z.string().max(5)),
-        label: z.string()).default('Introduction'),
-    })).default([
+        number: z.string().max(5).describe('Sequence number or index').default('1'),
+        label: z.string().max(40).describe('Label text for the item').default('Introduction'),
+    })).describe('List of items displayed in two columns').default([
         { number: '1', label: 'Introduction' },
         { number: '2', label: 'Key Findings' },
         { number: '3', label: 'Data Analysis' },

@@ -4,12 +4,12 @@ import * as z from "zod";
 
 const ImageSchema = z.object({
   __image_url__: z.string().url().default("https://images.pexels.com/photos/31527637/pexels-photo-31527637.jpeg"),
-  __image_prompt__: z.string()).max(120).default("Muted cover background image with subtle subject suitable for contact slide"),
+  __image_prompt__: z.string().min(10).max(120).default("Muted cover background image with subtle subject suitable for contact slide"),
 })
 
 const IconSchema = z.object({
   __icon_url__: z.string().default("data:svg+xml,placeholder"),
-  __icon_query__: z.string().min(3)).default("photo placeholder"),
+  __icon_query__: z.string().min(3).max(24).default("photo placeholder"),
 })
 
 const layoutId = "header-left-media-contact-info-slide"
@@ -17,7 +17,7 @@ const layoutName = "ContactLayout"
 const layoutDescription = "A slide with a top bar, left media with overlay and bottom bar, and right content with header and text blocks. This should only be used for contact information."
 
 const Schema = z.object({
-  metaMaxWords: z.number()),
+  metaMaxWords: z.number().default(24),
 
   topBar: z.object({
 
@@ -37,7 +37,7 @@ const Schema = z.object({
       __icon_query__: "photo placeholder",
     }),
     websiteBar: z.object({
-      websiteText: z.string()).max(30).default("www.yourwebsite.com"),
+      websiteText: z.string().min(12).max(30).default("www.yourwebsite.com"),
       actionIcon: IconSchema.default({
         __icon_url__: "data:svg+xml,plus-arrow",
         __icon_query__: "plus arrow",
@@ -68,11 +68,11 @@ const Schema = z.object({
   }),
 
   rightContent: z.object({
-    title: z.string()).max(40).default("Let’s Get in\nTouch with Us"),
+    title: z.string().min(18).max(40).default("Let’s Get in\nTouch with Us"),
     sections: z.array(z.object({
-      label: z.string().min(4)).default("Label"),
-      value: z.string().min(8)).default("Value text"),
-      showDivider: z.boolean()),
+      label: z.string().min(4).max(10).default("Label"),
+      value: z.string().min(8).max(50).default("Value text"),
+      showDivider: z.boolean().default(true),
     })).min(1).max(3).default([
       {
         label: "Address",

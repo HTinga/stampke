@@ -38,15 +38,15 @@ const RadialProgress = ({ value, size = 120, strokeWidth = 14 }: { value: number
 };
 
 export const Schema = z.object({
-    title: z.string().default("Executive Summary"),
-    description: z.string().default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
+    title: z.string().describe("The main title of the slide").default("Executive Summary"),
+    description: z.string().describe("A brief overview or summary description").default("Focus on companies with 500+ employees in Financial Services, Healthcare, and Technology sectors. Target $3.5M in new pipeline with sub-$150 CAC through account-based marketing and content-led strategies."),
     cards: z.array(z.object({
-        heading: z.string()),
+        heading: z.string().describe("Heading for the card item").max(20),
         graph: z.object({
 
-            value: z.number(),
+            value: z.number().describe("The numerical percentage value for the chart"),
         }),
-        footerText: z.string()),
+        footerText: z.string().describe("The descriptive text at the bottom of the card").max(50),
     })).max(8).default([
         { heading: "Research", graph: { value: 1 }, footerText: "Main Challenge: Delayed Client" },
         { heading: "Research", graph: { value: 40 }, footerText: "Main Challenge: Delayed Client" },
