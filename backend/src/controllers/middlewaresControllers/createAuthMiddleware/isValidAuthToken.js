@@ -6,8 +6,11 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
     const UserPassword = mongoose.model(userModel + 'Password');
     const User         = mongoose.model(userModel);
 
-    const authHeader = req.headers['authorization'];
-    const token      = authHeader && authHeader.split(' ')[1];
+    // Issue #2: prefer httpOnly cookie, fall back to Authorization header
+    const cookieToken = req.cookies && req.cookies['tomo_session'];
+    const authHeader  = req.headers['authorization'];
+    const headerToken = authHeader && authHeader.split(' ')[1];
+    const token       = cookieToken || headerToken;
 
     if (!token)
       return res.status(401).json({

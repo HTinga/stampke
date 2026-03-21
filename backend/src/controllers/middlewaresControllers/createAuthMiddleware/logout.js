@@ -18,6 +18,8 @@ const logout = async (req, res, { userModel }) => {
     ).exec();
   }
 
+  // Clear httpOnly cookie (issue #2)
+  res.clearCookie('tomo_session', { httpOnly: true, path: '/' });
   return res.status(200).json({ success: true, result: {}, message: 'Successfully logged out' });
 };
 

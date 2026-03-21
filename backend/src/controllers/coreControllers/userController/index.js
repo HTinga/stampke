@@ -1,5 +1,5 @@
+const sendEmail = require('@/utils/sendEmail');
 const mongoose   = require('mongoose');
-const { Resend } = require('resend');
 const bcrypt     = require('bcryptjs');
 const shortid    = require('shortid');
 
@@ -60,14 +60,7 @@ const read = async (req, res) => {
 const activate = async (req, res) => {
   const user = await User().findOneAndUpdate({ _id: req.params.id, removed: false }, { enabled: true }, { new: true });
   if (!user) return res.status(404).json({ success: false, result: null, message: 'User not found.' });
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Tomo <noreply@tomo.ke>', to: user.email,
-      subject: '[Tomo] Your account is now active!',
-      html: `<p>Hi ${user.name}, your account has been activated. <a href="${FRONTEND_URL}">Sign in to Tomo</a></p>`,
-    });
-  } catch (e) { console.error('[Email] activate error:', e.message); }
+  sendEmail({ to: user.email, subject: '[Tomo] Your account is now active!', html: `<p>Hi ${user.name}, your account has been activated. <a href="${FRONTEND_URL}">Sign in to Tomo</a></p>`, from: 'Tomo <noreply@tomo.ke>' });
   return res.status(200).json({ success: true, result: user, message: `${user.name} activated.` });
 };
 
@@ -148,14 +141,7 @@ const grantPlan = async (req, res) => {
   );
   if (!user) return res.status(404).json({ success: false, result: null, message: 'User not found.' });
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Tomo <noreply@tomo.ke>', to: user.email,
-      subject: `[Tomo] Your plan has been upgraded to ${plan.toUpperCase()}!`,
-      html: `<p>Hi ${user.name}, you now have access to all ${plan} features on Tomo. <a href="${FRONTEND_URL}">Sign in to get started</a></p>`,
-    });
-  } catch (e) { console.error('[Email] grant plan error:', e.message); }
+  sendEmail({ to: user.email, subject: `[Tomo] Your plan has been upgraded to ${plan.toUpperCase()}!`, html: `<p>Hi ${user.name}, you now have access to all ${plan} features on Tomo. <a href="${FRONTEND_URL}">Sign in to get started</a></p>`, from: 'Tomo <noreply@tomo.ke>' });
 
   return res.status(200).json({ success: true, result: user, message: `Plan upgraded to ${plan}.` });
 };

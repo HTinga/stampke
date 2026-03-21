@@ -1,24 +1,26 @@
-const express         = require('express');
-const router          = express.Router();
-const { catchErrors } = require('@/handlers/errorHandlers');
-const userController  = require('@/controllers/coreControllers/userController');
-const userAuth        = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
+const express                          = require('express');
+const router                           = express.Router();
+const { catchErrors }                  = require('@/handlers/errorHandlers');
+const userController                   = require('@/controllers/coreControllers/userController');
+const userAuth                         = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
+const { requireRole, requirePermission } = require('@/middleware/roleCheck');
 
-// ── Own profile ───────────────────────────────────────────────────────────────
-router.get('/user/me',            catchErrors(userController.me));
-router.patch('/user/profile',     catchErrors(userController.updateProfile));
-router.post('/logout',            catchErrors(userAuth.logout));
+// ── Own profile (any authenticated user) ─────────────────────────────────────
+router.get('/user/me',        catchErrors(userController.me));
+router.patch('/user/profile', catchErrors(userController.updateProfile));
+router.post('/logout',        catchErrors(userAuth.logout));
 
-// ── User management (superadmin + admin) ──────────────────────────────────────
-router.get('/user/list',          catchErrors(userController.list));
-router.get('/user/read/:id',      catchErrors(userController.read));
-router.patch('/user/activate/:id',catchErrors(userController.activate));
-router.patch('/user/suspend/:id', catchErrors(userController.suspend));
-router.delete('/user/delete/:id', catchErrors(userController.delete));
+// ── User management — superadmin + admin ─────────────────────────────────────
+// #16: role-gated
+router.get('/user/list',           requireRole('superadmin', 'admin'), catchErrors(userController.list));
+router.get('/user/read/:id',       requireRole('superadmin', 'admin'), catchErrors(userController.read));
+router.patch('/user/activate/:id', requireRole('superadmin', 'admin'), catchErrors(userController.activate));
+router.patch('/user/suspend/:id',  requireRole('superadmin', 'admin'), catchErrors(userController.suspend));
+router.delete('/user/delete/:id',  requireRole('superadmin', 'admin'), catchErrors(userController.delete));
 
-// ── Superadmin only ───────────────────────────────────────────────────────────
-router.post('/user/create-admin',              catchErrors(userController.createAdmin));
-router.patch('/user/grant-plan/:id',           catchErrors(userController.grantPlan));
-router.patch('/user/admin-permissions/:id',    catchErrors(userController.updateAdminPermissions));
+// ── Superadmin ONLY ───────────────────────────────────────────────────────────
+router.post('/user/create-admin',           requireRole('superadmin'), catchErrors(userController.createAdmin));
+router.patch('/user/grant-plan/:id',        requireRole('superadmin'), catchErrors(userController.grantPlan));
+router.patch('/user/admin-permissions/:id', requireRole('superadmin'), catchErrors(userController.updateAdminPermissions));
 
 module.exports = router;

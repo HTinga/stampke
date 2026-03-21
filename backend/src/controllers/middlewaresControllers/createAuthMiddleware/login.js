@@ -1,6 +1,6 @@
 const Joi      = require('joi');
 const mongoose = require('mongoose');
-const authUser = require('./authUser');
+const { authUser } = require('./authUser');
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
 

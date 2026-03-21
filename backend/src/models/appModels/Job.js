@@ -45,4 +45,9 @@ const jobSchema = new mongoose.Schema({
 jobSchema.plugin(require('mongoose-autopopulate'));
 jobSchema.pre('save', function (next) { this.updated = Date.now(); next(); });
 
+jobSchema.index({ status: 1, removed: 1 });
+jobSchema.index({ category: 1, type: 1 });
+jobSchema.index({ postedBy: 1 });
+jobSchema.index({ created: -1 });
+
 module.exports = mongoose.model('Job', jobSchema);

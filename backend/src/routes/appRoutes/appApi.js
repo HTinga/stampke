@@ -55,3 +55,17 @@ router.get('/health', (req, res) =>
 );
 
 module.exports = router;
+
+// ── Payment gateway ───────────────────────────────────────────────────────────
+const paymentGateway = require('@/controllers/appControllers/paymentGatewayController');
+
+// Public — plans page
+router.get('/payment/plans', catchErrors(paymentGateway.getPlans));
+
+// Protected — Stripe
+router.post('/payment/stripe/checkout', catchErrors(paymentGateway.stripeCheckout));
+router.post('/payment/stripe/portal',   catchErrors(paymentGateway.stripePortal));
+
+// Protected — M-Pesa
+router.post('/payment/mpesa/stk',    catchErrors(paymentGateway.mpesaSTK));
+router.post('/payment/mpesa/status', catchErrors(paymentGateway.mpesaStatus));

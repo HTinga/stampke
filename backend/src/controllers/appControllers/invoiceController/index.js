@@ -1,3 +1,4 @@
+const sendEmail = require('@/utils/sendEmail');
 const mongoose             = require('mongoose');
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
 const { Resend }           = require('resend');
@@ -76,26 +77,14 @@ methods.sendReminder = async (req, res) => {
   if (!invoice.clientEmail)
     return res.status(400).json({ success: false, result: null, message: 'No client email on this invoice.' });
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from:    `${invoice.businessName || 'Tomo'} <noreply@tomo.ke>`,
-      to:      invoice.clientEmail,
-      subject: `Payment Reminder: ${invoice.invoiceNumber} — ${invoice.currency} ${invoice.total.toLocaleString()}`,
-      html: `
+  sendEmail({ to: invoice.clientEmail, subject: `Payment Reminder: ${invoice.invoiceNumber} — ${invoice.currency} ${invoice.total.toLocaleString()}`, html: `
         <div style="font-family:sans-serif;max-width:480px">
           <h2>Payment Reminder</h2>
           <p>Hi ${invoice.clientName},</p>
           <p>Invoice <strong>${invoice.invoiceNumber}</strong> for 
              <strong>${invoice.currency} ${invoice.total.toLocaleString()}</strong> 
              is due on <strong>${new Date(invoice.expiredDate).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.</p>
-          ${invoice.notes ? `<p>${invoice.notes}</p>` : ''}
-          <p style="color:#888;font-size:12px">Reminder #${invoice.reminderCount + 1} — sent via Tomo</p>
-        </div>`,
-    });
-  } catch (e) {
-    console.error('[Email] reminder error:', e.message);
-  }
+          ${invoice.notes ? `, from: `${invoice.businessName || 'Tomo'} <noreply@tomo.ke>` });
 
   invoice.reminderCount  += 1;
   invoice.lastReminderAt  = new Date();

@@ -1,3 +1,4 @@
+const sendEmail = require('@/utils/sendEmail');
 const mongoose             = require('mongoose');
 const createCRUDController = require('@/controllers/middlewaresControllers/createCRUDController');
 const { Resend }           = require('resend');
@@ -81,20 +82,7 @@ methods.approve = async (req, res) => {
   if (!profile)
     return res.status(404).json({ success: false, result: null, message: 'Profile not found.' });
 
-  try {
-    const workerUser = await User.findById(profile.user);
-    if (workerUser) {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from:    'Tomo Platform <noreply@tomo.ke>',
-        to:      workerUser.email,
-        subject: '[Tomo] Your worker profile is now live!',
-        html:    `<p>Hi ${workerUser.name}, your worker profile has been approved. Recruiters can now find and hire you on Tomo.</p>`,
-      });
-    }
-  } catch (e) {
-    console.error('[Email] worker approve error:', e.message);
-  }
+  sendEmail({ to: workerUser.email, subject: '[Tomo] Your worker profile is now live!', html: `<p>Hi ${workerUser.name}, your worker profile has been approved. Recruiters can now find and hire you on Tomo.</p>`, from: 'Tomo Platform <noreply@tomo.ke>' });
 
   return res.status(200).json({ success: true, result: profile, message: 'Worker approved.' });
 };

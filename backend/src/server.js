@@ -23,7 +23,11 @@ if (missing.length) {
 }
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB_URI, {
+  maxPoolSize:     10,   // issue #15 — connection pooling
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+});
 mongoose.connection.on('connected', () => console.log('✅  MongoDB connected'));
 mongoose.connection.on('error',     (e) => {
   console.error('❌  MongoDB error:', e.message);

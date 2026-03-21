@@ -1,7 +1,7 @@
+const sendEmail = require('@/utils/sendEmail');
 const mongoose = require('mongoose');
 const jwt      = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const { Resend } = require('resend');
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
 
@@ -44,17 +44,7 @@ const googleSignIn = async (req, res, { userModel }) => {
 
     // Notify owner
     if (!isOwner) {
-      try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-          from:    'Tomo Platform <noreply@tomo.ke>',
-          to:      OWNER_EMAIL,
-          subject: `[Tomo] New Google signup — ${name}`,
-          html: `<p><strong>${name}</strong> (${email}) signed up via Google. Activate in Admin Panel.</p>`,
-        });
-      } catch (e) {
-        console.error('[Email] google signup notify error:', e.message);
-      }
+      sendEmail({ to: OWNER_EMAIL, subject: `[Tomo] New Google signup — ${name}`, html: `<p><strong>${name}</strong> (${email}) signed up via Google. Activate in Admin Panel.</p>`, from: 'Tomo Platform <noreply@tomo.ke>' });
     }
   } else {
     // Existing user — link Google if not already linked

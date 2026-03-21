@@ -17,7 +17,11 @@ const { globSync } = require('glob');
 let isConnected = false;
 async function connectDB() {
   if (isConnected) return;
-  await mongoose.connect(process.env.MONGODB_URI);
+  await mongoose.connect(process.env.MONGODB_URI, {
+    maxPoolSize: 5,   // lower pool for serverless (issue #15)
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  });
   isConnected = true;
 
   // Auto-register all models

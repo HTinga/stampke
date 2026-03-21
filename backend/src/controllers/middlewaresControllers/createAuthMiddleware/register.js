@@ -1,9 +1,9 @@
+const sendEmail = require('@/utils/sendEmail');
 const bcrypt     = require('bcryptjs');
 const Joi        = require('joi');
 const mongoose   = require('mongoose');
 const shortid    = require('shortid');
 const crypto     = require('crypto');
-const { Resend } = require('resend');
 
 const OWNER_EMAIL  = process.env.OWNER_EMAIL  || 'hempstonetinga@gmail.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -63,13 +63,7 @@ const register = async (req, res, { userModel }) => {
 
   // Send verification email
   const verifyUrl = `${FRONTEND_URL}/verify-email?token=${emailVerifyToken}&id=${user._id}`;
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from:    'Tomo <noreply@tomo.ke>',
-      to:      value.email,
-      subject: 'Verify your Tomo email address',
-      html: `
+  sendEmail({ to: value.email, subject: 'Verify your Tomo email address', html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#1f6feb">Welcome to Tomo, ${value.name}!</h2>
           <p>Please verify your email address to activate your account.</p>
@@ -77,11 +71,7 @@ const register = async (req, res, { userModel }) => {
             Verify Email Address
           </a>
           <p style="color:#666;font-size:13px">Link expires in 24 hours. If you didn't create this account, ignore this email.</p>
-        </div>`,
-    });
-  } catch (e) {
-    console.error('[Email] verify email error:', e.message);
-  }
+        </div>`, from: 'Tomo <noreply@tomo.ke>' });
 
   return res.status(201).json({
     success: true,

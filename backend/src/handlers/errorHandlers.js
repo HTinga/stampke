@@ -1,4 +1,7 @@
 'use strict';
+const logger = require('@/utils/logger');
+
+'use strict';
 
 // Catch Errors Handler
 // With async/await, you need some way to catch errors.
@@ -15,12 +18,12 @@ exports.catchErrors = (fn) => {
           error,
         });
       }
+      logger.error({ message: error.message, controller: fn.name, stack: error.stack });
       return res.status(500).json({
         success: false,
         result: null,
-        message: error.message,
+        message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
         controller: fn.name,
-        error,
       });
     });
   };

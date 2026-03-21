@@ -30,7 +30,9 @@ const resetPassword = async (req, res, { userModel }) => {
     return res.status(409).json({ success: false, result: null, message: 'Account is disabled.' });
 
   if (!databasePassword.resetToken || databasePassword.resetToken !== resetToken)
-    return res.status(403).json({ success: false, result: null, message: 'Invalid or expired reset token.' });
+    return res.status(403).json({ success: false, result: null, message: 'Invalid reset token.' });
+  if (databasePassword.resetExpires && new Date() > databasePassword.resetExpires)
+    return res.status(403).json({ success: false, result: null, message: 'Reset token has expired. Please request a new one.' });
 
   const salt           = shortid.generate();
   const hashedPassword = bcrypt.hashSync(salt + password);

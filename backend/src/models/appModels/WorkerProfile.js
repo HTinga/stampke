@@ -31,4 +31,8 @@ const workerProfileSchema = new mongoose.Schema({
 workerProfileSchema.plugin(require('mongoose-autopopulate'));
 workerProfileSchema.pre('save', function (next) { this.updated = Date.now(); next(); });
 
+workerProfileSchema.index({ user: 1 }, { unique: true });
+workerProfileSchema.index({ status: 1, category: 1 });
+workerProfileSchema.index({ adminRating: -1 });
+
 module.exports = mongoose.model('WorkerProfile', workerProfileSchema);
