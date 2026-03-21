@@ -1,103 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Briefcase, Plus, Search, MapPin, Clock, ChevronRight, X, Check,
-  User, Star, Phone, Mail, Filter, Tag, Zap, Users, CheckCircle2,
-  AlertCircle, Calendar, DollarSign, Edit3, Trash2, Eye, Send,
-  ChevronDown, ChevronUp, Bookmark, Share2, Award, MoreVertical,
-  UserPlus, ThumbsUp, ThumbsDown, MessageSquare, FileText
+  Briefcase, Plus, Search, MapPin, Clock, X, Check,
+  Star, Phone, Filter, Users, CheckCircle2, DollarSign,
+  Edit3, Trash2, Eye, Send, UserPlus, ThumbsUp, ThumbsDown, FileText
 } from 'lucide-react';
-
-/* ─── TYPES ──────────────────────────────────────────────── */
-type JobType = 'quick-gig' | 'temporary' | 'permanent' | 'contract';
-type JobStatus = 'open' | 'in-progress' | 'completed' | 'cancelled';
-type ApplicantStatus = 'pending' | 'shortlisted' | 'hired' | 'rejected';
-type WorkerView = 'find-work' | 'my-gigs';
-type RecruiterView = 'post-job' | 'my-jobs' | 'find-worker';
-type ActiveView = WorkerView | RecruiterView | 'browse';
-
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  type: JobType;
-  location: string;
-  pay: string;
-  duration: string;
-  postedBy: string;
-  postedAt: string;
-  status: JobStatus;
-  applicants: Applicant[];
-  urgent: boolean;
-  skills: string[];
-}
-
-interface Applicant {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  skills: string[];
-  rating: number;
-  completedJobs: number;
-  availability: string;
-  note: string;
-  status: ApplicantStatus;
-  appliedAt: string;
-}
-
-interface WorkerProfile {
-  id: string;
-  name: string;
-  phone: string;
-  skills: string[];
-  category: string;
-  location: string;
-  rating: number;
-  completedJobs: number;
-  availability: string;
-  bio: string;
-  hourlyRate: string;
-  verified: boolean;
-}
-
-/* ─── SEED DATA ──────────────────────────────────────────── */
-const JOB_CATEGORIES = [
-  'Electrician', 'Plumber', 'Painter', 'Carpenter', 'Mason',
-  'Driver', 'Security Guard', 'Cleaner', 'Cashier', 'Waiter',
-  '3D Signage', 'Graphic Designer', 'Photographer', 'Delivery',
-  'Errands', 'Data Entry', 'Receptionist', 'Sales Agent', 'Other'
-];
-
-const TYPE_LABELS: Record<JobType, string> = {
-  'quick-gig': '⚡ Quick Gig',
-  'temporary': '📅 Temporary',
-  'permanent': '🏢 Permanent',
-  'contract': '📋 Contract',
-};
-
-const TYPE_COLORS: Record<JobType, string> = {
-  'quick-gig':  'bg-orange-500/20 text-orange-300 border-orange-500/30',
-  'temporary':  'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  'permanent':  'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-  'contract':   'bg-purple-500/20 text-purple-300 border-purple-500/30',
-};
-
-const STATUS_COLORS: Record<JobStatus, string> = {
-  'open':        'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  'in-progress': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'completed':   'bg-[#21262d] text-[#8b949e] border-[#30363d]',
-  'cancelled':   'bg-red-500/20 text-red-400 border-red-500/30',
-};
-
-const SEED_WORKERS: WorkerProfile[] = [
-  { id: 'w1', name: 'John Kamau', phone: '0712 345 678', skills: ['Electrician', 'Wiring', 'Solar'], category: 'Electrician', location: 'Nairobi CBD', rating: 4.8, completedJobs: 34, availability: 'Available now', bio: 'Licensed electrician with 7 years experience. Specialise in residential and commercial wiring.', hourlyRate: 'KES 800/hr', verified: true },
-  { id: 'w2', name: 'Grace Wanjiku', phone: '0723 456 789', skills: ['3D Signage', 'Vinyl', 'Branding'], category: '3D Signage', location: 'Industrial Area', rating: 4.9, completedJobs: 58, availability: 'Available now', bio: 'Expert in 3D signage fabrication and installation. Serving Nairobi businesses since 2018.', hourlyRate: 'KES 1,200/hr', verified: true },
-  { id: 'w3', name: 'Peter Odhiambo', phone: '0734 567 890', skills: ['Driver', 'PSV', 'Logistics'], category: 'Driver', location: 'Westlands', rating: 4.6, completedJobs: 112, availability: 'Available tomorrow', bio: 'Professional driver with PSV license. Available for deliveries, airport transfers and errands.', hourlyRate: 'KES 600/hr', verified: true },
-  { id: 'w4', name: 'Mary Njeri', phone: '0745 678 901', skills: ['Cashier', 'M-Pesa', 'Customer Service'], category: 'Cashier', location: 'Westlands', rating: 4.5, completedJobs: 22, availability: 'Available now', bio: 'Experienced cashier and shop attendant. Fast and accurate with good customer service skills.', hourlyRate: 'KES 500/hr', verified: false },
-  { id: 'w5', name: 'James Mutua', phone: '0756 789 012', skills: ['Painter', 'Interior', 'Exterior'], category: 'Painter', location: 'Kilimani', rating: 4.7, completedJobs: 41, availability: 'Available in 2 days', bio: 'Interior and exterior painter. Provide materials or I source them. Neat finish guaranteed.', hourlyRate: 'KES 700/hr', verified: true },
-  { id: 'w6', name: 'Faith Atieno', phone: '0767 890 123', skills: ['Cleaner', 'Office', 'Residential'], category: 'Cleaner', location: 'Parklands', rating: 4.4, completedJobs: 67, availability: 'Available now', bio: 'Reliable cleaner for offices and homes. Own cleaning equipment. References available.', hourlyRate: 'KES 400/hr', verified: false },
-];
+import {
+  useWorkStore, Job, WorkerProfile, Applicant, ApplicantStatus,
+  JOB_CATEGORIES, TYPE_LABELS, TYPE_COLORS, JobType
+} from '../src/workStore';
 
 /* ─── HELPERS ────────────────────────────────────────────── */
 const timeAgo = (iso: string) => {
@@ -488,8 +398,7 @@ interface WorkHubProps { initialView?: 'post-job' | 'browse' | 'find-worker' | '
 
 export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
   const [view, setView] = useState<ActiveView>(initialView);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [workers] = useState<WorkerProfile[]>(SEED_WORKERS);
+  const { jobs, workers, addJob, updateJob, deleteJob, addApplicant, updateApplicant } = useWorkStore();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [applyingJob, setApplyingJob] = useState<Job | null>(null);
@@ -519,21 +428,11 @@ export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
     setView('my-jobs');
   };
 
-  const deleteJob = (id: string) => setJobs(prev => prev.filter(j => j.id !== id));
+  
 
-  const applyToJob = (jobId: string, applicant: Applicant) => {
-    setJobs(prev => prev.map(j => j.id === jobId ? { ...j, applicants: [...j.applicants, applicant] } : j));
-    setApplyingJob(null);
-    setSelectedJob(null);
-  };
+  const applyToJob = (jobId: string, applicant: Applicant) => { addApplicant(jobId, applicant); setApplyingJob(null); setSelectedJob(null); };
 
-  const updateApplicant = (jobId: string, appId: string, status: ApplicantStatus) => {
-    setJobs(prev => prev.map(j => j.id === jobId ? {
-      ...j,
-      applicants: j.applicants.map(a => a.id === appId ? { ...a, status } : a),
-      status: status === 'hired' ? 'in-progress' : j.status,
-    } : j));
-  };
+  
 
   const hireWorker = (worker: WorkerProfile) => {
     const job = newJob();

@@ -22,6 +22,8 @@ import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
 import WorkHub from './components/WorkHub';
+import AdminPanel from './components/AdminPanel';
+import WorkerPortal from './components/WorkerPortal';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
@@ -37,11 +39,13 @@ type SubView =
   | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed'
   | 'activity-all' | 'activity-notifications'
   | 'settings-profile' | 'settings-business'
+  | 'admin-panel' | 'worker-portal'
   | 'landing';
 
 // Kept for compatibility with child components that use old tab names
 type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert' | 'apply-stamp' | 'templates' | 'qr-tracker' | 'social-hub' | 'landing' | 'smart-invoice';
 
+// Admin nav item injected below based on role
 const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any>; emoji: string }[] = [
   { id: 'home',      label: 'Home',      icon: Home,       emoji: '🏠' },
   { id: 'clients',   label: 'Clients',   icon: Users,      emoji: '👥' },
@@ -88,6 +92,8 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
   settings:  [
     { id: 'settings-profile',  label: 'Profile',       desc: 'Your account' },
     { id: 'settings-business', label: 'Business Info', desc: 'Company details' },
+    { id: 'admin-panel',       label: '⚡ Admin Panel', desc: 'Platform management (owner only)' },
+    { id: 'worker-portal',    label: '👷 Worker Portal', desc: 'Register as a worker' },
   ],
 };
 
@@ -99,6 +105,7 @@ const CREATE_ACTIONS = [
   { label: 'Sign Document',    sub: 'documents-esign' as SubView,        section: 'documents' as MainSection, emoji: '✍️' },
   { label: 'Design Stamp',     sub: 'documents-stamps' as SubView,       section: 'documents' as MainSection, emoji: '🖋️' },
   { label: 'Find Worker',      sub: 'work-find' as SubView,              section: 'work' as MainSection,      emoji: '👷' },
+  { label: 'Worker Portal',    sub: 'worker-portal' as SubView,          section: 'settings' as MainSection,  emoji: '🪪' },
 ];
 
 // ─── Placeholder view for unbuilt sections ────────────────────────────────────
@@ -146,6 +153,8 @@ const App: React.FC = () => {
       'qr-tracker':   { section: 'work',      view: 'work-my-workers' },
       'social-hub':   { section: 'clients',   view: 'clients-leads' },
       'landing':      { section: 'home',      view: 'landing' },
+      'admin':        { section: 'settings', view: 'admin-panel' },
+      'worker-portal':{ section: 'settings', view: 'worker-portal' },
     };
     const target = map[tab];
     if (target) { setActiveSection(target.section); setActiveView(target.view); }
@@ -410,7 +419,9 @@ const App: React.FC = () => {
       return <ComingSoon title={activeView === 'activity-all' ? 'All Activity' : 'Notifications'} desc="Activity logs and notifications are coming soon." emoji="📊" />;
     }
 
-    // SETTINGS
+    // SETTINGS & SPECIAL VIEWS
+    if (activeView === 'admin-panel') return <AdminPanel />;
+    if (activeView === 'worker-portal') return <WorkerPortal workerEmail={user?.email} />;
     if (activeView === 'settings-profile' || activeView === 'settings-business') {
       return <ComingSoon title={activeView === 'settings-profile' ? 'Profile' : 'Business Info'} desc="Settings are coming soon." emoji="⚙️" />;
     }
