@@ -55,6 +55,16 @@ app.post('/api/payment/stripe/webhook',
 );
 
 app.use(cookieParser());
+
+// ── Stripe webhook needs raw body (register BEFORE express.json) ──────────────
+const paymentGateway = require('./controllers/appControllers/paymentGatewayController');
+const { catchErrors } = require('./handlers/errorHandlers');
+app.post(
+  '/api/payments/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  catchErrors(paymentGateway.stripeWebhook)
+);
+
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(compression());
@@ -86,6 +96,12 @@ app.use('/api', limiter);
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 app.use('/api/forgetpassword', authLimiter);
+
+// ── Stripe webhook — raw body required BEFORE express.json ──────────────────
+app.post('/api/payments/stripe/webhook',
+  require('express').raw({ type: 'application/json' }),
+  require('./controllers/appControllers/paymentGatewayController').stripeWebhook
+);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', coreAuthRouter);

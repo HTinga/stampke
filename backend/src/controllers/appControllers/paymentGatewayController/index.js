@@ -1,208 +1,122 @@
 'use strict';
+const stripe   = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_placeholder');
 const mongoose = require('mongoose');
-const logger   = require('@/utils/logger');
+const { Resend } = require('resend');
 
-// ── Stripe ────────────────────────────────────────────────────────────────────
-const getStripe = () => {
-  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not set');
-  return require('stripe')(process.env.STRIPE_SECRET_KEY);
+const PLANS = {
+  pro:        { name: 'Professional', priceKES: 2499, stripePriceId: process.env.STRIPE_PRO_PRICE_ID },
+  enterprise: { name: 'Enterprise',   priceKES: 9999, stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID },
 };
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const INTASEND_API = process.env.INTASEND_API_KEY || '';
+const IS_SANDBOX   = process.env.NODE_ENV !== 'production';
 
-const PLAN_PRICES = {
-  pro:        process.env.STRIPE_PRICE_PRO        || 'price_pro',
-  enterprise: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise',
-};
-
-// POST /api/payment/stripe/checkout — create Stripe checkout session
 const stripeCheckout = async (req, res) => {
-  const { plan } = req.body;
-  if (!PLAN_PRICES[plan])
-    return res.status(400).json({ success: false, result: null, message: 'Invalid plan.' });
-
-  const stripe  = getStripe();
+  const { planId, email } = req.body;
+  const plan = PLANS[planId];
+  if (!plan) return res.status(400).json({ success: false, result: null, message: 'Invalid plan.' });
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_placeholder')
+    return res.status(400).json({ success: false, result: null, message: 'Stripe not configured. Contact hempstonetinga@gmail.com to upgrade.' });
   const session = await stripe.checkout.sessions.create({
-    mode:            'subscription',
-    payment_method_types: ['card'],
-    line_items: [{ price: PLAN_PRICES[plan], quantity: 1 }],
-    customer_email:  req.user.email,
-    client_reference_id: req.user._id.toString(),
-    metadata:        { userId: req.user._id.toString(), plan },
-    success_url:     `${process.env.FRONTEND_URL}?payment=success&plan=${plan}`,
-    cancel_url:      `${process.env.FRONTEND_URL}?payment=cancelled`,
+    mode: 'subscription', payment_method_types: ['card'],
+    customer_email: email || req.user.email,
+    line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+    metadata: { userId: req.user._id.toString(), planId },
+    success_url: `${FRONTEND_URL}?payment=success&plan=${planId}`,
+    cancel_url:  `${FRONTEND_URL}?payment=cancelled`,
   });
   return res.status(200).json({ success: true, result: { url: session.url }, message: 'Checkout session created.' });
 };
 
-// POST /api/payment/stripe/portal — billing portal to manage subscription
-const stripePortal = async (req, res) => {
-  const stripe = getStripe();
-  const User   = mongoose.model('User');
-  const user   = await User.findById(req.user._id);
-
-  if (!user.stripeCustomerId)
-    return res.status(400).json({ success: false, result: null, message: 'No active subscription found.' });
-
-  const session = await stripe.billingPortal.sessions.create({
-    customer:   user.stripeCustomerId,
-    return_url: process.env.FRONTEND_URL,
-  });
-  return res.status(200).json({ success: true, result: { url: session.url }, message: 'Portal session created.' });
-};
-
-// POST /api/payment/stripe/webhook — Stripe calls this after payment events
-// MUST be raw body — issue #5: signature verification
 const stripeWebhook = async (req, res) => {
-  const stripe = getStripe();
-  const sig    = req.headers['stripe-signature'];
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!secret)
-    return res.status(400).json({ success: false, result: null, message: 'Webhook secret not configured.' });
-
+  const sig = req.headers['stripe-signature'];
   let event;
-  try {
-    // req.body must be raw Buffer for signature verification (issue #5)
-    event = stripe.webhooks.constructEvent(req.body, sig, secret);
-  } catch (err) {
-    logger.warn({ message: `Stripe webhook signature failed: ${err.message}` });
-    return res.status(400).json({ success: false, result: null, message: 'Invalid signature.' });
+  try { event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET); }
+  catch (err) { return res.status(400).send('Webhook signature failed'); }
+  if (event.type === 'checkout.session.completed') {
+    const { userId, planId } = event.data.object.metadata || {};
+    if (userId && planId) {
+      const User = mongoose.model('User');
+      await User.findByIdAndUpdate(userId, { plan: planId, planActivatedAt: new Date(), stripeCustomerId: event.data.object.customer });
+    }
   }
-
-  const User = mongoose.model('User');
-
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      const userId  = session.metadata?.userId;
-      const plan    = session.metadata?.plan;
-      if (userId && plan) {
-        await User.findByIdAndUpdate(userId, {
-          plan,
-          stripeCustomerId:     session.customer,
-          stripeSubscriptionId: session.subscription,
-          planActivatedAt:      new Date(),
-        });
-        logger.info({ message: `Plan upgraded: ${plan}`, userId });
-      }
-      break;
-    }
-    case 'customer.subscription.deleted': {
-      const sub    = event.data.object;
-      const user   = await User.findOne({ stripeSubscriptionId: sub.id });
-      if (user) {
-        await User.findByIdAndUpdate(user._id, { plan: 'free', stripeSubscriptionId: null });
-        logger.info({ message: 'Subscription cancelled', userId: user._id });
-      }
-      break;
-    }
-    case 'invoice.payment_failed': {
-      logger.warn({ message: 'Stripe payment failed', customer: event.data.object.customer });
-      break;
-    }
-    default:
-      logger.debug({ message: `Unhandled Stripe event: ${event.type}` });
+  if (event.type === 'customer.subscription.deleted') {
+    const User = mongoose.model('User');
+    const user = await User.findOne({ stripeCustomerId: event.data.object.customer });
+    if (user) await User.findByIdAndUpdate(user._id, { plan: 'free' });
   }
-
-  return res.status(200).json({ received: true });
+  res.json({ received: true });
 };
 
-// ── M-Pesa (via IntaSend — Kenyan payment gateway) ────────────────────────────
-// POST /api/payment/mpesa/stk — trigger STK push to user's phone
-const mpesaSTK = async (req, res) => {
-  const { phone, amount, plan } = req.body;
-  if (!phone || !amount)
-    return res.status(400).json({ success: false, result: null, message: 'phone and amount are required.' });
-
-  if (!process.env.INTASEND_API_KEY)
-    return res.status(503).json({ success: false, result: null, message: 'M-Pesa not configured. Contact admin.' });
-
+const mpesaStkPush = async (req, res) => {
+  const { phone, amount, planId } = req.body;
+  if (!phone || !amount || !planId)
+    return res.status(400).json({ success: false, result: null, message: 'phone, amount and planId required.' });
+  if (!INTASEND_API)
+    return res.status(400).json({ success: false, result: null, message: 'M-Pesa not configured. Contact hempstonetinga@gmail.com to upgrade.' });
+  const baseUrl = IS_SANDBOX ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com';
+  const payload = {
+    currency: 'KES', amount: String(amount), phone_number: phone,
+    narrative: `Tomo ${PLANS[planId]?.name || planId} subscription`,
+    api_ref: `tomo-${req.user._id}-${planId}-${Date.now()}`,
+    callback_url: `${process.env.BACKEND_URL || FRONTEND_URL}/api/payments/mpesa/callback`,
+  };
+  const User = mongoose.model('User');
+  await User.findByIdAndUpdate(req.user._id, { 'pendingPayment.planId': planId, 'pendingPayment.phone': phone, 'pendingPayment.startedAt': new Date() });
   try {
-    const response = await fetch('https://sandbox.intasend.com/api/v1/payment/mpesa-stk-push/', {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.INTASEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        phone_number: phone.replace(/^0/, '254').replace(/^\+/, ''),
-        amount:       Number(amount),
-        narrative:    `Tomo ${plan || 'subscription'} payment`,
-        email:        req.user.email,
-        first_name:   req.user.name.split(' ')[0],
-        last_name:    req.user.name.split(' ').slice(1).join(' ') || '.',
-      }),
+    const response = await fetch(`${baseUrl}/api/v1/payment/mpesa-stk-push/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${INTASEND_API}` },
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
-
-    if (!response.ok) {
-      logger.warn({ message: 'M-Pesa STK failed', data });
-      return res.status(400).json({ success: false, result: null, message: data?.detail || 'M-Pesa push failed.' });
+    if (data.invoice?.invoice_id) {
+      await User.findByIdAndUpdate(req.user._id, { 'pendingPayment.checkoutRequestId': data.invoice.invoice_id });
+      return res.status(200).json({ success: true, result: { checkoutRequestId: data.invoice.invoice_id }, message: 'M-Pesa STK push sent.' });
     }
-
-    return res.status(200).json({
-      success: true,
-      result:  { invoiceId: data.invoice?.invoice_id, state: data.invoice?.state },
-      message: 'STK push sent. Check your phone to complete payment.',
-    });
+    return res.status(400).json({ success: false, result: null, message: data.detail || 'M-Pesa request failed.' });
   } catch (err) {
-    logger.error({ message: 'M-Pesa error', error: err.message });
     return res.status(500).json({ success: false, result: null, message: 'M-Pesa service unavailable.' });
   }
 };
 
-// POST /api/payment/mpesa/status — check STK payment status
 const mpesaStatus = async (req, res) => {
-  const { invoiceId } = req.body;
-  if (!invoiceId)
-    return res.status(400).json({ success: false, result: null, message: 'invoiceId required.' });
-
+  const { checkoutRequestId } = req.params;
+  const baseUrl = IS_SANDBOX ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com';
   try {
-    const response = await fetch(`https://sandbox.intasend.com/api/v1/payment/${invoiceId}/`, {
-      headers: { 'Authorization': `Bearer ${process.env.INTASEND_API_KEY}` },
+    const response = await fetch(`${baseUrl}/api/v1/payment/status/`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${INTASEND_API}` },
+      body: JSON.stringify({ invoice_id: checkoutRequestId }),
     });
     const data = await response.json();
-    const paid = data?.invoice?.state === 'COMPLETE';
-
-    if (paid && req.body.plan) {
+    const state = data.invoice?.state;
+    if (state === 'COMPLETE') {
       const User = mongoose.model('User');
-      await User.findByIdAndUpdate(req.user._id, { plan: req.body.plan, planActivatedAt: new Date() });
+      const user = await User.findOne({ 'pendingPayment.checkoutRequestId': checkoutRequestId });
+      if (user) {
+        const planId = user.pendingPayment?.planId;
+        await User.findByIdAndUpdate(user._id, { plan: planId, planActivatedAt: new Date(), pendingPayment: null });
+        try {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: 'Tomo <noreply@tomo.ke>', to: user.email,
+            subject: `[Tomo] M-Pesa payment confirmed — ${PLANS[planId]?.name} active!`,
+            html: `<p>Hi ${user.name}, payment received. Your <strong>${PLANS[planId]?.name}</strong> plan is now active. <a href="${FRONTEND_URL}">Open Tomo</a></p>`,
+          });
+        } catch (e) { console.error('[Email] mpesa confirm:', e.message); }
+      }
+      return res.status(200).json({ success: true, result: { status: 'paid' }, message: 'Payment confirmed.' });
     }
-
-    return res.status(200).json({
-      success: true,
-      result:  { paid, state: data?.invoice?.state },
-      message: paid ? 'Payment confirmed!' : `Status: ${data?.invoice?.state}`,
-    });
+    if (['FAILED','CANCELLED'].includes(state))
+      return res.status(200).json({ success: true, result: { status: 'failed' }, message: 'Payment failed.' });
+    return res.status(200).json({ success: true, result: { status: 'pending' }, message: 'Pending.' });
   } catch (err) {
-    return res.status(500).json({ success: false, result: null, message: 'Could not check payment status.' });
+    return res.status(200).json({ success: true, result: { status: 'pending' }, message: 'Checking...' });
   }
 };
 
-// GET /api/payment/plans — return plan pricing (public)
-const getPlans = async (req, res) => {
-  return res.status(200).json({
-    success: true,
-    result: [
-      {
-        id: 'free', name: 'Free', price: 0, currency: 'KES',
-        features: ['eSign (3/month)', 'Stamp designer', 'Basic templates'],
-        cta: 'Get Started',
-      },
-      {
-        id: 'pro', name: 'Professional', price: 2499, currency: 'KES', period: '/month',
-        stripePriceId: process.env.STRIPE_PRICE_PRO,
-        features: ['Unlimited eSign', 'Unlimited stamps', 'Smart Invoice', 'Client Manager', 'PDF Editor', 'WorkHub', 'AI Scan', 'QR Tracker'],
-        cta: 'Start 7-day trial',
-        popular: true,
-      },
-      {
-        id: 'enterprise', name: 'Enterprise', price: null, currency: 'KES',
-        features: ['Everything in Pro', 'White-label', 'Custom integrations', 'Dedicated support', 'SLA', 'Multi-team'],
-        cta: 'Contact us',
-      },
-    ],
-    message: 'Plans fetched.',
-  });
+const mpesaCallback = (req, res) => {
+  console.log('[M-Pesa Callback]', JSON.stringify(req.body));
+  res.status(200).json({ received: true });
 };
 
-module.exports = { stripeCheckout, stripePortal, stripeWebhook, mpesaSTK, mpesaStatus, getPlans };
+module.exports = { stripeCheckout, stripeWebhook, mpesaStkPush, mpesaStatus, mpesaCallback };

@@ -29,12 +29,21 @@ import AdminPanel from './components/AdminPanel';
 import ActivityLog from './components/ActivityLog';
 import SettingsPanel from './components/SettingsPanel';
 import WorkerPortal from './components/WorkerPortal';
+import JobsLandingPage from './components/JobsLandingPage';
+import TrialBanner from './components/TrialBanner';
+import SuperAdminPanel from './components/SuperAdminPanel';
+import PricingPage from './components/PricingPage';
+import PricingPage from './components/PricingPage';
+import { analyzeStampImage } from './services/geminiService';
+import { motion, AnimatePresence } from 'motion/react';
+import { useStampStore } from './src/store';
+import { useAppStats } from './src/appStatsStore';
 // ─── Navigation Model (business-owner language) ──────────────────────────────
 type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activity' | 'settings';
 type SubView =
   | 'dashboard'
   | 'clients-all' | 'clients-add' | 'clients-leads'
-  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
+  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create' | 'money-upgrade' | 'money-upgrade'
   | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
   | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
   | 'activity-all' | 'activity-notifications'
@@ -71,6 +80,8 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'money-payments', label: 'Payments',       desc: 'Payment history' },
     { id: 'money-unpaid',   label: 'Unpaid',         desc: 'Outstanding balances' },
     { id: 'money-create',   label: 'Create Invoice', desc: 'New invoice' },
+    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'Stripe & M-Pesa' },
+    { id: 'money-upgrade',  label: '⭐ Upgrade Plan',  desc: 'Stripe & M-Pesa' },
   ],
   documents: [
     { id: 'documents-create',       label: 'Create Document',    desc: 'New document or contract' },
@@ -177,6 +188,45 @@ const App: React.FC = () => {
     setIsSidebarOpen(false);
     setShowCreate(false);
   };
+
+  // Handle Stripe redirect back to app
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      const plan = params.get('plan') || 'pro';
+      window.history.replaceState({}, '', window.location.pathname);
+      if (isLoggedIn) {
+        setUser(u => u ? { ...u, plan, trialActive: false, trialDaysLeft: 0 } : u);
+        alert(`🎉 Payment successful! Your ${plan} plan is now active. Welcome to Tomo Pro!`);
+      }
+    }
+    if (params.get('payment') === 'cancelled') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [isLoggedIn]);
+
+  // Handle Stripe redirect back with ?payment=success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      const plan = params.get('plan') || 'pro';
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refresh user data from API to get updated plan
+      const token = localStorage.getItem('tomo_token');
+      if (token) {
+        const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+        fetch(`${apiUrl}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.json())
+          .then(d => {
+            if (d.success && d.result) {
+              const u = d.result;
+              setUser(prev => prev ? { ...prev, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft } : prev);
+            }
+          }).catch(() => {});
+        setTimeout(() => alert(`🎉 Payment successful! Your ${plan} plan is now active.`), 500);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('custom_stamp_templates');
@@ -341,7 +391,7 @@ const App: React.FC = () => {
       <div>
         <h3 className="text-lg font-bold text-white mb-2">Premium Feature</h3>
         <p className="text-sm text-[#8b949e] max-w-sm">{feature} requires a paid plan. Your 7-day free trial covers eSign & Stamps only.</p>
-        <p className="text-xs text-[#58a6ff] mt-3">Contact <strong>hempstonetinga@gmail.com</strong> to upgrade your plan.</p>
+        <button onClick={() => goTo('money', 'money-upgrade')} className="mt-3 px-5 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">View Plans & Upgrade</button>
       </div>
     </div>
   );
@@ -483,6 +533,10 @@ const App: React.FC = () => {
     if (activeView === 'clients-add') { if (userRole === 'business' && !canAccess('clients-add')) return renderLocked('Client Manager'); return <ClientManager initialView="add" />; }
 
     // MONEY — premium for business (free only esign+stamps)
+    if (activeView === 'money-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan} />;
+    if (activeView === 'money-upgrade') {
+      return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    }
     if (activeView === 'money-invoices' || activeView === 'money-payments' || activeView === 'money-unpaid' || activeView === 'money-create') {
       if (userRole === 'business' && !canAccess('money-invoices')) return renderLocked('Smart Invoice');
       return <SmartInvoice />;
