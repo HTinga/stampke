@@ -1,3 +1,4 @@
+import StampKELogo from './StampKELogo';
 import React, { useState, useEffect } from 'react';
 import {
   Search, MapPin, Briefcase, Clock, ChevronRight, Star,
@@ -83,8 +84,8 @@ export default function JobsLandingPage({ onSignUp, onSignIn }: JobsLandingPageP
       <header className="sticky top-0 z-50 bg-[#161b22]/90 backdrop-blur border-b border-[#30363d]">
         <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-[#1f6feb] rounded-lg flex items-center justify-center font-black text-xs">T</div>
-            <span className="font-black text-white">Tomo</span>
+            <StampKELogo size={28} />
+            <span className="font-black text-white">StampKE</span>
             <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30 ml-1">Jobs</span>
           </div>
           <div className="flex items-center gap-3">
@@ -227,7 +228,7 @@ export default function JobsLandingPage({ onSignUp, onSignIn }: JobsLandingPageP
 
       {/* Footer */}
       <footer className="border-t border-[#30363d] py-6 text-center">
-        <p className="text-xs text-[#8b949e]">© 2025 Tomo · <button onClick={onSignIn} className="hover:text-white transition-colors">Sign In</button> · <button onClick={onSignUp} className="hover:text-white transition-colors">Register</button></p>
+        <p className="text-xs text-[#8b949e]">© 2025 StampKE · <button onClick={onSignIn} className="hover:text-white transition-colors">Sign In</button> · <button onClick={onSignUp} className="hover:text-white transition-colors">Register</button></p>
       </footer>
     </div>
   );

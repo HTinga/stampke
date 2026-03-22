@@ -1,3 +1,4 @@
+import StampKELogo from './components/StampKELogo';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Home, Users, DollarSign, FileText, Briefcase, BarChart2, Settings,
@@ -197,7 +198,7 @@ const App: React.FC = () => {
       window.history.replaceState({}, '', window.location.pathname);
       if (isLoggedIn) {
         setUser(u => u ? { ...u, plan, trialActive: false, trialDaysLeft: 0 } : u);
-        alert(`🎉 Payment successful! Your ${plan} plan is now active. Welcome to Tomo Pro!`);
+        alert(`🎉 Payment successful! Your ${plan} plan is now active. Welcome to StampKE Pro!`);
       }
     }
     if (params.get('payment') === 'cancelled') {
@@ -457,7 +458,7 @@ const App: React.FC = () => {
         className="bg-[#161b22] w-full max-w-md rounded-3xl shadow-2xl border border-[#30363d] p-8 space-y-5">
         <div className="text-center">
           <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-4"><ShieldCheck size={24} /></div>
-          <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? (landingType === 'jobs' ? 'Find Work on Tomo' : 'Join Tomo') : 'Welcome Back'}</h3>
+          <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? (landingType === 'jobs' ? 'Find Work on StampKE' : 'Join StampKE') : 'Welcome Back'}</h3>
           <p className="text-[#8b949e] text-sm">{isSignUp ? (landingType === 'jobs' ? 'Create your free worker profile.' : 'Start your 7-day free trial.') : 'Sign in to your account.'}</p>
         </div>
 
@@ -727,8 +728,8 @@ const App: React.FC = () => {
       <aside className="hidden lg:flex w-56 flex-col bg-[#161b22] border-r border-[#30363d] flex-shrink-0 z-[100]">
         {/* Logo */}
         <button onClick={() => goTo('home')} className="p-5 flex items-center gap-3 hover:bg-[#21262d] transition-colors">
-          <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center"><span className="text-white font-black text-sm">T</span></div>
-          <span className="text-lg font-black tracking-tight text-white">Tomo</span>
+          <StampKELogo size={32} />
+          <span className="text-lg font-black tracking-tight text-white">StampKE</span>
         </button>
 
         {/* Main nav */}
@@ -784,8 +785,8 @@ const App: React.FC = () => {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="lg:hidden fixed inset-y-0 left-0 w-72 bg-[#161b22] border-r border-[#30363d] z-[200] flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-[#30363d]">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-[#1f6feb] rounded-lg flex items-center justify-center"><span className="text-white font-black text-xs">T</span></div>
-                  <span className="font-black text-white">Tomo</span>
+                  <StampKELogo size={28} />
+                  <span className="font-black tracking-tight text-white">StampKE</span>
                 </div>
                 <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-[#30363d] rounded-lg"><X size={18} /></button>
               </div>

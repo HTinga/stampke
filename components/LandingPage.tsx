@@ -1,3 +1,4 @@
+import StampKELogo from './StampKELogo';
 import React, { useState } from 'react';
 import {
   PenTool, CheckCircle2, FileText, Wrench, QrCode, Share2,
@@ -48,9 +49,9 @@ const PRICING = [
 ];
 
 const TESTIMONIALS = [
-  { name: 'Adv. Wanjiku Kamau',  role: 'Senior Partner, Kamau & Associates',       text: 'Tomo transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',          stars: 5, initials: 'WK', color: 'bg-[#1f6feb]' },
+  { name: 'Adv. Wanjiku Kamau',  role: 'Senior Partner, Kamau & Associates',       text: 'StampKE transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',          stars: 5, initials: 'WK', color: 'bg-[#1f6feb]' },
   { name: 'James Otieno',        role: 'Finance Director, Rift Holdings',           text: 'The bulk stamp applier alone saves us 3+ hours every week. The audit trail for our signed documents is rock solid.',                          stars: 5, initials: 'JO', color: 'bg-emerald-600' },
-  { name: 'Dr. Amina Hassan',    role: 'Registrar, Coast Technical University',     text: 'We process over 500 certificates a month. Tomo\'s batch processing and QR tracking is indispensable for our verification process.',           stars: 5, initials: 'AH', color: 'bg-purple-600' },
+  { name: 'Dr. Amina Hassan',    role: 'Registrar, Coast Technical University',     text: 'We process over 500 certificates a month. StampKE\'s batch processing and QR tracking is indispensable for our verification process.',           stars: 5, initials: 'AH', color: 'bg-purple-600' },
 ];
 
 const STATS = [
@@ -65,7 +66,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const faqs = [
-    { q: 'Is Tomo legally compliant in Kenya?',        a: 'Yes. Tomo is built to LSK (Law Society of Kenya) standards and our e-signatures comply with the Kenya Information and Communications Act and Evidence Act requirements for electronic documents.' },
+    { q: 'Is StampKE legally compliant in Kenya?',        a: 'Yes. StampKE is built to LSK (Law Society of Kenya) standards and our e-signatures comply with the Kenya Information and Communications Act and Evidence Act requirements for electronic documents.' },
     { q: 'Can I recreate my existing rubber stamp?',   a: 'Absolutely. Our AI Digitizer uses Google Gemini Vision to analyze a photo of your physical stamp and recreate it as a precise vector graphic, matching shape, font, text, and color.' },
     { q: 'How does the QR Tracker work?',              a: 'Each generated QR code links to a unique tracking page. Every time it\'s scanned, we log the timestamp, location, and device. You can view all events in real-time on your dashboard.' },
     { q: 'Can multiple team members use one account?', a: 'Professional plans include up to 5 seats. Enterprise plans support unlimited users with role-based access control (Admin, Supervisor, Staff).' },
@@ -79,10 +80,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0d1117]/95 border-b border-[#30363d] backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center shadow-lg shadow-[#1f6feb]/40">
-              <Plus size={18} className="text-white" />
-            </div>
-            <span className="text-xl font-black tracking-tighter">Tomo</span>
+            <StampKELogo size={36} />
+            <span className="text-xl font-black tracking-tighter">StampKE</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             {['Features','Pricing','Testimonials','FAQ'].map(item => (
@@ -330,7 +329,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             <div className="relative">
               <Award size={48} className="mx-auto mb-6 text-[#e6edf3]" />
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 text-white">Ready to go digital?</h2>
-              <p className="text-xl text-[#e6edf3] mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust Tomo for their digital stamp and document authority.</p>
+              <p className="text-xl text-[#e6edf3] mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust StampKE for their digital stamp and document authority.</p>
               <button onClick={onGetStarted}
                 className="bg-[#161b22] text-[#58a6ff] px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl">
                 Get Started — It's Free
@@ -344,10 +343,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
       <footer className="border-t border-[#30363d] bg-[#0d1117] py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center">
-              <Plus size={16} className="text-white" />
-            </div>
-            <span className="font-black text-lg tracking-tighter text-white">Tomo</span>
+            <StampKELogo size={32} />
+            <span className="font-black text-lg tracking-tighter text-white">StampKE</span>
           </div>
           <p className="text-[11px] font-bold uppercase tracking-widest text-[#e6edf3]">
             © 2024 JijiTechy Innovations · LSK Standards Applied · Nairobi, Kenya

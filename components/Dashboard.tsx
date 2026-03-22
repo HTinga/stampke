@@ -78,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
         <h1 className="text-2xl font-bold text-white">{greeting}, {first} 👋</h1>
         <p className="text-[#8b949e] text-sm mt-0.5">
           {totalActions === 0
-            ? "Welcome to Tomo. Start by designing a stamp or uploading a document."
+            ? "Welcome to StampKE. Start by designing a stamp or uploading a document."
             : `You've completed ${totalActions} action${totalActions !== 1 ? 's' : ''} so far.`}
         </p>
       </div>

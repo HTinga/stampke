@@ -140,7 +140,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
               <div className="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto"><Check size={28} className="text-emerald-400" /></div>
               <h3 className="font-bold text-white">Payment Successful! 🎉</h3>
               <p className="text-[#8b949e] text-sm">Your {PLANS[mpesaFlow.planId].name} plan is now active.</p>
-              <button onClick={() => window.location.reload()} className="w-full py-3 bg-[#1f6feb] text-white rounded-xl font-bold text-sm">Continue to Tomo</button>
+              <button onClick={() => window.location.reload()} className="w-full py-3 bg-[#1f6feb] text-white rounded-xl font-bold text-sm">Continue to StampKE</button>
             </>}
             {mpesaFlow.step === 'failed' && <>
               <div className="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto"><X size={28} className="text-red-400" /></div>
