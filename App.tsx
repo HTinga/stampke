@@ -151,6 +151,7 @@ const App: React.FC = () => {
   const userRole = user?.role || 'business';
   // Landing page type: 'main' = business tools, 'jobs' = worker portal
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [openedFromPDFEditor, setOpenedFromPDFEditor] = useState(false);
@@ -801,10 +802,28 @@ const App: React.FC = () => {
         {/* Bottom */}
         <div className="p-3 border-t border-[#30363d] space-y-2">
           {isLoggedIn ? (
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold">{user?.name?.charAt(0).toUpperCase()}</div>
-              <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-white truncate">{user?.name}</p><p className="text-[10px] text-[#8b949e] capitalize">{userRole}</p></div>
-              <button onClick={handleLogout} className="p-1 text-[#8b949e] hover:text-white transition-colors"><LogOut size={14} /></button>
+            <div className="space-y-1">
+              <button
+                onClick={() => setShowUserMenu(m => !m)}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-[#21262d] transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{user?.name?.charAt(0).toUpperCase()}</div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-xs font-semibold text-white truncate">{user?.name}</p>
+                  <p className="text-[10px] text-[#8b949e] capitalize">{userRole}</p>
+                </div>
+              </button>
+              <button onClick={() => { goTo('settings', 'settings-profile'); }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
+                <Settings size={13} /> Settings
+              </button>
+              <button onClick={() => { goTo('money', 'money-upgrade'); }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
+                <Receipt size={13} /> Billing
+              </button>
+              <button onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-red-400 hover:bg-red-500/10 transition-colors">
+                <LogOut size={13} /> Sign Out
+              </button>
             </div>
           ) : (
             <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="w-full flex items-center justify-center gap-2 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors">
@@ -861,6 +880,23 @@ const App: React.FC = () => {
                   </div>
                 ))}
               </nav>
+              {/* Mobile drawer bottom */}
+              {isLoggedIn && (
+                <div className="p-3 border-t border-[#30363d] space-y-1">
+                  <button onClick={() => { goTo('settings', 'settings-profile'); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
+                    <User size={15} /> My Profile
+                  </button>
+                  <button onClick={() => { goTo('money', 'money-upgrade'); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
+                    <Receipt size={15} /> Billing & Plans
+                  </button>
+                  <button onClick={() => { handleLogout(); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                    <LogOut size={15} /> Sign Out
+                  </button>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -917,11 +953,84 @@ const App: React.FC = () => {
             </button>
             {/* Notifications */}
             <button className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors"><Bell size={15} /></button>
-            {/* User */}
+            {/* User menu */}
             {isLoggedIn ? (
-              <button onClick={handleLogout} className="w-7 h-7 rounded-lg bg-[#1f6feb] flex items-center justify-center text-white text-xs font-bold" title="Log out">
-                {user?.name?.charAt(0).toUpperCase()}
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(m => !m)}
+                  className="w-8 h-8 rounded-xl bg-[#1f6feb] flex items-center justify-center text-white text-xs font-black hover:bg-[#388bfd] transition-colors ring-2 ring-[#1f6feb]/30"
+                  title="Account">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </button>
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <>
+                      <div className="fixed inset-0 z-[400]" onClick={() => setShowUserMenu(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-full mt-2 w-64 bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl z-[500] overflow-hidden">
+                        {/* User info */}
+                        <div className="px-4 py-3 border-b border-[#21262d] bg-[#0d1117]">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#1f6feb] flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+                              {user?.name?.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{user?.name}</p>
+                              <p className="text-xs text-[#8b949e] truncate">{user?.email}</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                              userRole === 'superadmin' ? 'bg-red-500/20 text-red-400' :
+                              userRole === 'admin' ? 'bg-orange-500/20 text-orange-400' :
+                              userRole === 'worker' ? 'bg-emerald-500/20 text-emerald-400' :
+                              'bg-blue-500/20 text-blue-400'
+                            }`}>{userRole}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
+                              user?.plan === 'pro' || user?.plan === 'enterprise' ? 'bg-purple-500/20 text-purple-400' :
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>{user?.plan || 'trial'}</span>
+                            {!user?.emailVerified && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">unverified</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Menu items */}
+                        <div className="p-1.5">
+                          <button onClick={() => { goTo('settings', 'settings-profile'); setShowUserMenu(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
+                            <User size={15} className="text-[#58a6ff]" /> My Profile
+                          </button>
+                          <button onClick={() => { goTo('settings', 'settings-business'); setShowUserMenu(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
+                            <Settings size={15} className="text-[#8b949e]" /> Business Settings
+                          </button>
+                          <button onClick={() => { goTo('money', 'money-upgrade'); setShowUserMenu(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
+                            <Receipt size={15} className="text-emerald-400" /> Billing & Plans
+                          </button>
+                          {(userRole === 'superadmin' || userRole === 'admin') && (
+                            <button onClick={() => { goTo('settings', 'admin-panel'); setShowUserMenu(false); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
+                              <ShieldCheck size={15} className="text-red-400" /> Admin Panel
+                            </button>
+                          )}
+                          <div className="border-t border-[#21262d] mt-1 pt-1">
+                            <button onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                              <LogOut size={15} /> Sign Out
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="px-3 py-1.5 bg-[#1f6feb] text-white rounded-xl text-xs font-bold hover:bg-[#388bfd] transition-colors">Sign In</button>
             )}
