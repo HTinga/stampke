@@ -160,4 +160,44 @@ const updateAdminPermissions = async (req, res) => {
   return res.status(200).json({ success: true, result: user, message: 'Permissions updated.' });
 };
 
-module.exports = { list, activate, suspend, delete: remove, read, updateProfile, me, createAdmin, grantPlan, updateAdminPermissions };
+
+// POST /api/user/usage — increment a free usage counter
+// body: { feature: 'esign' | 'stamp' | 'shortlist' | 'hire' }
+const trackUsage = async (req, res) => {
+  const { feature } = req.body;
+  const LIMITS = { esign: 3, stamp: 3, shortlist: 5, hire: 3 };
+  const FIELD_MAP = { esign: 'freeUsage.eSignCount', stamp: 'freeUsage.stampCount', shortlist: 'freeUsage.shortlistCount', hire: 'freeUsage.hireCount' };
+  if (!FIELD_MAP[feature]) return res.status(400).json({ success: false, result: null, message: 'Unknown feature.' });
+
+  const user = await User().findOne({ _id: req.user._id, removed: false });
+  const isPaid = ['pro','enterprise'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
+  if (isPaid) return res.status(200).json({ success: true, result: { allowed: true, remaining: 999 }, message: 'Premium user.' });
+
+  const countKey = feature === 'esign' ? 'eSignCount' : feature === 'stamp' ? 'stampCount' : feature === 'shortlist' ? 'shortlistCount' : 'hireCount';
+  const current = (user.freeUsage || {})[countKey] || 0;
+  const limit = LIMITS[feature];
+
+  if (current >= limit) {
+    return res.status(200).json({ success: true, result: { allowed: false, remaining: 0, limit }, message: `Free ${feature} limit reached (${limit}). Please upgrade.` });
+  }
+
+  // Increment
+  await User().findByIdAndUpdate(req.user._id, { $inc: { [`freeUsage.${countKey}`]: 1 } });
+  return res.status(200).json({ success: true, result: { allowed: true, remaining: limit - current - 1, limit, used: current + 1 }, message: 'Usage recorded.' });
+};
+
+// GET /api/user/usage — get current usage counts
+const getUsage = async (req, res) => {
+  const user = await User().findOne({ _id: req.user._id, removed: false });
+  const isPaid = ['pro','enterprise'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
+  const usage = user.freeUsage || {};
+  return res.status(200).json({ success: true, result: {
+    isPaid,
+    esign:     { used: usage.eSignCount     || 0, limit: 3, remaining: Math.max(0, 3 - (usage.eSignCount     || 0)) },
+    stamp:     { used: usage.stampCount     || 0, limit: 3, remaining: Math.max(0, 3 - (usage.stampCount     || 0)) },
+    shortlist: { used: usage.shortlistCount || 0, limit: 5, remaining: Math.max(0, 5 - (usage.shortlistCount || 0)) },
+    hire:      { used: usage.hireCount      || 0, limit: 3, remaining: Math.max(0, 3 - (usage.hireCount      || 0)) },
+  }, message: 'Usage fetched.' });
+};
+
+module.exports = { list, activate, suspend, delete: remove, read, updateProfile, me, createAdmin, grantPlan, updateAdminPermissions, trackUsage, getUsage };

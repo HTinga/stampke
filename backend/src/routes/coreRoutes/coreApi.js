@@ -7,6 +7,8 @@ const { requireRole, requirePermission } = require('@/middleware/roleCheck');
 
 // ── Own profile (any authenticated user) ─────────────────────────────────────
 router.get('/user/me',        catchErrors(userController.me));
+router.get('/user/usage',     catchErrors(userController.getUsage));
+router.post('/user/usage',    catchErrors(userController.trackUsage));
 router.patch('/user/profile', catchErrors(userController.updateProfile));
 router.post('/logout',        catchErrors(userAuth.logout));
 

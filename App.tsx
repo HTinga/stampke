@@ -155,6 +155,7 @@ const App: React.FC = () => {
   const [signUpName, setSignUpName] = useState('');
   const [signUpRole, setSignUpRole] = useState<'business' | 'worker'>('business');
   const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean } | null>(null);
+  const [freeUsage, setFreeUsage] = useState({ esign: { used:0, limit:3, remaining:3 }, stamp: { used:0, limit:3, remaining:3 }, shortlist: { used:0, limit:5, remaining:5 }, hire: { used:0, limit:3, remaining:3 }, isPaid: false });
   const userRole = user?.role || 'business';
   // Landing page type: 'main' = business tools, 'jobs' = worker portal
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
@@ -288,8 +289,10 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Restore session on reload — keep user on current view, never redirect to landing
+  // Restore session on reload — but NOT if user explicitly logged out
   useEffect(() => {
+    // If user deliberately logged out in this tab, don't restore
+    if (sessionStorage.getItem('logged_out') === '1') return;
     const token = localStorage.getItem('tomo_token');
     if (!token) return;
     const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
@@ -302,6 +305,10 @@ const App: React.FC = () => {
             trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
             adminPermissions: u.adminPermissions, emailVerified: u.emailVerified });
           setIsLoggedIn(true);
+          // Fetch free usage counts
+          const apiUrl2 = (import.meta as any).env?.VITE_API_URL || '';
+          fetch(`${apiUrl2}/api/user/usage`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json()).then(d => { if (d.success) setFreeUsage(d.result); }).catch(()=>{});
           // Only route if currently on landing page — otherwise keep current view
           setActiveView(v => {
             if (v !== 'landing') return v;
@@ -420,7 +427,44 @@ const App: React.FC = () => {
     setLoginError('Login failed. Please check your credentials.');
   };
 
-  const handleLogout = () => { setUser(null); setIsLoggedIn(false); setActiveView('landing'); };
+  const handleLogout = () => {
+    // Clear ALL session data so page refresh does NOT restore the session
+    localStorage.removeItem('tomo_token');
+    localStorage.removeItem('tomo_profile');
+    sessionStorage.clear();
+    setUser(null);
+    setIsLoggedIn(false);
+    setActiveSection('home');
+    setActiveView('landing');
+    setShowUserMenu(false);
+    setIsSidebarOpen(false);
+  };
+
+
+  // ── Free tier usage tracking (per user, persisted) ────────────────────────
+  const getUserUsage = () => {
+    if (!user?.email) return { esign: 0, stamp: 0, shortlist: 0, hire: 0 };
+    try { return JSON.parse(localStorage.getItem(`usage_${user.email}`) || '{}'); } catch { return {}; }
+  };
+  const bumpUsage = (key: string) => {
+    if (!user?.email) return;
+    const u = getUserUsage();
+    u[key] = (u[key] || 0) + 1;
+    localStorage.setItem(`usage_${user.email}`, JSON.stringify(u));
+  };
+  const FREE_LIMITS = { esign: 3, stamp: 3, shortlist: 5, hire: 3 };
+  const withinFreeLimit = (key: string) => {
+    if (userRole === 'superadmin' || user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive) return true;
+    const usage = getUserUsage();
+    const limit = FREE_LIMITS[key as keyof typeof FREE_LIMITS] || 0;
+    return (usage[key] || 0) < limit;
+  };
+  const usageLeft = (key: string) => {
+    if (userRole === 'superadmin' || user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive) return 999;
+    const usage = getUserUsage();
+    const limit = FREE_LIMITS[key as keyof typeof FREE_LIMITS] || 0;
+    return Math.max(0, limit - (usage[key] || 0));
+  };
 
   const handleTemplateSelect = (template: StampTemplate) => {
     setStampConfig({ ...DEFAULT_CONFIG, shape: template.shape, primaryText: template.primaryText, secondaryText: template.secondaryText || '', innerTopText: template.innerTopText || '', innerBottomText: template.innerBottomText || '', centerText: template.centerText || '', centerSubText: template.centerSubText || '', borderColor: template.borderColor, secondaryColor: template.secondaryColor || template.borderColor, fontFamily: template.fontFamily, showSignatureLine: template.showSignatureLine || false, showDateLine: template.showDateLine || false, showStars: template.showStars || false, showInnerLine: template.showInnerLine || false, innerLineOffset: template.innerLineOffset || 15, wetInk: template.wetInk || false, logoUrl: null });
@@ -478,24 +522,40 @@ const App: React.FC = () => {
       return true;
     }
     if (userRole === 'worker') return ['worker-portal','recruit-find'].includes(feature);
-    // Free forever: eSign (1 free) + Stamp Designer + Apply Stamp
-    const alwaysFree = ['sign-esign','sign-stamps','sign-applier','documents-esign','documents-stamps','documents-stamp-applier'];
-    if (alwaysFree.includes(feature)) return true;
-    // Paid plan or active trial for everything else
+    // eSign and stamps: free up to 3 uses each, then require paid plan
+    if (['sign-esign','documents-esign'].includes(feature)) return withinFreeLimit('esign');
+    if (['sign-stamps','sign-applier','documents-stamps','documents-stamp-applier'].includes(feature)) return withinFreeLimit('stamp');
+    // Recruit: free up to limits (shortlist:5, hire:3)
+    if (['recruit-find','recruit-workers'].includes(feature)) return true; // browsing always free
+    if (['recruit-active','recruit-completed','recruit-tracking'].includes(feature)) {
+      const paid = user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
+      return paid;
+    }
+    // All other features need paid plan or active trial
     const paid = user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
     return paid;
   };
 
   // ── Locked feature placeholder ──────────────────────────────────────────────
-  const renderLocked = (feature: string) => (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-5">
+  const renderLocked = (message?: string) => (
+    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-5 px-4">
       <div className="w-16 h-16 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
-      <div>
-        <h3 className="text-lg font-bold text-white mb-2">Premium Feature</h3>
-        <p className="text-sm text-[#8b949e] max-w-sm">{feature} requires a paid plan. Your 7-day free trial covers eSign & Stamps only.</p>
-        <button onClick={() => goTo('invoicing', 'invoicing-upgrade')} className="mt-3 px-5 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">View Plans & Upgrade</button>
+      <div className="max-w-sm">
+        <h3 className="text-lg font-bold text-white mb-2">
+          {message?.includes('used your') ? '🔒 Free Limit Reached' : '⚡ Premium Feature'}
+        </h3>
+        <p className="text-sm text-[#8b949e] mb-4 leading-relaxed">
+          {message || 'This feature requires a paid plan. Upgrade to unlock all StampKE tools.'}
+        </p>
+        <div className="flex flex-col gap-2">
+          <button onClick={() => goTo('invoicing', 'invoicing-upgrade')}
+            className="px-6 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
+            View Plans & Upgrade via M-Pesa or Card
+          </button>
+          <p className="text-xs text-[#8b949e]">Plans from KES 2,499/month · Cancel anytime</p>
+        </div>
       </div>
     </div>
   );
@@ -722,6 +782,7 @@ const App: React.FC = () => {
 
     // ── eSign & Stamps ──────────────────────────────────────────────────────────
     if (activeView === 'sign-esign') {
+      if (!withinFreeLimit('esign')) return renderLocked(`eSign — You've used your ${FREE_LIMITS.esign} free signatures. Upgrade to continue signing documents.`);
       return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('sign-docs', 'sign-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
     }
     if (activeView === 'sign-stamps')    return renderView_stamps();
@@ -833,7 +894,30 @@ const App: React.FC = () => {
 
     // ── Recruit & Track ──────────────────────────────────────────────────────────
     if (activeView === 'recruit-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'recruit-find' || activeView === 'work-find') return <WorkHub initialView="find-worker" />;
+    if (activeView === 'recruit-find' || activeView === 'work-find') return (
+      <WorkHub
+        initialView="find-worker"
+        shortlistsLeft={userRole === 'superadmin' || user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive ? 999 : usageLeft('shortlist')}
+        hiresLeft={userRole === 'superadmin' || user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive ? 999 : usageLeft('hire')}
+        onUpgrade={() => goTo('invoicing', 'invoicing-upgrade')}
+        onBumpShortlist={() => bumpUsage('shortlist')}
+        onBumpHire={() => bumpUsage('hire')}
+        onSendContract={(workerName, workerEmail, jobTitle) => {
+          // Open eSign with a pre-filled employment contract
+          const contractText = `EMPLOYMENT CONTRACT
+
+This contract is between the employer and ${workerName} for the role of ${jobTitle}.
+
+Date: ${new Date().toLocaleDateString('en-KE')}
+
+Terms and conditions apply as agreed between both parties.
+
+Signed:`;
+          localStorage.setItem('pending_contract', JSON.stringify({ workerName, workerEmail, jobTitle, contractText }));
+          goTo('sign-docs', 'sign-esign');
+        }}
+      />
+    );
     if (activeView === 'recruit-workers' || activeView === 'work-my-workers') return <WorkHub initialView="my-jobs" />;
     if (['recruit-active','recruit-completed','work-active','work-completed'].includes(activeView)) { if (!canAccess('recruit-active')) return renderLocked('Advanced Workforce Tools'); return <WorkHub initialView="browse" />; }
     if (activeView === 'recruit-tracking' || activeView === 'work-tracking') { if (!canAccess('recruit-tracking')) return renderLocked('GPS Tracking'); return <EmployeeTracking />; }
@@ -1147,7 +1231,12 @@ const App: React.FC = () => {
             <div className="p-5 md:p-8 min-h-full">
               <AnimatePresence mode="wait">
                 <motion.div key={activeView} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                  {renderView()}
+                  {isLoggedIn ? renderView() : (
+                    <div className="flex flex-col items-center justify-center h-64 gap-4">
+                      <p className="text-[#8b949e]">Please sign in to access this page.</p>
+                      <button onClick={() => { setIsSignUp(false); setShowLoginModal(true); }} className="px-6 py-3 bg-[#1f6feb] text-white rounded-xl font-bold text-sm hover:bg-[#388bfd] transition-colors">Sign In</button>
+                    </div>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Briefcase, Plus, Search, MapPin, Clock, X, Check,
-  Star, Phone, Filter, Users, CheckCircle2, DollarSign,
+  Star, Phone, Mail, Filter, Users, CheckCircle2, DollarSign,
   Edit3, Trash2, Eye, Send, UserPlus, ThumbsUp, ThumbsDown, FileText
 } from 'lucide-react';
 import {
@@ -75,7 +75,14 @@ const JobCard: React.FC<{ job: Job; onClick: () => void; onApply?: () => void; m
 );
 
 /* ─── WORKER CARD ────────────────────────────────────────── */
-const WorkerCard: React.FC<{ worker: WorkerProfile; onHire: () => void }> = ({ worker, onHire }) => (
+const WorkerCard: React.FC<{ 
+  worker: WorkerProfile; 
+  onShortlist: () => void; 
+  onViewAndHire: () => void;
+  isShortlisted?: boolean;
+  shortlistsLeft?: number; 
+  hiresLeft?: number;
+}> = ({ worker, onShortlist, onViewAndHire, isShortlisted = false, shortlistsLeft = 999, hiresLeft = 999 }) => (
   <div className="bg-[#161b22] border border-[#30363d] hover:border-[#58a6ff]/50 rounded-2xl p-5 transition-all hover:bg-[#1c2128]">
     <div className="flex items-start gap-3 mb-3">
       <div className="w-12 h-12 bg-[#1f6feb] rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
@@ -85,18 +92,19 @@ const WorkerCard: React.FC<{ worker: WorkerProfile; onHire: () => void }> = ({ w
         <div className="flex items-center gap-1.5 flex-wrap">
           <h3 className="font-bold text-white text-sm">{worker.name}</h3>
           {worker.verified && <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded-full">✓ Verified</span>}
+          {isShortlisted && <span className="text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 py-0.5 rounded-full">⭐ Shortlisted</span>}
         </div>
         <p className="text-xs text-[#58a6ff]">{worker.category}</p>
         <div className="flex items-center gap-3 mt-1 text-xs text-[#8b949e]">
           <span className="flex items-center gap-0.5"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {worker.rating}</span>
-          <span>{worker.completedJobs} jobs done</span>
+          <span>{worker.completedJobs} jobs</span>
           <span className="flex items-center gap-0.5"><MapPin size={10} /> {worker.location}</span>
         </div>
       </div>
     </div>
     <p className="text-xs text-[#8b949e] line-clamp-2 mb-3">{worker.bio}</p>
     <div className="flex flex-wrap gap-1 mb-3">
-      {worker.skills.map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}
+      {worker.skills.slice(0,4).map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}
     </div>
     <div className="flex items-center justify-between">
       <div>
@@ -104,12 +112,19 @@ const WorkerCard: React.FC<{ worker: WorkerProfile; onHire: () => void }> = ({ w
         <p className={`text-[10px] ${worker.availability.includes('now') ? 'text-emerald-400' : 'text-yellow-400'}`}>{worker.availability}</p>
       </div>
       <div className="flex gap-2">
-        <a href={`tel:${worker.phone}`} onClick={e => e.stopPropagation()} className="p-2 bg-[#21262d] hover:bg-[#30363d] text-[#8b949e] hover:text-white rounded-xl transition-colors" title={worker.phone}>
-          <Phone size={14} />
-        </a>
-        <button onClick={onHire} className="flex items-center gap-1.5 px-3 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white text-xs font-bold rounded-xl transition-colors">
-          <UserPlus size={13} /> Hire
-        </button>
+        {isShortlisted ? (
+          <button onClick={onViewAndHire}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors"
+            title={hiresLeft <= 0 ? 'Hire limit reached. Upgrade.' : 'View credentials & hire'}>
+            <Eye size={13} /> View & Hire {hiresLeft < 999 && `(${hiresLeft} left)`}
+          </button>
+        ) : (
+          <button onClick={onShortlist}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-colors ${shortlistsLeft > 0 ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30' : 'bg-[#21262d] text-[#8b949e] cursor-not-allowed'}`}
+            disabled={shortlistsLeft <= 0} title={shortlistsLeft <= 0 ? 'Shortlist limit reached. Upgrade.' : `Shortlist (${shortlistsLeft} left)`}>
+            <UserPlus size={13} /> {shortlistsLeft <= 0 ? '🔒 Upgrade' : `Shortlist`}
+          </button>
+        )}
       </div>
     </div>
   </div>
@@ -405,9 +420,13 @@ const ApplyModal: React.FC<{ job: Job; onApply: (a: Applicant) => void; onClose:
 };
 
 /* ─── MAIN WORK HUB ──────────────────────────────────────── */
-interface WorkHubProps { initialView?: 'post-job' | 'browse' | 'find-worker' | 'my-jobs'; }
+interface WorkHubProps { initialView?: 'post-job' | 'browse' | 'find-worker' | 'my-jobs'; shortlistsLeft?: number; hiresLeft?: number; onUpgrade?: () => void; onBumpShortlist?: () => void; onBumpHire?: () => void; onSendContract?: (workerName: string, workerEmail: string, jobTitle: string) => void; }
+interface HireModalState { worker: WorkerProfile; jobTitle: string; }
 
-export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
+export default function WorkHub({ initialView = 'browse', shortlistsLeft = 999, hiresLeft = 999, onUpgrade, onBumpShortlist, onBumpHire, onSendContract }: WorkHubProps) {
+  const [shortlisted, setShortlisted] = React.useState<Set<string>>(new Set());
+  const [hired, setHired] = React.useState<Set<string>>(new Set());
+  const [hireModal, setHireModal] = React.useState<HireModalState | null>(null);
   const [view, setView] = useState<ActiveView>(initialView);
   const { jobs, workers, addJob, updateJob, deleteJob, addApplicant, updateApplicant } = useWorkStore();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -445,16 +464,28 @@ export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
 
   
 
-  const hireWorker = (worker: WorkerProfile) => {
-    const job = newJob();
-    job.title = `Hire ${worker.name} — ${worker.category}`;
-    job.category = worker.category;
-    job.location = worker.location;
-    job.pay = worker.hourlyRate;
-    job.skills = worker.skills;
-    setEditingJob(job);
-    setView('post-job');
+  const doShortlist = (worker: WorkerProfile) => {
+    if (shortlistsLeft <= 0) { onUpgrade?.(); return; }
+    setShortlisted(s => { const n = new Set(s); n.add(worker.id); return n; });
+    onBumpShortlist?.();
   };
+
+  const doViewAndHire = (worker: WorkerProfile) => {
+    if (hiresLeft <= 0) { onUpgrade?.(); return; }
+    setHireModal({ worker, jobTitle: `${worker.category} role — ${worker.location}` });
+  };
+
+  const confirmHire = () => {
+    if (!hireModal) return;
+    const { worker, jobTitle } = hireModal;
+    setHired(h => { const n = new Set(h); n.add(worker.id); return n; });
+    onBumpHire?.();
+    onSendContract?.(worker.name, worker.phone || '', jobTitle);
+    setHireModal(null);
+  };
+
+  // Keep old for backward compat
+  const hireWorker = (worker: WorkerProfile) => doShortlist(worker);
 
   const TABS: { id: ActiveView; label: string; emoji: string }[] = [
     { id: 'browse',      label: 'Browse Jobs',  emoji: '🔍' },
@@ -525,6 +556,26 @@ export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
       {/* ── FIND WORKER ── */}
       {view === 'find-worker' && (
         <div className="space-y-4">
+          {/* Free tier usage bar */}
+          <div className="flex gap-3 flex-wrap">
+            <div className="flex-1 bg-[#161b22] border border-[#30363d] rounded-xl px-4 py-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e]">Shortlists</span>
+                <span className={`text-xs font-bold ${shortlistsLeft > 0 ? 'text-blue-400' : 'text-red-400'}`}>{shortlistsLeft < 999 ? `${shortlistsLeft} left` : 'Unlimited'}</span>
+              </div>
+              {shortlistsLeft < 999 && <div className="h-1.5 bg-[#21262d] rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${(shortlistsLeft/5)*100}%` }} /></div>}
+            </div>
+            <div className="flex-1 bg-[#161b22] border border-[#30363d] rounded-xl px-4 py-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e]">Hires</span>
+                <span className={`text-xs font-bold ${hiresLeft > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{hiresLeft < 999 ? `${hiresLeft} left` : 'Unlimited'}</span>
+              </div>
+              {hiresLeft < 999 && <div className="h-1.5 bg-[#21262d] rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${(hiresLeft/3)*100}%` }} /></div>}
+            </div>
+            {(shortlistsLeft <= 0 || hiresLeft <= 0) && onUpgrade && (
+              <button onClick={onUpgrade} className="px-4 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-black transition-colors flex-shrink-0">⚡ Upgrade</button>
+            )}
+          </div>
           <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-xl px-3 py-2.5">
             <Search size={16} className="text-[#8b949e]" />
             <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search by skill, name, location..."
@@ -532,7 +583,7 @@ export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {workers.filter(w => !searchQ || w.name.toLowerCase().includes(searchQ.toLowerCase()) || w.category.toLowerCase().includes(searchQ.toLowerCase()) || w.skills.some(s => s.toLowerCase().includes(searchQ.toLowerCase())) || w.location.toLowerCase().includes(searchQ.toLowerCase())).map(w => (
-              <WorkerCard key={w.id} worker={w} onHire={() => hireWorker(w)} />
+              <WorkerCard key={w.id} worker={w} onShortlist={() => doShortlist(w)} onViewAndHire={() => doViewAndHire(w)} isShortlisted={shortlisted.has(w.id)} shortlistsLeft={shortlistsLeft} hiresLeft={hiresLeft} />
             ))}
           </div>
         </div>
@@ -580,6 +631,63 @@ export default function WorkHub({ initialView = 'browse' }: WorkHubProps) {
       )}
       {applyingJob && (
         <ApplyModal job={applyingJob} onApply={app => applyToJob(applyingJob.id, app)} onClose={() => setApplyingJob(null)} />
+      )}
+      {/* ── Hire Modal — shows worker credentials + contract send ── */}
+      {hireModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur z-[500] flex items-end sm:items-center justify-center p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-5 border-b border-[#30363d] flex items-center justify-between">
+              <h3 className="text-base font-black text-white">Worker Credentials</h3>
+              <button onClick={() => setHireModal(null)} className="p-1 text-[#8b949e] hover:text-white"><X size={16} /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Worker details */}
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 bg-[#1f6feb] rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0">{hireModal.worker.name.charAt(0)}</div>
+                <div>
+                  <p className="font-black text-white">{hireModal.worker.name}</p>
+                  <p className="text-xs text-[#58a6ff]">{hireModal.worker.category}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {hireModal.worker.verified && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30">✓ Verified</span>}
+                  </div>
+                </div>
+              </div>
+              {/* Credentials */}
+              <div className="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-3">
+                <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-wide">Contact Details</p>
+                {hireModal.worker.phone && (
+                  <a href={`tel:${hireModal.worker.phone}`} className="flex items-center gap-2 text-sm text-white hover:text-[#58a6ff] transition-colors">
+                    <Phone size={14} className="text-[#8b949e]" /> {hireModal.worker.phone}
+                  </a>
+                )}
+                {hireModal.worker.email && (
+                  <a href={`mailto:${hireModal.worker.email}`} className="flex items-center gap-2 text-sm text-white hover:text-[#58a6ff] transition-colors">
+                    <Mail size={14} className="text-[#8b949e]" /> {hireModal.worker.email}
+                  </a>
+                )}
+              </div>
+              <div className="bg-[#0d1117] border border-[#30363d] rounded-xl p-4 space-y-2">
+                <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-wide">Profile</p>
+                <p className="text-sm text-white">{hireModal.worker.bio}</p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {hireModal.worker.skills.map(s => <span key={s} className="text-[10px] bg-[#21262d] text-[#8b949e] px-2 py-0.5 rounded-lg">{s}</span>)}
+                </div>
+                <p className="text-sm text-emerald-400 font-semibold mt-2">{hireModal.worker.hourlyRate}</p>
+              </div>
+              {/* Contract info */}
+              <div className="bg-[#1f6feb]/10 border border-[#1f6feb]/20 rounded-xl p-4">
+                <p className="text-sm font-bold text-white mb-1">📄 Auto-send Employment Contract</p>
+                <p className="text-xs text-[#8b949e]">Clicking "Hire & Send Contract" will use one eSign credit to automatically send a contract for <strong className="text-white">{hireModal.worker.name}</strong> to sign digitally.</p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setHireModal(null)} className="flex-1 py-3 border border-[#30363d] text-[#8b949e] hover:text-white rounded-xl text-sm font-bold transition-colors">Cancel</button>
+                <button onClick={confirmHire} className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-black transition-colors">
+                  ✓ Hire & Send Contract
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

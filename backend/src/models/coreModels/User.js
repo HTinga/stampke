@@ -36,7 +36,15 @@ const userSchema = new Schema({
   planActivatedAt: { type: Date },
   planGrantedBy:   { type: mongoose.Schema.ObjectId, ref: 'User' },
 
-  // Pending IntaSend payment tracking
+  // ── Free tier usage tracking ──────────────────────────────────────────────
+  freeUsage: {
+    eSignCount:     { type: Number, default: 0 },  // max 3 free
+    stampCount:     { type: Number, default: 0 },  // max 3 free
+    shortlistCount: { type: Number, default: 0 },  // max 5 free
+    hireCount:      { type: Number, default: 0 },  // max 3 free
+  },
+
+  // ── Pending IntaSend payment tracking
   pendingPayment: {
     planId:            { type: String },
     phone:             { type: String },
