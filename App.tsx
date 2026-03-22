@@ -488,7 +488,7 @@ const App: React.FC = () => {
           // Standard Google OAuth2 redirect — works in all browsers, no popup blocking
           const params = new URLSearchParams({
             client_id:     clientId,
-            redirect_uri:  window.location.origin + '/auth/google/callback',
+            redirect_uri:  window.location.origin + '/api/auth/google/callback',
             response_type: 'code',
             scope:         'openid email profile',
             access_type:   'offline',

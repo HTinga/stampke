@@ -66,8 +66,8 @@ router.post('/resend-verification', catchErrors(async (req, res) => {
   return res.status(200).json({ success: true, result: null, message: 'Verification email resent.' });
 }));
 
-// Google OAuth redirect callback — GET /auth/google/callback?code=...
+// Google OAuth redirect callback — GET /api/auth/google/callback?code=...
 // Note: this is on /auth not /api because it's a browser redirect
-router.get('/google/callback', catchErrors(googleCallback));
+router.get('/auth/google/callback', catchErrors(googleCallback));
 
 module.exports = router;

@@ -39,7 +39,9 @@ const googleCallback = async (req, res) => {
     : (stateData.signUpRole || 'business');
 
   // Determine callback URL — must exactly match what's registered in Google Console
-  const redirectUri = (process.env.BACKEND_URL || FRONTEND_URL) + '/auth/google/callback';
+  // Must exactly match what's registered in Google Console AND what the frontend sends
+  // We use /api/auth/google/callback so it routes through the Vercel /api/* function
+  const redirectUri = FRONTEND_URL + '/api/auth/google/callback';
 
   try {
     const client = new OAuth2Client({ clientId, clientSecret, redirectUri });

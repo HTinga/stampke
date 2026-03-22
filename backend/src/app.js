@@ -73,8 +73,6 @@ app.use('/api/forgetpassword', authLimiter);
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', coreAuthRouter);
-// Google OAuth redirect callback lives on /auth/google/callback (browser redirect)
-app.use('/auth', coreAuthRouter);
 app.use('/api', userAuth.isValidAuthToken, coreApiRouter);
 app.use('/api', userAuth.isValidAuthToken, appApiRouter);
 
