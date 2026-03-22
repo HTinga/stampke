@@ -67,3 +67,50 @@ export const analyzeStampImage = async (base64Image: string) => {
     };
   }
 };
+
+// Analyze an invoice/receipt image using AI to extract structured data
+export const analyzeInvoiceImage = async (base64Image: string): Promise<{
+  type: string; invoiceNumber?: string; date?: string; dueDate?: string;
+  businessName?: string; businessAddress?: string;
+  clientName?: string; clientAddress?: string;
+  items: Array<{ description: string; qty: number; unitPrice: number }>;
+  subtotal?: number; tax?: number; total?: number; currency?: string; notes?: string;
+} | null> => {
+  if (!apiKey) {
+    // Mock for dev without API key
+    return {
+      type: 'invoice', invoiceNumber: 'INV-001', date: new Date().toISOString().slice(0,10),
+      businessName: 'Scanned Business', clientName: 'Scanned Client',
+      items: [{ description: 'Services rendered', qty: 1, unitPrice: 5000 }],
+      total: 5800, tax: 800, subtotal: 5000, currency: 'KES',
+    };
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: {
+        parts: [
+          { inlineData: { data: base64Image.replace(/^data:[^;]+;base64,/, ''), mimeType: 'image/jpeg' } },
+          { text: `Extract all invoice/receipt/quotation data from this image. Return JSON with these fields:
+type (invoice/receipt/quotation), invoiceNumber, date (YYYY-MM-DD), dueDate (YYYY-MM-DD),
+businessName, businessAddress, clientName, clientAddress,
+items (array of {description, qty, unitPrice}),
+subtotal, tax, total, currency (default KES if Kenya context), notes.
+If a field is not visible, omit it. Return valid JSON only.` },
+        ],
+      },
+      config: { responseMimeType: 'application/json' },
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+    data.items = Array.isArray(data.items) ? data.items : [];
+    return data;
+  } catch (e) {
+    console.error('[AI Invoice Scan]', e);
+    return null;
+  }
+};
