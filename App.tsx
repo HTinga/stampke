@@ -34,7 +34,6 @@ import JobsLandingPage from './components/JobsLandingPage';
 import TrialBanner from './components/TrialBanner';
 import SuperAdminPanel from './components/SuperAdminPanel';
 import PricingPage from './components/PricingPage';
-import PricingPage from './components/PricingPage';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
@@ -44,7 +43,7 @@ type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activi
 type SubView =
   | 'dashboard'
   | 'clients-all' | 'clients-add' | 'clients-leads'
-  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create' | 'money-upgrade' | 'money-upgrade'
+  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create' | 'money-upgrade'
   | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
   | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
   | 'activity-all' | 'activity-notifications'
@@ -81,7 +80,6 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'money-payments', label: 'Payments',       desc: 'Payment history' },
     { id: 'money-unpaid',   label: 'Unpaid',         desc: 'Outstanding balances' },
     { id: 'money-create',   label: 'Create Invoice', desc: 'New invoice' },
-    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'M-Pesa & Card' },
     { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'M-Pesa & Card' },
   ],
   documents: [

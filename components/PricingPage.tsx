@@ -72,7 +72,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-white">{formatPrice(plan.price)}</span>
-                  {plan.price > 0 && <span className="text-[#8b949e] text-sm">{plan.period}</span>}
+                  {'period' in plan && plan.period && <span className="text-[#8b949e] text-sm">{plan.period}</span>}
                 </div>
               </div>
               <ul className="space-y-2 flex-1 mb-5">
