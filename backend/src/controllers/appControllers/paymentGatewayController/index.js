@@ -8,8 +8,9 @@ const mongoose   = require('mongoose');
 const sendEmail  = require('@/utils/sendEmail');
 
 const INTASEND_API = process.env.INTASEND_API_KEY || '';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const IS_SANDBOX   = process.env.NODE_ENV !== 'production';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
+// Use live if key is a live key, sandbox otherwise
+const IS_SANDBOX   = !INTASEND_API || INTASEND_API.includes('test') || INTASEND_API.includes('_test') || process.env.NODE_ENV === 'development';
 const BASE_URL     = IS_SANDBOX ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com';
 
 const PLANS = {

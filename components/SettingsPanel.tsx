@@ -49,7 +49,19 @@ export default function SettingsPanel({ view, user, theme, onThemeToggle, onLogo
     } catch {}
   }, []);
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
+    // Save to API first, localStorage as backup
+    const token = localStorage.getItem('tomo_token');
+    const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+    if (token) {
+      try {
+        await fetch(`${apiUrl}/api/user/profile`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ name: profile.name, phone: profile.phone, photo: profile.avatar }),
+        });
+      } catch { /* fallback to localStorage */ }
+    }
     localStorage.setItem('tomo_profile', JSON.stringify(profile));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -153,17 +165,6 @@ export default function SettingsPanel({ view, user, theme, onThemeToggle, onLogo
               className={`w-11 h-6 rounded-full transition-all ${theme === 'dark' ? 'bg-[#1f6feb]' : 'bg-[#30363d]'}`}>
               <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${theme === 'dark' ? 'translate-x-5' : ''}`} />
             </button>
-          </div>
-        </div>
-
-        {/* Demo account notice */}
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 flex items-start gap-3">
-          <AlertTriangle size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-yellow-400">Demo Mode</p>
-            <p className="text-xs text-[#8b949e] mt-0.5">
-              You're using a demo account. Profile changes are saved locally. Connect the backend to persist data across devices.
-            </p>
           </div>
         </div>
 

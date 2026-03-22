@@ -39,11 +39,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './src/store';
 import { useAppStats } from './src/appStatsStore';
 // ─── Navigation Model (business-owner language) ──────────────────────────────
-type MainSection = 'home' | 'clients' | 'money' | 'documents' | 'work' | 'activity' | 'settings';
+type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'recruit' | 'clients' | 'settings';
 type SubView =
   | 'dashboard'
   | 'clients-all' | 'clients-add' | 'clients-leads'
   | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create' | 'money-upgrade'
+  | 'invoicing-invoices' | 'invoicing-payments' | 'invoicing-unpaid' | 'invoicing-create' | 'invoicing-upgrade'
+  | 'sign-esign' | 'sign-stamps' | 'sign-applier' | 'sign-templates' | 'sign-ai-scan' | 'sign-upgrade'
+  | 'recruit-find' | 'recruit-workers' | 'recruit-active' | 'recruit-completed' | 'recruit-tracking' | 'recruit-upgrade'
+  | 'clients-upgrade'
+  | 'documents-upgrade'
   | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' | 'documents-ai-scan' | 'documents-presentation'
   | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
   | 'activity-all' | 'activity-notifications'
@@ -59,67 +64,68 @@ type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert
 
 // Admin nav item injected below based on role
 const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any>; emoji: string }[] = [
-  { id: 'home',      label: 'Home',      icon: Home,       emoji: '🏠' },
-  { id: 'clients',   label: 'Clients',   icon: Users,      emoji: '👥' },
-  { id: 'money',     label: 'Money',     icon: DollarSign, emoji: '💰' },
-  { id: 'documents', label: 'Documents', icon: FileText,   emoji: '📄' },
-  { id: 'work',      label: 'Work',      icon: Briefcase,  emoji: '👷' },
-  { id: 'activity',  label: 'Activity',  icon: BarChart2,  emoji: '📊' },
-  { id: 'settings',  label: 'Settings',  icon: Settings,   emoji: '⚙️' },
+  { id: 'home',      label: 'Home',             icon: Home,       emoji: '🏠' },
+  { id: 'sign-docs', label: 'eSign & Stamps',   icon: PenTool,    emoji: '✍️' },
+  { id: 'invoicing', label: 'Smart Invoice',    icon: Receipt,    emoji: '💰' },
+  { id: 'documents', label: 'Docs & PDF',       icon: FileText,   emoji: '📄' },
+  { id: 'recruit',   label: 'Recruit & Track',  icon: Briefcase,  emoji: '👷' },
+  { id: 'clients',   label: 'Get Clients',      icon: Users,      emoji: '👥' },
+  { id: 'settings',  label: 'Settings',         icon: Settings,   emoji: '⚙️' },
 ];
 
-const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string }[]> = {
-  home:      [],
-  clients:   [
-    { id: 'clients-all',   label: 'All Clients',    desc: 'View and manage clients' },
-    { id: 'clients-add',   label: 'Add Client',     desc: 'Add a new client' },
-    { id: 'clients-leads', label: 'Lead Tracking',  desc: 'WhatsApp, Facebook, etc.' },
+const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string; locked?: boolean }[]> = {
+  home: [],
+  'sign-docs': [
+    { id: 'sign-esign',     label: '✍️ eSign',           desc: 'Collect legally binding signatures' },
+    { id: 'sign-stamps',    label: '🖋 Stamp Designer',   desc: 'Design digital stamps' },
+    { id: 'sign-applier',   label: '📄 Apply Stamp',      desc: 'Stamp a PDF document' },
+    { id: 'sign-templates', label: '📂 Templates',        desc: 'Stamp & document templates', locked: true },
+    { id: 'sign-ai-scan',   label: '🤖 AI Scan Stamp',    desc: 'Digitize a rubber stamp with AI', locked: true },
+    { id: 'sign-upgrade',   label: '⚡ Upgrade',          desc: 'Unlock all eSign features' },
   ],
-  money:     [
-    { id: 'money-invoices', label: 'Invoices',       desc: 'All invoices' },
-    { id: 'money-payments', label: 'Payments',       desc: 'Payment history' },
-    { id: 'money-unpaid',   label: 'Unpaid',         desc: 'Outstanding balances' },
-    { id: 'money-create',   label: 'Create Invoice', desc: 'New invoice' },
-    { id: 'money-upgrade',  label: '⚡ Upgrade Plan',  desc: 'M-Pesa & Card' },
+  invoicing: [
+    { id: 'invoicing-invoices', label: '🧾 Invoices',       desc: 'All invoices' },
+    { id: 'invoicing-create',   label: '➕ New Invoice',    desc: 'Create & send invoice' },
+    { id: 'invoicing-payments', label: '💳 Payments',       desc: 'Payment history', locked: true },
+    { id: 'invoicing-unpaid',   label: '⏳ Unpaid',         desc: 'Outstanding balances', locked: true },
+    { id: 'invoicing-upgrade',  label: '⚡ Upgrade',        desc: 'Unlock full invoicing suite' },
   ],
   documents: [
-    { id: 'documents-create',       label: 'Create Document',    desc: 'New document or contract' },
-    { id: 'documents-templates',    label: 'Templates',          desc: 'Invoice, contract, letter' },
-    { id: 'documents-esign',        label: 'eSign',              desc: 'Collect signatures' },
-    { id: 'documents-stamps',       label: 'Stamps',             desc: 'Design & manage stamps' },
-    { id: 'documents-pdf',          label: 'PDF Editor',         desc: 'Edit PDF documents' },
-    { id: 'documents-stamp-applier',label: 'Apply Stamp',        desc: 'Stamp a document' },
-    { id: 'documents-presentation', label: 'Create Presentation',desc: 'PowerPoint / slides' },
-    { id: 'documents-ai-scan',      label: 'AI Stamp Scan',      desc: 'Digitize rubber stamp' },
+    { id: 'documents-create',       label: '📝 New Document',   desc: 'Contract, letter, form', locked: true },
+    { id: 'documents-pdf',          label: '📑 PDF Editor',     desc: 'Edit & fill PDF files', locked: true },
+    { id: 'documents-presentation', label: '🎨 Presentations',  desc: 'Slides & pitch decks', locked: true },
+    { id: 'documents-upgrade',      label: '⚡ Upgrade',        desc: 'Unlock all document tools' },
   ],
-  work:      [
-    { id: 'work-find',      label: 'Find Worker',   desc: 'Search for staff' },
-    { id: 'work-my-workers',label: 'My Workers',    desc: 'Your team' },
-    { id: 'work-active',    label: 'Active Jobs',   desc: 'In-progress tasks' },
-    { id: 'work-completed', label: 'Completed Jobs',desc: 'Done tasks' },
-    { id: 'work-tracking',  label: '📍 GPS Tracking', desc: 'QR check-in & GPS attendance' },
+  recruit: [
+    { id: 'recruit-find',      label: '🔍 Find Workers',   desc: 'Search vetted workers' },
+    { id: 'recruit-workers',   label: '👥 My Team',        desc: 'Workers you hired' },
+    { id: 'recruit-active',    label: '⚡ Active Errands',  desc: 'In-progress work', locked: true },
+    { id: 'recruit-completed', label: '✅ Completed',       desc: 'Done tasks & history', locked: true },
+    { id: 'recruit-tracking',  label: '📍 GPS Tracking',   desc: 'Live attendance & check-in', locked: true },
+    { id: 'recruit-upgrade',   label: '⚡ Upgrade',         desc: 'Unlock full workforce tools' },
   ],
-  activity:  [
-    { id: 'activity-all',           label: 'All Actions',    desc: 'Full activity log' },
-    { id: 'activity-notifications', label: 'Notifications',  desc: 'Alerts & updates' },
+  clients: [
+    { id: 'clients-all',     label: '👤 All Clients',     desc: 'View & manage clients', locked: true },
+    { id: 'clients-add',     label: '➕ Add Client',       desc: 'Add a new client' },
+    { id: 'clients-leads',   label: '📊 Lead Tracking',   desc: 'WhatsApp, Facebook, Instagram', locked: true },
+    { id: 'clients-upgrade', label: '⚡ Upgrade',          desc: 'Unlock full CRM suite' },
   ],
-  settings:  [
-    { id: 'settings-profile',  label: 'Profile',         desc: 'Your account' },
-    { id: 'settings-business', label: 'Business Info',   desc: 'Company details & billing' },
-    { id: 'admin-panel',       label: '⚡ Admin Panel',  desc: 'Platform management (owner only)' },
-    { id: 'worker-portal',     label: '👷 Worker Portal',desc: 'Register as a worker' },
+  settings: [
+    { id: 'settings-profile',  label: 'My Profile',       desc: 'Account details' },
+    { id: 'settings-business', label: 'Business Info',    desc: 'Company & billing details' },
+    { id: 'money-upgrade',     label: '⚡ Plans & Billing',desc: 'Upgrade your plan' },
+    { id: 'admin-panel',       label: '🛡 Admin Panel',   desc: 'Platform management' },
+    { id: 'worker-portal',     label: '👷 Worker Portal', desc: 'Find Errands profile' },
   ],
 };
 
 // ─── Create Quick-Action items ────────────────────────────────────────────────
 const CREATE_ACTIONS = [
-  { label: 'Create Invoice',   sub: 'money-create' as SubView,           section: 'money' as MainSection,     emoji: '💰' },
-  { label: 'Add Client',       sub: 'clients-add' as SubView,            section: 'clients' as MainSection,   emoji: '👥' },
-  { label: 'New Document',     sub: 'documents-create' as SubView,       section: 'documents' as MainSection, emoji: '📄' },
-  { label: 'Sign Document',    sub: 'documents-esign' as SubView,        section: 'documents' as MainSection, emoji: '✍️' },
-  { label: 'Design Stamp',     sub: 'documents-stamps' as SubView,       section: 'documents' as MainSection, emoji: '🖋️' },
-  { label: 'Find Worker',      sub: 'work-find' as SubView,              section: 'work' as MainSection,      emoji: '👷' },
-  { label: 'Worker Portal',    sub: 'worker-portal' as SubView,          section: 'settings' as MainSection,  emoji: '🪪' },
+  { label: 'Sign Document',    sub: 'sign-esign' as SubView,       section: 'sign-docs' as MainSection,  emoji: '✍️' },
+  { label: 'Design Stamp',     sub: 'sign-stamps' as SubView,      section: 'sign-docs' as MainSection,  emoji: '🖋️' },
+  { label: 'Create Invoice',   sub: 'invoicing-create' as SubView, section: 'invoicing' as MainSection,  emoji: '🧾' },
+  { label: 'Add Client',       sub: 'clients-add' as SubView,      section: 'clients' as MainSection,    emoji: '👥' },
+  { label: 'Find Worker',      sub: 'recruit-find' as SubView,     section: 'recruit' as MainSection,    emoji: '👷' },
 ];
 
 // ─── Placeholder view for unbuilt sections ────────────────────────────────────
@@ -163,18 +169,18 @@ const App: React.FC = () => {
   const navLegacy = (tab: LegacyTab | string) => {
     const map: Record<string, { section: MainSection; view: SubView }> = {
       'dashboard':    { section: 'home',      view: 'dashboard' },
-      'stamp-studio': { section: 'documents', view: 'documents-stamps' },
-      'esign':        { section: 'documents', view: 'documents-esign' },
-      'apply-stamp':  { section: 'documents', view: 'documents-stamp-applier' },
-      'convert':      { section: 'documents', view: 'documents-ai-scan' },
+      'stamp-studio': { section: 'sign-docs', view: 'sign-stamps' },
+      'esign':        { section: 'sign-docs', view: 'sign-esign' },
+      'apply-stamp':  { section: 'sign-docs', view: 'sign-applier' },
+      'convert':      { section: 'sign-docs', view: 'sign-ai-scan' },
       'pdf-forge':    { section: 'documents', view: 'documents-pdf' },
-      'templates':    { section: 'documents', view: 'documents-templates' },
-      'smart-invoice':{ section: 'money',     view: 'money-invoices' },
-      'qr-tracker':   { section: 'work',      view: 'work-my-workers' },
+      'templates':    { section: 'sign-docs', view: 'sign-templates' },
+      'smart-invoice':{ section: 'invoicing', view: 'invoicing-invoices' },
+      'qr-tracker':   { section: 'recruit',   view: 'recruit-workers' },
       'social-hub':   { section: 'clients',   view: 'clients-leads' },
       'landing':      { section: 'home',      view: 'landing' },
-      'admin':        { section: 'settings', view: 'admin-panel' },
-      'worker-portal':{ section: 'settings', view: 'worker-portal' },
+      'admin':        { section: 'settings',  view: 'admin-panel' },
+      'worker-portal':{ section: 'settings',  view: 'worker-portal' },
     };
     const target = map[tab];
     if (target) { setActiveSection(target.section); setActiveView(target.view); }
@@ -362,8 +368,9 @@ const App: React.FC = () => {
               trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
               adminPermissions: u.adminPermissions });
             setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
-            // Business owners go to home dashboard, workers go to their portal
+            // Business signup → directly to Find Workers; workers → their portal
             if (u.role === 'worker') goTo('settings', 'worker-portal');
+            else if (signUpRole === 'business') goTo('recruit', 'recruit-find');
             else goTo('home');
             return;
           }
@@ -417,7 +424,7 @@ const App: React.FC = () => {
   const handleTemplateSelect = (template: StampTemplate) => {
     setStampConfig({ ...DEFAULT_CONFIG, shape: template.shape, primaryText: template.primaryText, secondaryText: template.secondaryText || '', innerTopText: template.innerTopText || '', innerBottomText: template.innerBottomText || '', centerText: template.centerText || '', centerSubText: template.centerSubText || '', borderColor: template.borderColor, secondaryColor: template.secondaryColor || template.borderColor, fontFamily: template.fontFamily, showSignatureLine: template.showSignatureLine || false, showDateLine: template.showDateLine || false, showStars: template.showStars || false, showInnerLine: template.showInnerLine || false, innerLineOffset: template.innerLineOffset || 15, wetInk: template.wetInk || false, logoUrl: null });
     appStats.recordTemplateUsed(template.name);
-    goTo('documents', 'documents-stamps');
+    goTo('sign-docs', 'sign-stamps');
   };
 
   const downloadStamp = async (format: 'svg' | 'png' | 'pdf') => {
@@ -447,13 +454,13 @@ const App: React.FC = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
-    goTo('documents', 'documents-ai-scan');
+    goTo('sign-docs', 'sign-ai-scan');
     const reader = new FileReader();
     reader.onloadend = async () => {
       const analysis = await analyzeStampImage(reader.result as string);
       if (analysis) {
         setStampConfig(prev => ({ ...prev, shape: analysis.shape === 'OVAL' ? StampShape.OVAL : analysis.shape === 'ROUND' ? StampShape.ROUND : StampShape.RECTANGLE, primaryText: analysis.primaryText || prev.primaryText, secondaryText: analysis.secondaryText || '', centerText: analysis.centerText || '', borderColor: analysis.color || prev.borderColor }));
-        appStats.recordAiScan(); goTo('documents', 'documents-stamps');
+        appStats.recordAiScan(); goTo('sign-docs', 'sign-stamps');
       }
     };
     reader.readAsDataURL(file);
@@ -469,12 +476,13 @@ const App: React.FC = () => {
       if (['work-find','work-my-workers','work-active','work-completed'].includes(feature)) return perms.includes('jobs');
       return true;
     }
-    if (userRole === 'worker') return ['worker-portal'].includes(feature);
-    // business role — eSign + stamps always accessible (free tier shows usage counter)
-    const alwaysFree = ['documents-esign','documents-stamps','documents-templates','documents-stamp-applier'];
+    if (userRole === 'worker') return ['worker-portal','recruit-find'].includes(feature);
+    // Free forever: eSign (1 free) + Stamp Designer + Apply Stamp
+    const alwaysFree = ['sign-esign','sign-stamps','sign-applier','documents-esign','documents-stamps','documents-stamp-applier'];
     if (alwaysFree.includes(feature)) return true;
-    // All other features need paid plan or active trial
-    return user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
+    // Paid plan or active trial for everything else
+    const paid = user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
+    return paid;
   };
 
   // ── Locked feature placeholder ──────────────────────────────────────────────
@@ -486,7 +494,7 @@ const App: React.FC = () => {
       <div>
         <h3 className="text-lg font-bold text-white mb-2">Premium Feature</h3>
         <p className="text-sm text-[#8b949e] max-w-sm">{feature} requires a paid plan. Your 7-day free trial covers eSign & Stamps only.</p>
-        <button onClick={() => goTo('money', 'money-upgrade')} className="mt-3 px-5 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">View Plans & Upgrade</button>
+        <button onClick={() => goTo('invoicing', 'invoicing-upgrade')} className="mt-3 px-5 py-2.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">View Plans & Upgrade</button>
       </div>
     </div>
   );
@@ -606,38 +614,122 @@ const App: React.FC = () => {
 
   // ─── MAIN APP SHELL ───────────────────────────────────────────────────────
 
+  // Extract complex views as inline helpers for readability
+  const renderView_stamps = () => {
+    const openedFrom = openedFromSignCenter ? 'sign-center' : openedFromPDFEditor ? 'pdf' : null;
+    return (
+      <div className="h-full flex flex-col -m-5 md:-m-8" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        <div className="flex items-center justify-between px-5 md:px-8 py-4 border-b border-[#30363d] bg-[#0d1117] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-[#1f6feb] rounded-xl flex items-center justify-center"><PenTool size={17} className="text-white" /></div>
+            <div><h2 className="text-base font-bold text-white">Stamp Studio</h2><p className="text-xs text-[#8b949e] hidden sm:block">Design · Export · Apply</p></div>
+          </div>
+          <div className="flex items-center gap-2">
+            {openedFrom === 'sign-center' && <button onClick={() => { goTo('sign-docs','sign-esign'); setOpenedFromSignCenter(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to Sign</button>}
+            {openedFrom === 'pdf' && <button onClick={() => { goTo('sign-docs','sign-applier'); setOpenedFromPDFEditor(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to PDF</button>}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <div className="lg:order-2 flex-1 lg:flex-none lg:w-[60%] xl:w-[65%] bg-[#0d1117] flex flex-col border-b lg:border-b-0 lg:border-l border-[#30363d]">
+            <div className="relative flex items-center justify-center p-8 lg:p-16 flex-1 flex-shrink-0" style={{ background:'radial-gradient(ellipse at center, #041628 0%, #020b18 70%)' }}>
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage:'radial-gradient(circle, #4d93d9 1px, transparent 1px)', backgroundSize:'28px 28px' }} />
+              <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96 xl:w-[420px] xl:h-[420px] flex items-center justify-center">
+                <div className="absolute inset-0 rounded-3xl border border-dashed border-[#58a6ff]/40" />
+                <SVGPreview config={stampConfig} ref={svgRef} onUpdateConfig={(u) => setStampConfig(prev => ({ ...prev, ...u }))} />
+              </div>
+            </div>
+            <div className="px-5 pb-4 flex-shrink-0 border-t border-[#30363d] pt-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Export As</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[{format:'svg' as const,Icon:FileType,label:'SVG',desc:'Vector',color:'text-[#58a6ff] hover:bg-[#30363d] hover:border-[#58a6ff]'},{format:'png' as const,Icon:ImageIcon,label:'PNG',desc:'2000px',color:'text-emerald-400 hover:bg-emerald-900/30 hover:border-emerald-500'},{format:'pdf' as const,Icon:FileIcon,label:'PDF',desc:'Print',color:'text-orange-400 hover:bg-orange-900/20 hover:border-orange-500'}].map(({format,Icon,label,desc,color})=>(
+                  <button key={format} onClick={()=>downloadStamp(format)} className={`flex flex-col items-center gap-1 py-3 rounded-xl border border-[#30363d] bg-[#161b22] transition-all ${color} active:scale-95`}>
+                    <Icon size={18}/><span className="text-[11px] font-bold">{label}</span><span className="text-[9px] text-[#8b949e]">{desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="px-5 pb-5 flex-shrink-0 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={()=>{appStats.recordStampCreated(`${stampConfig.primaryText} stamp`);goTo('sign-docs','sign-applier');}} className="flex items-center justify-center gap-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><FileText size={14}/>Apply to PDF</button>
+                <button onClick={()=>{setOpenedFromSignCenter(true);goTo('sign-docs','sign-esign');}} className="flex items-center justify-center gap-1.5 bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><Layers size={14} className="text-[#58a6ff]"/>eSign</button>
+              </div>
+              <button onClick={handleSaveTemplate} disabled={!isLoggedIn} className="w-full flex items-center justify-center gap-1.5 bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-[#8b949e] py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-40"><Save size={14}/>{isLoggedIn?'Save Template':'Sign in to Save'}</button>
+            </div>
+          </div>
+          <div className="lg:order-1 flex-shrink-0 lg:w-[40%] xl:w-[35%] overflow-y-auto bg-[#161b22]" style={{scrollbarWidth:'thin'}}>
+            <div className="p-3 md:p-4 space-y-1">
+              <div className="mb-3"><h3 className="text-sm font-bold text-white">Stamp Configuration</h3><p className="text-xs text-[#8b949e]">Every change updates the preview instantly</p></div>
+              <EditorControls config={stampConfig} onChange={(u)=>setStampConfig(prev=>({...prev,...u}))} isLoggedIn={isLoggedIn} onSaveTemplate={handleSaveTemplate}/>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderView_aiScan = () => (
+    <div className="max-w-3xl mx-auto py-10 text-center">
+      <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-6"><Camera size={32} className="text-white"/></div>
+      <h2 className="text-3xl font-black text-white mb-3">AI Stamp Digitizer</h2>
+      <p className="text-[#8b949e] mb-10">Photograph your old rubber stamp — AI recreates it as a perfect digital vector in seconds.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
+          <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10"/>
+          <ImageIcon size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors"/>
+          <p className="font-bold text-white mb-1">Upload Photo</p><p className="text-xs text-[#8b949e]">Select from device</p>
+        </label>
+        <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
+          <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10"/>
+          <Camera size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors"/>
+          <p className="font-bold text-white mb-1">Live Camera</p><p className="text-xs text-[#8b949e]">Take a photo now</p>
+        </label>
+      </div>
+    </div>
+  );
+
   const renderView = () => {
     // HOME
     if (activeView === 'dashboard' || activeSection === 'home') {
       return <Dashboard userName={user?.name} onNavigate={navLegacy as any} theme={theme} />;
     }
 
-    // CLIENTS
-    if (activeView === 'clients-leads') return <SocialHub />;
-    if (activeView === 'clients-all') { if (userRole === 'business' && !canAccess('clients-all')) return renderLocked('Client Manager'); return <ClientManager initialView="all" />; }
-    if (activeView === 'clients-add') { if (userRole === 'business' && !canAccess('clients-add')) return renderLocked('Client Manager'); return <ClientManager initialView="add" />; }
+    // ── Get Clients ──────────────────────────────────────────────────────────────
+    if (activeView === 'clients-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'clients-leads') { if (!canAccess('clients-leads')) return renderLocked('Lead Tracking'); return <SocialHub />; }
+    if (activeView === 'clients-all') { if (!canAccess('clients-all')) return renderLocked('Client CRM'); return <ClientManager initialView="all" />; }
+    if (activeView === 'clients-add') return <ClientManager initialView="add" />;
 
-    // MONEY — premium for business (free only esign+stamps)
-    if (activeView === 'money-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'money-invoices' || activeView === 'money-payments' || activeView === 'money-unpaid' || activeView === 'money-create') {
-      if (userRole === 'business' && !canAccess('money-invoices')) return renderLocked('Smart Invoice');
+    // ── Smart Invoice ────────────────────────────────────────────────────────────
+    if (activeView === 'invoicing-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (['invoicing-invoices','invoicing-payments','invoicing-unpaid','invoicing-create',
+         'money-invoices','money-payments','money-unpaid','money-create'].includes(activeView)) {
+      if (!canAccess('invoicing')) return renderLocked('Smart Invoice & Payments');
       return <SmartInvoice />;
     }
 
-    // DOCUMENTS
-    if (activeView === 'documents-esign') {
-      return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('documents', 'documents-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
+    // ── eSign & Stamps ──────────────────────────────────────────────────────────
+    if (activeView === 'sign-esign') {
+      return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('sign-docs', 'sign-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
     }
-    if (activeView === 'documents-pdf') { if (userRole === 'business' && !canAccess('documents-pdf')) return renderLocked('PDF Editor'); return <PDFTools />; }
+    if (activeView === 'sign-stamps')    return renderView_stamps();
+    if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} />;
+    if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Stamp Templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
+    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer'); return renderView_aiScan(); }
+    if (activeView === 'sign-upgrade')  return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+
+    // ── Docs & PDF ───────────────────────────────────────────────────────────────
+    if (activeView === 'documents-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor'); return <PDFTools />; }
     if (activeView === 'documents-stamp-applier') {
-      return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('documents', 'documents-stamps'); }} />;
+      return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('sign-docs', 'sign-stamps'); }} />;
     }
     if (activeView === 'documents-templates') {
       return (
         <div className="max-w-5xl mx-auto py-6">
           <h2 className="text-2xl font-bold text-white mb-1">Your Templates</h2>
           <p className="text-[#8b949e] text-sm mb-8">Saved stamp templates — ready to use.</p>
-          <TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} onCreateNew={() => goTo('documents', 'documents-stamps')} />
+          <TemplateLibrary onSelect={handleTemplateSelect} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs', 'sign-stamps')} />
         </div>
       );
     }
@@ -680,8 +772,8 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {openedFromSignCenter && <button onClick={() => { goTo('documents', 'documents-esign'); setOpenedFromSignCenter(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to Sign</button>}
-              {openedFromPDFEditor && <button onClick={() => { goTo('documents', 'documents-stamp-applier'); setOpenedFromPDFEditor(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to PDF</button>}
+              {openedFromSignCenter && <button onClick={() => { goTo('sign-docs', 'sign-esign'); setOpenedFromSignCenter(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to Sign</button>}
+              {openedFromPDFEditor && <button onClick={() => { goTo('sign-docs', 'sign-applier'); setOpenedFromPDFEditor(false); }} className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors"><CheckCircle2 size={14} /> Return to PDF</button>}
             </div>
           </div>
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -709,11 +801,11 @@ const App: React.FC = () => {
               </div>
               <div className="px-5 pb-5 flex-shrink-0 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp`); goTo('documents', 'documents-stamp-applier'); }} className="flex items-center justify-center gap-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><FileText size={14} /> Apply to PDF</button>
-                  <button onClick={() => { setOpenedFromSignCenter(true); goTo('documents', 'documents-esign'); }} className="flex items-center justify-center gap-1.5 bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><Layers size={14} className="text-[#58a6ff]" /> eSign</button>
+                  <button onClick={() => { appStats.recordStampCreated(`${stampConfig.primaryText} stamp`); goTo('sign-docs', 'sign-applier'); }} className="flex items-center justify-center gap-1.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><FileText size={14} /> Apply to PDF</button>
+                  <button onClick={() => { setOpenedFromSignCenter(true); goTo('sign-docs', 'sign-esign'); }} className="flex items-center justify-center gap-1.5 bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-white py-2.5 rounded-xl text-xs font-bold transition-colors"><Layers size={14} className="text-[#58a6ff]" /> eSign</button>
                 </div>
                 <button onClick={handleSaveTemplate} disabled={!isLoggedIn} className="w-full flex items-center justify-center gap-1.5 bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-[#8b949e] py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-40"><Save size={14} /> {isLoggedIn ? 'Save Template' : 'Sign in to Save'}</button>
-                <button onClick={() => goTo('documents', 'documents-ai-scan')} className="w-full flex items-center justify-center gap-1.5 border border-[#30363d] hover:border-[#30363d] text-[#8b949e] py-2 rounded-xl text-xs font-medium transition-colors"><Camera size={13} /> AI Scan Existing Stamp</button>
+                <button onClick={() => goTo('sign-docs', 'sign-ai-scan')} className="w-full flex items-center justify-center gap-1.5 border border-[#30363d] hover:border-[#30363d] text-[#8b949e] py-2 rounded-xl text-xs font-medium transition-colors"><Camera size={13} /> AI Scan Existing Stamp</button>
               </div>
             </div>
             <div className="lg:order-1 flex-shrink-0 lg:w-[40%] xl:w-[35%] overflow-y-auto bg-[#161b22]" style={{ scrollbarWidth: 'thin' }}>
@@ -727,11 +819,12 @@ const App: React.FC = () => {
       );
     }
 
-    // WORK — WorkHub handles all work sub-views
-    if (activeView === 'work-find') return <WorkHub initialView="find-worker" />;
-    if (activeView === 'work-my-workers') return <WorkHub initialView="my-jobs" />;
-    if (activeView === 'work-active' || activeView === 'work-completed') return <WorkHub initialView="browse" />;
-    if (activeView === 'work-tracking') return <EmployeeTracking />;
+    // ── Recruit & Track ──────────────────────────────────────────────────────────
+    if (activeView === 'recruit-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'recruit-find' || activeView === 'work-find') return <WorkHub initialView="find-worker" />;
+    if (activeView === 'recruit-workers' || activeView === 'work-my-workers') return <WorkHub initialView="my-jobs" />;
+    if (['recruit-active','recruit-completed','work-active','work-completed'].includes(activeView)) { if (!canAccess('recruit-active')) return renderLocked('Advanced Workforce Tools'); return <WorkHub initialView="browse" />; }
+    if (activeView === 'recruit-tracking' || activeView === 'work-tracking') { if (!canAccess('recruit-tracking')) return renderLocked('GPS Tracking'); return <EmployeeTracking />; }
 
     // ACTIVITY
     if (activeView === 'activity-all' || activeView === 'activity-notifications') {
@@ -758,24 +851,11 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-white">
-      {/* Email verification reminder — non-blocking, just informative */}
+      {/* Email verification reminder — shown only if unverified, dismissible */}
       {isLoggedIn && user && !user.emailVerified && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-xs">
-          <p className="text-yellow-300">📧 Please verify your email — check your inbox for the verification link.</p>
-          <button
-            onClick={async () => {
-              const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
-              await fetch(`${apiUrl}/api/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email }) });
-              alert('Verification email resent! Check your inbox.');
-            }}
-            className="flex-shrink-0 text-yellow-300 hover:text-white underline">
-            Resend
-          </button>
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-[#1f6feb]/10 border-b border-[#1f6feb]/20 text-xs">
+          <span className="text-[#58a6ff]">📧 Check your email to verify your account.</span>
         </div>
-      )}
-      {/* Trial banner */}
-      {isLoggedIn && userRole === 'business' && (user?.trialActive || user?.plan === 'trial') && (
-        <TrialBanner daysLeft={user?.trialDaysLeft || 0} />
       )}
       <div className="flex flex-1 overflow-hidden">
 
@@ -816,7 +896,7 @@ const App: React.FC = () => {
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
                 <Settings size={13} /> Settings
               </button>
-              <button onClick={() => { goTo('money', 'money-upgrade'); }}
+              <button onClick={() => { goTo('invoicing', 'invoicing-upgrade'); }}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
                 <Receipt size={13} /> Billing
               </button>
@@ -840,12 +920,17 @@ const App: React.FC = () => {
             <p className="text-[10px] font-black uppercase tracking-widest text-[#8b949e]">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</p>
           </div>
           <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {subItems.map(item => (
-              <button key={item.id} onClick={() => { setActiveView(item.id); }}
-                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all ${activeView === item.id ? 'bg-[#21262d] text-white font-semibold' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
-                {item.label}
-              </button>
-            ))}
+            {subItems.map(item => {
+              const isLocked = (item as any).locked && !canAccess(item.id);
+              return (
+                <button key={item.id}
+                  onClick={() => { setActiveView(item.id as SubView); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between gap-1 ${activeView === item.id ? 'bg-[#21262d] text-white font-semibold' : isLocked ? 'text-[#8b949e]/60 hover:bg-[#21262d]/50' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
+                  <span>{item.label}</span>
+                  {isLocked && <span className="text-[10px] text-[#8b949e]/60 flex-shrink-0">🔒</span>}
+                </button>
+              );
+            })}
           </nav>
         </aside>
       )}
@@ -887,7 +972,7 @@ const App: React.FC = () => {
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
                     <User size={15} /> My Profile
                   </button>
-                  <button onClick={() => { goTo('money', 'money-upgrade'); setIsSidebarOpen(false); }}
+                  <button onClick={() => { goTo('invoicing', 'invoicing-upgrade'); setIsSidebarOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
                     <Receipt size={15} /> Billing & Plans
                   </button>
@@ -1009,7 +1094,7 @@ const App: React.FC = () => {
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
                             <Settings size={15} className="text-[#8b949e]" /> Business Settings
                           </button>
-                          <button onClick={() => { goTo('money', 'money-upgrade'); setShowUserMenu(false); }}
+                          <button onClick={() => { goTo('invoicing', 'invoicing-upgrade'); setShowUserMenu(false); }}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
                             <Receipt size={15} className="text-emerald-400" /> Billing & Plans
                           </button>
