@@ -22,7 +22,7 @@ exports.catchErrors = (fn) => {
       return res.status(500).json({
         success: false,
         result: null,
-        message: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
+        message: error.message,  // always show real error
         controller: fn.name,
       });
     });

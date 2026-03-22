@@ -1,31 +1,38 @@
 // api/index.js — Vercel Serverless Function
-// All backend packages live in backend/node_modules — require them by path
+'use strict';
 
-const path = require('path');
+const path            = require('path');
+const BACKEND_MODULES = path.join(__dirname, '../backend/node_modules');
+const BACKEND_SRC     = path.join(__dirname, '../backend/src');
 
-// Step 1: Tell module-alias where @ points BEFORE any backend require
+// ── Step 1: Add backend/node_modules to Node's search path FIRST ─────────────
+// Must happen before ANY require() that needs backend packages
+process.env.NODE_PATH = BACKEND_MODULES;
+require('module').Module._initPaths();
+
+// ── Step 2: Set up @/ alias ───────────────────────────────────────────────────
 const moduleAlias = require('module-alias');
-moduleAlias.addAlias('@', path.join(__dirname, '../backend/src'));
+moduleAlias.addAlias('@', BACKEND_SRC);
 
-// Step 2: Require mongoose from BACKEND node_modules (not root)
-const mongoose = require(path.join(__dirname, '../backend/node_modules/mongoose'));
+// ── Step 3: Now we can require backend packages normally ──────────────────────
+const mongoose = require('mongoose');
 
 let isConnected = false;
 
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) return;
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is not set');
+  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI env var not set');
 
   await mongoose.connect(process.env.MONGODB_URI, {
-    maxPoolSize: 3,
+    maxPoolSize:              3,
     serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 10000,
+    socketTimeoutMS:          45000,
+    connectTimeoutMS:         10000,
   });
   isConnected = true;
 
-  // Register models explicitly from backend paths
-  const modelPaths = [
+  // Register models
+  [
     '../backend/src/models/coreModels/User',
     '../backend/src/models/coreModels/UserPassword',
     '../backend/src/models/coreModels/Setting',
@@ -34,39 +41,27 @@ async function connectDB() {
     '../backend/src/models/appModels/Payment',
     '../backend/src/models/appModels/Job',
     '../backend/src/models/appModels/WorkerProfile',
-  ];
-  for (const m of modelPaths) {
-    try { require(path.join(__dirname, m)); } catch (_) { /* already loaded */ }
-  }
+  ].forEach(m => { try { require(path.join(__dirname, m)); } catch (_) {} });
 }
 
-// Cache the Express app across warm invocations
+// Cache Express app
 let app;
 function getApp() {
-  if (!app) {
-    // Tell Node to find all backend requires in backend/node_modules
-    // by prepending it to the module lookup path
-    const backendNodeModules = path.join(__dirname, '../backend/node_modules');
-    if (!require.resolve.paths('express').includes(backendNodeModules)) {
-      process.env.NODE_PATH = backendNodeModules;
-      require('module').Module._initPaths();
-    }
-    app = require('../backend/src/app');
-  }
+  if (!app) app = require('../backend/src/app');
   return app;
 }
 
+// Vercel handler
 module.exports = async (req, res) => {
   try {
     await connectDB();
     return getApp()(req, res);
   } catch (err) {
-    console.error('[Serverless crash]', err.message, '\n', err.stack);
+    console.error('[Serverless]', err.message, err.stack);
     if (!res.headersSent) {
       res.status(500).json({
-        success: false,
-        result:  null,
-        message: 'Server error — ' + err.message,
+        success: false, result: null,
+        message: err.message,   // always show real error
       });
     }
   }
