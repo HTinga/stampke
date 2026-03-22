@@ -30,6 +30,7 @@ import AdminPanel from './components/AdminPanel';
 import ActivityLog from './components/ActivityLog';
 import SettingsPanel from './components/SettingsPanel';
 import WorkerPortal from './components/WorkerPortal';
+import WorkerApp from './components/WorkerApp';
 import JobsLandingPage from './components/JobsLandingPage';
 import TrialBanner from './components/TrialBanner';
 import SuperAdminPanel from './components/SuperAdminPanel';
@@ -579,6 +580,17 @@ const App: React.FC = () => {
       </motion.div>
     </div>
   );
+  // ─── WORKER APP — completely separate, no SaaS UI ──────────────────────────
+  if (isLoggedIn && userRole === 'worker') {
+    return (
+      <WorkerApp
+        user={user}
+        token={localStorage.getItem('tomo_token')}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   // ─── LANDING PAGE ROUTER ────────────────────────────────────────────────────
   if (activeView === 'landing') {
     // Jobs landing for workers
