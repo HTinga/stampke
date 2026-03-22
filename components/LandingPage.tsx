@@ -8,6 +8,7 @@ import {
 
 interface LandingPageProps {
   onGetStarted: () => void;
+  onSignIn?: () => void;
   theme?: 'light' | 'dark';
 }
 
@@ -59,7 +60,7 @@ const STATS = [
   { value: '4,200+',  label: 'Active Users',      icon: Users },
 ];
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -89,6 +90,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             ))}
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={onSignIn || onGetStarted}
+              className="hidden md:block text-[#8b949e] hover:text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
+              Sign In
+            </button>
             <button onClick={onGetStarted}
               className="hidden md:block bg-[#1f6feb] text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#388bfd] transition-all shadow-lg shadow-[#1f6feb]/30">
               Get Started Free
@@ -103,7 +108,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             {['Features','Pricing','Testimonials','FAQ'].map(item => (
               <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold py-2 text-[#e6edf3]">{item}</a>
             ))}
-            <button onClick={onGetStarted} className="w-full bg-[#1f6feb] text-white py-3 rounded-xl font-bold text-sm mt-2">Get Started Free</button>
+            <button onClick={onSignIn || onGetStarted} className="w-full bg-[#21262d] border border-[#30363d] text-white py-3 rounded-xl font-bold text-sm">Sign In</button>
+            <button onClick={onGetStarted} className="w-full bg-[#1f6feb] text-white py-3 rounded-xl font-bold text-sm">Get Started Free</button>
           </div>
         )}
       </nav>

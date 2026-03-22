@@ -548,7 +548,7 @@ const App: React.FC = () => {
     }
     return (
       <>
-        <LandingPage onGetStarted={() => { if (isLoggedIn) goTo('home'); else { setIsSignUp(true); setShowLoginModal(true); } }} theme={theme} />
+        <LandingPage onGetStarted={() => { if (isLoggedIn) goTo('home'); else { setIsSignUp(true); setShowLoginModal(true); } }} onSignIn={() => { setIsSignUp(false); setShowLoginModal(true); }} theme={theme} />
         {/* Jobs portal link */}
         <div className="fixed bottom-4 right-4 z-50">
           <button onClick={() => setLandingType('jobs')}
@@ -577,10 +577,7 @@ const App: React.FC = () => {
     if (activeView === 'clients-add') { if (userRole === 'business' && !canAccess('clients-add')) return renderLocked('Client Manager'); return <ClientManager initialView="add" />; }
 
     // MONEY — premium for business (free only esign+stamps)
-    if (activeView === 'money-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan} />;
-    if (activeView === 'money-upgrade') {
-      return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    }
+    if (activeView === 'money-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (activeView === 'money-invoices' || activeView === 'money-payments' || activeView === 'money-unpaid' || activeView === 'money-create') {
       if (userRole === 'business' && !canAccess('money-invoices')) return renderLocked('Smart Invoice');
       return <SmartInvoice />;
