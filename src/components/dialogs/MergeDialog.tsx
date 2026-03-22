@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useCallback } from 'react';
 import { mergePDFs, downloadPDF, insertPagesFromPDF } from '../../utils/pdfUtils';
 import './MergeDialog.css';

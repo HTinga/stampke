@@ -8,6 +8,7 @@ interface OutlinePanelProps {
 }
 
 interface OutlineItemProps {
+  key?: string;
   item: Outline;
   level: number;
   onPageSelect: (page: number) => void;

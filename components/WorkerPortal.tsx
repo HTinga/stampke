@@ -41,7 +41,7 @@ const ProfileForm: React.FC<{ initial?: Partial<WorkerProfile>; onSave: (p: Work
     files.forEach(f => {
       const reader = new FileReader();
       reader.onloadend = () => upd({ portfolioFiles: [...(form.portfolioFiles || []), reader.result as string] });
-      reader.readAsDataURL(f);
+      reader.readAsDataURL(f as File);
     });
   };
 

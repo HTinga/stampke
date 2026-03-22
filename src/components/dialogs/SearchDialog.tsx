@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useSearchStore } from '../../store';

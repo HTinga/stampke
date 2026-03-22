@@ -1,3 +1,4 @@
+import React from 'react';
 import * as z from "zod";
 /**
  * Zod Schema for the slide content.

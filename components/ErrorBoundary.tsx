@@ -1,34 +1,33 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 
-interface Props { children: React.ReactNode; fallback?: React.ReactNode; }
-interface State { hasError: boolean; error?: Error; }
+interface EBProps { children: React.ReactNode; fallback?: React.ReactNode; }
+interface EBState { hasError: boolean; error?: Error; }
 
-export default class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { hasError: false };
+// Use any to avoid TypeScript class member resolution issues across React versions
+export default class ErrorBoundary extends (React.Component as any)<EBProps, EBState> {
+  state: EBState = { hasError: false };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary]', error.message, info.componentStack);
+    console.error('[ErrorBoundary]', error.message, info?.componentStack);
   }
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-center gap-5 p-8 bg-[#0d1117]">
-          <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center text-3xl">💥</div>
-          <div>
-            <h3 className="text-lg font-bold text-white mb-2">Something went wrong</h3>
-            <p className="text-sm text-[#8b949e] mb-4 max-w-sm">{this.state.error?.message || 'An unexpected error occurred.'}</p>
-            <button
-              onClick={() => this.setState({ hasError: false, error: undefined })}
-              className="px-4 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
-              Try Again
-            </button>
-          </div>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', textAlign:'center', gap:20, padding:32, background:'#0d1117', color:'white' }}>
+          <div style={{ fontSize:48 }}>💥</div>
+          <h3 style={{ margin:'0 0 8px' }}>Something went wrong</h3>
+          <p style={{ color:'#8b949e', margin:'0 0 16px' }}>{this.state.error?.message || 'An unexpected error occurred.'}</p>
+          <button onClick={() => this.setState({ hasError: false, error: undefined })}
+            style={{ padding:'8px 20px', background:'#1f6feb', color:'white', border:'none', borderRadius:12, cursor:'pointer', fontWeight:'bold', fontSize:14 }}>
+            Try Again
+          </button>
         </div>
       );
     }

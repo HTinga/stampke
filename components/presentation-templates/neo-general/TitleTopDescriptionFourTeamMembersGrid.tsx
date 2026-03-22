@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Zod Schema for Slide Content
  */

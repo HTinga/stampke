@@ -106,7 +106,7 @@ const Toggle = ({ label, value, onChange }: { label:string; value:boolean; onCha
 );
 
 /* ── Color Dot ──────────────────────────────────── */
-const ColorDot = ({ color, active, onClick }: { color:string; active:boolean; onClick:()=>void }) => (
+const ColorDot = ({ color, active, onClick }: { color:string; active:boolean; onClick:()=>void; key?:string }) => (
   <button onClick={onClick}
     className={`w-7 h-7 rounded-full border-2 transition-all ${active ? 'ring-2 ring-[#1f6feb] ring-offset-2 ring-offset-[#161b22] scale-110' : 'border-transparent hover:scale-105'}`}
     style={{ backgroundColor: color }} />
