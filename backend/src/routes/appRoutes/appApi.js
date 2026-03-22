@@ -32,6 +32,8 @@ routeEntity('job', jobController);
 router.get  (`/job/mine`,          catchErrors(jobController.mine));
 router.post (`/job/apply/:id`,     catchErrors(jobController.apply));
 router.patch(`/job/applicant/:id`, catchErrors(jobController.updateApplicant));
+  router.get  (`/job/open`,            catchErrors(jobController.listOpen));
+  router.get  (`/job/my-applications`, catchErrors(jobController.myApplications));
 
 routeEntity('worker', workerController);
 router.get  (`/worker/me`,                catchErrors(workerController.myProfile));

@@ -69,4 +69,35 @@ methods.updateApplicant = async (req, res) => {
   return res.status(200).json({ success: true, result: job, message: `Applicant ${status}.` });
 };
 
+
+// List open jobs (for workers to browse)
+methods.listOpen = async (req, res) => {
+  const { category, type, q, page = 1, items = 20 } = req.query;
+  const limit  = parseInt(items);
+  const skip   = (parseInt(page) - 1) * limit;
+  const filter = { removed: false, status: 'open' };
+  if (category) filter.category = category;
+  if (type)     filter.type = type;
+  if (q) filter.$or = [
+    { title:    { $regex: q, $options: 'i' } },
+    { location: { $regex: q, $options: 'i' } },
+    { skills:   { $regex: q, $options: 'i' } },
+  ];
+  const [result, count] = await Promise.all([
+    mongoose.model('Job').find(filter).skip(skip).limit(limit).sort({ urgent: -1, created: -1 }),
+    mongoose.model('Job').countDocuments(filter),
+  ]);
+  return res.status(200).json({ success: true, result, pagination: { page: parseInt(page), pages: Math.ceil(count/limit), count }, message: 'Open jobs.' });
+};
+
+// My applications — jobs the worker has applied to
+methods.myApplications = async (req, res) => {
+  const jobs = await mongoose.model('Job').find({ 'applicants.user': req.user._id, removed: false });
+  const result = jobs.map(j => {
+    const app = j.applicants.find(a => a.user?.toString() === req.user._id.toString());
+    return { job: j, application: app };
+  });
+  return res.status(200).json({ success: true, result, message: 'Your applications.' });
+};
+
 module.exports = methods;

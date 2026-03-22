@@ -2,7 +2,7 @@ import StampKELogo from './components/StampKELogo';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Home, Users, DollarSign, FileText, Briefcase, BarChart2, Settings,
-  Plus, X, Menu, ChevronRight, Search, Bell, LogOut, User,
+  Plus, X, Menu, ChevronRight, ChevronDown, Search, Bell, LogOut, User,
   PenTool, CheckCircle2, Camera, Wrench, QrCode, Share2,
   ArrowRight, ShieldCheck, Receipt, FileType, FileIcon, Layers, BookOpen,
   Image as ImageIcon, Save, Sparkles, Sun, Moon, Twitter, Linkedin, Github,
@@ -871,24 +871,53 @@ const App: React.FC = () => {
       )}
       <div className="flex flex-1 overflow-hidden">
 
-      {/* ── Desktop Sidebar ── */}
-      <aside className="hidden lg:flex w-56 flex-col bg-[#161b22] border-r border-[#30363d] flex-shrink-0 z-[100]">
+      {/* ── Desktop Sidebar — accordion ── */}
+      <aside className="hidden lg:flex w-60 flex-col bg-[#161b22] border-r border-[#30363d] flex-shrink-0 z-[100]">
         {/* Logo */}
         <button onClick={() => goTo('home')} className="p-5 flex items-center gap-3 hover:bg-[#21262d] transition-colors">
           <StampKELogo size={32} />
           <span className="text-lg font-black tracking-tight text-white">StampKE</span>
         </button>
 
-        {/* Main nav */}
+        {/* Main nav — clicking section expands subitems, not navigates */}
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {NAV_ITEMS.map(item => (
-            <button key={item.id} onClick={() => goTo(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeSection === item.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
-              <item.icon size={16} className={activeSection === item.id ? 'text-[#1f6feb]' : ''} />
-              <span>{item.label}</span>
-              {activeSection === item.id && subItems.length > 0 && <ChevronRight size={14} className="ml-auto text-[#8b949e]" />}
-            </button>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const subs = SUB_MENUS[item.id] || [];
+            const isActive = activeSection === item.id;
+            return (
+              <div key={item.id}>
+                <button
+                  onClick={() => {
+                    if (subs.length === 0) { goTo(item.id); }
+                    else { setActiveSection(item.id); setIsSidebarOpen(false); }
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${isActive ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
+                  <item.icon size={16} className={isActive ? 'text-[#1f6feb]' : ''} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {subs.length > 0 && (
+                    <ChevronDown size={13} className={`ml-auto text-[#8b949e] transition-transform ${isActive ? 'rotate-180' : ''}`} />
+                  )}
+                </button>
+                {/* Subitems — shown inline when section is active */}
+                {isActive && subs.length > 0 && (
+                  <div className="mt-0.5 ml-2 pl-3 border-l border-[#30363d] space-y-0.5 pb-1">
+                    {subs.map(sub => {
+                      const isLocked = (sub as any).locked && !canAccess(sub.id);
+                      return (
+                        <button key={sub.id}
+                          onClick={() => setActiveView(sub.id as SubView)}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center justify-between gap-1
+                            ${activeView === sub.id ? 'bg-[#1f6feb]/15 text-white font-bold' : isLocked ? 'text-[#8b949e]/50 hover:bg-[#21262d]/50' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
+                          <span>{sub.label}</span>
+                          {isLocked && <span className="text-[10px] flex-shrink-0">🔒</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom */}
@@ -924,28 +953,6 @@ const App: React.FC = () => {
           )}
         </div>
       </aside>
-
-      {/* ── Desktop Sub-sidebar (second level) ── */}
-      {subItems.length > 0 && (
-        <aside className="hidden lg:flex w-48 flex-col bg-[#0d1117] border-r border-[#30363d] flex-shrink-0">
-          <div className="p-4 pb-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#8b949e]">{NAV_ITEMS.find(n => n.id === activeSection)?.label}</p>
-          </div>
-          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {subItems.map(item => {
-              const isLocked = (item as any).locked && !canAccess(item.id);
-              return (
-                <button key={item.id}
-                  onClick={() => { setActiveView(item.id as SubView); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between gap-1 ${activeView === item.id ? 'bg-[#21262d] text-white font-semibold' : isLocked ? 'text-[#8b949e]/60 hover:bg-[#21262d]/50' : 'text-[#8b949e] hover:bg-[#21262d] hover:text-white'}`}>
-                  <span>{item.label}</span>
-                  {isLocked && <span className="text-[10px] text-[#8b949e]/60 flex-shrink-0">🔒</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
-      )}
 
       {/* ── Mobile Drawer ── */}
       <AnimatePresence>

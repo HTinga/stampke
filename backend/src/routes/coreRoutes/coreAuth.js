@@ -140,4 +140,40 @@ router.post('/setup', catchErrors(async (req, res) => {
   });
 }));
 
+
+// GET /api/seed-jobs — creates real demo jobs in the database  
+// Call once: /api/seed-jobs?secret=stampke-setup-2024
+router.get('/seed-jobs', catchErrors(async (req, res) => {
+  const { secret } = req.query;
+  if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
+    return res.status(403).json({ success: false, result: null, message: 'Invalid secret.' });
+
+  const Job  = mongoose.model('Job');
+  const User = mongoose.model('User');
+  
+  // Use superadmin as poster
+  const admin = await User.findOne({ email: (process.env.OWNER_EMAIL||'hempstonetinga@gmail.com').toLowerCase() });
+  if (!admin) return res.status(400).json({ success: false, result: null, message: 'Run /api/setup first.' });
+  
+  const existing = await Job.countDocuments({ removed: false });
+  if (existing >= 6) return res.status(200).json({ success: true, result: null, message: `${existing} jobs already exist.` });
+
+  const JOBS = [
+    { title: 'Plumber — Emergency Repairs', category: 'Plumbing', type: 'quick-gig', location: 'Westlands, Nairobi', pay: 'KES 2,500/day', description: 'Urgent plumbing repairs needed. Experience with residential and commercial plumbing.', skills: ['Plumbing','Pipe fitting','Drainage'], urgent: true },
+    { title: 'Graphic Designer — Brand Identity', category: 'Graphic Design', type: 'contract', location: 'Remote', pay: 'KES 60,000/month', description: 'We need a skilled graphic designer for a 3-month brand identity project. Proficiency in Adobe Suite required.', skills: ['Illustrator','Photoshop','Figma','Branding'], urgent: false },
+    { title: 'Security Officer — Night Shift', category: 'Security', type: 'permanent', location: 'CBD, Nairobi', pay: 'KES 25,000/month', description: 'Night security officer for a commercial building in CBD. G4S training preferred.', skills: ['Security','First Aid','CCTV Monitoring'], urgent: false },
+    { title: 'Executive Driver', category: 'Driving', type: 'temporary', location: 'Kilimani, Nairobi', pay: 'KES 35,000/month', description: 'Professional executive driver needed. Must have a clean driving record and valid PSV license.', skills: ['Driving','PSV License','Professionalism'], urgent: true },
+    { title: 'Data Entry Clerk', category: 'Admin / Office', type: 'temporary', location: 'Upperhill, Nairobi', pay: 'KES 18,000/month', description: 'Data entry for a fintech startup. Fast typing and Excel proficiency required.', skills: ['Excel','Data Entry','Attention to Detail'], urgent: false },
+    { title: 'Event Waitstaff — Corporate Dinner', category: 'Event Staff', type: 'quick-gig', location: 'Gigiri, Nairobi', pay: 'KES 1,500/event', description: 'Professional waitstaff needed for a corporate dinner event this weekend.', skills: ['Hospitality','Customer Service','Smart Appearance'], urgent: true },
+    { title: 'House Cleaner — Weekly', category: 'Cleaning', type: 'temporary', location: 'Karen, Nairobi', pay: 'KES 800/day', description: 'Professional house cleaner for weekly cleaning of a 4-bedroom home.', skills: ['Cleaning','Organizing','Attention to Detail'], urgent: false },
+    { title: 'IT Support Technician', category: 'IT Support', type: 'permanent', location: 'Westlands, Nairobi', pay: 'KES 45,000/month', description: 'IT support for a 50-person office. Windows, networking, and printer support required.', skills: ['Windows','Networking','Troubleshooting','Hardware'], urgent: false },
+  ];
+
+  const created = await mongoose.model('Job').insertMany(
+    JOBS.map(j => ({ ...j, postedBy: admin._id, status: 'open', removed: false }))
+  );
+
+  return res.status(200).json({ success: true, result: created, message: `${created.length} real jobs seeded.` });
+}));
+
 module.exports = router;
