@@ -1137,7 +1137,7 @@ const App: React.FC = () => {
 
         {/* ── Mobile Bottom Nav ── */}
         <nav className="lg:hidden flex border-t border-[#30363d] bg-[#161b22] flex-shrink-0">
-          {(['home', 'clients', 'money', 'work'] as MainSection[]).map(s => {
+          {(['home', 'sign-docs', 'invoicing', 'recruit'] as MainSection[]).map(s => {
             const item = NAV_ITEMS.find(n => n.id === s)!;
             return (
               <button key={s} onClick={() => goTo(s)}
