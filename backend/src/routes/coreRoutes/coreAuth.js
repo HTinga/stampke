@@ -74,6 +74,33 @@ router.get('/auth/google/callback', catchErrors(googleCallback));
 // POST /api/setup — seeds superadmin account on live DB
 // Call once: POST https://your-app.vercel.app/api/setup
 // Body: { "secret": "stampke-setup-2024" }
+// GET version — trigger from browser: /api/setup?secret=stampke-setup-2024
+router.get('/setup', catchErrors(async (req, res) => {
+  const secret = req.query.secret;
+  if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
+    return res.status(403).json({ success: false, result: null, message: 'Invalid setup secret.' });
+
+  const User         = mongoose.model('User');
+  const UserPassword = mongoose.model('UserPassword');
+  const bcrypt       = require('bcryptjs');
+  const shortid      = require('shortid');
+  const OWNER_EMAIL    = process.env.OWNER_EMAIL    || 'hempstonetinga@gmail.com';
+  const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '@Outlier12';
+
+  let owner = await User.findOne({ email: OWNER_EMAIL.toLowerCase() });
+  const salt = shortid.generate();
+  const hashed = bcrypt.hashSync(salt + OWNER_PASSWORD);
+  if (!owner) {
+    owner = await new User({ name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(), role: 'superadmin', enabled: true, emailVerified: true, plan: 'enterprise', removed: false }).save();
+    await new UserPassword({ user: owner._id, password: hashed, salt, removed: false }).save();
+  } else {
+    owner.role = 'superadmin'; owner.enabled = true; owner.emailVerified = true; owner.plan = 'enterprise';
+    await owner.save();
+    await UserPassword.findOneAndUpdate({ user: owner._id }, { password: hashed, salt }, { upsert: true });
+  }
+  return res.status(200).json({ success: true, result: { email: OWNER_EMAIL, role: 'superadmin' }, message: 'Superadmin ready. Login: ' + OWNER_EMAIL + ' / ' + OWNER_PASSWORD });
+}));
+
 router.post('/setup', catchErrors(async (req, res) => {
   const { secret } = req.body;
   if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))

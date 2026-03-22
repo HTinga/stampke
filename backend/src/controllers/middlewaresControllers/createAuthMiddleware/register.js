@@ -6,7 +6,7 @@ const shortid    = require('shortid');
 const crypto     = require('crypto');
 
 const OWNER_EMAIL  = process.env.OWNER_EMAIL  || 'hempstonetinga@gmail.com';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
 
 const register = async (req, res, { userModel }) => {
   const UserPassword = mongoose.model(userModel + 'Password');

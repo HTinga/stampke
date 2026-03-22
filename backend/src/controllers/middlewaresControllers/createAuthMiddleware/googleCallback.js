@@ -10,9 +10,17 @@ const jwt              = require('jsonwebtoken');
 const sendEmail        = require('@/utils/sendEmail');
 
 const OWNER_EMAIL  = process.env.OWNER_EMAIL  || 'hempstonetinga@gmail.com';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+// Detect frontend URL from request or env — works even if FRONTEND_URL not set
+const getFrontendUrl = (req) => {
+  if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL.replace(/\/$/, '');
+  // Derive from request host (Vercel sets x-forwarded-host)
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host  = req.headers['x-forwarded-host'] || req.headers.host || '';
+  return `${proto}://${host}`;
+};
 
 const googleCallback = async (req, res) => {
+  const FRONTEND_URL = getFrontendUrl(req);
   const { code, state, error: oauthError } = req.query;
 
   // User denied permission
@@ -41,6 +49,7 @@ const googleCallback = async (req, res) => {
   // Determine callback URL — must exactly match what's registered in Google Console
   // Must exactly match what's registered in Google Console AND what the frontend sends
   // We use /api/auth/google/callback so it routes through the Vercel /api/* function
+  // redirectUri must exactly match Google Console AND what frontend sent
   const redirectUri = FRONTEND_URL + '/api/auth/google/callback';
 
   try {
