@@ -32,7 +32,8 @@ router.get('/verify-email', catchErrors(async (req, res) => {
   user.emailVerifyExpires = undefined;
   await user.save();
 
-  return res.status(200).json({ success: true, result: null, message: 'Email verified! You can now sign in.' });
+  const FRONTEND = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
+  return res.redirect(`${FRONTEND}?verified=1`);
 }));
 
 // Resend verification email

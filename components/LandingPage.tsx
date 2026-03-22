@@ -48,17 +48,15 @@ const PRICING = [
   },
 ];
 
-const TESTIMONIALS = [
-  { name: 'Adv. Wanjiku Kamau',  role: 'Senior Partner, Kamau & Associates',       text: 'StampKE transformed how our firm handles documentation. The AI digitizer recreated our 20-year-old firm stamp perfectly in minutes.',          stars: 5, initials: 'WK', color: 'bg-[#1f6feb]' },
-  { name: 'James Otieno',        role: 'Finance Director, Rift Holdings',           text: 'The bulk stamp applier alone saves us 3+ hours every week. The audit trail for our signed documents is rock solid.',                          stars: 5, initials: 'JO', color: 'bg-emerald-600' },
-  { name: 'Dr. Amina Hassan',    role: 'Registrar, Coast Technical University',     text: 'We process over 500 certificates a month. StampKE\'s batch processing and QR tracking is indispensable for our verification process.',           stars: 5, initials: 'AH', color: 'bg-purple-600' },
+const TESTIMONIALS: { name: string; role: string; text: string; stars: number; initials: string; color: string }[] = [
+  // Real reviews will appear here as users submit them
 ];
 
 const STATS = [
-  { value: '50,000+', label: 'Stamps Created',    icon: PenTool },
-  { value: '12,000+', label: 'Documents Signed',  icon: FileCheck },
-  { value: '98.7%',   label: 'Uptime SLA',        icon: TrendingUp },
-  { value: '4,200+',  label: 'Active Users',      icon: Users },
+  { value: 'Kenya',  label: 'Based in Nairobi',  icon: Globe },
+  { value: 'LSK',     label: 'Standard Compliant', icon: Shield },
+  { value: '99.9%',   label: 'Uptime SLA',         icon: TrendingUp },
+  { value: 'Free',    label: 'To Get Started',     icon: Zap },
 ];
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => {
@@ -232,23 +230,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             <div className="text-xs font-black uppercase tracking-widest mb-4 text-[#58a6ff]">Trusted by Professionals</div>
             <h2 className="text-5xl font-black tracking-tighter text-white">What our users say</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="p-8 rounded-3xl border border-[#30363d] bg-[#161b22] hover:border-[#58a6ff] transition-colors">
-                <div className="flex gap-1 mb-6">
-                  {Array.from({length: t.stars}).map((_, j) => <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />)}
-                </div>
-                <p className="text-sm leading-relaxed mb-8 text-[#e6edf3]">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${t.color} rounded-xl flex items-center justify-center text-white font-black text-sm`}>{t.initials}</div>
-                  <div>
-                    <div className="font-black text-sm text-white">{t.name}</div>
-                    <div className="text-[11px] font-bold text-[#8b949e]">{t.role}</div>
+          {TESTIMONIALS.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {TESTIMONIALS.map((t, i) => (
+                <div key={i} className="p-8 rounded-3xl border border-[#30363d] bg-[#161b22] hover:border-[#58a6ff] transition-colors">
+                  <div className="flex gap-1 mb-6">
+                    {Array.from({length: t.stars}).map((_, j) => <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />)}
+                  </div>
+                  <p className="text-sm leading-relaxed mb-8 text-[#e6edf3]">"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 ${t.color} rounded-xl flex items-center justify-center text-white font-black text-sm`}>{t.initials}</div>
+                    <div>
+                      <div className="font-black text-sm text-white">{t.name}</div>
+                      <div className="text-[11px] font-bold text-[#8b949e]">{t.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 border border-[#30363d] rounded-3xl bg-[#161b22]">
+              <div className="text-4xl mb-4">⭐</div>
+              <p className="text-white font-bold text-lg mb-2">Be the first to review StampKE</p>
+              <p className="text-[#8b949e] text-sm">Sign up, use the platform, and share your experience.</p>
+              <button onClick={onGetStarted} className="mt-6 px-6 py-3 bg-[#1f6feb] text-white rounded-xl font-bold text-sm hover:bg-[#388bfd] transition-colors">Get Started Free</button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -329,7 +336,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             <div className="relative">
               <Award size={48} className="mx-auto mb-6 text-[#e6edf3]" />
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 text-white">Ready to go digital?</h2>
-              <p className="text-xl text-[#e6edf3] mb-10 max-w-xl mx-auto">Join 4,200+ professionals who trust StampKE for their digital stamp and document authority.</p>
+              <p className="text-xl text-[#e6edf3] mb-10 max-w-xl mx-auto">Join professionals across Kenya who trust StampKE for their digital stamp and document authority.</p>
               <button onClick={onGetStarted}
                 className="bg-[#161b22] text-[#58a6ff] px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl">
                 Get Started — It's Free

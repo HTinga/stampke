@@ -147,7 +147,7 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState('');
   const [signUpName, setSignUpName] = useState('');
   const [signUpRole, setSignUpRole] = useState<'business' | 'worker'>('business');
-  const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[] } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean } | null>(null);
   const userRole = user?.role || 'business';
   // Landing page type: 'main' = business tools, 'jobs' = worker portal
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
@@ -232,11 +232,27 @@ const App: React.FC = () => {
     if (saved) { try { setCustomTemplates(JSON.parse(saved)); } catch {} }
   }, []);
 
-  // Handle Google OAuth redirect response (?google_auth= or ?auth_error=)
+  // Handle Google OAuth redirect response (?google_auth= or ?auth_error= or ?verified=)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const googleAuth = params.get('google_auth');
     const authError  = params.get('auth_error');
+    const verified   = params.get('verified');
+
+    if (verified === '1') {
+      window.history.replaceState({}, '', window.location.pathname);
+      // Update user state if logged in
+      setUser(u => u ? { ...u, emailVerified: true } : u);
+      setShowLoginModal(false);
+      // Show a subtle success — don't alert, just show modal with message
+      setLoginError('');
+      setIsSignUp(false);
+      setTimeout(() => {
+        const token = localStorage.getItem('tomo_token');
+        if (!token) { setShowLoginModal(true); }
+      }, 100);
+      return;
+    }
 
     if (authError) {
       window.history.replaceState({}, '', window.location.pathname);
@@ -264,27 +280,32 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Restore session from localStorage on mount
+  // Restore session on reload — keep user on current view, never redirect to landing
   useEffect(() => {
     const token = localStorage.getItem('tomo_token');
-    if (token) {
-      const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
-      fetch(`${apiUrl}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.json())
-        .then(d => {
-          if (d.success && d.result) {
-            const u = d.result;
-            setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
-            setIsLoggedIn(true);
-            if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-            else if (u.role === 'worker') goTo('settings', 'worker-portal');
-            else goTo('home');
-          } else {
-            localStorage.removeItem('tomo_token'); // expired/invalid token
-          }
-        })
-        .catch(() => localStorage.removeItem('tomo_token'));
-    }
+    if (!token) return;
+    const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.result) {
+          const u = d.result;
+          setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan,
+            trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
+            adminPermissions: u.adminPermissions, emailVerified: u.emailVerified });
+          setIsLoggedIn(true);
+          // Only route if currently on landing page — otherwise keep current view
+          setActiveView(v => {
+            if (v !== 'landing') return v;
+            if (u.role === 'superadmin' || u.role === 'admin') { setActiveSection('settings'); return 'admin-panel'; }
+            if (u.role === 'worker') { setActiveSection('settings'); return 'worker-portal'; }
+            setActiveSection('home'); return 'dashboard';
+          });
+        } else {
+          localStorage.removeItem('tomo_token');
+        }
+      })
+      .catch(() => localStorage.removeItem('tomo_token'));
   }, []);
 
   useEffect(() => {
@@ -327,9 +348,28 @@ const App: React.FC = () => {
         });
         const data = await res.json();
         if (data.success) {
-          setLoginError('');
+          // Auto-login after signup
+          const loginRes = await fetch(`${apiUrl}/api/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+          });
+          const loginData = await loginRes.json();
+          if (loginData.success && loginData.result) {
+            const u = loginData.result;
+            localStorage.setItem('tomo_token', u.token);
+            setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan,
+              trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
+              adminPermissions: u.adminPermissions });
+            setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
+            // Business owners go to home dashboard, workers go to their portal
+            if (u.role === 'worker') goTo('settings', 'worker-portal');
+            else goTo('home');
+            return;
+          }
+          // Fallback if auto-login fails
           setShowLoginModal(false);
-          alert('✅ Account created! Please check your email to verify your address before signing in.');
+          setLoginError('');
+          alert('✅ Account created! Check your email for a verification link, then sign in.');
           setIsSignUp(false);
           return;
         }
@@ -429,9 +469,10 @@ const App: React.FC = () => {
       return true;
     }
     if (userRole === 'worker') return ['worker-portal'].includes(feature);
-    // business role — eSign + stamps always free
+    // business role — eSign + stamps always accessible (free tier shows usage counter)
     const alwaysFree = ['documents-esign','documents-stamps','documents-templates','documents-stamp-applier'];
     if (alwaysFree.includes(feature)) return true;
+    // All other features need paid plan or active trial
     return user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
   };
 
@@ -465,7 +506,7 @@ const App: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             {[
               { value: 'business', label: '🏢 Business', desc: 'Tools & invoicing' },
-              { value: 'worker',   label: '👷 Job Seeker', desc: 'Find work & gigs' },
+              { value: 'worker',   label: '👷 Find Errands', desc: 'Find work & gigs' },
             ].map(opt => (
               <button key={opt.value} type="button" onClick={() => setSignUpRole(opt.value as 'business' | 'worker')}
                 className={`p-3 rounded-xl border text-left transition-all ${signUpRole === opt.value ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] hover:border-[#58a6ff]'}`}>
@@ -716,6 +757,21 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0d1117] text-white">
+      {/* Email verification reminder — non-blocking, just informative */}
+      {isLoggedIn && user && !user.emailVerified && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-yellow-500/10 border-b border-yellow-500/20 text-xs">
+          <p className="text-yellow-300">📧 Please verify your email — check your inbox for the verification link.</p>
+          <button
+            onClick={async () => {
+              const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+              await fetch(`${apiUrl}/api/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email }) });
+              alert('Verification email resent! Check your inbox.');
+            }}
+            className="flex-shrink-0 text-yellow-300 hover:text-white underline">
+            Resend
+          </button>
+        </div>
+      )}
       {/* Trial banner */}
       {isLoggedIn && userRole === 'business' && (user?.trialActive || user?.plan === 'trial') && (
         <TrialBanner daysLeft={user?.trialDaysLeft || 0} />

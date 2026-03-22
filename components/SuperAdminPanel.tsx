@@ -132,7 +132,7 @@ export default function SuperAdminPanel() {
       <div className="flex gap-1 bg-[#161b22] border border-[#30363d] rounded-xl p-1">
         {[
           { id: 'users',   label: 'All Users',    icon: Users },
-          { id: 'workers', label: 'Job Seekers',  icon: Briefcase },
+          { id: 'workers', label: 'Find Errands', icon: Briefcase },
           { id: 'admins',  label: 'Admins',       icon: Shield },
           { id: 'plans',   label: 'Subscriptions',icon: Award },
         ].map(t => (

@@ -22,15 +22,8 @@ const login = async (req, res, { userModel }) => {
   if (!user)
     return res.status(404).json({ success: false, result: null, message: 'No account with this email has been registered.' });
 
-  // Email must be verified (superadmin email bypasses this)
-  const isOwner = user.email.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  if (!isOwner && !user.emailVerified)
-    return res.status(403).json({
-      success: false, result: null,
-      message: 'Please verify your email address before signing in. Check your inbox.',
-      code: 'EMAIL_NOT_VERIFIED',
-    });
-
+  // Accounts are enabled on signup — no admin approval needed
+  // emailVerified is tracked but doesn't block login (banner shown in app instead)
   if (!user.enabled)
     return res.status(409).json({
       success: false, result: null,
