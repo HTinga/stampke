@@ -233,6 +233,61 @@ const App: React.FC = () => {
     if (saved) { try { setCustomTemplates(JSON.parse(saved)); } catch {} }
   }, []);
 
+  // Handle Google OAuth redirect response (?google_auth= or ?auth_error=)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleAuth = params.get('google_auth');
+    const authError  = params.get('auth_error');
+
+    if (authError) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setLoginError(decodeURIComponent(authError));
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (googleAuth) {
+      window.history.replaceState({}, '', window.location.pathname);
+      try {
+        const u = JSON.parse(decodeURIComponent(googleAuth));
+        localStorage.setItem('tomo_token', u.token);
+        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [] });
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+        if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
+        else if (u.role === 'worker') goTo('settings', 'worker-portal');
+        else goTo('home');
+      } catch (e) {
+        setLoginError('Google sign-in failed. Please try email login.');
+        setShowLoginModal(true);
+      }
+      return;
+    }
+  }, []);
+
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem('tomo_token');
+    if (token) {
+      const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+      fetch(`${apiUrl}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success && d.result) {
+            const u = d.result;
+            setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
+            setIsLoggedIn(true);
+            if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
+            else if (u.role === 'worker') goTo('settings', 'worker-portal');
+            else goTo('home');
+          } else {
+            localStorage.removeItem('tomo_token'); // expired/invalid token
+          }
+        })
+        .catch(() => localStorage.removeItem('tomo_token'));
+    }
+  }, []);
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
     if (savedTheme) setTheme(savedTheme);
@@ -292,14 +347,13 @@ const App: React.FC = () => {
           body: JSON.stringify({ email: loginEmail, password: loginPassword }),
         });
         const data = await res.json();
-        if (data.success && data.token) {
-          const u = data.result || data.user || data;
-          localStorage.setItem('tomo_token', u.token || data.token);
+        if (data.success && data.result) {
+          const u = data.result;
+          localStorage.setItem('tomo_token', u.token);
           setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
-          setIsLoggedIn(true); setShowLoginModal(false);
-          const r = data.result || data.user || data;
-          if (r.role === 'superadmin' || r.role === 'admin') goTo('settings', 'admin-panel');
-          else if (r.role === 'worker') goTo('settings', 'worker-portal');
+          setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
+          if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
+          else if (u.role === 'worker') goTo('settings', 'worker-portal');
           else goTo('home');
           return;
         }
@@ -423,65 +477,29 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Google Sign-In */}
+        {/* Google Sign-In — standard OAuth redirect, works in all browsers */}
         <button type="button" onClick={() => {
           const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
           if (!clientId) {
-            setLoginError('Google Sign-In not configured. Add VITE_GOOGLE_CLIENT_ID to your Vercel environment variables.');
+            setLoginError('Google Sign-In not configured yet. Please use email login below.');
             return;
           }
-          const handleCredential = async (resp: any) => {
-            const apiUrl = import.meta.env.VITE_API_URL || '';
-            try {
-              const r = await fetch(`${apiUrl}/api/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: resp.credential }),
-              });
-              const d = await r.json();
-              if (d.success && d.result) {
-                const u = d.result;
-                localStorage.setItem('tomo_token', u.token);
-                setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
-                setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
-                if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-                else if (u.role === 'worker') goTo('settings', 'worker-portal');
-                else goTo('home');
-              } else {
-                setLoginError(d.message || 'Google sign-in failed.');
-              }
-            } catch { setLoginError('Google sign-in error. Try email instead.'); }
-          };
-          // GSI is preloaded in index.html — initialize and prompt
-          const initAndPrompt = () => {
-            (window as any).google.accounts.id.initialize({ client_id: clientId, callback: handleCredential });
-            (window as any).google.accounts.id.prompt((notification: any) => {
-              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                // One-tap not shown — render button instead
-                const container = document.getElementById('google-btn-container');
-                if (container) {
-                  (window as any).google.accounts.id.renderButton(container, {
-                    theme: 'filled_black', size: 'large', width: 380,
-                  });
-                }
-              }
-            });
-          };
-          if ((window as any).google?.accounts?.id) {
-            initAndPrompt();
-          } else {
-            // Fallback: load script if not yet available
-            const s = document.createElement('script');
-            s.src = 'https://accounts.google.com/gsi/client';
-            s.onload = initAndPrompt;
-            document.head.appendChild(s);
-          }
+          setLoginError('');
+          // Standard Google OAuth2 redirect — works in all browsers, no popup blocking
+          const params = new URLSearchParams({
+            client_id:     clientId,
+            redirect_uri:  window.location.origin + '/auth/google/callback',
+            response_type: 'code',
+            scope:         'openid email profile',
+            access_type:   'offline',
+            prompt:        'select_account',
+            state:         JSON.stringify({ landingType, signUpRole }),
+          });
+          window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
         }} className="w-full flex items-center justify-center gap-3 py-3 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
           <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
           Continue with Google
         </button>
-        {/* Fallback Google button container (shown if one-tap is blocked) */}
-        <div id="google-btn-container" className="flex justify-center" />
 
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or with email</span><div className="flex-1 h-px bg-[#30363d]"/></div>
 

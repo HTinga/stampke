@@ -2,7 +2,8 @@ const express    = require('express');
 const router     = express.Router();
 const mongoose   = require('mongoose');
 const { catchErrors } = require('@/handlers/errorHandlers');
-const userAuth   = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
+const userAuth        = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
+const googleCallback  = require('@/controllers/middlewaresControllers/createAuthMiddleware/googleCallback');
 
 // Public auth routes
 router.post('/login',          catchErrors(userAuth.login));
@@ -64,5 +65,9 @@ router.post('/resend-verification', catchErrors(async (req, res) => {
 
   return res.status(200).json({ success: true, result: null, message: 'Verification email resent.' });
 }));
+
+// Google OAuth redirect callback — GET /auth/google/callback?code=...
+// Note: this is on /auth not /api because it's a browser redirect
+router.get('/google/callback', catchErrors(googleCallback));
 
 module.exports = router;
