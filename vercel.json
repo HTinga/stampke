@@ -2,18 +2,17 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --legacy-peer-deps && npm install --legacy-peer-deps --prefix backend",
+  "installCommand": "npm install && cd backend && npm install --legacy-peer-deps",
   "functions": {
-    "api/index.js": {
+    "api/index.cjs": {
       "maxDuration": 30,
-      "memory": 512,
-      "runtime": "nodejs20.x"
+      "memory": 512
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": "/api/index.cjs"
     },
     {
       "source": "/(.*)",
