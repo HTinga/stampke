@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "installCommand": "npm install && cd backend && npm install --legacy-peer-deps",
   "functions": {
-    "api/index.cjs": {
+    "api/index.js": {
       "maxDuration": 30,
       "memory": 512
     }
@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.cjs"
+      "destination": "/api/index.js"
     },
     {
       "source": "/(.*)",
