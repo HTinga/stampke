@@ -26,21 +26,21 @@ const FEATURES = [
 
 const PRICING = [
   {
-    name: 'Starter', price: 'Free', period: '',
+    name: 'Starter', price: 'KES 2,500', period: '/month',
     desc: 'Perfect for individuals and freelancers.',
     highlight: false,
     features: ['5 stamps per month','SVG & PNG export','3 PDF sign requests','Basic templates','AI Digitizer (3 scans)'],
     missing: ['Bulk stamp applier','QR Tracker','Social Hub','Priority support'],
   },
   {
-    name: 'Professional', price: 'KES 2,499', period: '/month',
+    name: 'Professional', price: 'KES 5,000', period: '/month',
     desc: 'For law firms, SMEs, and growing teams.',
     highlight: true, badge: 'Most Popular',
     features: ['Unlimited stamps','SVG, PNG & PDF export','Unlimited sign requests','Full template library','AI Digitizer (unlimited)','Bulk stamp applier','QR Tracker (50 codes)','Social Hub'],
     missing: ['White-label branding','Custom integrations'],
   },
   {
-    name: 'Enterprise', price: 'Custom', period: '',
+    name: 'Enterprise', price: 'KES 10,000', period: '/month',
     desc: 'For large organizations and government agencies.',
     highlight: false,
     features: ['Everything in Professional','White-label branding','Unlimited QR codes','Custom API integrations','Dedicated account manager','SLA uptime guarantee','On-premise deployment','Custom compliance docs'],

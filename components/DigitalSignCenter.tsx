@@ -40,8 +40,9 @@ const SIGNATURE_FONTS = [
 export const SignaturePad: React.FC<{ 
   onSave: (url: string) => void, 
   onCancel: () => void,
-  title?: string
-}> = ({ onSave, onCancel, title = "Sign Document" }) => {
+  title?: string,
+  embedded?: boolean  // when true, no card wrapper — renders inline
+}> = ({ onSave, onCancel, title = "Sign Document", embedded = false }) => {
   const [activeTab, setActiveTab] = useState<'draw' | 'type' | 'upload'>('draw');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -50,12 +51,25 @@ export const SignaturePad: React.FC<{
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [isBold, setIsBold] = useState(false);
 
+  // Scale pointer position to canvas internal dimensions
+  const getPointerPos = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  };
+
+  // Reset canvas when switching to draw tab
   useEffect(() => {
     if (activeTab === 'draw') {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      const ctx = canvas.getContext('2d')!;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = '#000080';
       ctx.lineWidth = strokeWidth;
       ctx.lineCap = 'round';
@@ -63,26 +77,23 @@ export const SignaturePad: React.FC<{
     }
   }, [activeTab, strokeWidth]);
 
-  const getPointerPos = (e: any) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  };
-
   const startDrawing = (e: any) => {
+    e.preventDefault();
     setIsDrawing(true);
     const pos = getPointerPos(e);
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx) {
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#000080';
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
     }
   };
 
   const draw = (e: any) => {
+    e.preventDefault();
     if (!isDrawing) return;
     const pos = getPointerPos(e);
     const ctx = canvasRef.current?.getContext('2d');
@@ -92,23 +103,26 @@ export const SignaturePad: React.FC<{
     }
   };
 
+  const stopDrawing = () => setIsDrawing(false);
+
   const handleApply = () => {
     if (activeTab === 'draw') {
       const canvas = canvasRef.current;
       if (canvas) onSave(canvas.toDataURL('image/png'));
     } else if (activeTab === 'type') {
+      if (!typedName.trim()) return;
       const canvas = document.createElement('canvas');
       canvas.width = 800;
       canvas.height = 300;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.font = `${isBold ? 'bold ' : ''}70px ${selectedFont}`;
-        ctx.fillStyle = '#000080';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(typedName, canvas.width / 2, canvas.height / 2);
-        onSave(canvas.toDataURL('image/png'));
-      }
+      const ctx = canvas.getContext('2d')!;
+      // Transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `${isBold ? 'bold ' : ''}70px ${selectedFont}`;
+      ctx.fillStyle = '#000080';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(typedName, canvas.width / 2, canvas.height / 2);
+      onSave(canvas.toDataURL('image/png'));
     }
   };
 
@@ -121,130 +135,103 @@ export const SignaturePad: React.FC<{
     }
   };
 
-  return (
-    <div className="bg-[#161b22] p-6 md:p-10 rounded-[48px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border border-[#21262d] max-w-xl w-full animate-in zoom-in duration-300">
-      <div className="flex justify-between items-center mb-8">
-        <h4 className="text-3xl font-black text-white tracking-tighter">{title}</h4>
-        <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-full transition-all text-[#8b949e]"><X size={24} /></button>
-      </div>
-
-      <div className="flex bg-[#21262d] p-1.5 rounded-2xl mb-8">
+  const content = (
+    <>
+      <div className="flex bg-[#21262d] p-1.5 rounded-2xl mb-6">
         {['draw', 'type', 'upload'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
+          <button key={tab} onClick={() => setActiveTab(tab as any)}
             className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
               activeTab === tab ? 'bg-[#161b22] shadow-md text-[#58a6ff]' : 'text-[#8b949e] hover:text-[#e6edf3]'
-            }`}
-          >
-            {tab}
-          </button>
+            }`}>{tab}</button>
         ))}
       </div>
 
-      <div className="bg-[#0d1117] border-2 border-dashed border-[#30363d] rounded-[32px] overflow-hidden mb-10 h-72 flex items-center justify-center relative shadow-inner">
+      <div className="bg-[#0d1117] border-2 border-dashed border-[#30363d] rounded-[24px] overflow-hidden mb-6 h-56 flex items-center justify-center relative shadow-inner">
         {activeTab === 'draw' && (
           <canvas
             ref={canvasRef}
-            width={600}
-            height={300}
+            width={700}
+            height={280}
             onMouseDown={startDrawing}
-            onMouseUp={() => setIsDrawing(false)}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
             onMouseMove={draw}
             onTouchStart={startDrawing}
-            onTouchEnd={() => setIsDrawing(false)}
+            onTouchEnd={stopDrawing}
             onTouchMove={draw}
-            className="w-full h-full cursor-crosshair bg-[#161b22] touch-none"
+            className="w-full h-full cursor-crosshair touch-none"
+            style={{ background: 'transparent' }}
           />
         )}
         {activeTab === 'type' && (
-          <div className="w-full p-10 text-center space-y-8">
-            <input
-              type="text"
-              placeholder="Your Name Here"
-              value={typedName}
+          <div className="w-full p-6 text-center space-y-4">
+            <input autoFocus type="text" placeholder="Your Name Here" value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
-              className={`w-full bg-transparent border-b-2 border-[#30363d] py-6 px-4 text-center text-4xl outline-none focus:border-[#1a5cad] transition-colors ${isBold ? 'font-bold' : ''}`}
-              style={{ fontFamily: selectedFont }}
-            />
-            <div className="flex flex-wrap justify-center gap-4">
-              <button 
-                onClick={() => setIsBold(!isBold)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center gap-2 ${isBold ? 'border-[#58a6ff] bg-[#1f6feb] text-white' : 'border-[#30363d] text-[#8b949e]'}`}
-              >
-                {isBold ? <Check size={14} /> : null} Bold Text
+              className={`w-full bg-transparent border-b-2 border-[#30363d] py-4 px-4 text-center text-3xl outline-none focus:border-[#1a5cad] transition-colors text-white ${isBold ? 'font-bold' : ''}`}
+              style={{ fontFamily: selectedFont }} />
+            <div className="flex flex-wrap justify-center gap-2">
+              <button onClick={() => setIsBold(!isBold)}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase border-2 transition-all flex items-center gap-1.5 ${isBold ? 'border-[#58a6ff] bg-[#1f6feb] text-white' : 'border-[#30363d] text-[#8b949e]'}`}>
+                {isBold ? <Check size={12} /> : null} Bold
               </button>
-              <div className="h-8 w-px bg-[#30363d] mx-2"></div>
-              {SIGNATURE_FONTS.map((font) => (
-                <button
-                  key={font.family}
-                  onClick={() => setSelectedFont(font.family)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${
-                    selectedFont === font.family ? 'border-[#58a6ff] bg-[#21262d] text-[#58a6ff]' : 'border-[#30363d] text-[#8b949e]'
-                  }`}
-                >
-                  {font.name}
+              <div className="h-6 w-px bg-[#30363d] mx-1 self-center" />
+              {SIGNATURE_FONTS.map(f => (
+                <button key={f.family} onClick={() => setSelectedFont(f.family)}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border-2 transition-all ${selectedFont === f.family ? 'border-[#58a6ff] bg-[#21262d] text-[#58a6ff]' : 'border-[#30363d] text-[#8b949e]'}`}>
+                  {f.name}
                 </button>
               ))}
             </div>
           </div>
         )}
         {activeTab === 'upload' && (
-          <div className="text-center p-10">
-            <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-            <div className="bg-[#1f6feb] text-white w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black">
-              <Upload size={32} />
-            </div>
-            <p className="text-white font-black text-lg">Upload Transparent PNG</p>
-            <p className="text-[#8b949e] text-xs mt-2 uppercase font-bold tracking-widest">Recommended for best quality</p>
+          <div className="text-center p-8 relative">
+            <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            <div className="bg-[#1f6feb] text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl"><Upload size={28} /></div>
+            <p className="text-white font-black">Upload Signature Image</p>
+            <p className="text-[#8b949e] text-xs mt-1 uppercase font-bold tracking-widest">PNG with transparent background</p>
           </div>
         )}
       </div>
 
-      {(activeTab === 'draw' || activeTab === 'type') && (
-        <div className="mb-8 p-6 bg-[#0d1117] rounded-3xl border border-[#21262d]">
-          <div className="flex justify-between items-center mb-4">
-            <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Stroke Thickness</label>
-            <span className="text-xs font-bold text-[#58a6ff]">{strokeWidth}px</span>
-          </div>
-          <input 
-            type="range" 
-            min="1" 
-            max="12" 
-            step="1" 
-            value={strokeWidth} 
+      {activeTab === 'draw' && (
+        <div className="mb-4 flex items-center gap-4">
+          <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest whitespace-nowrap">Thickness: {strokeWidth}px</span>
+          <input type="range" min="1" max="12" step="1" value={strokeWidth}
             onChange={e => setStrokeWidth(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-[#30363d] rounded-lg accent-[#1f6feb] cursor-pointer"
-          />
+            className="flex-1 h-1.5 bg-[#30363d] rounded-lg accent-[#1f6feb] cursor-pointer" />
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
-        <button
-          onClick={() => {
-            if (activeTab === 'draw') {
-              const canvas = canvasRef.current;
-              const ctx = canvas?.getContext('2d');
-              if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-            } else {
-              setTypedName('');
-            }
-          }}
-          className="bg-[#21262d] text-[#e6edf3] py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#30363d]"
-        >
-          <Eraser size={20} /> Reset
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => {
+          if (activeTab === 'draw') {
+            const c = canvasRef.current; const ctx = c?.getContext('2d');
+            if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
+          } else setTypedName('');
+        }} className="bg-[#21262d] text-[#e6edf3] py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-[#30363d] transition-all">
+          <Eraser size={18} /> Clear
         </button>
-        <button
-          onClick={handleApply}
-          className="bg-[#1f6feb] text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-[#30363d] shadow-2xl shadow-[#c5d8ef]"
-        >
-          <Save size={20} /> Apply
+        <button onClick={handleApply}
+          className="bg-[#1f6feb] text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-[#388bfd] shadow-xl transition-all">
+          <Save size={18} /> Apply
         </button>
       </div>
+    </>
+  );
+
+  if (embedded) return <div>{content}</div>;
+
+  return (
+    <div className="bg-[#161b22] p-6 md:p-8 rounded-[40px] shadow-2xl border border-[#21262d] max-w-xl w-full animate-in zoom-in duration-300">
+      <div className="flex justify-between items-center mb-6">
+        <h4 className="text-2xl font-black text-white tracking-tighter">{title}</h4>
+        <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-full transition-all text-[#8b949e]"><X size={22} /></button>
+      </div>
+      {content}
     </div>
   );
 };
-
 // ── Initials Pad ──────────────────────────────────────────────────────────────
 function InitialsPad({ onSave, onCancel }: { onSave: (v: string) => void; onCancel: () => void }) {
   const [mode, setMode] = React.useState<'type' | 'draw'>('type');
@@ -1487,7 +1474,7 @@ export default function DigitalSignCenter({
                            ) : field.type === 'stamp' ? (
                              <div className="scale-[0.3] md:scale-[0.5] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
                            ) : (
-                             <span className="font-bold text-[#1e3a8a] text-xl px-6 py-3 bg-blue-50/90 rounded-xl">{field.value}</span>
+                             <span className="font-bold text-[#1e3a8a] text-base px-2 py-0.5" style={{ background: 'transparent' }}>{field.value}</span>
                            )
                          ) : (
                            <div className={`text-white px-6 py-5 rounded-2xl border-2 border-dashed shadow-2xl flex flex-col items-center gap-2 transition-all animate-pulse ${
@@ -1631,6 +1618,7 @@ export default function DigitalSignCenter({
                   {/* SIGNATURE */}
                   {fieldType === 'signature' && (
                     <SignaturePad
+                      embedded
                       title="Your Signature"
                       onCancel={() => setShowSignPad(null)}
                       onSave={applyValue}

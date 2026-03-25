@@ -14,8 +14,9 @@ const IS_SANDBOX   = !INTASEND_API || INTASEND_API.includes('test') || INTASEND_
 const BASE_URL     = IS_SANDBOX ? 'https://sandbox.intasend.com' : 'https://payment.intasend.com';
 
 const PLANS = {
-  pro:        { name: 'Professional', priceKES: 2499 },
-  enterprise: { name: 'Enterprise',   priceKES: 9999 },
+  starter:    { name: 'Starter',      priceKES: 2500  },
+  pro:        { name: 'Professional', priceKES: 5000  },
+  enterprise: { name: 'Enterprise',   priceKES: 10000 },
 };
 
 // ── Shared IntaSend fetch ─────────────────────────────────────────────────────

@@ -515,27 +515,49 @@ const App: React.FC = () => {
 
   // ── Role-based feature gate ─────────────────────────────────────────────────
   const canAccess = (feature: string): boolean => {
+    // Superadmin — no restrictions ever
     if (userRole === 'superadmin') return true;
+
+    // Admin — based on granted permissions
     if (userRole === 'admin') {
       const perms = user?.adminPermissions || [];
       if (['clients-all','clients-add','clients-leads'].includes(feature)) return perms.includes('clients');
-      if (['money-invoices','money-payments','money-unpaid','money-create'].includes(feature)) return perms.includes('invoices');
-      if (['work-find','work-my-workers','work-active','work-completed'].includes(feature)) return perms.includes('jobs');
+      if (['money-invoices','money-payments','money-unpaid','money-create','invoicing-invoices','invoicing-create'].includes(feature)) return perms.includes('invoices');
+      if (['work-find','work-my-workers','work-active','work-completed','recruit-find','recruit-workers'].includes(feature)) return perms.includes('jobs');
       return true;
     }
+
+    // Worker — very limited
     if (userRole === 'worker') return ['worker-portal','recruit-find'].includes(feature);
-    // eSign and stamps: free up to 3 uses each, then require paid plan
-    if (['sign-esign','documents-esign'].includes(feature)) return withinFreeLimit('esign');
-    if (['sign-stamps','sign-applier','documents-stamps','documents-stamp-applier'].includes(feature)) return withinFreeLimit('stamp');
-    // Recruit: free up to limits (shortlist:5, hire:3)
-    if (['recruit-find','recruit-workers'].includes(feature)) return true; // browsing always free
-    if (['recruit-active','recruit-completed','recruit-tracking'].includes(feature)) {
-      const paid = user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
-      return paid;
-    }
-    // All other features need paid plan or active trial
-    const paid = user?.plan === 'pro' || user?.plan === 'enterprise' || user?.trialActive === true;
-    return paid;
+
+    // Business users — check plan
+    const isPaid = user?.plan === 'starter' || user?.plan === 'pro' || user?.plan === 'enterprise';
+    const isProOrEnterprise = user?.plan === 'pro' || user?.plan === 'enterprise';
+    const isTrial = user?.trialActive === true;
+    const hasAnyPlan = isPaid || isTrial;
+
+    // Features unlocked on ANY paid plan (including starter + trial)
+    const starterFeatures = [
+      'sign-esign', 'documents-esign',
+      'sign-stamps', 'sign-applier', 'documents-stamps', 'documents-stamp-applier',
+      'invoicing-invoices', 'invoicing-create', 'money-invoices', 'money-create',
+      'recruit-find', 'recruit-workers',
+      'clients-add',
+    ];
+    if (starterFeatures.includes(feature)) return hasAnyPlan;
+
+    // Features requiring Pro or Enterprise
+    const proFeatures = [
+      'sign-templates', 'sign-ai-scan',
+      'documents-pdf', 'documents-create', 'documents-presentation', 'documents-templates', 'documents-ai-scan',
+      'invoicing-payments', 'invoicing-unpaid', 'money-payments', 'money-unpaid',
+      'recruit-active', 'recruit-completed', 'recruit-tracking',
+      'clients-all', 'clients-leads',
+    ];
+    if (proFeatures.includes(feature)) return isProOrEnterprise || isTrial;
+
+    // Default: require any paid plan
+    return hasAnyPlan;
   };
 
   // ── Locked feature placeholder ──────────────────────────────────────────────
@@ -556,7 +578,7 @@ const App: React.FC = () => {
             className="px-6 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
             View Plans & Upgrade via M-Pesa or Card
           </button>
-          <p className="text-xs text-[#8b949e]">Plans from KES 2,499/month · Cancel anytime</p>
+          <p className="text-xs text-[#8b949e]">Plans from KES 2,500/month · Cancel anytime</p>
         </div>
       </div>
     </div>
@@ -589,29 +611,48 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Google Sign-In — standard OAuth redirect, works in all browsers */}
-        <button type="button" onClick={() => {
-          const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-          if (!clientId) {
-            setLoginError('Google Sign-In not configured yet. Please use email login below.');
-            return;
-          }
-          setLoginError('');
-          // Standard Google OAuth2 redirect — works in all browsers, no popup blocking
-          const params = new URLSearchParams({
-            client_id:     clientId,
-            redirect_uri:  window.location.origin + '/api/auth/google/callback',
-            response_type: 'code',
-            scope:         'openid email profile',
-            access_type:   'offline',
-            prompt:        'select_account',
-            state:         JSON.stringify({ landingType, signUpRole }),
-          });
-          window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-        }} className="w-full flex items-center justify-center gap-3 py-3 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
-          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-          Continue with Google
-        </button>
+        {/* Social Sign-In buttons */}
+        <div className="space-y-2">
+          {/* Google */}
+          <button type="button" onClick={() => {
+            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+            if (!clientId) { setLoginError('Google Sign-In not configured yet. Please use email login below.'); return; }
+            setLoginError('');
+            const params = new URLSearchParams({
+              client_id: clientId, redirect_uri: window.location.origin + '/api/auth/google/callback',
+              response_type: 'code', scope: 'openid email profile', access_type: 'offline', prompt: 'select_account',
+              state: JSON.stringify({ landingType, signUpRole }),
+            });
+            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+          }} className="w-full flex items-center justify-center gap-3 py-2.5 bg-[#0d1117] border border-[#30363d] hover:border-[#58a6ff] text-white rounded-xl text-sm font-semibold transition-colors">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Continue with Google
+          </button>
+
+          {/* Facebook */}
+          <button type="button" onClick={() => {
+            const appId = import.meta.env.VITE_FACEBOOK_APP_ID;
+            if (!appId) { setLoginError('Facebook Sign-In not configured yet.'); return; }
+            setLoginError('');
+            const params = new URLSearchParams({
+              client_id: appId, redirect_uri: window.location.origin + '/api/auth/facebook/callback',
+              response_type: 'code', scope: 'email,public_profile',
+              state: JSON.stringify({ landingType, signUpRole }),
+            });
+            window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?${params}`;
+          }} className="w-full flex items-center justify-center gap-3 py-2.5 bg-[#0d1117] border border-[#30363d] hover:border-[#1877f2] text-white rounded-xl text-sm font-semibold transition-colors">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Continue with Facebook
+          </button>
+
+          {/* X (Twitter) */}
+          <button type="button" onClick={() => {
+            setLoginError('X (Twitter) sign-in coming soon. Please use Google or email.');
+          }} className="w-full flex items-center justify-center gap-3 py-2.5 bg-[#0d1117] border border-[#30363d] hover:border-[#e7e7e7] text-white rounded-xl text-sm font-semibold transition-colors">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Continue with X
+          </button>
+        </div>
 
         <div className="flex items-center gap-3"><div className="flex-1 h-px bg-[#30363d]"/><span className="text-[10px] text-[#8b949e] uppercase tracking-widest">or with email</span><div className="flex-1 h-px bg-[#30363d]"/></div>
 
