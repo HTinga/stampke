@@ -245,6 +245,109 @@ export const SignaturePad: React.FC<{
   );
 };
 
+// ── Initials Pad ──────────────────────────────────────────────────────────────
+function InitialsPad({ onSave, onCancel }: { onSave: (v: string) => void; onCancel: () => void }) {
+  const [mode, setMode] = React.useState<'type' | 'draw'>('type');
+  const [typed, setTyped] = React.useState('');
+  const [hasDrawn, setHasDrawn] = React.useState(false);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const drawing = React.useRef(false);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
+    const r = c.getBoundingClientRect();
+    if ('touches' in e) return { x: (e.touches[0].clientX - r.left) * (c.width / r.width), y: (e.touches[0].clientY - r.top) * (c.height / r.height) };
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+  };
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const c = canvasRef.current!; const ctx = c.getContext('2d')!;
+    const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y); drawing.current = true; setHasDrawn(true);
+  };
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); if (!drawing.current) return;
+    const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = getPos(e, c);
+    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e3a8a'; ctx.lineTo(p.x, p.y); ctx.stroke();
+  };
+  const clear = () => { canvasRef.current!.getContext('2d')!.clearRect(0, 0, 400, 140); setHasDrawn(false); };
+
+  const handleSave = () => {
+    if (mode === 'type') {
+      if (!typed.trim()) return;
+      const c = document.createElement('canvas'); c.width = 300; c.height = 120;
+      const ctx = c.getContext('2d')!;
+      ctx.font = "bold 72px 'Dancing Script', Georgia, serif"; ctx.fillStyle = '#1e3a8a';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(typed.toUpperCase().slice(0, 4), 150, 60);
+      onSave(c.toDataURL('image/png'));
+    } else {
+      if (!hasDrawn) return;
+      onSave(canvasRef.current!.toDataURL('image/png'));
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex bg-[#0d1117] rounded-2xl p-1">
+        {(['type', 'draw'] as const).map(m => (
+          <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${mode === m ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white'}`}>{m}</button>
+        ))}
+      </div>
+      {mode === 'type' ? (
+        <input autoFocus maxLength={4} value={typed} onChange={e => setTyped(e.target.value)}
+          placeholder="e.g. HT" className="w-full bg-[#0d1117] border-2 border-[#30363d] focus:border-[#1f6feb] rounded-2xl px-5 py-5 text-white text-3xl font-black text-center outline-none transition-colors tracking-[0.3em]" />
+      ) : (
+        <div className="space-y-2">
+          <canvas ref={canvasRef} width={500} height={140}
+            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={() => { drawing.current = false; }}
+            onMouseLeave={() => { drawing.current = false; }}
+            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={() => { drawing.current = false; }}
+            className="w-full border-2 border-dashed border-[#30363d] rounded-2xl bg-[#0d1117] cursor-crosshair touch-none" style={{ height: 140 }} />
+          <button onClick={clear} className="text-xs text-[#8b949e] hover:text-white font-bold uppercase tracking-widest transition-colors">↺ Clear</button>
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-4 pt-2">
+        <button onClick={onCancel} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Cancel</button>
+        <button onClick={handleSave} disabled={mode === 'type' ? !typed.trim() : !hasDrawn}
+          className="py-4 rounded-2xl font-black text-sm text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-30 transition-all">Apply Initials</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Date Pad ──────────────────────────────────────────────────────────────────
+function DatePad({ onSave, onCancel }: { onSave: (v: string) => void; onCancel: () => void }) {
+  const today = new Date().toISOString().split('T')[0];
+  const [value, setValue] = React.useState(today);
+  const fmt = (iso: string) => { const d = new Date(iso); return isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(); };
+  return (
+    <div className="space-y-6">
+      <input type="date" value={value} onChange={e => setValue(e.target.value)}
+        className="w-full bg-[#0d1117] border-2 border-[#30363d] focus:border-[#1f6feb] rounded-2xl px-5 py-4 text-white text-sm outline-none transition-colors" />
+      {value && <p className="text-center text-3xl font-black text-green-400 tracking-widest">{fmt(value)}</p>}
+      <div className="grid grid-cols-2 gap-4 pt-2">
+        <button onClick={onCancel} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Cancel</button>
+        <button onClick={() => onSave(fmt(value))} className="py-4 rounded-2xl font-black text-sm text-white bg-green-600 hover:bg-green-700 transition-all">Apply Date</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Text Pad ──────────────────────────────────────────────────────────────────
+function TextPad({ onSave, onCancel }: { onSave: (v: string) => void; onCancel: () => void }) {
+  const [value, setValue] = React.useState('');
+  return (
+    <div className="space-y-6">
+      <textarea autoFocus rows={4} value={value} onChange={e => setValue(e.target.value)} placeholder="Type your text here…"
+        className="w-full bg-[#0d1117] border-2 border-[#30363d] focus:border-[#1f6feb] rounded-2xl px-5 py-4 text-white text-sm resize-none outline-none transition-colors" />
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={onCancel} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Cancel</button>
+        <button onClick={() => value.trim() && onSave(value.trim())} disabled={!value.trim()}
+          className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] hover:bg-[#388bfd] disabled:opacity-30 transition-all">Apply Text</button>
+      </div>
+    </div>
+  );
+}
+
 export default function DigitalSignCenter({ 
   stampConfig, 
   onOpenStudio, 
@@ -776,7 +879,7 @@ export default function DigitalSignCenter({
     setShowToast({ message: `Cloned to all ${activeDoc.pages} pages`, type: 'success' });
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const envelope: Envelope = {
       ...newEnv as Envelope,
       id: `env-${Date.now()}`,
@@ -793,6 +896,33 @@ export default function DigitalSignCenter({
       }]
     };
     setEnvelopes([envelope, ...envelopes]);
+
+    // Send email notifications to each signer
+    const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+    const token = localStorage.getItem('tomo_token') || '';
+    const signers = newEnv.signers?.filter(s => s.email && s.email !== 'user@firm.ke') || [];
+    
+    for (const signer of signers) {
+      try {
+        await fetch(`${apiUrl}/api/notify/sign-request`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            toEmail: signer.email,
+            toName: signer.name,
+            documentTitle: newEnv.title || 'Document',
+            signerRole: signer.role || 'signer',
+            signLink: `${window.location.origin}?sign=${envelope.id}&signer=${signer.id}`,
+          }),
+        });
+      } catch (_) { /* non-blocking */ }
+    }
+
+    if (signers.length > 0) {
+      setShowToast({ message: `Sign request sent to ${signers.length} signer${signers.length > 1 ? 's' : ''}`, type: 'success' });
+    } else {
+      setShowToast({ message: 'Document saved', type: 'success' });
+    }
     setView('dashboard');
     setCurrentStep(1);
   };
@@ -1342,24 +1472,44 @@ export default function DigitalSignCenter({
                      {activeEnvelope.fields.filter(f => f.page === idx + 1).map(field => (
                        <div 
                          key={field.id}
-                         onClick={() => !field.isCompleted && setShowSignPad({ fieldId: field.id })}
+                         onClick={() => {
+                           if (field.isCompleted) return;
+                           setShowSignPad({ fieldId: field.id, type: field.type as FieldType });
+                         }}
                          className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center justify-center group ${
                            field.isCompleted ? '' : 'hover:scale-105'
                          }`}
                          style={{ left: `${field.x}%`, top: `${field.y}%`, minWidth: field.type === 'stamp' ? '200px' : '160px' }}
                        >
                          {field.isCompleted ? (
-                           field.type === 'signature' ? (
-                             <img src={field.value} className="max-h-24 mix-blend-multiply drop-shadow-sm" alt="Signature" />
+                           field.type === 'signature' || field.type === 'initials' ? (
+                             <img src={field.value} className="max-h-24 mix-blend-multiply drop-shadow-sm" alt={field.type} />
                            ) : field.type === 'stamp' ? (
                              <div className="scale-[0.3] md:scale-[0.5] origin-center mix-blend-multiply"><SVGPreview config={stampConfig} /></div>
                            ) : (
-                             <span className="font-bold text-white text-xl px-6 py-3">{field.value}</span>
+                             <span className="font-bold text-[#1e3a8a] text-xl px-6 py-3 bg-blue-50/90 rounded-xl">{field.value}</span>
                            )
                          ) : (
-                           <div className="bg-[#1f6feb]/95 text-white px-8 py-6 rounded-[32px] border-2 border-[#30363d] border-dashed shadow-2xl flex flex-col items-center gap-3 hover:bg-[#30363d] transition-all animate-pulse">
-                              <div className="bg-[#161b22]/20 p-3 rounded-2xl"><PenTool size={24} /></div>
-                              <span className="text-xs font-black uppercase tracking-widest text-white/90">Touch to {field.type}</span>
+                           <div className={`text-white px-6 py-5 rounded-2xl border-2 border-dashed shadow-2xl flex flex-col items-center gap-2 transition-all animate-pulse ${
+                             field.type === 'signature' ? 'bg-blue-600/90 border-blue-400 hover:bg-blue-700' :
+                             field.type === 'stamp' ? 'bg-orange-600/90 border-orange-400 hover:bg-orange-700' :
+                             field.type === 'initials' ? 'bg-purple-600/90 border-purple-400 hover:bg-purple-700' :
+                             field.type === 'date' ? 'bg-green-600/90 border-green-400 hover:bg-green-700' :
+                             'bg-gray-600/90 border-gray-400 hover:bg-gray-700'
+                           }`}>
+                             <div className="bg-white/20 p-2.5 rounded-xl">
+                               {field.type === 'signature' && <PenTool size={20} />}
+                               {field.type === 'stamp' && <Stamp size={20} />}
+                               {field.type === 'initials' && <span className="text-sm font-black leading-none">AB</span>}
+                               {field.type === 'date' && <Calendar size={20} />}
+                               {field.type === 'text' && <Type size={20} />}
+                             </div>
+                             <span className="text-[10px] font-black uppercase tracking-widest">
+                               {field.type === 'initials' ? 'Add Initials' :
+                                field.type === 'date' ? 'Add Date' :
+                                field.type === 'text' ? 'Add Text' :
+                                field.type === 'stamp' ? 'Apply Stamp' : 'Sign Here'}
+                             </span>
                            </div>
                          )}
                        </div>
@@ -1437,14 +1587,99 @@ export default function DigitalSignCenter({
            </div>
         </div>
 
-        {showSignPad && (
-          <div className="fixed inset-0 bg-[#161b22]/90 backdrop-blur-3xl z-[200] flex items-center justify-center p-4">
-            <SignaturePad 
-              onCancel={() => setShowSignPad(null)}
-              onSave={handleSignatureCaptured}
-            />
-          </div>
-        )}
+        {showSignPad && (() => {
+          const fieldId = showSignPad.fieldId!;
+          const fieldType = showSignPad.type || activeEnvelope.fields.find(f => f.id === fieldId)?.type || 'signature';
+
+          const applyValue = (val: string) => {
+            const updatedFields = activeEnvelope.fields.map(f =>
+              f.id === fieldId ? { ...f, isCompleted: true, value: val } : f
+            );
+            const updatedEnvelope = { ...activeEnvelope, fields: updatedFields, updatedAt: new Date().toISOString() };
+            setActiveEnvelope(updatedEnvelope);
+            setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+            const labels: Record<string, string> = { signature: 'Signature', stamp: 'Stamp', initials: 'Initials', date: 'Date', text: 'Text' };
+            setShowToast({ message: `${labels[fieldType] || 'Field'} applied successfully`, type: 'success' });
+            setShowSignPad(null);
+          };
+
+          return (
+            <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-4">
+              <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-[#21262d]">
+                  <div>
+                    <h3 className="text-2xl font-black text-white tracking-tighter">
+                      {fieldType === 'signature' && '✍️ Add Your Signature'}
+                      {fieldType === 'initials' && '🔤 Add Initials'}
+                      {fieldType === 'stamp' && '🖋 Apply Stamp'}
+                      {fieldType === 'date' && '📅 Select Date'}
+                      {fieldType === 'text' && '✏️ Enter Text'}
+                    </h3>
+                    <p className="text-[#8b949e] text-xs font-bold uppercase tracking-widest mt-1">
+                      {fieldType === 'signature' && 'Draw, type, or upload your signature'}
+                      {fieldType === 'initials' && 'Type or draw your initials'}
+                      {fieldType === 'stamp' && 'Apply your official stamp to this document'}
+                      {fieldType === 'date' && 'Select the date to insert'}
+                      {fieldType === 'text' && 'Enter text for this field'}
+                    </p>
+                  </div>
+                  <button onClick={() => setShowSignPad(null)} className="p-2.5 hover:bg-[#21262d] rounded-2xl text-[#8b949e] transition-all"><X size={20} /></button>
+                </div>
+
+                <div className="px-10 py-8">
+                  {/* SIGNATURE */}
+                  {fieldType === 'signature' && (
+                    <SignaturePad
+                      title="Your Signature"
+                      onCancel={() => setShowSignPad(null)}
+                      onSave={applyValue}
+                    />
+                  )}
+
+                  {/* INITIALS */}
+                  {fieldType === 'initials' && (
+                    <InitialsPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+                  )}
+
+                  {/* STAMP */}
+                  {fieldType === 'stamp' && (
+                    <div className="space-y-6">
+                      <div className="bg-[#0d1117] rounded-3xl p-10 flex items-center justify-center min-h-[220px] border border-[#21262d]" id="stamp-preview-container">
+                        <div className="scale-[1.2] origin-center"><SVGPreview config={localStampConfig} /></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button onClick={() => setIsEditingStamp(true)} className="py-4 rounded-2xl font-black text-sm text-[#58a6ff] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
+                          <Edit3 size={16} /> Customize
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const pngData = await captureStampAsPng();
+                            if (pngData) applyValue(pngData);
+                            else setShowToast({ message: 'Could not capture stamp — try customizing first', type: 'info' });
+                          }}
+                          className="py-4 rounded-2xl font-black text-sm text-white bg-orange-600 hover:bg-orange-700 transition-all flex items-center justify-center gap-2 shadow-xl"
+                        >
+                          <Check size={16} /> Apply Stamp
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* DATE */}
+                  {fieldType === 'date' && (
+                    <DatePad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+                  )}
+
+                  {/* TEXT */}
+                  {fieldType === 'text' && (
+                    <TextPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Floating Action Menu for Signer View */}
         <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">

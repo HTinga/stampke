@@ -55,4 +55,9 @@ router.get('/health', (req, res) =>
   res.status(200).json({ success: true, result: { status: 'ok', ts: new Date().toISOString() }, message: 'API running' })
 );
 
+// ── Email Notifications ───────────────────────────────────────────────────────
+const notifyController = require('@/controllers/appControllers/notifyController');
+router.post('/notify/sign-request', catchErrors(notifyController.signRequest));
+router.post('/notify/completed',    catchErrors(notifyController.completed));
+
 module.exports = router;

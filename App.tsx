@@ -160,6 +160,8 @@ const App: React.FC = () => {
   // Landing page type: 'main' = business tools, 'jobs' = worker portal
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; title: string; body: string; read: boolean; createdAt: string; link?: string }[]>([]);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
   const [openedFromPDFEditor, setOpenedFromPDFEditor] = useState(false);
@@ -1140,7 +1142,60 @@ Signed:`;
               {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
             {/* Notifications */}
-            <button className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors"><Bell size={15} /></button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(n => !n)}
+                className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] transition-colors relative"
+              >
+                <Bell size={15} />
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-black text-white flex items-center justify-center">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </button>
+              <AnimatePresence>
+                {showNotifications && (
+                  <>
+                    <div className="fixed inset-0 z-[390]" onClick={() => setShowNotifications(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-10 w-80 bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl z-[400] overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-[#21262d]">
+                        <span className="text-xs font-black text-white uppercase tracking-widest">Notifications</span>
+                        {notifications.length > 0 && (
+                          <button onClick={() => setNotifications(n => n.map(x => ({ ...x, read: true })))} className="text-[10px] text-[#58a6ff] font-bold hover:underline">Mark all read</button>
+                        )}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center">
+                            <Bell size={24} className="mx-auto mb-2 text-[#30363d]" />
+                            <p className="text-xs text-[#8b949e] font-bold">No notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map(notif => (
+                            <div key={notif.id} onClick={() => { setNotifications(n => n.map(x => x.id === notif.id ? { ...x, read: true } : x)); if (notif.link) navLegacy(notif.link); setShowNotifications(false); }}
+                              className={`flex gap-3 px-4 py-3 border-b border-[#21262d]/50 cursor-pointer hover:bg-[#21262d] transition-colors ${!notif.read ? 'bg-[#1f6feb]/5' : ''}`}>
+                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notif.read ? 'bg-[#1f6feb]' : 'bg-transparent'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-white truncate">{notif.title}</p>
+                                <p className="text-[10px] text-[#8b949e] mt-0.5">{notif.body}</p>
+                                <p className="text-[9px] text-[#8b949e]/60 mt-1">{new Date(notif.createdAt).toLocaleTimeString()}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
             {/* User menu */}
             {isLoggedIn ? (
               <div className="relative">
