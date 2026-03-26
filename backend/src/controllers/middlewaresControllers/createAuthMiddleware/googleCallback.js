@@ -127,7 +127,20 @@ const googleCallback = async (req, res) => {
 
   try {
     const client = new OAuth2Client({ clientId, clientSecret, redirectUri });
-    const { tokens } = await client.getToken(code);
+
+    let tokens;
+    try {
+      const result = await client.getToken(code);
+      tokens = result.tokens;
+    } catch (tokenErr) {
+      // invalid_grant = expired or already-used auth code (e.g. user hit back button)
+      if (tokenErr.message?.includes('invalid_grant') || tokenErr.response?.data?.error === 'invalid_grant') {
+        console.warn('[Google OAuth] invalid_grant — code expired or already used');
+        return res.redirect(`${FRONTEND_URL}?auth_error=${encodeURIComponent('Sign-in link expired. Please try again.')}`);
+      }
+      throw tokenErr; // re-throw unexpected errors
+    }
+
     client.setCredentials(tokens);
 
     const ticket  = await client.verifyIdToken({ idToken: tokens.id_token, audience: clientId });
