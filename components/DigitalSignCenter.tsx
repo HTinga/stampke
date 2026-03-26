@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   FileText, Upload, Plus, Send, ShieldCheck, Clock, CheckCircle2, 
   Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
@@ -333,6 +334,149 @@ function TextPad({ onSave, onCancel }: { onSave: (v: string) => void; onCancel: 
         <button onClick={() => value.trim() && onSave(value.trim())} disabled={!value.trim()}
           className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] hover:bg-[#388bfd] disabled:opacity-30 transition-all">Apply Text</button>
       </div>
+    </div>
+  );
+}
+
+// ── Sign Pad Portal ─────────────────────────────────────────────────────────
+// Renders via createPortal on document.body so it escapes ALL overflow/z-index
+// stacking contexts — fixed within any nested overflow-hidden container.
+function SignPadPortal({
+  showSignPad, activeEnvelope, newEnv, setNewEnv,
+  setActiveEnvelope, envelopes, setEnvelopes,
+  localStampConfig, setLocalStampConfig, isEditingStamp, setIsEditingStamp,
+  captureStampAsPng, handleSignatureCaptured, setShowSignPad, setShowToast,
+  setDraggedFieldType, onOpenStudio,
+}: any) {
+  const fieldId   = showSignPad.fieldId;
+  const isDesigner = showSignPad.isDesignerPlacement || (!fieldId && !activeEnvelope);
+
+  // Determine field type
+  const fieldType = showSignPad.type || 
+    (fieldId && activeEnvelope ? activeEnvelope.fields.find((f: any) => f.id === fieldId)?.type : 'signature') || 
+    'signature';
+
+  // Apply handler — works for both designer placement and signer-view
+  const applyValue = (val: string) => {
+    if (isDesigner) {
+      // Designer mode: store captured value and set drag type
+      if (fieldId) {
+        setNewEnv((prev: any) => ({
+          ...prev,
+          fields: prev.fields?.map((f: any) => f.id === fieldId ? { ...f, value: val, isCompleted: true } : f)
+        }));
+      } else {
+        setDraggedFieldType(fieldType);
+        // Store in parent via handleSignatureCaptured
+        handleSignatureCaptured(val);
+        return;
+      }
+    } else if (activeEnvelope && fieldId) {
+      // Signer view: update the specific field
+      const updatedFields = activeEnvelope.fields.map((f: any) =>
+        f.id === fieldId ? { ...f, isCompleted: true, value: val } : f
+      );
+      const updatedEnvelope = { ...activeEnvelope, fields: updatedFields, updatedAt: new Date().toISOString() };
+      setActiveEnvelope(updatedEnvelope);
+      setEnvelopes((prev: any[]) => prev.map((e: any) => e.id === activeEnvelope.id ? updatedEnvelope : e));
+    }
+    const labels: Record<string, string> = { signature: 'Signature', stamp: 'Stamp', initials: 'Initials', date: 'Date', text: 'Text' };
+    setShowToast({ message: `${labels[fieldType] || 'Field'} applied successfully`, type: 'success' });
+    setShowSignPad(null);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
+
+      {/* STAMP */}
+      {fieldType === 'stamp' ? (
+        <div className="bg-[#161b22] p-8 md:p-12 rounded-[40px] shadow-2xl w-full max-w-3xl animate-in zoom-in-95 duration-200 border border-[#30363d]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="bg-[#0d1117] p-10 rounded-[32px] border border-[#21262d] flex items-center justify-center min-h-[280px]" id="stamp-preview-container">
+              <div className="scale-125 origin-center"><SVGPreview config={localStampConfig} /></div>
+            </div>
+            <div className="flex flex-col gap-5">
+              <div>
+                <h4 className="text-3xl font-black text-white tracking-tighter mb-2">Apply Stamp</h4>
+                <p className="text-[#8b949e] text-xs font-bold uppercase tracking-widest">Place your official seal</p>
+              </div>
+              {isEditingStamp ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Primary Text</label>
+                    <input type="text" value={localStampConfig.primaryText} onChange={(e: any) => setLocalStampConfig((p: any) => ({ ...p, primaryText: e.target.value }))} className="w-full bg-[#0d1117] p-3 rounded-2xl border border-[#21262d] outline-none font-bold text-white text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Center Text</label>
+                    <input type="text" value={localStampConfig.centerText} onChange={(e: any) => setLocalStampConfig((p: any) => ({ ...p, centerText: e.target.value }))} className="w-full bg-[#0d1117] p-3 rounded-2xl border border-[#21262d] outline-none font-bold text-white text-sm" />
+                  </div>
+                  <button onClick={() => setIsEditingStamp(false)} className="w-full py-3 bg-[#1f6feb] text-white rounded-2xl font-black text-sm">Done</button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <button onClick={async () => { const png = await captureStampAsPng(); if (png) applyValue(png); else setShowToast({ message: 'Could not capture stamp', type: 'info' }); }}
+                    className="w-full py-4 rounded-2xl font-black text-white bg-orange-600 hover:bg-orange-700 flex items-center justify-center gap-2 shadow-xl transition-all">
+                    <Check size={20} /> Apply Stamp
+                  </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => onOpenStudio ? onOpenStudio(fieldId) : setIsEditingStamp(true)} className="py-3 rounded-2xl font-black text-[#58a6ff] bg-[#21262d] hover:bg-[#30363d] text-sm flex items-center justify-center gap-2 transition-all">
+                      <Edit3 size={16} /> {onOpenStudio ? 'Open Studio' : 'Customize'}
+                    </button>
+                    <button onClick={() => setShowSignPad(null)} className="py-3 rounded-2xl font-black text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] text-sm flex items-center justify-center gap-2 transition-all">
+                      <X size={16} /> Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+      /* SIGNATURE */
+      ) : fieldType === 'signature' ? (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200">
+          <div className="flex items-center justify-between px-8 pt-8 pb-5 border-b border-[#21262d]">
+            <div>
+              <h3 className="text-2xl font-black text-white tracking-tighter">✍️ Add Your Signature</h3>
+              <p className="text-[#8b949e] text-xs font-bold uppercase tracking-widest mt-1">Draw, type, or upload</p>
+            </div>
+            <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-2xl text-[#8b949e]"><X size={20}/></button>
+          </div>
+          <div className="px-8 py-6">
+            <SignaturePad embedded title="Your Signature" onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+          </div>
+        </div>
+
+      /* INITIALS */
+      ) : fieldType === 'initials' ? (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-black text-white tracking-tighter">🔤 Add Initials</h3>
+            <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+          </div>
+          <InitialsPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+        </div>
+
+      /* DATE */
+      ) : fieldType === 'date' ? (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-black text-white tracking-tighter">📅 Select Date</h3>
+            <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+          </div>
+          <DatePad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+        </div>
+
+      /* TEXT */
+      ) : (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-black text-white tracking-tighter">✏️ Enter Text</h3>
+            <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+          </div>
+          <TextPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1489,82 +1633,7 @@ export default function DigitalSignCenter({
             </div>
          </div>
 
-         {/* Immediate Prompting Pad */}
-         {showSignPad && (
-           <div className="fixed inset-0 bg-[#161b22]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-6">
-              {showSignPad.type === 'stamp' ? (
-                 <div className="bg-[#161b22] p-12 rounded-[64px] shadow-2xl max-w-5xl w-full animate-in zoom-in overflow-hidden">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                      <div className="bg-[#0d1117] p-12 rounded-[48px] border border-[#21262d] flex items-center justify-center shadow-inner min-h-[400px]" id="stamp-preview-container">
-                         <div className="scale-[1.5] origin-center"><SVGPreview config={localStampConfig} /></div>
-                      </div>
-                      <div className="flex flex-col justify-center space-y-8">
-                        <div>
-                          <h4 className="text-5xl font-black text-white tracking-tighter leading-none mb-4">Apply Stamp</h4>
-                          <p className="text-[#8b949e] font-bold uppercase text-[11px] tracking-widest">Place your official seal</p>
-                        </div>
-                        {isEditingStamp ? (
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Primary Text</label>
-                              <input type="text" value={localStampConfig.primaryText} onChange={e => setLocalStampConfig(prev => ({ ...prev, primaryText: e.target.value }))} className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-white" />
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Center Text</label>
-                              <input type="text" value={localStampConfig.centerText} onChange={e => setLocalStampConfig(prev => ({ ...prev, centerText: e.target.value }))} className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-white" />
-                            </div>
-                            <button onClick={() => setIsEditingStamp(false)} className="w-full py-4 bg-[#161b22] text-white rounded-2xl font-black text-sm shadow-xl hover:bg-[#1f6feb] transition-all">Done Customizing</button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-4">
-                            <button onClick={async () => { const pngData = await captureStampAsPng(); if (pngData) handleSignatureCaptured(pngData); }} className="w-full py-6 rounded-3xl font-black text-white bg-[#1f6feb] shadow-2xl hover:bg-[#388bfd] transition-all flex items-center justify-center gap-3 text-lg">
-                              <Check size={24} /> Apply to Document
-                            </button>
-                            <div className="grid grid-cols-2 gap-4">
-                              <button onClick={() => onOpenStudio ? onOpenStudio(showSignPad?.fieldId) : setIsEditingStamp(true)} className="py-5 rounded-3xl font-black text-[#58a6ff] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
-                                <Edit3 size={18} /> {onOpenStudio ? 'Open Studio' : 'Customize'}
-                              </button>
-                              <button onClick={() => setShowSignPad(null)} className="py-5 rounded-3xl font-black text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
-                                <X size={18} /> Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                 </div>
-              ) : showSignPad.type === 'text' ? (
-                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">✏️ Enter Text</h3>
-                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
-                  </div>
-                  <TextPad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
-                </div>
-              ) : showSignPad.type === 'date' ? (
-                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">📅 Select Date</h3>
-                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
-                  </div>
-                  <DatePad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
-                </div>
-              ) : showSignPad.type === 'initials' ? (
-                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-black text-white tracking-tighter">🔤 Add Initials</h3>
-                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
-                  </div>
-                  <InitialsPad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
-                </div>
-              ) : (
-                <SignaturePad 
-                  onCancel={() => setShowSignPad(null)}
-                  onSave={handleSignatureCaptured}
-                />
-              )}
-           </div>
-         )}
+         {/* Sign pad modal is rendered via portal at root level */}
       </div>
     );
   };
@@ -1629,7 +1698,7 @@ export default function DigitalSignCenter({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16">
            <div className="lg:col-span-8 bg-[#161b22] rounded-[48px] md:rounded-[64px] p-4 md:p-16 flex flex-col items-center gap-8 md:gap-12 overflow-y-auto max-h-[70vh] md:max-h-[90vh] custom-scrollbar shadow-2xl">
               {activeDoc?.pagePreviews?.map((preview, idx) => (
-                <div key={idx} className="w-full max-w-4xl bg-[#161b22] aspect-[1/1.41] relative shadow-2xl overflow-hidden shrink-0">
+                <div key={idx} className="w-full max-w-4xl bg-[#161b22] aspect-[1/1.41] relative shadow-2xl shrink-0">
                    <div className="absolute inset-0 w-full h-full bg-[#161b22]">
                       <img src={preview} className="w-full h-full object-contain" alt={`Page ${idx + 1}`} />
                    </div>
@@ -1771,103 +1840,7 @@ export default function DigitalSignCenter({
            </div>
         </div>
 
-        {showSignPad && (() => {
-          const fieldId   = showSignPad.fieldId;
-          const fieldType = showSignPad.type || (fieldId ? activeEnvelope.fields.find(f => f.id === fieldId)?.type : 'signature') || 'signature';
-
-          const applyValue = (val: string) => {
-            if (fieldId) {
-              // Update a specific placed field in the active envelope
-              const updatedFields = activeEnvelope.fields.map(f =>
-                f.id === fieldId ? { ...f, isCompleted: true, value: val } : f
-              );
-              const updatedEnvelope = { ...activeEnvelope, fields: updatedFields, updatedAt: new Date().toISOString() };
-              setActiveEnvelope(updatedEnvelope);
-              setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
-            }
-            const labels: Record<string, string> = { signature: 'Signature', stamp: 'Stamp', initials: 'Initials', date: 'Date', text: 'Text' };
-            setShowToast({ message: `${labels[fieldType] || 'Field'} applied successfully`, type: 'success' });
-            setShowSignPad(null);
-          };
-
-          return (
-            <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-4">
-              <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-[#21262d]">
-                  <div>
-                    <h3 className="text-2xl font-black text-white tracking-tighter">
-                      {fieldType === 'signature' && '✍️ Add Your Signature'}
-                      {fieldType === 'initials' && '🔤 Add Initials'}
-                      {fieldType === 'stamp' && '🖋 Apply Stamp'}
-                      {fieldType === 'date' && '📅 Select Date'}
-                      {fieldType === 'text' && '✏️ Enter Text'}
-                    </h3>
-                    <p className="text-[#8b949e] text-xs font-bold uppercase tracking-widest mt-1">
-                      {fieldType === 'signature' && 'Draw, type, or upload your signature'}
-                      {fieldType === 'initials' && 'Type or draw your initials'}
-                      {fieldType === 'stamp' && 'Apply your official stamp to this document'}
-                      {fieldType === 'date' && 'Select the date to insert'}
-                      {fieldType === 'text' && 'Enter text for this field'}
-                    </p>
-                  </div>
-                  <button onClick={() => setShowSignPad(null)} className="p-2.5 hover:bg-[#21262d] rounded-2xl text-[#8b949e] transition-all"><X size={20} /></button>
-                </div>
-
-                <div className="px-10 py-8">
-                  {/* SIGNATURE */}
-                  {fieldType === 'signature' && (
-                    <SignaturePad
-                      embedded
-                      title="Your Signature"
-                      onCancel={() => setShowSignPad(null)}
-                      onSave={applyValue}
-                    />
-                  )}
-
-                  {/* INITIALS */}
-                  {fieldType === 'initials' && (
-                    <InitialsPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
-                  )}
-
-                  {/* STAMP */}
-                  {fieldType === 'stamp' && (
-                    <div className="space-y-6">
-                      <div className="bg-[#0d1117] rounded-3xl p-10 flex items-center justify-center min-h-[220px] border border-[#21262d]" id="stamp-preview-container">
-                        <div className="scale-[1.2] origin-center"><SVGPreview config={localStampConfig} /></div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => setIsEditingStamp(true)} className="py-4 rounded-2xl font-black text-sm text-[#58a6ff] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
-                          <Edit3 size={16} /> Customize
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const pngData = await captureStampAsPng();
-                            if (pngData) applyValue(pngData);
-                            else setShowToast({ message: 'Could not capture stamp — try customizing first', type: 'info' });
-                          }}
-                          className="py-4 rounded-2xl font-black text-sm text-white bg-orange-600 hover:bg-orange-700 transition-all flex items-center justify-center gap-2 shadow-xl"
-                        >
-                          <Check size={16} /> Apply Stamp
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* DATE */}
-                  {fieldType === 'date' && (
-                    <DatePad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
-                  )}
-
-                  {/* TEXT */}
-                  {fieldType === 'text' && (
-                    <TextPad onCancel={() => setShowSignPad(null)} onSave={applyValue} />
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        {/* Sign pad modal rendered via portal at root level */}
 
         {/* Floating Action Menu for Signer View */}
         <div className="fixed bottom-10 right-10 z-[130] flex flex-col gap-4 animate-in slide-in-from-right-10 duration-500">
@@ -2374,6 +2347,30 @@ export default function DigitalSignCenter({
         </div>
       )}
       {view === 'signer-view' && renderSignerView()}
+
+      {/* ── SIGN PAD PORTAL — renders directly on document.body, escapes all stacking contexts ── */}
+      {showSignPad && createPortal(
+        <SignPadPortal
+          showSignPad={showSignPad}
+          activeEnvelope={activeEnvelope}
+          newEnv={newEnv}
+          setNewEnv={setNewEnv}
+          setActiveEnvelope={setActiveEnvelope}
+          envelopes={envelopes}
+          setEnvelopes={setEnvelopes}
+          localStampConfig={localStampConfig}
+          setLocalStampConfig={setLocalStampConfig}
+          isEditingStamp={isEditingStamp}
+          setIsEditingStamp={setIsEditingStamp}
+          captureStampAsPng={captureStampAsPng}
+          handleSignatureCaptured={handleSignatureCaptured}
+          setShowSignPad={setShowSignPad}
+          setShowToast={setShowToast}
+          setDraggedFieldType={setDraggedFieldType}
+          onOpenStudio={onOpenStudio}
+        />,
+        document.body
+      )}
     </div>
   );
 }
