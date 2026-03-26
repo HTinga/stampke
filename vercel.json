@@ -9,6 +9,12 @@
       "memory": 512
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-unverified",
+      "schedule": "0 * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

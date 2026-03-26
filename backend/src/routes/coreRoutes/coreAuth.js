@@ -179,4 +179,40 @@ router.get('/seed-jobs', catchErrors(async (req, res) => {
   return res.status(200).json({ success: true, result: created, message: `${created.length} real jobs seeded.` });
 }));
 
+// ── Cron: auto-delete unverified accounts after 24h ──────────────────────────
+// Called by Vercel Cron every hour: GET /api/cron/cleanup-unverified
+// Protected by CRON_SECRET header set in Vercel environment variables
+router.get('/cron/cleanup-unverified', catchErrors(async (req, res) => {
+  const secret = req.headers['authorization']?.replace('Bearer ', '');
+  if (secret !== (process.env.CRON_SECRET || 'stampke-cron-2024')) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const User         = mongoose.model('User');
+  const UserPassword = mongoose.model('UserPassword');
+
+  const cutoff = new Date(); // remove users whose emailVerifyExpires < now
+
+  // Find unverified users whose verification window has expired
+  const expired = await User.find({
+    emailVerified:    false,
+    emailVerifyExpires: { $lt: cutoff },
+    removed: false,
+  });
+
+  let removed = 0;
+  for (const user of expired) {
+    // Hard-delete: mark removed and wipe tokens
+    await User.updateOne({ _id: user._id }, {
+      $set:   { removed: true, enabled: false },
+      $unset: { emailVerifyToken: '', emailVerifyExpires: '' },
+    });
+    await UserPassword.deleteOne({ user: user._id });
+    removed++;
+  }
+
+  console.log(`[Cron] cleanup-unverified: removed ${removed} expired unverified accounts`);
+  return res.status(200).json({ success: true, removed, message: `Removed ${removed} unverified accounts.` });
+}));
+
 module.exports = router;

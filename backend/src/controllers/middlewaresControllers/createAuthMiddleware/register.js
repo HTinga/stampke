@@ -9,100 +9,173 @@ const crypto     = require('crypto');
 const OWNER_EMAIL  = process.env.OWNER_EMAIL  || 'hempstonetinga@gmail.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
 
-// ── Shared welcome email builder ─────────────────────────────────────────────
+// ── Welcome + verify email (Lovable-inspired style) ─────────────────────────
 const buildWelcomeEmail = (name, verifyUrl) => `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d1117;font-family:'Segoe UI',Arial,sans-serif">
-  <div style="max-width:600px;margin:0 auto;padding:40px 24px">
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Welcome to StampKE</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#18181b">
 
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:40px">
-      <div style="display:inline-block;background:#1f6feb;border-radius:16px;padding:16px 32px">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:900;letter-spacing:-0.5px">StampKE</h1>
-        <p style="margin:4px 0 0;color:#93c5fd;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase">Digital Authority Platform</p>
-      </div>
-    </div>
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
-    <!-- Welcome Card -->
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:24px;padding:40px;margin-bottom:24px">
-      <h2 style="color:#ffffff;font-size:26px;font-weight:900;margin:0 0 8px">Welcome, ${name}! 👋</h2>
-      <p style="color:#58a6ff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin:0 0 24px">You're officially part of StampKE</p>
+        <!-- Logo Header -->
+        <tr>
+          <td align="center" style="padding:0 0 32px">
+            <div style="display:inline-block;background:#18181b;border-radius:14px;padding:14px 28px">
+              <span style="color:#ffffff;font-size:24px;font-weight:900;letter-spacing:-0.5px">StampKE</span>
+              <span style="color:#71717a;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;display:block;margin-top:2px">Digital Authority Platform</span>
+            </div>
+          </td>
+        </tr>
 
-      <p style="color:#e6edf3;font-size:16px;line-height:1.7;margin:0 0 20px">
-        My name is <strong style="color:#ffffff">Hempstone Tinga</strong>, CEO and Founder of StampKE, and I'm personally excited to welcome you aboard.
-      </p>
-      <p style="color:#8b949e;font-size:15px;line-height:1.7;margin:0 0 20px">
-        StampKE was built with one mission: to give Kenyan businesses and professionals <strong style="color:#e6edf3">complete digital document authority</strong> — from legally-binding e-signatures to professional digital stamps, smart invoicing, and beyond.
-      </p>
-      <p style="color:#8b949e;font-size:15px;line-height:1.7;margin:0 0 32px">
-        Whether you're a law firm, an SME, a freelancer, or an institution — StampKE gives you the tools to operate with authority, speed, and legal compliance under the Kenya Information and Communications Act (KICA).
-      </p>
+        <!-- Hero Card -->
+        <tr>
+          <td style="background:#ffffff;border-radius:20px;padding:48px 48px 40px;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
 
-      <!-- Features Grid -->
-      <div style="display:grid;gap:12px;margin-bottom:32px">
-        <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:16px;display:flex;gap:12px">
-          <span style="font-size:24px">✍️</span>
-          <div><strong style="color:#ffffff;font-size:14px;display:block;margin-bottom:4px">eSign &amp; Stamp</strong><span style="color:#8b949e;font-size:13px">Place legally binding signatures and official stamps on any document in seconds.</span></div>
-        </div>
-        <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:16px;display:flex;gap:12px">
-          <span style="font-size:24px">🧾</span>
-          <div><strong style="color:#ffffff;font-size:14px;display:block;margin-bottom:4px">Smart Invoice</strong><span style="color:#8b949e;font-size:13px">Create, send, and track professional invoices with M-Pesa payment integration.</span></div>
-        </div>
-        <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:16px;display:flex;gap:12px">
-          <span style="font-size:24px">📄</span>
-          <div><strong style="color:#ffffff;font-size:14px;display:block;margin-bottom:4px">Document Hub</strong><span style="color:#8b949e;font-size:13px">Generate contracts, letters, and PDFs from templates — no design skills needed.</span></div>
-        </div>
-        <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:16px;display:flex;gap:12px">
-          <span style="font-size:24px">👷</span>
-          <div><strong style="color:#ffffff;font-size:14px;display:block;margin-bottom:4px">Recruit &amp; Track</strong><span style="color:#8b949e;font-size:13px">Find vetted workers for errands, gigs, and projects across Kenya.</span></div>
-        </div>
-        <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:16px;display:flex;gap:12px">
-          <span style="font-size:24px">👥</span>
-          <div><strong style="color:#ffffff;font-size:14px;display:block;margin-bottom:4px">Client Manager</strong><span style="color:#8b949e;font-size:13px">Manage your clients, leads, and follow-ups from one place.</span></div>
-        </div>
-      </div>
+            <h1 style="font-size:28px;font-weight:900;color:#18181b;margin:0 0 12px;line-height:1.2">
+              Welcome to StampKE.
+            </h1>
+            <p style="font-size:16px;color:#52525b;line-height:1.7;margin:0 0 28px">
+              Only a fraction of Kenyan businesses have digital document authority — and most brilliant ideas get slowed down by paperwork, manual stamps, and chasing signatures. So we built StampKE to change that. <strong style="color:#18181b">Now you're part of that future.</strong>
+            </p>
 
-      ${verifyUrl ? `
-      <!-- Verify Email CTA -->
-      <div style="background:#0d1117;border:1px solid #1f6feb;border-radius:16px;padding:24px;text-align:center;margin-bottom:24px">
-        <p style="color:#e6edf3;font-size:15px;font-weight:600;margin:0 0 16px">One last step — verify your email to unlock full access:</p>
-        <a href="${verifyUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:900;font-size:15px">
-          ✅ Verify My Email
-        </a>
-        <p style="color:#484f58;font-size:12px;margin:12px 0 0">Link expires in 48 hours</p>
-      </div>` : `
-      <!-- CTA for OAuth users -->
-      <div style="text-align:center;margin-bottom:24px">
-        <a href="https://stampke.vercel.app" style="display:inline-block;background:#1f6feb;color:#ffffff;padding:16px 40px;border-radius:12px;text-decoration:none;font-weight:900;font-size:16px">
-          🚀 Get Started Now
-        </a>
-      </div>`}
+            <!-- CTA Button -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 36px">
+              <tr>
+                <td>
+                  <a href="${verifyUrl}" style="display:inline-block;background:#18181b;color:#ffffff;padding:15px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;letter-spacing:0.2px">
+                    ✅ Verify your email &rarr;
+                  </a>
+                  <p style="font-size:12px;color:#a1a1aa;margin:10px 0 0">
+                    This link expires in <strong>24 hours</strong>. Unverified accounts are automatically removed.
+                  </p>
+                </td>
+              </tr>
+            </table>
 
-      <p style="color:#8b949e;font-size:14px;line-height:1.7;margin:0">
-        Your account comes with a <strong style="color:#e6edf3">7-day free trial</strong>. Questions? Reply here or email me directly at
-        <a href="mailto:hempstonetinga@gmail.com" style="color:#58a6ff;text-decoration:none">hempstonetinga@gmail.com</a>.
-      </p>
-    </div>
+            <hr style="border:none;border-top:1px solid #f4f4f5;margin:0 0 36px"/>
 
-    <!-- Signature -->
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:24px;display:flex;gap:16px;align-items:center;margin-bottom:24px">
-      <div style="width:56px;height:56px;min-width:56px;background:#1f6feb;border-radius:50%;display:flex;align-items:center;justify-content:center">
-        <span style="color:#ffffff;font-weight:900;font-size:20px">HT</span>
-      </div>
-      <div>
-        <strong style="color:#ffffff;font-size:15px;display:block">Hempstone Tinga</strong>
-        <span style="color:#58a6ff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Founder &amp; CEO, StampKE</span><br>
-        <a href="mailto:hempstonetinga@gmail.com" style="color:#8b949e;font-size:12px;text-decoration:none">hempstonetinga@gmail.com</a>
-      </div>
-    </div>
+            <!-- Meet StampKE section -->
+            <h2 style="font-size:18px;font-weight:800;color:#18181b;margin:0 0 8px">
+              Meet StampKE: Your Digital Authority Platform
+            </h2>
+            <p style="font-size:14px;color:#52525b;line-height:1.7;margin:0 0 28px">
+              StampKE is your all-in-one partner for turning paper-heavy workflows into fast, legally-binding digital operations — built for Kenyan law firms, enterprises, and institutions.
+            </p>
 
-    <!-- Footer -->
-    <p style="color:#484f58;font-size:12px;text-align:center;margin:0">
-      &copy; ${new Date().getFullYear()} StampKE &middot; Nairobi, Kenya &middot; KICA-Compliant eSign Platform<br>
-      <a href="https://stampke.vercel.app" style="color:#484f58">stampke.vercel.app</a>
-    </p>
-  </div>
+            <!-- Features -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px">
+              ${[
+                ['✍️','eSign &amp; Stamp','Place legally-binding signatures and official digital stamps on any document. KICA-compliant.'],
+                ['🧾','Smart Invoice','Create, send, and track professional invoices with M-Pesa payment integration. Get paid faster.'],
+                ['📄','Document Hub','Generate contracts, letters, and PDFs from templates instantly — no design skills needed.'],
+                ['👷','Recruit &amp; Track','Find vetted workers for errands, gigs, and projects across Kenya. Track them live.'],
+                ['👥','Client Manager','Manage clients, leads, and follow-ups — a lightweight CRM built for Kenyan businesses.'],
+              ].map(([icon, title, desc]) => `
+              <tr>
+                <td style="padding:0 0 16px">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 20px">
+                    <tr>
+                      <td width="36" style="font-size:22px;vertical-align:top;padding-right:14px">${icon}</td>
+                      <td>
+                        <strong style="font-size:14px;color:#18181b;display:block;margin-bottom:4px">${title}</strong>
+                        <span style="font-size:13px;color:#71717a;line-height:1.5">${desc}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>`).join('')}
+            </table>
+
+            <!-- Subscription callout -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+              <tr>
+                <td>
+                  <strong style="font-size:14px;color:#0369a1;display:block;margin-bottom:6px">🎁 Your 7-day free trial is active</strong>
+                  <span style="font-size:13px;color:#0c4a6e;line-height:1.6">Explore every feature free for 7 days. After your trial, choose a plan that fits your business:</span>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px">
+                    ${[
+                      ['Free','KES 0/mo','3 envelopes · Basic stamps'],
+                      ['Pro','KES 2,500/mo','Unlimited signing · AI features · Priority support'],
+                      ['Enterprise','Custom','Team accounts · API access · Custom branding'],
+                    ].map(([plan, price, features]) => `
+                    <tr>
+                      <td style="padding:4px 0">
+                        <span style="font-size:13px;color:#18181b;font-weight:700">${plan}</span>
+                        <span style="font-size:12px;color:#71717a;margin-left:8px">${price}</span>
+                        <span style="font-size:12px;color:#71717a;display:block;margin-left:0">${features}</span>
+                      </td>
+                    </tr>`).join('')}
+                  </table>
+                  <a href="${FRONTEND_URL}?section=pricing" style="display:inline-block;margin-top:14px;background:#0369a1;color:#ffffff;padding:10px 24px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:700">View Plans &rarr;</a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Getting started -->
+            <h3 style="font-size:16px;font-weight:800;color:#18181b;margin:0 0 12px">Getting started with StampKE:</h3>
+            <ul style="margin:0 0 28px;padding-left:20px;color:#52525b;font-size:14px;line-height:2">
+              <li>Verify your email using the button above, then sign in</li>
+              <li>Upload your first document and place a signature or stamp</li>
+              <li>Invite co-signers and send your first envelope</li>
+              <li>Set up your digital stamp in the Stamp Designer</li>
+              <li>Or create your first invoice and send it to a client</li>
+            </ul>
+
+            <p style="font-size:14px;color:#52525b;line-height:1.7;margin:0 0 28px">
+              We're excited to see what you build. If you ever have questions or need help, reply to this email — I read every one personally.
+            </p>
+            <p style="font-size:14px;color:#52525b;line-height:1.7;margin:0">
+              Together, we're building a future where every Kenyan business operates with full digital authority — and we're thrilled to have you along for the journey.
+            </p>
+            <p style="font-size:14px;color:#18181b;font-weight:700;margin:24px 0 0">Let's prove it's possible!</p>
+
+            <hr style="border:none;border-top:1px solid #f4f4f5;margin:32px 0"/>
+
+            <!-- Signature -->
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="52" style="vertical-align:top;padding-right:14px">
+                  <div style="width:48px;height:48px;background:#18181b;border-radius:50%;text-align:center;line-height:48px;color:#ffffff;font-weight:900;font-size:16px">HT</div>
+                </td>
+                <td>
+                  <strong style="font-size:14px;color:#18181b;display:block">Hempstone Tinga</strong>
+                  <span style="font-size:13px;color:#71717a">CEO &amp; Founder, StampKE</span><br/>
+                  <a href="mailto:hempstonetinga@gmail.com" style="font-size:12px;color:#71717a;text-decoration:none">hempstonetinga@gmail.com</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:28px 0 0;text-align:center">
+            <p style="font-size:12px;color:#a1a1aa;margin:0 0 8px">
+              We sent this email to <strong>${'${to}'}</strong> because you signed up for StampKE.
+            </p>
+            <p style="font-size:12px;color:#a1a1aa;margin:0 0 16px">
+              <a href="${FRONTEND_URL}/terms" style="color:#a1a1aa;text-decoration:underline">Terms</a>
+              &nbsp;&nbsp;·&nbsp;&nbsp;
+              <a href="${FRONTEND_URL}/privacy" style="color:#a1a1aa;text-decoration:underline">Privacy</a>
+              &nbsp;&nbsp;·&nbsp;&nbsp;
+              <a href="${FRONTEND_URL}/unsubscribe" style="color:#a1a1aa;text-decoration:underline">Unsubscribe</a>
+            </p>
+            <p style="font-size:11px;color:#d4d4d8;margin:0">
+              &copy; ${new Date().getFullYear()} StampKE &middot; Nairobi, Kenya
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`;
 
@@ -130,14 +203,14 @@ const register = async (req, res, { userModel }) => {
     return res.status(409).json({ success: false, result: null, message: 'An account with this email already exists.' });
 
   const emailVerifyToken   = crypto.randomBytes(32).toString('hex');
-  const emailVerifyExpires = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h — auto-delete after this
   const now                = new Date();
 
   const user = await new User({
     name:    value.name,
     email:   value.email.toLowerCase(),
-    company: value.company,
-    phone:   value.phone,
+    company: value.company || '',
+    phone:   value.phone   || '',
     role:    value.role,
     enabled:          true,
     emailVerified:    false,
@@ -157,28 +230,28 @@ const register = async (req, res, { userModel }) => {
     removed:  false,
   }).save();
 
-  // ── Send welcome + verification email immediately ────────────────────────
   const verifyUrl = `${FRONTEND_URL}/api/verify-email?token=${emailVerifyToken}&id=${user._id}`;
 
-  sendEmail({
+  // ── AWAIT the email — must complete before res is sent on Vercel ─────────
+  await sendEmail({
     to:      value.email,
-    from:    'Hempstone Tinga, StampKE <noreply@tomo.ke>',
-    subject: '🎉 Welcome to StampKE — Verify Your Email',
-    html:    buildWelcomeEmail(value.name, verifyUrl),
+    from:    'Hempstone Tinga @ StampKE <noreply@tomo.ke>',
+    subject: 'Welcome to StampKE — please verify your email',
+    html:    buildWelcomeEmail(value.name, verifyUrl).replace('${to}', value.email),
   });
 
-  // ── Notify owner of new signup ──────────────────────────────────────────
+  // Notify owner (fire-and-forget is OK here — non-critical)
   sendEmail({
     to:      OWNER_EMAIL,
     from:    'StampKE Alerts <noreply@tomo.ke>',
     subject: `[StampKE] New signup — ${value.name} (${value.role})`,
-    html:    `<p><strong>${value.name}</strong> (${value.email}) signed up as <strong>${value.role}</strong>.</p>`,
+    html:    `<p><b>${value.name}</b> (${value.email.toLowerCase()}) signed up as <b>${value.role}</b>.</p>`,
   });
 
   return res.status(201).json({
     success: true,
     result:  { _id: user._id, email: user.email, role: user.role, name: user.name },
-    message: 'Account created! Check your email for a welcome message and verification link.',
+    message: 'Account created! Check your email for a welcome message — verify within 24 hours.',
   });
 };
 
