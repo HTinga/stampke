@@ -19,6 +19,9 @@ const logger         = require('./utils/logger');
 
 const app = express();
 
+// ── Trust Vercel's proxy — required for rate-limit & req.ip on Vercel/serverless
+app.set('trust proxy', 1);
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, cb) => {
