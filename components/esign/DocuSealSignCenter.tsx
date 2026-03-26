@@ -42,31 +42,145 @@ const STATUS_STYLES: Record<string, string> = {
 const SignaturePad: React.FC<{ onSave:(d:string)=>void; onCancel:()=>void; label?:string }> = ({ onSave, onCancel, label='Draw your signature' }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+  const [tab, setTab] = React.useState<'draw'|'type'|'upload'>('draw');
+  const [typed, setTyped] = React.useState('');
+  const FONTS = [
+    { name:'Script',  family:"'Dancing Script', cursive" },
+    { name:'Formal',  family:"'Great Vibes', cursive" },
+    { name:'Classic', family:"Georgia, serif" },
+  ];
+  const [font, setFont] = React.useState(FONTS[0].family);
+
   useEffect(() => {
-    const ctx = ref.current?.getContext('2d');
-    if (ctx) { ctx.strokeStyle = '#e6edf3'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
-  }, []);
+    if (tab === 'draw') {
+      const ctx = ref.current?.getContext('2d');
+      if (ctx) { ctx.strokeStyle = '#1f6feb'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+    }
+  }, [tab]);
+
   const getPos = (e: any, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect();
     const s = e.touches ? e.touches[0] : e;
     return { x: (s.clientX - r.left) * (c.width / r.width), y: (s.clientY - r.top) * (c.height / r.height) };
   };
-  const start = (e: any) => { e.preventDefault(); drawing.current = true; const c = ref.current!; const { x, y } = getPos(e, c); c.getContext('2d')!.beginPath(); c.getContext('2d')!.moveTo(x, y); };
-  const move = (e: any) => { e.preventDefault(); if (!drawing.current) return; const c = ref.current!; const ctx = c.getContext('2d')!; const { x, y } = getPos(e, c); ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y); };
-  const stop = () => { drawing.current = false; };
+  const start = (e: any) => { e.preventDefault(); drawing.current = true; const c = ref.current!; const { x, y } = getPos(e, c); const ctx = c.getContext('2d')!; ctx.beginPath(); ctx.moveTo(x, y); };
+  const move  = (e: any) => { e.preventDefault(); if (!drawing.current) return; const c = ref.current!; const ctx = c.getContext('2d')!; const { x, y } = getPos(e, c); ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y); };
+  const stop  = () => { drawing.current = false; };
+
+  const applyTyped = () => {
+    if (!typed.trim()) return;
+    const c = document.createElement('canvas'); c.width = 560; c.height = 160;
+    const ctx = c.getContext('2d')!;
+    ctx.clearRect(0, 0, 560, 160);
+    ctx.font = `60px ${font}`;
+    ctx.fillStyle = '#1f6feb';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(typed, 280, 80);
+    onSave(c.toDataURL());
+  };
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => onSave(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-[#161b22] rounded-2xl shadow-2xl p-6 w-full max-w-md border border-[#30363d]">
         <div className="flex items-center justify-between mb-4">
-          <div><h3 className="font-bold text-white">{label}</h3><p className="text-xs text-[#8b949e]">Sign in the box below</p></div>
+          <div><h3 className="font-bold text-white">{label}</h3><p className="text-xs text-[#8b949e]">Draw, type, or upload your signature</p></div>
           <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e] hover:text-white"><X size={16} /></button>
         </div>
-        <div className="border border-[#30363d] rounded-xl overflow-hidden mb-4 bg-[#0d1117] touch-none" style={{height:160}}>
-          <canvas ref={ref} width={560} height={160} onMouseDown={start} onMouseUp={stop} onMouseLeave={stop} onMouseMove={move} onTouchStart={start} onTouchEnd={stop} onTouchMove={move} className="w-full h-full cursor-crosshair" />
+
+        {/* Tabs */}
+        <div className="flex bg-[#0d1117] rounded-xl p-1 mb-4 gap-1">
+          {(['draw','type','upload'] as const).map(t => (
+            <button key={t} onClick={()=>setTab(t)} className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${tab===t?'bg-[#1f6feb] text-white':'text-[#8b949e] hover:text-white'}`}>{t}</button>
+          ))}
         </div>
+
+        {/* Draw */}
+        {tab === 'draw' && (
+          <>
+            <div className="border border-[#30363d] rounded-xl overflow-hidden mb-3 bg-[#0d1117] touch-none" style={{height:160}}>
+              <canvas ref={ref} width={560} height={160} onMouseDown={start} onMouseUp={stop} onMouseLeave={stop} onMouseMove={move} onTouchStart={start} onTouchEnd={stop} onTouchMove={move} className="w-full h-full cursor-crosshair" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { const c = ref.current!; const ctx = c.getContext('2d')!; ctx.clearRect(0,0,c.width,c.height); }} className="flex-1 py-2.5 border border-[#30363d] rounded-xl text-sm font-medium text-[#8b949e] hover:bg-[#21262d] flex items-center justify-center gap-2 transition-colors"><Eraser size={14} /> Clear</button>
+              <button onClick={() => { if (ref.current) onSave(ref.current.toDataURL()); }} className="flex-1 py-2.5 bg-[#1f6feb] text-white rounded-xl text-sm font-semibold hover:bg-[#388bfd] flex items-center justify-center gap-2 transition-colors"><Check size={14} /> Apply</button>
+            </div>
+          </>
+        )}
+
+        {/* Type */}
+        {tab === 'type' && (
+          <>
+            <input autoFocus type="text" value={typed} onChange={e=>setTyped(e.target.value)} placeholder="Type your name…"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-lg outline-none focus:ring-2 focus:ring-[#1f6feb] mb-3"
+              style={{ fontFamily: font, fontSize: 28 }} />
+            <div className="flex gap-2 mb-3">
+              {FONTS.map(f => (
+                <button key={f.name} onClick={()=>setFont(f.family)} className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${font===f.family?'border-[#1f6feb] bg-[#1f6feb]/10 text-[#58a6ff]':'border-[#30363d] text-[#8b949e] hover:border-[#58a6ff]'}`} style={{fontFamily:f.family}}>{f.name}</button>
+              ))}
+            </div>
+            <button onClick={applyTyped} disabled={!typed.trim()} className="w-full py-2.5 bg-[#1f6feb] text-white rounded-xl text-sm font-semibold hover:bg-[#388bfd] disabled:opacity-30 flex items-center justify-center gap-2 transition-colors"><Check size={14}/> Apply</button>
+          </>
+        )}
+
+        {/* Upload */}
+        {tab === 'upload' && (
+          <label className="block border-2 border-dashed border-[#30363d] rounded-xl p-8 text-center cursor-pointer hover:border-[#1f6feb] transition-colors mb-3">
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden"/>
+            <ImageIcon size={32} className="text-[#30363d] mx-auto mb-2"/>
+            <p className="text-sm text-[#8b949e] font-medium">Click to upload signature image</p>
+            <p className="text-xs text-[#8b949e] mt-1">PNG with transparent background recommended</p>
+          </label>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─── TEXT PAD ──────────────────────────────────────────────── */
+const TextPad: React.FC<{ onSave:(d:string)=>void; onCancel:()=>void }> = ({ onSave, onCancel }) => {
+  const [val, setVal] = React.useState('');
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#161b22] rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-[#30363d]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-white">✏️ Enter Text</h3>
+          <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={16}/></button>
+        </div>
+        <textarea autoFocus rows={4} value={val} onChange={e=>setVal(e.target.value)} placeholder="Type your text here…"
+          className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm resize-none outline-none focus:ring-2 focus:ring-[#1f6feb] mb-4"/>
         <div className="flex gap-2">
-          <button onClick={() => { const c = ref.current!; c.getContext('2d')!.clearRect(0,0,c.width,c.height); }} className="flex-1 py-2.5 border border-[#30363d] rounded-xl text-sm font-medium text-[#8b949e] hover:bg-[#21262d] flex items-center justify-center gap-2 transition-colors"><Eraser size={14} /> Clear</button>
-          <button onClick={() => { if (ref.current) onSave(ref.current.toDataURL()); }} className="flex-1 py-2.5 bg-[#1f6feb] text-white rounded-xl text-sm font-semibold hover:bg-[#388bfd] flex items-center justify-center gap-2 transition-colors"><Check size={14} /> Apply</button>
+          <button onClick={onCancel} className="flex-1 py-2.5 border border-[#30363d] rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] transition-colors">Cancel</button>
+          <button onClick={()=>val.trim()&&onSave(val.trim())} disabled={!val.trim()} className="flex-1 py-2.5 bg-[#1f6feb] text-white rounded-xl text-sm font-semibold hover:bg-[#388bfd] disabled:opacity-30 flex items-center justify-center gap-2 transition-colors"><Check size={14}/> Apply</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── DATE PAD ──────────────────────────────────────────────── */
+const DatePad: React.FC<{ onSave:(d:string)=>void; onCancel:()=>void }> = ({ onSave, onCancel }) => {
+  const [val, setVal] = React.useState(new Date().toISOString().split('T')[0]);
+  const fmt = (iso:string) => { const d = new Date(iso); return isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase(); };
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#161b22] rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-[#30363d]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-white">📅 Select Date</h3>
+          <button onClick={onCancel} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={16}/></button>
+        </div>
+        <input type="date" value={val} onChange={e=>setVal(e.target.value)}
+          className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-[#1f6feb] mb-2"/>
+        {val && <p className="text-center text-lg font-bold text-emerald-400 mb-4">{fmt(val)}</p>}
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-2.5 border border-[#30363d] rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] transition-colors">Cancel</button>
+          <button onClick={()=>onSave(fmt(val))} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 flex items-center justify-center gap-2 transition-colors"><Check size={14}/> Apply</button>
         </div>
       </div>
     </div>
@@ -557,26 +671,27 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
 };
 
 /* ─── SIGNER VIEW ────────────────────────────────────────── */
-const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; onBack:()=>void}> = ({envelope,onComplete,onBack}) => {
+const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; onBack:()=>void; stampConfig:StampConfig}> = ({envelope,onComplete,onBack,stampConfig}) => {
   const [env,setEnv]=useState<Envelope>(envelope);
-  const [showSignPad,setShowSignPad]=useState(false);
-  const [signPadField,setSignPadField]=useState<SignField|null>(null);
+  const [activePad,setActivePad]=useState<{field:SignField; type:'signature'|'text'|'date'|'stamp'|'initials'}|null>(null);
   const [pdfCanvas,setPdfCanvas]=useState<string>('');
-  const [pdfDoc,setPdfDoc]=useState<pdfjs.PDFDocumentProxy|null>(null);
 
   useEffect(()=>{
     const doc=envelope.documents[0];
-    if(!doc?.previewUrl) return;
-    if(doc.type==='application/pdf'||doc.previewUrl.startsWith('data:application/pdf')){
-      // Already rendered as canvas in builder, reuse previewUrl
-      setPdfCanvas(doc.previewUrl);
-    } else {
-      setPdfCanvas(doc.previewUrl);
-    }
+    if(doc?.previewUrl) setPdfCanvas(doc.previewUrl);
   },[envelope]);
 
   const completeField=(field:SignField,value:string)=>{
     setEnv(e=>({...e,fields:e.fields.map(f=>f.id===field.id?{...f,value,isCompleted:true}:f)}));
+    setActivePad(null);
+  };
+
+  const handleFieldClick=(field:SignField)=>{
+    if(field.isCompleted) return;
+    if(field.type==='signature'||field.type==='initials') setActivePad({field,type:field.type});
+    else if(field.type==='text')   setActivePad({field,type:'text'});
+    else if(field.type==='date')   setActivePad({field,type:'date'});
+    else if(field.type==='stamp')  setActivePad({field,type:'stamp'});
   };
 
   const allComplete=env.fields.length>0&&env.fields.every(f=>f.isCompleted);
@@ -597,7 +712,7 @@ const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; on
       </div>
       <div className="flex-1 overflow-auto bg-[#0d1117] flex items-start justify-center p-8">
         <div className="w-full max-w-2xl">
-          <div className="relative bg-white rounded-xl shadow-2xl overflow-hidden" style={{minHeight:1100}}>
+          <div className="relative bg-white rounded-xl shadow-2xl" style={{minHeight:1100}}>
             {pdfCanvas?(
               <img src={pdfCanvas} alt="Document" className="w-full h-auto"/>
             ):(
@@ -609,15 +724,15 @@ const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; on
               const ft=FIELD_TYPES.find(f=>f.type===field.type)!;
               return (
                 <div key={field.id}
-                  className={`absolute border-2 rounded-lg flex items-center justify-center cursor-pointer transition-all ${field.isCompleted?'border-emerald-500 bg-emerald-50':'border-[#1f6feb] bg-blue-50/80 hover:bg-blue-100/80'}`}
-                  style={{left:`${field.x}%`,top:`${field.y}%`,width:`${field.width||20}%`,height:`${field.height||6}%`,minHeight:32}}
-                  onClick={()=>{if(!field.isCompleted){setSignPadField(field);if(field.type==='signature'||field.type==='initials')setShowSignPad(true);else completeField(field,field.type==='date'?new Date().toLocaleDateString():'Confirmed');}}}>
+                  className={`absolute border-2 rounded-lg flex items-center justify-center cursor-pointer transition-all ${field.isCompleted?'border-emerald-500 bg-emerald-50/80':'border-[#1f6feb] bg-blue-50/80 hover:bg-blue-100/80 hover:scale-105'}`}
+                  style={{left:`${field.x}%`,top:`${field.y}%`,width:`${field.width||20}%`,height:`${field.height||6}%`,minHeight:36}}
+                  onClick={()=>handleFieldClick(field)}>
                   {field.isCompleted?(
-                    field.value?.startsWith('data:')?<img src={field.value} alt="signed" className="w-full h-full object-contain p-1"/>:<span className="text-xs font-semibold text-emerald-700 px-2">{field.value}</span>
+                    field.value?.startsWith('data:')?<img src={field.value} alt="signed" className="w-full h-full object-contain p-1"/>:<span className="text-xs font-semibold text-emerald-700 px-2 text-center leading-tight">{field.value}</span>
                   ):(
                     <div className="flex items-center gap-1.5 px-2">
                       <span style={{color:'#1f6feb'}}>{ft.icon}</span>
-                      <span className="text-[10px] font-bold text-[#1f6feb] capitalize">Click to {field.type}</span>
+                      <span className="text-[10px] font-bold text-[#1f6feb] capitalize whitespace-nowrap">Click to {field.type}</span>
                     </div>
                   )}
                 </div>
@@ -626,7 +741,43 @@ const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; on
           </div>
         </div>
       </div>
-      {showSignPad&&signPadField&&<SignaturePad label={`Sign: ${signPadField.type}`} onSave={url=>{completeField(signPadField,url);setShowSignPad(false);setSignPadField(null);}} onCancel={()=>{setShowSignPad(false);setSignPadField(null);}}/>}
+
+      {/* Pads — rendered at fixed/z-[9999] so nothing clips them */}
+      {activePad?.type==='signature'&&<SignaturePad label="Add Your Signature" onSave={url=>completeField(activePad.field,url)} onCancel={()=>setActivePad(null)}/>}
+      {activePad?.type==='initials'&&<SignaturePad label="Add Your Initials" onSave={url=>completeField(activePad.field,url)} onCancel={()=>setActivePad(null)}/>}
+      {activePad?.type==='text'&&<TextPad onSave={val=>completeField(activePad.field,val)} onCancel={()=>setActivePad(null)}/>}
+      {activePad?.type==='date'&&<DatePad onSave={val=>completeField(activePad.field,val)} onCancel={()=>setActivePad(null)}/>}
+      {activePad?.type==='stamp'&&(
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#161b22] rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-[#30363d]">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-white">🖋 Apply Stamp</h3>
+              <button onClick={()=>setActivePad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={16}/></button>
+            </div>
+            <div className="bg-[#0d1117] rounded-xl p-6 flex items-center justify-center mb-4 border border-[#30363d]" id="signer-stamp-preview" style={{minHeight:140}}>
+              <svg viewBox="0 0 200 200" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#1f6feb" strokeWidth="4"/>
+                <circle cx="100" cy="100" r="76" fill="none" stroke="#1f6feb" strokeWidth="1.5"/>
+                <text x="100" y="88" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#1f6feb" fontFamily="Arial">{stampConfig?.primaryText||'OFFICIAL STAMP'}</text>
+                <text x="100" y="108" textAnchor="middle" fontSize="11" fill="#1f6feb" fontFamily="Arial">{stampConfig?.centerText||''}</text>
+                <text x="100" y="126" textAnchor="middle" fontSize="10" fill="#1f6feb" fontFamily="Arial">{new Date().getFullYear()}</text>
+              </svg>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>setActivePad(null)} className="flex-1 py-2.5 border border-[#30363d] rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] transition-colors">Cancel</button>
+              <button onClick={()=>{
+                const svg = document.querySelector('#signer-stamp-preview svg');
+                if (!svg) { completeField(activePad.field,'[STAMP]'); return; }
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const canvas = document.createElement('canvas'); canvas.width=200; canvas.height=200;
+                const img = new Image();
+                img.onload = () => { canvas.getContext('2d')!.drawImage(img,0,0); completeField(activePad.field, canvas.toDataURL('image/png')); };
+                img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+              }} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 flex items-center justify-center gap-2 transition-colors"><Check size={14}/> Apply Stamp</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -664,7 +815,7 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
       <main className="flex-1 overflow-hidden flex flex-col">
         {view==='dashboard'&&<div className="flex-1 overflow-y-auto"><Dashboard envelopes={envelopes} onSelect={selectEnvelope} onCreate={createNew} onDelete={id=>setEnvelopes(es=>es.filter(e=>e.id!==id))}/></div>}
         {view==='builder'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><Builder envelope={active} onUpdate={save} onSend={e=>{save(e);setView('dashboard');}} onBack={()=>setView('dashboard')} stampConfig={stampConfig} onOpenStudio={onOpenStudio}/></div>}
-        {view==='signerView'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><SignerView envelope={active} onComplete={e=>{save(e);setView('dashboard');}} onBack={()=>setView('dashboard')}/></div>}
+        {view==='signerView'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><SignerView envelope={active} onComplete={e=>{save(e);setView('dashboard');}} onBack={()=>setView('dashboard')} stampConfig={stampConfig}/></div>}
       </main>
     </div>
   );
