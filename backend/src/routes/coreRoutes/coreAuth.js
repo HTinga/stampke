@@ -3,7 +3,8 @@ const router     = express.Router();
 const mongoose   = require('mongoose');
 const { catchErrors } = require('@/handlers/errorHandlers');
 const userAuth        = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
-const googleCallback  = require('@/controllers/middlewaresControllers/createAuthMiddleware/googleCallback');
+const googleCallback   = require('@/controllers/middlewaresControllers/createAuthMiddleware/googleCallback');
+const facebookCallback = require('@/controllers/middlewaresControllers/createAuthMiddleware/facebookCallback');
 
 // Public auth routes
 router.post('/login',          catchErrors(userAuth.login));
@@ -69,7 +70,9 @@ router.post('/resend-verification', catchErrors(async (req, res) => {
 
 // Google OAuth redirect callback — GET /api/auth/google/callback?code=...
 // Note: this is on /auth not /api because it's a browser redirect
-router.get('/auth/google/callback', catchErrors(googleCallback));
+router.get('/auth/google/callback',   catchErrors(googleCallback));
+// Facebook OAuth redirect callback — GET /api/auth/facebook/callback?code=...
+router.get('/auth/facebook/callback', catchErrors(facebookCallback));
 
 
 // POST /api/setup — seeds superadmin account on live DB

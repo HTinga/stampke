@@ -11,7 +11,8 @@ const userSchema = new Schema({
   photo:    { type: String, trim: true },
   phone:    { type: String },
   company:  { type: String },
-  googleId: { type: String, sparse: true },
+  googleId:   { type: String, sparse: true },
+  facebookId: { type: String, sparse: true },
 
   // ── Roles ─────────────────────────────────────────────────────────────────
   // superadmin : hempstonetinga@gmail.com — full platform, cannot signup

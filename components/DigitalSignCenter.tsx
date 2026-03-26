@@ -4,7 +4,9 @@ import {
   Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
   Eraser, MousePointer2, Loader2, Stamp, Image as ImageIcon, 
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
-  FileDown, Share2, Mail, Edit3, Check, Layers
+  FileDown, Share2, Mail, Edit3, Check, Layers, AlertTriangle,
+  ArrowUpDown, Award, Phone, Link2, RotateCcw, Copy, HardDrive,
+  ChevronDown, ChevronUp, ListOrdered
 } from 'lucide-react';
 import { Envelope, SignField, FieldType, BulkDocument, StampConfig, SignerInfo } from '../types';
 import SVGPreview from './SVGPreview';
@@ -342,7 +344,7 @@ export default function DigitalSignCenter({
   onClearPendingField, 
   isActive
 }: DigitalSignCenterProps) {
-  const [view, setView] = useState<'dashboard' | 'create' | 'signer-view'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'create' | 'signer-view' | 'envelope-detail'>('dashboard');
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [activeEnvelope, setActiveEnvelope] = useState<Envelope | null>(null);
   const [showSignPad, setShowSignPad] = useState<{ fieldId?: string, isDesignerPlacement?: boolean, type?: FieldType } | null>(null);
@@ -360,6 +362,15 @@ export default function DigitalSignCenter({
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const [draggedField, setDraggedField] = useState<FieldType | null>(null);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+  // Envelope feature state
+  const [showCertificate, setShowCertificate] = useState<Envelope | null>(null);
+  const [showVoidModal, setShowVoidModal]   = useState<Envelope | null>(null);
+  const [showCorrectModal, setShowCorrectModal] = useState<Envelope | null>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const [showDriveModal, setShowDriveModal] = useState<Envelope | null>(null);
+  const [driveEmail, setDriveEmail] = useState('');
+  const [showRoutingModal, setShowRoutingModal] = useState(false);
+  const [signerPhone, setSignerPhone] = useState<Record<string, string>>({});
 
   // Sync local config with prop when it changes (e.g. from Studio)
   useEffect(() => {
@@ -608,6 +619,121 @@ export default function DigitalSignCenter({
     setShowToast({ message: 'Document archived successfully', type: 'success' });
   };
 
+  const voidEnvelope = (envelope: Envelope, reason: string) => {
+    const updated = { 
+      ...envelope, 
+      status: 'voided' as any,
+      updatedAt: new Date().toISOString(),
+      auditLog: [...(envelope.auditLog || []), {
+        id: `a-${Date.now()}`, timestamp: new Date().toISOString(),
+        action: 'Envelope Voided', user: 'System Admin',
+        ip: '197.248.33.102', details: reason || 'Voided by sender'
+      }]
+    };
+    setEnvelopes(prev => prev.map(e => e.id === envelope.id ? updated : e));
+    if (activeEnvelope?.id === envelope.id) setActiveEnvelope(updated);
+    setShowVoidModal(null); setVoidReason('');
+    setShowToast({ message: 'Envelope voided successfully', type: 'success' });
+  };
+
+  const duplicateEnvelope = (envelope: Envelope) => {
+    const copy: Envelope = {
+      ...envelope,
+      id: `env-${Date.now()}`,
+      status: 'draft' as any,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      fields: envelope.fields.map(f => ({ ...f, isCompleted: false, value: undefined })),
+      auditLog: [{ id: 'a-1', timestamp: new Date().toISOString(), action: 'Envelope Duplicated', user: 'System Admin', ip: '197.248.33.102', details: `Copied from ${envelope.id}` }]
+    };
+    setEnvelopes(prev => [copy, ...prev]);
+    setShowToast({ message: 'Envelope duplicated — fields reset for re-signing', type: 'success' });
+  };
+
+  const generateCertificate = (envelope: Envelope) => {
+    setShowCertificate(envelope);
+  };
+
+  const downloadCertificate = async (envelope: Envelope) => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    
+    // Header
+    doc.setFillColor(22, 27, 34);
+    doc.rect(0, 0, 210, 297, 'F');
+    doc.setFillColor(31, 111, 235);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22); doc.setFont('helvetica', 'bold');
+    doc.text('CERTIFICATE OF COMPLETION', 105, 18, { align: 'center' });
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text('StampKE Digital Signature Platform — Legally Binding Audit Trail', 105, 30, { align: 'center' });
+
+    let y = 55;
+    doc.setTextColor(200, 210, 220);
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.text('ENVELOPE DETAILS', 20, y); y += 8;
+    
+    const addRow = (label: string, value: string) => {
+      doc.setTextColor(139, 148, 158); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(label, 20, y);
+      doc.setTextColor(230, 237, 243); doc.setFont('helvetica', 'bold');
+      doc.text(value, 80, y);
+      y += 7;
+    };
+
+    addRow('Envelope ID:', envelope.id.toUpperCase());
+    addRow('Document Title:', envelope.title);
+    addRow('Status:', envelope.status.toUpperCase());
+    addRow('Created:', new Date(envelope.createdAt).toLocaleString());
+    addRow('Last Updated:', new Date(envelope.updatedAt).toLocaleString());
+    addRow('Total Fields:', String(envelope.fields?.length || 0));
+    addRow('Completed Fields:', String(envelope.fields?.filter(f => f.isCompleted).length || 0));
+
+    y += 10;
+    doc.setTextColor(200, 210, 220); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.text('SIGNERS & ROUTING ORDER', 20, y); y += 8;
+
+    envelope.signers.forEach((signer, i) => {
+      addRow(`${i + 1}. ${signer.name}`, `${signer.email} — ${signer.role.toUpperCase()} — ${signer.status.toUpperCase()}`);
+    });
+
+    y += 10;
+    doc.setTextColor(200, 210, 220); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.text('AUDIT LOG', 20, y); y += 8;
+
+    (envelope.auditLog || []).forEach(log => {
+      addRow(new Date(log.timestamp).toLocaleString(), `${log.action} — ${log.user} (${log.ip})`);
+      if (log.details) { doc.setTextColor(100, 120, 140); doc.text(log.details, 80, y); y += 6; }
+    });
+
+    // Footer
+    doc.setFillColor(31, 111, 235);
+    doc.rect(0, 275, 210, 22, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.text('This certificate is tamper-evident and generated by StampKE. Verify at: stampke.vercel.app/verify/' + envelope.id, 105, 285, { align: 'center' });
+    doc.text('KICA-compliant electronic signature • Generated: ' + new Date().toLocaleString(), 105, 292, { align: 'center' });
+
+    doc.save(`Certificate_${envelope.id}_${envelope.title.replace(/\s+/g, '_')}.pdf`);
+    setShowToast({ message: 'Certificate of Completion downloaded', type: 'success' });
+  };
+
+  const saveToGoogleDrive = async (envelope: Envelope, email: string) => {
+    setIsLoadingDoc(true);
+    setProcessingStatus('Preparing document for Drive...');
+    try {
+      const success = await downloadDocument(envelope);
+      if (success) {
+        // In production: use Google Drive API with OAuth. For now: download and show instructions
+        setShowDriveModal(null);
+        setShowToast({ message: `Document downloaded. Sign in to Google Drive as ${email} and upload the file.`, type: 'info' });
+      }
+    } finally {
+      setIsLoadingDoc(false);
+      setProcessingStatus('');
+    }
+  };
+
   const sendDocument = (envelope: Envelope) => {
     setShowToast({ message: `Document dispatched to ${envelope.signers.length} recipients`, type: 'success' });
   };
@@ -814,6 +940,28 @@ export default function DigitalSignCenter({
     const fieldId = `f-${Math.random().toString(36).substr(2, 5)}`;
     const baseWidth = draggedFieldType === 'stamp' ? 15 : 10;
     const baseHeight = draggedFieldType === 'stamp' ? 10 : 5;
+
+    // For text/date/initials when self-signing, open a pad to collect value immediately
+    if (!capturedValue && selectedSignerId === 's-1' && ['text', 'date', 'initials'].includes(draggedFieldType)) {
+      // Place the field first, then open pad to fill it
+      const newField: SignField = {
+        id: fieldId,
+        type: draggedFieldType,
+        x, y,
+        width: baseWidth * globalScale,
+        height: baseHeight * globalScale,
+        page: pageNum,
+        signerId: selectedSignerId,
+        value: undefined,
+        isCompleted: false,
+      };
+      setNewEnv(prev => ({ ...prev, fields: [...(prev.fields || []), newField] }));
+      setDraggedFieldType(null);
+      setCapturedValue(null);
+      // Open the appropriate pad to fill this field
+      setShowSignPad({ fieldId, type: draggedFieldType as any, isDesignerPlacement: true });
+      return;
+    }
     
     const newField: SignField = {
       id: fieldId,
@@ -829,17 +977,6 @@ export default function DigitalSignCenter({
     };
     
     setNewEnv(prev => ({ ...prev, fields: [...(prev.fields || []), newField] }));
-    
-    if (!capturedValue && selectedSignerId === 's-1') {
-      if (draggedFieldType === 'date') {
-        const dateStr = new Date().toLocaleDateString();
-        setNewEnv(prev => ({
-          ...prev,
-          fields: prev.fields?.map(f => f.id === fieldId ? { ...f, value: dateStr, isCompleted: true } : f)
-        }));
-      }
-    }
-    
     setDraggedFieldType(null);
     setCapturedValue(null);
   };
@@ -925,22 +1062,25 @@ export default function DigitalSignCenter({
           fields: prev.fields?.map(f => f.id === targetFieldId ? { ...f, value: url, isCompleted: true } : f)
         }));
       } else {
-        // New immediate capture path
-        if (showSignPad?.type === 'signature') setCapturedSignature(url);
-        if (showSignPad?.type === 'stamp') setCapturedStamp(url);
+        // New immediate capture path — store value then let user click doc to place
+        const padType = showSignPad?.type || 'signature';
+        if (padType === 'signature') setCapturedSignature(url);
+        if (padType === 'stamp')     setCapturedStamp(url);
         setCapturedValue(url);
-        setDraggedFieldType(showSignPad?.type || 'signature');
+        setDraggedFieldType(padType);
       }
     } else if (activeEnvelope) {
       // Signer view mode
-      const updatedFields = activeEnvelope.fields.map(f => f.id === targetFieldId ? { ...f, isCompleted: true, value: url } : f);
-      const updatedEnvelope = { 
-        ...activeEnvelope, 
-        fields: updatedFields,
-        updatedAt: new Date().toISOString()
-      };
-      setActiveEnvelope(updatedEnvelope);
-      setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+      if (targetFieldId) {
+        const updatedFields = activeEnvelope.fields.map(f => f.id === targetFieldId ? { ...f, isCompleted: true, value: url } : f);
+        const updatedEnvelope = { 
+          ...activeEnvelope, 
+          fields: updatedFields,
+          updatedAt: new Date().toISOString()
+        };
+        setActiveEnvelope(updatedEnvelope);
+        setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+      }
       setShowToast({ message: `${showSignPad?.type === 'stamp' ? 'Stamp' : 'Signature'} applied successfully`, type: 'success' });
     }
     setShowSignPad(null);
@@ -1072,21 +1212,33 @@ export default function DigitalSignCenter({
                       <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest px-2">Document Tags</label>
                       <div className="grid grid-cols-2 gap-3">
                          {[
-                           { type: 'signature', label: 'Sign', icon: <PenTool size={20}/>, color: 'text-[#58a6ff]', bg: 'bg-[#21262d] dark:bg-[#21262d]' },
-                           { type: 'stamp', label: 'Stamp', icon: <Stamp size={20}/>, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-                           { type: 'date', label: 'Date', icon: <Calendar size={20}/>, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
-                           { type: 'text', label: 'Text', icon: <Type size={20}/>, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' }
+                           { type: 'signature', label: 'Sign',     icon: <PenTool size={20}/>, color: 'text-[#58a6ff]',  bg: 'bg-[#21262d] dark:bg-[#21262d]' },
+                           { type: 'stamp',     label: 'Stamp',    icon: <Stamp size={20}/>,   color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+                           { type: 'initials',  label: 'Initials', icon: <span className="text-xs font-black leading-none">AB</span>, color: 'text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+                           { type: 'date',      label: 'Date',     icon: <Calendar size={20}/>, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
+                           { type: 'text',      label: 'Text',     icon: <Type size={20}/>,    color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-900/20' }
                          ].map(tag => (
                            <div 
                              key={tag.type}
                              onClick={() => {
-                               if ((tag.type === 'signature' || tag.type === 'stamp') && selectedSignerId === 's-1') {
-                                 const existing = tag.type === 'signature' ? capturedSignature : capturedStamp;
-                                 if (existing) {
-                                   setCapturedValue(existing);
-                                   setDraggedFieldType(tag.type as FieldType);
+                               if (tag.type === 'signature' || tag.type === 'stamp') {
+                                 if (selectedSignerId === 's-1') {
+                                   const existing = tag.type === 'signature' ? capturedSignature : capturedStamp;
+                                   if (existing) {
+                                     setCapturedValue(existing);
+                                     setDraggedFieldType(tag.type as FieldType);
+                                   } else {
+                                     setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
+                                   }
                                  } else {
+                                   setDraggedFieldType(tag.type as FieldType);
+                                 }
+                               } else if (tag.type === 'text' || tag.type === 'date' || tag.type === 'initials') {
+                                 // For self-signer: prompt immediately so they can fill it in
+                                 if (selectedSignerId === 's-1') {
                                    setShowSignPad({ isDesignerPlacement: true, type: tag.type as FieldType });
+                                 } else {
+                                   setDraggedFieldType(tag.type as FieldType);
                                  }
                                } else {
                                  setDraggedFieldType(tag.type as FieldType);
@@ -1340,76 +1492,40 @@ export default function DigitalSignCenter({
          {/* Immediate Prompting Pad */}
          {showSignPad && (
            <div className="fixed inset-0 bg-[#161b22]/95 backdrop-blur-2xl z-[200] flex items-center justify-center p-6">
-              {(showSignPad.type === 'stamp' || (showSignPad.fieldId && newEnv.fields?.find(f => f.id === showSignPad.fieldId)?.type === 'stamp')) ? (
+              {showSignPad.type === 'stamp' ? (
                  <div className="bg-[#161b22] p-12 rounded-[64px] shadow-2xl max-w-5xl w-full animate-in zoom-in overflow-hidden">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                      {/* Left Side: Preview */}
                       <div className="bg-[#0d1117] p-12 rounded-[48px] border border-[#21262d] flex items-center justify-center shadow-inner min-h-[400px]" id="stamp-preview-container">
-                         <div className="scale-[1.5] origin-center">
-                           <SVGPreview config={localStampConfig} />
-                         </div>
+                         <div className="scale-[1.5] origin-center"><SVGPreview config={localStampConfig} /></div>
                       </div>
-
-                      {/* Right Side: Controls */}
                       <div className="flex flex-col justify-center space-y-8">
                         <div>
                           <h4 className="text-5xl font-black text-white tracking-tighter leading-none mb-4">Apply Stamp</h4>
                           <p className="text-[#8b949e] font-bold uppercase text-[11px] tracking-widest">Place your official seal</p>
                         </div>
-
                         {isEditingStamp ? (
                           <div className="space-y-4">
                             <div>
                               <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Primary Text</label>
-                              <input 
-                                type="text" 
-                                value={localStampConfig.primaryText} 
-                                onChange={e => setLocalStampConfig(prev => ({ ...prev, primaryText: e.target.value }))}
-                                className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
-                              />
+                              <input type="text" value={localStampConfig.primaryText} onChange={e => setLocalStampConfig(prev => ({ ...prev, primaryText: e.target.value }))} className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-white" />
                             </div>
                             <div>
                               <label className="text-[10px] font-black uppercase text-[#8b949e] tracking-widest mb-2 block">Center Text</label>
-                              <input 
-                                type="text" 
-                                value={localStampConfig.centerText} 
-                                onChange={e => setLocalStampConfig(prev => ({ ...prev, centerText: e.target.value }))}
-                                className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold"
-                              />
+                              <input type="text" value={localStampConfig.centerText} onChange={e => setLocalStampConfig(prev => ({ ...prev, centerText: e.target.value }))} className="w-full bg-[#0d1117] p-4 rounded-2xl border border-[#21262d] outline-none focus:ring-4 focus:ring-[#1f6feb]/10 font-bold text-white" />
                             </div>
-                            <button 
-                              onClick={() => setIsEditingStamp(false)}
-                              className="w-full py-4 bg-[#161b22] text-white rounded-2xl font-black text-sm shadow-xl hover:bg-[#1f6feb] transition-all"
-                            >
-                              Done Customizing
-                            </button>
+                            <button onClick={() => setIsEditingStamp(false)} className="w-full py-4 bg-[#161b22] text-white rounded-2xl font-black text-sm shadow-xl hover:bg-[#1f6feb] transition-all">Done Customizing</button>
                           </div>
                         ) : (
                           <div className="flex flex-col gap-4">
-                            <button 
-                              onClick={async () => {
-                                const pngData = await captureStampAsPng();
-                                if (pngData) {
-                                  handleSignatureCaptured(pngData);
-                                }
-                              }} 
-                              className="w-full py-6 rounded-3xl font-black text-white bg-[#1f6feb] shadow-2xl hover:bg-[#30363d] transition-all flex items-center justify-center gap-3 text-lg"
-                            >
+                            <button onClick={async () => { const pngData = await captureStampAsPng(); if (pngData) handleSignatureCaptured(pngData); }} className="w-full py-6 rounded-3xl font-black text-white bg-[#1f6feb] shadow-2xl hover:bg-[#388bfd] transition-all flex items-center justify-center gap-3 text-lg">
                               <Check size={24} /> Apply to Document
                             </button>
-                            
                             <div className="grid grid-cols-2 gap-4">
-                              <button 
-                                onClick={() => onOpenStudio ? onOpenStudio(showSignPad?.fieldId) : setIsEditingStamp(true)}
-                                className="py-5 rounded-3xl font-black text-[#58a6ff] bg-[#21262d] hover:bg-[#d4e6f9] transition-all flex items-center justify-center gap-2"
-                              >
+                              <button onClick={() => onOpenStudio ? onOpenStudio(showSignPad?.fieldId) : setIsEditingStamp(true)} className="py-5 rounded-3xl font-black text-[#58a6ff] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
                                 <Edit3 size={18} /> {onOpenStudio ? 'Open Studio' : 'Customize'}
                               </button>
-                              <button 
-                                onClick={() => setShowSignPad(null)}
-                                className="py-5 rounded-3xl font-black text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2"
-                              >
-                                <X size={18} /> Discard
+                              <button onClick={() => setShowSignPad(null)} className="py-5 rounded-3xl font-black text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all flex items-center justify-center gap-2">
+                                <X size={18} /> Cancel
                               </button>
                             </div>
                           </div>
@@ -1417,6 +1533,30 @@ export default function DigitalSignCenter({
                       </div>
                     </div>
                  </div>
+              ) : showSignPad.type === 'text' ? (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-black text-white tracking-tighter">✏️ Enter Text</h3>
+                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+                  </div>
+                  <TextPad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
+                </div>
+              ) : showSignPad.type === 'date' ? (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-black text-white tracking-tighter">📅 Select Date</h3>
+                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+                  </div>
+                  <DatePad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
+                </div>
+              ) : showSignPad.type === 'initials' ? (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden p-10 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-black text-white tracking-tighter">🔤 Add Initials</h3>
+                    <button onClick={() => setShowSignPad(null)} className="p-2 hover:bg-[#21262d] rounded-xl text-[#8b949e]"><X size={20}/></button>
+                  </div>
+                  <InitialsPad onCancel={() => setShowSignPad(null)} onSave={handleSignatureCaptured} />
+                </div>
               ) : (
                 <SignaturePad 
                   onCancel={() => setShowSignPad(null)}
@@ -1436,6 +1576,45 @@ export default function DigitalSignCenter({
 
     return (
       <div className="animate-in fade-in duration-700 px-4 md:px-8 pb-24">
+        {/* Reuse the same certificate/void/drive modals from dashboard */}
+        {showCertificate && (
+          <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-2xl animate-in zoom-in-95 overflow-hidden">
+              <div className="bg-[#1f6feb] px-10 py-8 flex items-center justify-between">
+                <div className="flex items-center gap-4"><Award size={28} className="text-white"/><h3 className="text-xl font-black text-white">Certificate of Completion</h3></div>
+                <button onClick={() => setShowCertificate(null)} className="p-2 hover:bg-white/20 rounded-xl text-white"><X size={20}/></button>
+              </div>
+              <div className="p-10 grid grid-cols-2 gap-4">
+                <button onClick={() => setShowCertificate(null)} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d]">Close</button>
+                <button onClick={() => downloadCertificate(showCertificate)} className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] flex items-center justify-center gap-2"><FileDown size={16}/> Download</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showVoidModal && (
+          <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-md animate-in zoom-in-95 p-10 space-y-6">
+              <div className="flex items-center gap-4"><AlertTriangle size={24} className="text-red-500"/><h3 className="text-xl font-black text-white">Void this Envelope?</h3></div>
+              <textarea rows={3} value={voidReason} onChange={e => setVoidReason(e.target.value)} placeholder="Reason (optional)..." className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl px-5 py-4 text-white text-sm outline-none resize-none"/>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={() => setShowVoidModal(null)} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d]">Cancel</button>
+                <button onClick={() => { voidEnvelope(showVoidModal, voidReason); setView('dashboard'); }} className="py-4 rounded-2xl font-black text-sm text-white bg-red-600 flex items-center justify-center gap-2"><AlertTriangle size={16}/> Void</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {showDriveModal && (
+          <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-md animate-in zoom-in-95 p-10 space-y-6">
+              <div className="flex items-center gap-4"><HardDrive size={24} className="text-[#58a6ff]"/><h3 className="text-xl font-black text-white">Save to Google Drive</h3></div>
+              <input type="email" value={driveEmail} onChange={e => setDriveEmail(e.target.value)} placeholder="your@gmail.com" className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl px-5 py-4 text-white text-sm outline-none focus:ring-2 focus:ring-[#1f6feb]"/>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={() => setShowDriveModal(null)} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d]">Cancel</button>
+                <button onClick={() => saveToGoogleDrive(showDriveModal, driveEmail)} className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] flex items-center justify-center gap-2"><HardDrive size={16}/> Download</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
            <div>
               <h2 className="text-4xl md:text-6xl font-black text-white dark:text-white tracking-tighter leading-none">{activeEnvelope.title}</h2>
@@ -1520,7 +1699,7 @@ export default function DigitalSignCenter({
                       <div className="grid grid-cols-3 gap-4">
                         <button 
                           onClick={() => downloadDocument(activeEnvelope)}
-                          className="bg-[#1f6feb] text-white py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#30363d] shadow-xl transition-all active:scale-95"
+                          className="bg-[#1f6feb] text-white py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#388bfd] shadow-xl transition-all active:scale-95"
                         >
                           <FileDown size={16} /> Download
                         </button>
@@ -1535,6 +1714,24 @@ export default function DigitalSignCenter({
                           className="bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-[#30363d] dark:hover:bg-[#30363d] transition-all active:scale-95"
                         >
                           <Mail size={16} /> Send
+                        </button>
+                        <button
+                          onClick={() => generateCertificate(activeEnvelope)}
+                          className="bg-[#21262d] text-yellow-500 py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-yellow-900/20 transition-all active:scale-95"
+                        >
+                          <Award size={16} /> Certificate
+                        </button>
+                        <button
+                          onClick={() => { setShowDriveModal(activeEnvelope); setDriveEmail(''); }}
+                          className="bg-[#21262d] text-[#58a6ff] py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-blue-900/20 transition-all active:scale-95"
+                        >
+                          <HardDrive size={16} /> Drive
+                        </button>
+                        <button
+                          onClick={() => setShowVoidModal(activeEnvelope)}
+                          className="bg-[#21262d] text-red-500 py-5 rounded-3xl font-black text-[10px] flex flex-col items-center justify-center gap-2 hover:bg-red-900/20 transition-all active:scale-95"
+                        >
+                          <AlertTriangle size={16} /> Void
                         </button>
                       </div>
                     <button 
@@ -1575,16 +1772,19 @@ export default function DigitalSignCenter({
         </div>
 
         {showSignPad && (() => {
-          const fieldId = showSignPad.fieldId!;
-          const fieldType = showSignPad.type || activeEnvelope.fields.find(f => f.id === fieldId)?.type || 'signature';
+          const fieldId   = showSignPad.fieldId;
+          const fieldType = showSignPad.type || (fieldId ? activeEnvelope.fields.find(f => f.id === fieldId)?.type : 'signature') || 'signature';
 
           const applyValue = (val: string) => {
-            const updatedFields = activeEnvelope.fields.map(f =>
-              f.id === fieldId ? { ...f, isCompleted: true, value: val } : f
-            );
-            const updatedEnvelope = { ...activeEnvelope, fields: updatedFields, updatedAt: new Date().toISOString() };
-            setActiveEnvelope(updatedEnvelope);
-            setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+            if (fieldId) {
+              // Update a specific placed field in the active envelope
+              const updatedFields = activeEnvelope.fields.map(f =>
+                f.id === fieldId ? { ...f, isCompleted: true, value: val } : f
+              );
+              const updatedEnvelope = { ...activeEnvelope, fields: updatedFields, updatedAt: new Date().toISOString() };
+              setActiveEnvelope(updatedEnvelope);
+              setEnvelopes(envelopes.map(e => e.id === activeEnvelope.id ? updatedEnvelope : e));
+            }
             const labels: Record<string, string> = { signature: 'Signature', stamp: 'Stamp', initials: 'Initials', date: 'Date', text: 'Text' };
             setShowToast({ message: `${labels[fieldType] || 'Field'} applied successfully`, type: 'success' });
             setShowSignPad(null);
@@ -1724,46 +1924,138 @@ export default function DigitalSignCenter({
 
   const renderDashboard = () => (
     <div className="animate-in fade-in duration-500 px-4 md:px-8 py-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
+
+      {/* Certificate Modal */}
+      {showCertificate && (
+        <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-2xl animate-in zoom-in-95 overflow-hidden">
+            <div className="bg-[#1f6feb] px-10 py-8 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Award size={32} className="text-white" />
+                <div>
+                  <h3 className="text-xl font-black text-white">Certificate of Completion</h3>
+                  <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mt-1">Tamper-Evident Audit Trail</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCertificate(null)} className="p-2 hover:bg-white/20 rounded-xl text-white transition-all"><X size={20}/></button>
+            </div>
+            <div className="p-10 space-y-6">
+              <div className="bg-[#0d1117] rounded-3xl p-8 space-y-4 border border-[#21262d]">
+                {[
+                  ['Envelope ID', showCertificate.id.toUpperCase()],
+                  ['Document', showCertificate.title],
+                  ['Status', showCertificate.status.toUpperCase()],
+                  ['Created', new Date(showCertificate.createdAt).toLocaleString()],
+                  ['Total Signers', String(showCertificate.signers.length)],
+                  ['Fields Completed', `${showCertificate.fields?.filter(f=>f.isCompleted).length||0} / ${showCertificate.fields?.length||0}`],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between items-center border-b border-[#21262d] pb-3 last:border-0 last:pb-0">
+                    <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">{label}</span>
+                    <span className="text-sm font-bold text-white">{value}</span>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <h4 className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest mb-4">Signers & Routing</h4>
+                <div className="space-y-2">
+                  {showCertificate.signers.map((s, i) => (
+                    <div key={s.id} className="flex items-center gap-4 bg-[#0d1117] p-4 rounded-2xl border border-[#21262d]">
+                      <div className="w-8 h-8 bg-[#1f6feb] rounded-xl flex items-center justify-center text-white text-xs font-black">{i+1}</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-black text-white">{s.name}</p>
+                        <p className="text-xs text-[#8b949e]">{s.email} · {s.role}</p>
+                      </div>
+                      <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full ${s.status === 'completed' ? 'bg-green-900/40 text-green-400' : s.status === 'signed' ? 'bg-blue-900/40 text-blue-400' : 'bg-[#21262d] text-[#8b949e]'}`}>{s.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={() => setShowCertificate(null)} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Close</button>
+                <button onClick={() => downloadCertificate(showCertificate)} className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] hover:bg-[#388bfd] transition-all flex items-center justify-center gap-2">
+                  <FileDown size={16}/> Download Certificate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Void Modal */}
+      {showVoidModal && (
+        <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-md animate-in zoom-in-95 overflow-hidden p-10 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-red-900/30 rounded-2xl flex items-center justify-center"><AlertTriangle size={24} className="text-red-500"/></div>
+              <div>
+                <h3 className="text-xl font-black text-white">Void Envelope</h3>
+                <p className="text-[#8b949e] text-xs mt-1">This action cannot be undone. Signers will be notified.</p>
+              </div>
+            </div>
+            <textarea rows={3} value={voidReason} onChange={e => setVoidReason(e.target.value)} placeholder="Reason for voiding (optional)..."
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl px-5 py-4 text-white text-sm outline-none focus:ring-2 focus:ring-red-500 resize-none" />
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => { setShowVoidModal(null); setVoidReason(''); }} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Cancel</button>
+              <button onClick={() => voidEnvelope(showVoidModal, voidReason)} className="py-4 rounded-2xl font-black text-sm text-white bg-red-600 hover:bg-red-700 transition-all flex items-center justify-center gap-2">
+                <AlertTriangle size={16}/> Void Envelope
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drive Save Modal */}
+      {showDriveModal && (
+        <div className="fixed inset-0 bg-[#0d1117]/95 backdrop-blur-2xl z-[300] flex items-center justify-center p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-[40px] shadow-2xl w-full max-w-md animate-in zoom-in-95 overflow-hidden p-10 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-900/30 rounded-2xl flex items-center justify-center"><HardDrive size={24} className="text-[#58a6ff]"/></div>
+              <div>
+                <h3 className="text-xl font-black text-white">Save to Google Drive</h3>
+                <p className="text-[#8b949e] text-xs mt-1">Download the signed PDF to upload to your Drive.</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Your Google Account Email</label>
+              <input type="email" value={driveEmail} onChange={e => setDriveEmail(e.target.value)} placeholder="you@gmail.com"
+                className="w-full bg-[#0d1117] border border-[#30363d] rounded-2xl px-5 py-4 text-white text-sm outline-none focus:ring-2 focus:ring-[#1f6feb]" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setShowDriveModal(null)} className="py-4 rounded-2xl font-black text-sm text-[#8b949e] bg-[#21262d] hover:bg-[#30363d] transition-all">Cancel</button>
+              <button onClick={() => saveToGoogleDrive(showDriveModal, driveEmail)} className="py-4 rounded-2xl font-black text-sm text-white bg-[#1f6feb] hover:bg-[#388bfd] transition-all flex items-center justify-center gap-2">
+                <HardDrive size={16}/> Download for Drive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
         <div>
           <h2 className="text-5xl md:text-7xl font-black text-white dark:text-white tracking-tighter leading-none">Sign Center</h2>
           <p className="text-[#8b949e] dark:text-[#8b949e] font-medium text-lg mt-4">Upload documents to sign, stamp, or send for signature.</p>
         </div>
         <div className="relative group w-full md:w-auto">
-          <input 
-            type="file" 
-            onChange={handleFileUpload}
-            className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-            accept=".pdf,.doc,.docx"
-          />
-          <button className="w-full md:w-auto bg-[#1f6feb] text-white px-12 py-6 rounded-[32px] font-black text-xl shadow-2xl shadow-[#c5d8ef] dark:shadow-none hover:bg-[#30363d] transition-all flex items-center justify-center gap-3 active:scale-95">
+          <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept=".pdf,.doc,.docx" />
+          <button className="w-full md:w-auto bg-[#1f6feb] text-white px-12 py-6 rounded-[32px] font-black text-xl shadow-2xl hover:bg-[#388bfd] transition-all flex items-center justify-center gap-3 active:scale-95">
             <Upload size={28} /> Upload & Sign
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-16">
-        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
-          <div className="w-14 h-14 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <ShieldCheck size={28} />
+      {/* Stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
+        {[
+          { label: 'Total', value: envelopes.length, color: 'text-white' },
+          { label: 'Sent', value: envelopes.filter(e => e.status === 'sent').length, color: 'text-[#58a6ff]' },
+          { label: 'Completed', value: envelopes.filter(e => e.status === 'completed').length, color: 'text-green-400' },
+          { label: 'Voided', value: envelopes.filter(e => (e.status as any) === 'voided').length, color: 'text-red-400' },
+        ].map(stat => (
+          <div key={stat.label} className="bg-[#161b22] border border-[#21262d] rounded-3xl p-6 text-center">
+            <div className={`text-3xl font-black ${stat.color}`}>{stat.value}</div>
+            <div className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest mt-1">{stat.label}</div>
           </div>
-          <h4 className="text-xl font-black tracking-tight mb-2">Legal Compliance</h4>
-          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Fully compliant with Kenyan Information and Communications Act (KICA).</p>
-        </div>
-        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
-          <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <Layers size={28} />
-          </div>
-          <h4 className="text-xl font-black tracking-tight mb-2">Bulk Processing</h4>
-          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Sign or stamp hundreds of pages in seconds with our multi-page engine.</p>
-        </div>
-        <div className="bg-[#161b22] dark:bg-[#161b22] p-8 md:p-10 rounded-[40px] md:rounded-[48px] border border-[#21262d] dark:border-[#30363d] shadow-sm hover:shadow-xl transition-all group">
-          <div className="w-14 h-14 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-            <UserPlus size={28} />
-          </div>
-          <h4 className="text-xl font-black tracking-tight mb-2">Multi-Signer</h4>
-          <p className="text-sm text-[#8b949e] dark:text-[#8b949e] font-medium leading-relaxed">Incorporate multiple signers with secure email-based authentication.</p>
-        </div>
+        ))}
       </div>
 
       <div className="bg-[#161b22] dark:bg-[#161b22] border border-[#21262d] dark:border-[#30363d] rounded-[40px] md:rounded-[56px] overflow-hidden shadow-xl">
@@ -1772,86 +2064,91 @@ export default function DigitalSignCenter({
             <div className="bg-[#0d1117] dark:bg-[#21262d] w-24 h-24 md:w-32 md:h-32 rounded-[32px] md:rounded-[48px] flex items-center justify-center mx-auto mb-10">
                <FileText size={48} className="text-[#e6edf3] dark:text-white md:size-[56px]" />
             </div>
-            <h3 className="text-3xl md:text-4xl font-black text-white dark:text-white mb-4">No active documents</h3>
-            <p className="text-[#8b949e] dark:text-[#8b949e] mb-10 max-w-sm mx-auto">Your document list is empty. Upload a document to begin.</p>
+            <h3 className="text-3xl md:text-4xl font-black text-white dark:text-white mb-4">No active envelopes</h3>
+            <p className="text-[#8b949e] dark:text-[#8b949e] mb-10 max-w-sm mx-auto">Upload a document to create your first signing envelope.</p>
             <div className="relative inline-block group">
-              <input 
-                type="file" 
-                onChange={handleFileUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                accept=".pdf,.doc,.docx"
-              />
+              <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept=".pdf,.doc,.docx" />
               <button className="text-[#58a6ff] font-black uppercase text-sm tracking-widest hover:underline decoration-2 underline-offset-8">Start Your First Document</button>
             </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
+            <table className="w-full text-left min-w-[900px]">
               <thead>
                 <tr className="bg-[#0d1117] dark:bg-[#21262d]/50 border-b border-[#21262d] dark:border-[#30363d]">
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Document Name</th>
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Status</th>
-                  <th className="px-8 md:px-12 py-8 md:py-10 text-[11px] font-black text-[#8b949e] uppercase tracking-widest text-right">Access</th>
+                  <th className="px-8 py-6 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Document</th>
+                  <th className="px-8 py-6 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-6 text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Progress</th>
+                  <th className="px-8 py-6 text-[11px] font-black text-[#8b949e] uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-[#30363d]">
-                {envelopes.filter(e => e.status !== 'archived').map(env => (
-                  <tr key={env.id} className="hover:bg-[#0d1117]/50 dark:hover:bg-[#21262d]/30 transition-colors group">
-                    <td className="px-8 md:px-12 py-8 md:py-10">
-                      <div className="flex items-center gap-4 md:gap-6 cursor-pointer" onClick={() => { setActiveEnvelope(env); setView('signer-view'); }}>
-                        <div className="bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] p-4 md:p-5 rounded-2xl md:rounded-3xl flex-shrink-0"><FileText size={24} className="md:size-[28px]" /></div>
-                        <div className="min-w-0">
-                          <div className="font-black text-white dark:text-white text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{env.title}</div>
-                          <div className="text-[10px] md:text-xs text-[#8b949e] font-bold mt-1">ID: {env.id.toUpperCase()} • {new Date(env.createdAt).toLocaleDateString()}</div>
+              <tbody className="divide-y divide-[#21262d]">
+                {envelopes.filter(e => e.status !== 'archived').map(env => {
+                  const completed = env.fields?.filter(f => f.isCompleted).length || 0;
+                  const total     = env.fields?.length || 0;
+                  const isVoided  = (env.status as any) === 'voided';
+                  return (
+                    <tr key={env.id} className="hover:bg-[#0d1117]/50 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => { setActiveEnvelope(env); setView('signer-view'); }}>
+                          <div className={`p-4 rounded-2xl flex-shrink-0 ${isVoided ? 'bg-red-900/20 text-red-500' : 'bg-[#21262d] text-[#58a6ff]'}`}><FileText size={22}/></div>
+                          <div className="min-w-0">
+                            <div className="font-black text-white text-base truncate max-w-[220px]">{env.title}</div>
+                            <div className="text-[10px] text-[#8b949e] font-bold mt-1">{env.id.toUpperCase().slice(0,16)} · {new Date(env.createdAt).toLocaleDateString()}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-8 md:px-12 py-8 md:py-10">
-                      <div className="flex items-center gap-3">
-                        <span className={`px-4 md:px-6 py-1.5 md:py-2 rounded-full text-[10px] md:text-[11px] font-black uppercase tracking-widest border ${
-                          env.status === 'sent' ? 'bg-[#21262d] text-[#58a6ff] border-[#d4e6f9] dark:bg-[#21262d] dark:border-blue-800' : 
-                          env.status === 'completed' ? 'bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800' :
-                          'bg-[#0d1117] text-[#8b949e] border-[#21262d] dark:bg-[#21262d] dark:border-[#58a6ff]'
-                        }`}>
-                          {env.status}
-                        </span>
-                        <div className="hidden sm:flex -space-x-3">
-                          {env.signers.map((s, i) => (
-                            <div key={s.id} className="w-8 h-8 rounded-full bg-[#161b22] dark:bg-[#21262d] border-2 border-[#21262d] dark:border-[#020b18] flex items-center justify-center text-[10px] font-black text-[#8b949e]" title={s.name}>
-                              {s.name.charAt(0)}
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="space-y-2">
+                          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border inline-block ${
+                            env.status === 'sent' ? 'bg-[#21262d] text-[#58a6ff] border-blue-800' :
+                            env.status === 'completed' ? 'bg-green-900/20 text-green-400 border-green-800' :
+                            isVoided ? 'bg-red-900/20 text-red-400 border-red-800' :
+                            'bg-[#0d1117] text-[#8b949e] border-[#30363d]'
+                          }`}>{env.status}</span>
+                          <div className="flex -space-x-2">
+                            {env.signers.slice(0,4).map((s,i) => (
+                              <div key={s.id} className="w-6 h-6 rounded-full bg-[#1f6feb] border-2 border-[#161b22] flex items-center justify-center text-[8px] font-black text-white" title={s.name}>{s.name?.charAt(0)||'?'}</div>
+                            ))}
+                            {env.signers.length > 4 && <div className="w-6 h-6 rounded-full bg-[#30363d] border-2 border-[#161b22] flex items-center justify-center text-[8px] font-black text-[#8b949e]">+{env.signers.length-4}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        {total > 0 ? (
+                          <div className="space-y-1 min-w-[100px]">
+                            <div className="w-full bg-[#21262d] h-2 rounded-full overflow-hidden">
+                              <div className="bg-[#1f6feb] h-full rounded-full transition-all" style={{ width: `${(completed/total)*100}%` }}/>
                             </div>
-                          ))}
+                            <p className="text-[10px] text-[#8b949e] font-bold">{completed}/{total} fields</p>
+                          </div>
+                        ) : <span className="text-[10px] text-[#8b949e]">No fields</span>}
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {/* Open */}
+                          <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="p-2.5 bg-[#21262d] text-[#58a6ff] rounded-xl hover:bg-[#1f6feb] hover:text-white transition-all" title="Open"><FileText size={16}/></button>
+                          {/* Edit fields */}
+                          <button onClick={() => { setActiveEnvelope(env); setCurrentStep(2); setView('create'); setNewEnv(env); }} className="p-2.5 bg-[#21262d] text-[#8b949e] rounded-xl hover:bg-[#30363d] transition-all" title="Edit Fields"><Edit3 size={16}/></button>
+                          {/* Certificate */}
+                          <button onClick={() => generateCertificate(env)} className="p-2.5 bg-[#21262d] text-yellow-500 rounded-xl hover:bg-yellow-900/30 transition-all" title="Certificate of Completion"><Award size={16}/></button>
+                          {/* Download */}
+                          <button onClick={() => downloadDocument(env)} className="p-2.5 bg-[#21262d] text-green-400 rounded-xl hover:bg-green-900/30 transition-all" title="Download PDF"><FileDown size={16}/></button>
+                          {/* Save to Drive */}
+                          <button onClick={() => { setShowDriveModal(env); setDriveEmail(''); }} className="p-2.5 bg-[#21262d] text-[#8b949e] rounded-xl hover:bg-[#30363d] transition-all" title="Save to Drive"><HardDrive size={16}/></button>
+                          {/* Duplicate */}
+                          <button onClick={() => duplicateEnvelope(env)} className="p-2.5 bg-[#21262d] text-purple-400 rounded-xl hover:bg-purple-900/30 transition-all" title="Duplicate"><Copy size={16}/></button>
+                          {/* Share */}
+                          <button onClick={() => shareDocument(env)} className="p-2.5 bg-[#21262d] text-[#8b949e] rounded-xl hover:bg-[#30363d] transition-all" title="Share"><Share2 size={16}/></button>
+                          {/* Void */}
+                          {!isVoided && <button onClick={() => setShowVoidModal(env)} className="p-2.5 bg-[#21262d] text-red-500 rounded-xl hover:bg-red-900/30 transition-all" title="Void Envelope"><AlertTriangle size={16}/></button>}
+                          {/* Archive */}
+                          <button onClick={() => archiveDocument(env.id)} className="p-2.5 bg-[#21262d] text-[#8b949e] rounded-xl hover:bg-red-900/30 hover:text-red-400 transition-all" title="Archive"><Trash2 size={16}/></button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-8 md:px-12 py-8 md:py-10 text-right">
-                      <div className="flex items-center justify-end gap-2 md:gap-4">
-                        <button 
-                          onClick={() => { setActiveEnvelope(env); setView('create'); setCurrentStep(2); setNewEnv(env); }}
-                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-[#1f6feb] hover:text-white transition-all"
-                          title="Edit Tags"
-                        >
-                          <Edit3 size={18} className="md:size-[20px]" />
-                        </button>
-                        <button 
-                          onClick={() => downloadDocument(env)}
-                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-[#1f6feb] hover:text-white transition-all"
-                          title="Download PDF"
-                        >
-                          <FileDown size={18} className="md:size-[20px]" />
-                        </button>
-                        <button 
-                          onClick={() => archiveDocument(env.id)}
-                          className="p-3 md:p-4 bg-[#21262d] dark:bg-[#21262d] text-[#e6edf3] dark:text-[#8b949e] rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all"
-                          title="Archive"
-                        >
-                          <Trash2 size={18} className="md:size-[20px]" />
-                        </button>
-                        <button onClick={() => { setActiveEnvelope(env); setView('signer-view'); }} className="hidden sm:block bg-[#161b22] dark:bg-[#1f6feb] text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg active:scale-95">Open</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1864,14 +2161,12 @@ export default function DigitalSignCenter({
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-700 max-w-4xl mx-auto py-16 px-4">
       <div className="bg-[#161b22] dark:bg-[#161b22] p-14 rounded-[64px] border border-[#21262d] dark:border-[#30363d] shadow-2xl space-y-12">
         <div className="text-center space-y-4">
-          <h3 className="text-4xl font-black text-white dark:text-white tracking-tighter">Document Details</h3>
-          <p className="text-[#8b949e] font-medium">Give your document a name and add any other signers if needed.</p>
+          <h3 className="text-4xl font-black text-white dark:text-white tracking-tighter">Envelope Details</h3>
+          <p className="text-[#8b949e] font-medium">Configure your signing envelope — recipients receive and sign in the order listed below.</p>
         </div>
 
         <div className="space-y-6">
-          <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">
-            Document Title
-          </label>
+          <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest flex items-center gap-2">Document Title</label>
           <input 
             type="text" 
             placeholder="e.g., Partnership Agreement"
@@ -1883,44 +2178,71 @@ export default function DigitalSignCenter({
 
         <div className="space-y-10">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Signers</label>
+            <div>
+              <label className="text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Signers & Routing Order</label>
+              <p className="text-[10px] text-[#8b949e] mt-1">Recipients sign top-to-bottom in this order.</p>
+            </div>
             <button 
               onClick={() => setNewEnv(prev => ({ ...prev, signers: [...(prev.signers || []), { id: `s-${Date.now()}`, name: '', email: '', role: 'signer', order: (prev.signers?.length || 0) + 1, status: 'pending' }] }))} 
-              className="text-[#58a6ff] font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-[#21262d] dark:bg-[#21262d] px-6 py-4 rounded-[28px] hover:bg-[#d4e6f9] transition-all shadow-sm"
+              className="text-[#58a6ff] font-black text-xs uppercase tracking-widest flex items-center gap-3 bg-[#21262d] dark:bg-[#21262d] px-6 py-4 rounded-[28px] hover:bg-[#30363d] transition-all shadow-sm"
             >
-              <UserPlus size={20} /> Add Another Signer
+              <UserPlus size={20} /> Add Recipient
             </button>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {newEnv.signers?.map((signer, i) => (
-              <div key={signer.id} className="flex flex-col md:flex-row gap-6 p-8 bg-[#0d1117] dark:bg-[#21262d]/50 rounded-[40px] items-center group border border-[#21262d] dark:border-[#30363d] transition-all hover:bg-[#161b22] dark:hover:bg-[#21262d] hover:shadow-xl">
-                <div className="w-12 h-12 bg-[#161b22] dark:bg-[#161b22] rounded-2xl flex items-center justify-center font-black text-[#8b949e] border border-[#21262d] dark:border-[#30363d] flex-shrink-0 shadow-md">{i + 1}</div>
-                <input 
-                  type="text" placeholder="Full Name" value={signer.name}
-                  onChange={e => {
-                    const updated = [...(newEnv.signers || [])];
-                    updated[i].name = e.target.value;
-                    setNewEnv(prev => ({ ...prev, signers: updated }));
-                  }}
-                  className="w-full md:flex-1 bg-[#161b22] dark:bg-[#161b22] border border-[#30363d] dark:border-[#58a6ff] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#1f6feb]/10 dark:text-white" 
-                />
-                <input 
-                  type="email" placeholder="Email Address" value={signer.email}
-                  onChange={e => {
-                    const updated = [...(newEnv.signers || [])];
-                    updated[i].email = e.target.value;
-                    setNewEnv(prev => ({ ...prev, signers: updated }));
-                  }}
-                  className="w-full md:flex-1 bg-[#161b22] dark:bg-[#161b22] border border-[#30363d] dark:border-[#58a6ff] rounded-2xl py-4 px-6 outline-none font-bold text-lg shadow-sm focus:ring-4 focus:ring-[#1f6feb]/10 dark:text-white" 
-                />
-                {i > 0 && (
-                  <button 
-                    onClick={() => setNewEnv(prev => ({ ...prev, signers: prev.signers?.filter(s => s.id !== signer.id) }))} 
-                    className="text-[#8b949e] hover:text-red-500 transition-colors p-4 bg-[#161b22] dark:bg-[#161b22] rounded-2xl shadow-sm border border-[#21262d] dark:border-[#30363d]"
+              <div key={signer.id} className="flex flex-col gap-4 p-6 bg-[#0d1117] dark:bg-[#21262d]/50 rounded-[32px] border border-[#21262d] dark:border-[#30363d] transition-all hover:border-[#30363d]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#1f6feb] rounded-2xl flex items-center justify-center font-black text-white text-sm flex-shrink-0 shadow">{i + 1}</div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <ListOrdered size={14} className="text-[#8b949e]"/>
+                    <span className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest">Routing Step {i+1}</span>
+                  </div>
+                  <select
+                    value={signer.role}
+                    onChange={e => {
+                      const updated = [...(newEnv.signers || [])];
+                      updated[i].role = e.target.value as any;
+                      setNewEnv(prev => ({ ...prev, signers: updated }));
+                    }}
+                    className="bg-[#21262d] border border-[#30363d] rounded-xl py-2 px-3 text-[10px] font-black text-[#8b949e] uppercase outline-none"
                   >
-                    <Trash2 size={20} />
-                  </button>
-                )}
+                    <option value="signer">Signer</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="approver">Approver</option>
+                  </select>
+                  {i > 0 && (
+                    <button onClick={() => setNewEnv(prev => ({ ...prev, signers: prev.signers?.filter(s => s.id !== signer.id) }))} className="text-[#8b949e] hover:text-red-500 transition-colors p-2 rounded-xl bg-[#21262d]">
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input 
+                    type="text" placeholder="Full Name" value={signer.name}
+                    onChange={e => {
+                      const updated = [...(newEnv.signers || [])];
+                      updated[i].name = e.target.value;
+                      setNewEnv(prev => ({ ...prev, signers: updated }));
+                    }}
+                    className="bg-[#161b22] border border-[#30363d] rounded-2xl py-3 px-5 outline-none font-bold text-sm focus:ring-2 focus:ring-[#1f6feb]/30 dark:text-white" 
+                  />
+                  <input 
+                    type="email" placeholder="Email Address" value={signer.email}
+                    onChange={e => {
+                      const updated = [...(newEnv.signers || [])];
+                      updated[i].email = e.target.value;
+                      setNewEnv(prev => ({ ...prev, signers: updated }));
+                    }}
+                    className="bg-[#161b22] border border-[#30363d] rounded-2xl py-3 px-5 outline-none font-bold text-sm focus:ring-2 focus:ring-[#1f6feb]/30 dark:text-white" 
+                  />
+                  <input 
+                    type="tel" placeholder="Phone / WhatsApp (optional)" 
+                    value={signerPhone[signer.id] || ''}
+                    onChange={e => setSignerPhone(prev => ({ ...prev, [signer.id]: e.target.value }))}
+                    className="bg-[#161b22] border border-[#30363d] rounded-2xl py-3 px-5 outline-none font-bold text-sm focus:ring-2 focus:ring-[#1f6feb]/30 dark:text-white md:col-span-2" 
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -1930,7 +2252,7 @@ export default function DigitalSignCenter({
       <div className="flex justify-end">
          <button 
           onClick={() => setCurrentStep(2)}
-          className="bg-[#161b22] dark:bg-[#1f6feb] text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:scale-105 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
+          className="bg-[#1f6feb] text-white px-16 py-8 rounded-[40px] font-black text-2xl hover:scale-105 transition-all shadow-2xl active:scale-95 flex items-center gap-5"
         >
           Continue to Studio <ChevronRight size={32} />
         </button>

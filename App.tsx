@@ -243,12 +243,13 @@ const App: React.FC = () => {
     if (saved) { try { setCustomTemplates(JSON.parse(saved)); } catch {} }
   }, []);
 
-  // Handle Google OAuth redirect response (?google_auth= or ?auth_error= or ?verified=)
+  // Handle OAuth redirect responses (?google_auth=, ?facebook_auth=, ?auth_error=, ?verified=)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const googleAuth = params.get('google_auth');
-    const authError  = params.get('auth_error');
-    const verified   = params.get('verified');
+    const params       = new URLSearchParams(window.location.search);
+    const googleAuth   = params.get('google_auth');
+    const facebookAuth = params.get('facebook_auth');
+    const authError    = params.get('auth_error');
+    const verified     = params.get('verified');
 
     if (verified === '1') {
       window.history.replaceState({}, '', window.location.pathname);
@@ -289,9 +290,27 @@ const App: React.FC = () => {
       }
       return;
     }
+
+    if (facebookAuth) {
+      window.history.replaceState({}, '', window.location.pathname);
+      try {
+        const u = JSON.parse(decodeURIComponent(facebookAuth));
+        localStorage.setItem('tomo_token', u.token);
+        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [] });
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+        if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
+        else if (u.role === 'worker') goTo('settings', 'worker-portal');
+        else goTo('home');
+      } catch (e) {
+        setLoginError('Facebook sign-in failed. Please try email login.');
+        setShowLoginModal(true);
+      }
+      return;
+    }
   }, []);
 
-  // Restore session on reload — but NOT if user explicitly logged out
+ — but NOT if user explicitly logged out
   useEffect(() => {
     // If user deliberately logged out in this tab, don't restore
     if (sessionStorage.getItem('logged_out') === '1') return;

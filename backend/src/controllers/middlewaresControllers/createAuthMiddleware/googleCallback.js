@@ -81,7 +81,7 @@ const googleCallback = async (req, res) => {
         googleId,
         photo:         picture,
         role:          isOwner ? 'superadmin' : intendedRole,
-        enabled:       isOwner,
+        enabled:       true,
         emailVerified: true,
         plan:          isOwner ? 'enterprise' : 'trial',
         trialStartedAt: isOwner ? undefined : new Date(),
