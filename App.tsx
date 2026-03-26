@@ -310,7 +310,7 @@ const App: React.FC = () => {
     }
   }, []);
 
- — but NOT if user explicitly logged out
+  // Restore session on reload — but NOT if user explicitly logged out
   useEffect(() => {
     // If user deliberately logged out in this tab, don't restore
     if (sessionStorage.getItem('logged_out') === '1') return;
