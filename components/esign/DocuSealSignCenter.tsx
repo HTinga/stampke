@@ -262,7 +262,7 @@ const Dashboard: React.FC<{ envelopes:Envelope[]; onSelect:(e:Envelope)=>void; o
 };
 
 /* ─── BUILDER ────────────────────────────────────────────── */
-const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:(e:Envelope)=>void; onBack:()=>void; stampConfig:StampConfig}> = ({ envelope, onUpdate, onSend, onBack, stampConfig }) => {
+const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:(e:Envelope, openForSigning?:boolean)=>void; onBack:()=>void; stampConfig:StampConfig; onOpenStudio?:(fieldId?:string)=>void}> = ({ envelope, onUpdate, onSend, onBack, stampConfig, onOpenStudio }) => {
   const [env, setEnv] = useState<Envelope>(envelope);
   const [step, setStep] = useState<'upload'|'signers'|'fields'|'review'>(envelope.documents.length>0?(envelope.signers.length>0?'fields':'signers'):'upload');
   const [newName, setNewName] = useState('');
@@ -539,6 +539,16 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
                 className="w-full py-2.5 bg-[#1f6feb] text-white rounded-xl text-xs font-bold hover:bg-[#388bfd] disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
                 <Send size={13}/> Send for Signing
               </button>
+              {/* Sign Now — for self-signing: sends AND immediately opens signer view */}
+              <button onClick={()=>{
+                if (env.documents.length===0||env.fields.length===0) return;
+                const audit: AuditEntry = { id: Math.random().toString(36).slice(2), timestamp: new Date().toISOString(), action: 'Document Ready to Sign', user: 'You', ip: '—', details: `${env.fields.length} field(s) ready` };
+                const updated = { ...env, status: 'sent' as const, auditLog: [...env.auditLog, audit], updatedAt: new Date().toISOString() };
+                setEnv(updated); onSend(updated, true);
+              }} disabled={env.documents.length===0||env.fields.length===0}
+                className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 disabled:opacity-40 flex items-center justify-center gap-2 transition-colors">
+                <PenTool size={13}/> Sign Now (Self)
+              </button>
               <button onClick={()=>onUpdate(env)} className="w-full py-2 border border-[#30363d] text-[#8b949e] hover:text-white rounded-xl text-xs font-medium hover:bg-[#21262d] flex items-center justify-center gap-2 transition-colors">
                 <Save size={12}/> Save Draft
               </button>
@@ -797,6 +807,13 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
 
   const selectEnvelope=(env:Envelope)=>{setActive(env);setView(env.status==='sent'||env.status==='completed'?'signerView':'builder');};
 
+  // Called by Builder when sending — openForSigning=true means open signerView immediately
+  const handleSend=(env:Envelope, openForSigning=false)=>{
+    save(env);
+    if(openForSigning){ setActive(env); setView('signerView'); }
+    else { setView('dashboard'); }
+  };
+
   return (
     <div className="h-full flex flex-col bg-[#0d1117] -m-5 md:-m-8" style={{minHeight:'calc(100vh - 56px)'}}>
       {/* Toho Sign header */}
@@ -814,7 +831,7 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
       </nav>
       <main className="flex-1 overflow-hidden flex flex-col">
         {view==='dashboard'&&<div className="flex-1 overflow-y-auto"><Dashboard envelopes={envelopes} onSelect={selectEnvelope} onCreate={createNew} onDelete={id=>setEnvelopes(es=>es.filter(e=>e.id!==id))}/></div>}
-        {view==='builder'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><Builder envelope={active} onUpdate={save} onSend={e=>{save(e);setView('dashboard');}} onBack={()=>setView('dashboard')} stampConfig={stampConfig} onOpenStudio={onOpenStudio}/></div>}
+        {view==='builder'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><Builder envelope={active} onUpdate={save} onSend={(e,openForSigning)=>handleSend(e,openForSigning)} onBack={()=>setView('dashboard')} stampConfig={stampConfig} onOpenStudio={onOpenStudio}/></div>}
         {view==='signerView'&&active&&<div className="flex-1 overflow-hidden flex flex-col"><SignerView envelope={active} onComplete={e=>{save(e);setView('dashboard');}} onBack={()=>setView('dashboard')} stampConfig={stampConfig}/></div>}
       </main>
     </div>
