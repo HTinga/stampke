@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { StampConfig } from '../types';
-import { DEFAULT_CONFIG } from '../constants';
+import { StampConfig } from './types';
+import { DEFAULT_CONFIG } from './constants';
 
 // UI Store
 export type ZoomMode = 'manual' | 'fit-page' | 'fit-width';
@@ -364,18 +364,157 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   setUndoRedoInProgress: (undoRedoInProgress) => set({ undoRedoInProgress }),
 }));
 
-// Stamp Store
+import { persist, createJSONStorage } from 'zustand/middleware';
+
 interface StampState {
   config: StampConfig;
+  customTemplates: { id: string; name: string; config: StampConfig }[];
+  history: StampConfig[];
+  redoStack: StampConfig[];
   setConfig: (updates: Partial<StampConfig> | ((prev: StampConfig) => Partial<StampConfig>)) => void;
+  undo: () => void;
+  redo: () => void;
+  addCustomTemplate: (name: string, config: StampConfig) => void;
+  removeCustomTemplate: (id: string) => void;
+  clearHistory: () => void;
+  fetchTemplates: () => Promise<void>;
+  saveTemplateRemote: (name: string, config: StampConfig, svgPreview?: string, templateType?: 'completed' | 'sample') => Promise<void>;
+  logAudit: (action: string, details: string) => Promise<void>;
 }
 
-export const useStampStore = create<StampState>((set) => ({
-  config: DEFAULT_CONFIG,
-  setConfig: (updates) => set((state) => ({ 
-    config: { 
-      ...state.config, 
-      ...(typeof updates === 'function' ? updates(state.config) : updates) 
-    } 
-  })),
-}));
+export const useStampStore = create<StampState>()(
+  persist(
+    (set, get) => ({
+      config: DEFAULT_CONFIG,
+      customTemplates: [],
+      history: [],
+      redoStack: [],
+      setConfig: (updates) => {
+        const state = get();
+        const nextConfig = typeof updates === 'function' ? updates(state.config) : updates;
+        const newConfig = { ...state.config, ...nextConfig };
+        
+        // Don't record history if only superficial things changed (optional optimization)
+        set({
+          config: newConfig,
+          history: [...state.history, state.config].slice(-50),
+          redoStack: []
+        });
+      },
+      undo: () => {
+        const state = get();
+        if (state.history.length === 0) return;
+        const prev = state.history[state.history.length - 1];
+        set({
+          config: prev,
+          history: state.history.slice(0, -1),
+          redoStack: [state.config, ...state.redoStack]
+        });
+      },
+      redo: () => {
+        const state = get();
+        if (state.redoStack.length === 0) return;
+        const next = state.redoStack[0];
+        set({
+          config: next,
+          history: [...state.history, state.config],
+          redoStack: state.redoStack.slice(1)
+        });
+      },
+      addCustomTemplate: (name, config) => set((state) => ({
+        customTemplates: [...state.customTemplates, { id: Math.random().toString(36).substr(2, 9), name, config }]
+      })),
+      removeCustomTemplate: async (id) => {
+        const state = get();
+        set({ customTemplates: state.customTemplates.filter(t => t.id !== id) });
+        
+        // Sync with backend if logged in
+        const token = localStorage.getItem('tomo_token');
+        if (token && id.length > 10) { // Assume remote IDs are longer than random short IDs
+          try {
+            const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+            await fetch(`${apiUrl}/api/template/delete/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch (e) { console.error("Failed to delete remote template", e); }
+        }
+      },
+      clearHistory: () => set({ history: [], redoStack: [] }),
+
+      fetchTemplates: async () => {
+        const token = localStorage.getItem('tomo_token');
+        if (!token) return;
+        try {
+          const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+          const res = await fetch(`${apiUrl}/api/template/list`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            set({ customTemplates: data.result.map((t: any) => ({
+              id: t._id,
+              name: t.name,
+              templateType: t.templateType,
+              config: t.config
+            })) });
+          }
+        } catch (e) { console.error("Failed to fetch templates", e); }
+      },
+
+      saveTemplateRemote: async (name, config, svgPreview, templateType) => {
+        const token = localStorage.getItem('tomo_token');
+        if (!token) return;
+        try {
+          const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+          const res = await fetch(`${apiUrl}/api/template/create`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify({ name, config, svgPreview, templateType })
+          });
+          const data = await res.json();
+          if (data.success) {
+            const state = get();
+            const newT = { 
+              id: data.result._id, 
+              name: data.result.name, 
+              templateType: data.result.templateType,
+              config: data.result.config 
+            };
+            set({ customTemplates: [newT, ...state.customTemplates] });
+            
+            // Log to audit trail
+            await state.logAudit('Template Saved', `Saved template: ${name}`);
+          }
+        } catch (e) { console.error("Failed to save remote template", e); }
+      },
+
+      logAudit: async (action, details) => {
+        const token = localStorage.getItem('tomo_token');
+        if (!token) return;
+        try {
+           const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
+           await fetch(`${apiUrl}/api/audit/create`, {
+             method: 'POST',
+             headers: { 
+               'Content-Type': 'application/json',
+               Authorization: `Bearer ${token}` 
+             },
+             body: JSON.stringify({ action, details })
+           });
+        } catch (e) { console.error("Failed to log audit action", e); }
+      }
+    }),
+    {
+      name: 'stamp-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        config: state.config,
+        customTemplates: state.customTemplates
+      }),
+    }
+  )
+);

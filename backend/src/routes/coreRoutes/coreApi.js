@@ -9,6 +9,7 @@ const { requireRole, requirePermission } = require('@/middleware/roleCheck');
 router.get('/user/me',        catchErrors(userController.me));
 router.get('/user/usage',     catchErrors(userController.getUsage));
 router.post('/user/usage',    catchErrors(userController.trackUsage));
+router.post('/user/usage/bulk', catchErrors(userController.trackBulkUsage));
 router.patch('/user/profile', catchErrors(userController.updateProfile));
 router.post('/logout',        catchErrors(userAuth.logout));
 

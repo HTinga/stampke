@@ -10,6 +10,13 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api': {
+            target: 'http://localhost:4000',
+            changeOrigin: true,
+            secure: false,
+          }
+        }
       },
       plugins: [react(), tailwindcss()],
       define: {
@@ -18,7 +25,7 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(__dirname, './src'),
         }
       },
       build: {

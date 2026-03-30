@@ -1,3 +1,4 @@
+require('dns').setServers(['8.8.8.8', '8.8.4.4']);
 require('module-alias/register');
 require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
@@ -35,7 +36,7 @@ mongoose.connection.on('error',     (e) => {
 });
 
 // Auto-register all models (glob like idurar)
-const modelFiles = globSync('./src/models/**/*.js', { cwd: __dirname });
+const modelFiles = globSync('./models/**/*.js', { cwd: __dirname });
 for (const filePath of modelFiles) {
   require(path.resolve(__dirname, filePath));
 }

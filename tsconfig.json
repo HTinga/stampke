@@ -29,14 +29,6 @@
     "noImplicitAny": false
   },
   "exclude": [
-    "node_modules",
-    "components/presentation-templates",
-    "components/PDFViewer",
-    "components/StampStudio.tsx",
-    "components/TextBox",
-    "components/TipTapToolbar.tsx",
-    "components/UpgradeModal.tsx",
-    "components/WorkspaceSuite.tsx",
-    "components/ErrorBoundary.tsx"
+    "node_modules"
   ]
 }

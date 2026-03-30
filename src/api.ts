@@ -108,3 +108,22 @@ export const jobAPI = {
   updateApplicant: (id: string, applicantId: string, status: string) =>
     patch(`/jobs/${id}/applicant`, { applicantId, status }),
 };
+
+// ── Audit Logs ────────────────────────────────────────────────────────────────
+export const auditAPI = {
+  create: (action: string, details: string) => post('/audit/create', { action, details }),
+  list:   () => get('/audit/list'),
+};
+
+export const envelopeAPI = {
+  create: (data: any) => post('/envelope/create', data),
+  list:   () => get('/envelope/list'),
+  update: (id: string, data: any) => post(`/envelope/update/${id}`, data),
+  remove: (id: string) => del(`/envelope/delete/${id}`),
+};
+export const templateAPI = {
+  create: (data: any) => post('/template/create', data),
+  list:   () => get('/template/list'),
+  remove: (id: string) => del(`/template/delete/${id}`),
+};
+

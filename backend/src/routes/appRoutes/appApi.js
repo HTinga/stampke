@@ -8,6 +8,11 @@ const paymentController    = require('@/controllers/appControllers/paymentContro
 const jobController        = require('@/controllers/appControllers/jobController');
 const workerController     = require('@/controllers/appControllers/workerController');
 const paymentGateway       = require('@/controllers/appControllers/paymentGatewayController');
+const templateController     = require('@/controllers/appControllers/templateController');
+const auditController       = require('@/controllers/appControllers/auditController');
+const envelopeController    = require('@/controllers/appControllers/envelopeController');
+const notificationController = require('@/controllers/appControllers/notificationController');
+const meetingController      = require('@/controllers/appControllers/meetingController');
 
 const routeEntity = (entity, controller) => {
   router.post  (`/${entity}/create`,    catchErrors(controller.create));
@@ -49,6 +54,34 @@ router.post(`/payments/mpesa/stk-push`,           catchErrors(paymentGateway.mpe
 router.get (`/payments/mpesa/status/:checkoutRequestId`, catchErrors(paymentGateway.mpesaStatus));
 router.post(`/payments/card/checkout`,            catchErrors(paymentGateway.cardCheckout));
 router.post(`/payments/callback`,                 paymentGateway.mpesaCallback);
+
+// ── Templates ──
+router.post(`/template/create`,    catchErrors(templateController.createTemplate));
+router.get (`/template/list`,      catchErrors(templateController.getTemplates));
+router.delete(`/template/delete/:id`, catchErrors(templateController.deleteTemplate));
+
+// ── Audit Logs ──
+router.post(`/audit/create`,       catchErrors(auditController.createLog));
+router.get (`/audit/list`,         catchErrors(auditController.list));
+
+// ── eSign Envelopes ──
+router.post  (`/envelope/create`,     catchErrors(envelopeController.create));
+router.get   (`/envelope/list`,       catchErrors(envelopeController.list));
+router.post  (`/envelope/update/:id`, catchErrors(envelopeController.update));
+router.delete(`/envelope/delete/:id`, catchErrors(envelopeController.delete));
+
+// ── Notifications ──
+router.post(`/notification/create`,    catchErrors(notificationController.create));
+router.get  (`/notification/list`,      catchErrors(notificationController.list));
+router.patch(`/notification/read/:id`, catchErrors(notificationController.markRead));
+router.patch(`/notification/readAll`,  catchErrors(notificationController.markAllRead));
+
+// ── AI Meetings ──
+router.post(`/meeting/create`,      catchErrors(meetingController.createMeeting));
+router.get(`/meeting/list`,         catchErrors(meetingController.getMeetings));
+router.get(`/meeting/read/:id`,     catchErrors(meetingController.getMeeting));
+router.patch(`/meeting/update/:id`,  catchErrors(meetingController.updateMeeting));
+router.delete(`/meeting/delete/:id`, catchErrors(meetingController.deleteMeeting));
 
 // ── Health ────────────────────────────────────────────────────────────────────
 router.get('/health', (req, res) =>

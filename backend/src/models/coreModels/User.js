@@ -30,19 +30,22 @@ const userSchema = new Schema({
   emailVerifyToken:   { type: String },
   emailVerifyExpires: { type: Date },
 
-  // ── Subscription ──────────────────────────────────────────────────────────
-  plan:            { type: String, enum: ['trial', 'free', 'pro', 'enterprise'], default: 'trial' },
+  // ── Subscription ────────────────────────────────────────────────────────────
+  plan:            { type: String, enum: ['trial', 'starter', 'pro', 'business'], default: 'trial' },
   trialStartedAt:  { type: Date },
   trialEndsAt:     { type: Date },
   planActivatedAt: { type: Date },
   planGrantedBy:   { type: mongoose.Schema.ObjectId, ref: 'User' },
 
-  // ── Free tier usage tracking ──────────────────────────────────────────────
+  // ── Per-feature trial usage (1 free trial per feature) ────────────────────
   freeUsage: {
-    eSignCount:     { type: Number, default: 0 },  // max 3 free
-    stampCount:     { type: Number, default: 0 },  // max 3 free
-    shortlistCount: { type: Number, default: 0 },  // max 5 free
-    hireCount:      { type: Number, default: 0 },  // max 3 free
+    eSignCount:      { type: Number, default: 0 },  // 1 trial
+    stampCount:      { type: Number, default: 0 },  // 1 trial
+    invoiceCount:    { type: Number, default: 0 },  // 1 trial
+    pdfCount:        { type: Number, default: 0 },  // 1 trial
+    summarizerCount: { type: Number, default: 0 },  // 1 trial
+    assistantCount:  { type: Number, default: 0 },  // 1 trial
+    scrapeCount:     { type: Number, default: 0 },  // 1 trial
   },
 
   // ── Pending IntaSend payment tracking

@@ -1,6 +1,7 @@
 'use strict';
 require('module-alias/register');
 
+require('dns').setServers(['8.8.8.8', '8.8.4.4']);
 const express       = require('express');
 const cors          = require('cors');
 const compression   = require('compression');

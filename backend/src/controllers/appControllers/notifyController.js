@@ -54,7 +54,7 @@ exports.signRequest = async (req, res) => {
           <!-- CTA -->
           <div style="text-align:center;margin:0 0 32px">
             <a href="${signLink}" style="display:inline-block;background:#18181b;color:#fff;font-weight:800;font-size:15px;text-decoration:none;padding:15px 40px;border-radius:10px;letter-spacing:0.2px">
-              Review &amp; Sign Document &rarr;
+              ${signerRole === 'viewer' ? 'Review Document' : 'Review & Sign Document'} &rarr;
             </a>
           </div>
 
@@ -77,7 +77,7 @@ exports.signRequest = async (req, res) => {
     const { data, error } = await resend.emails.send({
       from:    FROM,
       to:      toEmail,
-      subject: `Action Required: Please sign "${documentTitle}"`,
+      subject: signerRole === 'viewer' ? `Review Requested: "${documentTitle}"` : `Action Required: Please sign "${documentTitle}"`,
       html,
     });
     if (error) {

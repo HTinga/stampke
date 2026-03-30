@@ -1,3 +1,4 @@
+require('dns').setServers(['8.8.8.8', '8.8.4.4']);
 require('module-alias/register');
 require('dotenv').config({ path: '.env' });
 require('dotenv').config({ path: '.env.local' });
@@ -35,7 +36,7 @@ async function setup() {
       role:          'superadmin',
       enabled:       true,
       emailVerified: true,
-      plan:          'enterprise',
+      plan:          'business',
       removed:       false,
     }).save();
 
@@ -49,7 +50,7 @@ async function setup() {
     if (owner.role !== 'superadmin') { owner.role = 'superadmin'; changed = true; }
     if (!owner.enabled)              { owner.enabled = true;        changed = true; }
     if (!owner.emailVerified)        { owner.emailVerified = true;  changed = true; }
-    if (owner.plan !== 'enterprise') { owner.plan = 'enterprise';  changed = true; }
+    if (owner.plan !== 'business') { owner.plan = 'business';  changed = true; }
     if (changed) await owner.save();
 
     // Update password to current OWNER_PASSWORD
@@ -69,9 +70,10 @@ async function setup() {
     { settingKey: 'app_country',    settingValue: 'Kenya',   valueType: 'string' },
     { settingKey: 'tax_rate',       settingValue: 16,        valueType: 'number' },
     { settingKey: 'invoice_prefix', settingValue: 'INV',     valueType: 'string' },
-    { settingKey: 'trial_days',     settingValue: 7,         valueType: 'number' },
-    { settingKey: 'plan_pro_kes',   settingValue: 2499,      valueType: 'number' },
-    { settingKey: 'plan_ent_kes',   settingValue: 9999,      valueType: 'number' },
+    { settingKey: 'trial_days',          settingValue: 0,         valueType: 'number' },
+    { settingKey: 'plan_starter_kes',    settingValue: 1000,      valueType: 'number' },
+    { settingKey: 'plan_pro_kes',        settingValue: 2500,      valueType: 'number' },
+    { settingKey: 'plan_business_kes',   settingValue: 7500,      valueType: 'number' },
   ];
   for (const s of defaults) {
     await Setting.findOneAndUpdate({ settingKey: s.settingKey }, { ...s, removed: false }, { upsert: true });

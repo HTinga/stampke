@@ -90,7 +90,7 @@ workerProfileSchema.pre('save', function (next) {
   next();
 });
 
-workerProfileSchema.index({ user: 1 }, { unique: true });
+// user index is already defined as unique: true in the schema definition above
 workerProfileSchema.index({ status: 1, category: 1 });
 workerProfileSchema.index({ adminRating: -1 });
 

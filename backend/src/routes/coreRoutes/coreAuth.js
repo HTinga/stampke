@@ -95,10 +95,10 @@ router.get('/setup', catchErrors(async (req, res) => {
   const salt = shortid.generate();
   const hashed = bcrypt.hashSync(salt + OWNER_PASSWORD);
   if (!owner) {
-    owner = await new User({ name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(), role: 'superadmin', enabled: true, emailVerified: true, plan: 'enterprise', removed: false }).save();
+    owner = await new User({ name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(), role: 'superadmin', enabled: true, emailVerified: true, plan: 'business', removed: false }).save();
     await new UserPassword({ user: owner._id, password: hashed, salt, removed: false }).save();
   } else {
-    owner.role = 'superadmin'; owner.enabled = true; owner.emailVerified = true; owner.plan = 'enterprise';
+    owner.role = 'superadmin'; owner.enabled = true; owner.emailVerified = true; owner.plan = 'business';
     await owner.save();
     await UserPassword.findOneAndUpdate({ user: owner._id }, { password: hashed, salt }, { upsert: true });
   }
@@ -126,12 +126,12 @@ router.post('/setup', catchErrors(async (req, res) => {
     owner = await new User({
       name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(),
       role: 'superadmin', enabled: true, emailVerified: true,
-      plan: 'enterprise', removed: false,
+      plan: 'business', removed: false,
     }).save();
     await new UserPassword({ user: owner._id, password: hashed, salt, removed: false }).save();
   } else {
     owner.role = 'superadmin'; owner.enabled = true;
-    owner.emailVerified = true; owner.plan = 'enterprise';
+    owner.emailVerified = true; owner.plan = 'business';
     await owner.save();
     await UserPassword.findOneAndUpdate({ user: owner._id }, { password: hashed, salt }, { upsert: true });
   }

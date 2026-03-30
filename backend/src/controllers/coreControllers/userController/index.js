@@ -115,7 +115,7 @@ const createAdmin = async (req, res) => {
     emailVerified:    true,
     adminPermissions: adminPermissions,
     createdBy:        req.user._id,
-    plan:             'enterprise',
+    plan:             'business',
     removed:          false,
   }).save();
 
@@ -131,7 +131,7 @@ const grantPlan = async (req, res) => {
   if (req.user.role !== 'superadmin')
     return res.status(403).json({ success: false, result: null, message: 'Only superadmin can grant plans.' });
   const { plan } = req.body;
-  if (!['free', 'pro', 'enterprise', 'trial'].includes(plan))
+  if (!['starter', 'pro', 'business', 'trial'].includes(plan))
     return res.status(400).json({ success: false, result: null, message: 'Invalid plan.' });
 
   const user = await User().findOneAndUpdate(
@@ -162,42 +162,75 @@ const updateAdminPermissions = async (req, res) => {
 
 
 // POST /api/user/usage — increment a free usage counter
-// body: { feature: 'esign' | 'stamp' | 'shortlist' | 'hire' }
 const trackUsage = async (req, res) => {
   const { feature } = req.body;
-  const LIMITS = { esign: 3, stamp: 3, shortlist: 5, hire: 3 };
-  const FIELD_MAP = { esign: 'freeUsage.eSignCount', stamp: 'freeUsage.stampCount', shortlist: 'freeUsage.shortlistCount', hire: 'freeUsage.hireCount' };
-  if (!FIELD_MAP[feature]) return res.status(400).json({ success: false, result: null, message: 'Unknown feature.' });
+  const LIMITS = { esign: 1, stamp: 1, invoice: 1, pdf: 1, summarizer: 1, assistant: 1, scrape: 1 };
+  const FIELD_MAP = { esign: 'freeUsage.eSignCount', stamp: 'freeUsage.stampCount', invoice: 'freeUsage.invoiceCount', pdf: 'freeUsage.pdfCount', summarizer: 'freeUsage.summarizerCount', assistant: 'freeUsage.assistantCount', scrape: 'freeUsage.scrapeCount' };
+  if (!FIELD_MAP[feature]) return res.status(400).json({ success: false, message: 'Unknown feature.' });
 
-  const user = await User().findOne({ _id: req.user._id, removed: false });
-  const isPaid = ['pro','enterprise'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
+  const UserM = mongoose.model('User');
+  const user = await UserM.findOne({ _id: req.user._id, removed: false });
+  const isPaid = ['starter','pro','business'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
   if (isPaid) return res.status(200).json({ success: true, result: { allowed: true, remaining: 999 }, message: 'Premium user.' });
 
-  const countKey = feature === 'esign' ? 'eSignCount' : feature === 'stamp' ? 'stampCount' : feature === 'shortlist' ? 'shortlistCount' : 'hireCount';
+  const countKey = feature === 'esign' ? 'eSignCount' : feature === 'stamp' ? 'stampCount' : feature === 'invoice' ? 'invoiceCount' : feature === 'pdf' ? 'pdfCount' : feature === 'summarizer' ? 'summarizerCount' : feature === 'assistant' ? 'assistantCount' : 'scrapeCount';
   const current = (user.freeUsage || {})[countKey] || 0;
   const limit = LIMITS[feature];
 
-  if (current >= limit) {
-    return res.status(200).json({ success: true, result: { allowed: false, remaining: 0, limit }, message: `Free ${feature} limit reached (${limit}). Please upgrade.` });
-  }
+  if (current >= limit) return res.status(200).json({ success: true, result: { allowed: false, remaining: 0, limit }, message: `Free ${feature} limit reached. Please upgrade.` });
 
-  // Increment
-  await User().findByIdAndUpdate(req.user._id, { $inc: { [`freeUsage.${countKey}`]: 1 } });
+  await UserM.findByIdAndUpdate(req.user._id, { $inc: { [`freeUsage.${countKey}`]: 1 } });
   return res.status(200).json({ success: true, result: { allowed: true, remaining: limit - current - 1, limit, used: current + 1 }, message: 'Usage recorded.' });
 };
 
 // GET /api/user/usage — get current usage counts
 const getUsage = async (req, res) => {
-  const user = await User().findOne({ _id: req.user._id, removed: false });
-  const isPaid = ['pro','enterprise'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
+  const UserM = mongoose.model('User');
+  const user = await UserM.findOne({ _id: req.user._id, removed: false });
+  const isPaid = ['starter','pro','business'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
   const usage = user.freeUsage || {};
   return res.status(200).json({ success: true, result: {
     isPaid,
-    esign:     { used: usage.eSignCount     || 0, limit: 3, remaining: Math.max(0, 3 - (usage.eSignCount     || 0)) },
-    stamp:     { used: usage.stampCount     || 0, limit: 3, remaining: Math.max(0, 3 - (usage.stampCount     || 0)) },
-    shortlist: { used: usage.shortlistCount || 0, limit: 5, remaining: Math.max(0, 5 - (usage.shortlistCount || 0)) },
-    hire:      { used: usage.hireCount      || 0, limit: 3, remaining: Math.max(0, 3 - (usage.hireCount      || 0)) },
+    esign:      { used: usage.eSignCount     || 0, limit: 1, remaining: Math.max(0, 1 - (usage.eSignCount     || 0)) },
+    stamp:      { used: usage.stampCount     || 0, limit: 1, remaining: Math.max(0, 1 - (usage.stampCount     || 0)) },
+    invoice:    { used: usage.invoiceCount   || 0, limit: 1, remaining: Math.max(0, 1 - (usage.invoiceCount   || 0)) },
+    pdf:        { used: usage.pdfCount       || 0, limit: 1, remaining: Math.max(0, 1 - (usage.pdfCount       || 0)) },
+    summarizer: { used: usage.summarizerCount|| 0, limit: 1, remaining: Math.max(0, 1 - (usage.summarizerCount|| 0)) },
+    assistant:  { used: usage.assistantCount || 0, limit: 1, remaining: Math.max(0, 1 - (usage.assistantCount || 0)) },
+    scrape:     { used: usage.scrapeCount    || 0, limit: 1, remaining: Math.max(0, 1 - (usage.scrapeCount    || 0)) },
   }, message: 'Usage fetched.' });
 };
 
-module.exports = { list, activate, suspend, delete: remove, read, updateProfile, me, createAdmin, grantPlan, updateAdminPermissions, trackUsage, getUsage };
+// POST /api/user/usage/bulk — increment a free usage counter by multiple
+// body: { feature: 'esign' | 'stamp' | 'invoice' | 'pdf' | 'summarizer' | 'assistant' | 'scrape', count: number }
+const trackBulkUsage = async (req, res) => {
+  const { feature, count = 1 } = req.body;
+  const LIMITS = { esign: 1, stamp: 1, invoice: 1, pdf: 1, summarizer: 1, assistant: 1, scrape: 1 };
+  const FIELD_MAP = { esign: 'freeUsage.eSignCount', stamp: 'freeUsage.stampCount', invoice: 'freeUsage.invoiceCount', pdf: 'freeUsage.pdfCount', summarizer: 'freeUsage.summarizerCount', assistant: 'freeUsage.assistantCount', scrape: 'freeUsage.scrapeCount' };
+  
+  if (!FIELD_MAP[feature]) return res.status(400).json({ success: false, message: 'Unknown feature.' });
+
+  const UserM = mongoose.model('User');
+  const user = await UserM.findOne({ _id: req.user._id, removed: false });
+  const isPaid = ['starter','pro','business'].includes(user.plan) || (user.plan === 'trial' && user.trialEndsAt && new Date() < user.trialEndsAt);
+  
+  if (isPaid) {
+    const key = feature === 'esign' ? 'eSignCount' : feature === 'stamp' ? 'stampCount' : feature === 'invoice' ? 'invoiceCount' : feature === 'pdf' ? 'pdfCount' : feature === 'summarizer' ? 'summarizerCount' : feature === 'assistant' ? 'assistantCount' : 'scrapeCount';
+    await UserM.findByIdAndUpdate(req.user._id, { $inc: { [`freeUsage.${key}`]: count } });
+    return res.status(200).json({ success: true, result: { allowed: true, remaining: 999 }, message: 'Premium usage recorded.' });
+  }
+
+  const countKey = feature === 'esign' ? 'eSignCount' : feature === 'stamp' ? 'stampCount' : feature === 'invoice' ? 'invoiceCount' : feature === 'pdf' ? 'pdfCount' : feature === 'summarizer' ? 'summarizerCount' : feature === 'assistant' ? 'assistantCount' : 'scrapeCount';
+  const current = (user.freeUsage || {})[countKey] || 0;
+  const limit = LIMITS[feature];
+
+  if (current >= limit) {
+    return res.status(200).json({ success: true, result: { allowed: false, remaining: 0, limit }, message: `Free ${feature} limit reached. Please upgrade.` });
+  }
+
+  // Increment bulk
+  await UserM.findByIdAndUpdate(req.user._id, { $inc: { [`freeUsage.${countKey}`]: count } });
+  return res.status(200).json({ success: true, result: { allowed: true, remaining: Math.max(0, limit - current - count), limit, used: current + count }, message: 'Bulk usage recorded.' });
+};
+
+module.exports = { list, activate, suspend, delete: remove, read, updateProfile, me, createAdmin, grantPlan, updateAdminPermissions, trackUsage, getUsage, trackBulkUsage };
