@@ -35,6 +35,7 @@ import SuperAdminPanel from './components/SuperAdminPanel';
 import PricingPage from './components/PricingPage';
 import PublicSignerPage from './components/PublicSignerPage';
 import PaywallModal from './components/PaywallModal';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { checkFeatureAccess, markTrialUsed } from './hooks/useAccessControl';
 import type { FeatureKey } from './hooks/useAccessControl';
 import { analyzeStampImage } from './services/geminiService';
@@ -1548,6 +1549,9 @@ const App: React.FC = () => {
           }}
         />
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 };
