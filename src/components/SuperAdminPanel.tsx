@@ -56,9 +56,10 @@ export default function SuperAdminPanel() {
   const [adminForm, setAdminForm] = useState({ name: '', email: '', password: '', adminPermissions: [] as string[] });
   const [adminSaving, setAdminSaving] = useState(false);
 
-  // Grant plan
+  // Grant plan / approve access
   const [grantingPlan, setGrantingPlan] = useState<string | null>(null);
   const [planValue, setPlanValue] = useState('pro');
+  const [approvalMonths, setApprovalMonths] = useState(1); // 1–12 months duration
 
   const load = async () => {
     setLoading(true);
@@ -80,7 +81,13 @@ export default function SuperAdminPanel() {
   const deleteUser = async (id: string) => { if (!confirm('Delete this user?')) return; await apiFetch(`/user/delete/${id}`, { method: 'DELETE' }); load(); };
 
   const grantPlan = async (id: string) => {
-    await apiFetch(`/user/grant-plan/${id}`, { method: 'PATCH', body: JSON.stringify({ plan: planValue }) });
+    // Calculate expiry date from now + approvalMonths
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + approvalMonths);
+    await apiFetch(`/user/grant-plan/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ plan: planValue, approvalMonths, approvalExpiresAt: expiresAt.toISOString(), adminApproved: true }),
+    });
     setGrantingPlan(null);
     load();
   };
@@ -195,16 +202,28 @@ export default function SuperAdminPanel() {
               <div className="flex items-center gap-1 flex-shrink-0">
                 {tab === 'plans' && u.role === 'business' && (
                   grantingPlan === u._id ? (
-                    <div className="flex items-center gap-1">
-                      <select value={planValue} onChange={e => setPlanValue(e.target.value)}
-                        className="text-xs bg-[#0d1117] border border-[#30363d] rounded-lg px-2 py-1 text-white">
-                        {['free', 'trial', 'pro', 'enterprise'].map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                      <button onClick={() => grantPlan(u._id)} className="p-1 text-emerald-400 hover:text-emerald-300"><Check size={13} /></button>
-                      <button onClick={() => setGrantingPlan(null)} className="p-1 text-[#8b949e] hover:text-white"><X size={13} /></button>
+                    <div className="flex flex-col gap-1.5 bg-[#0d1117] border border-[#30363d] rounded-xl p-3 min-w-[220px]">
+                      <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-widest">Approve Access</p>
+                      <div className="flex gap-1.5">
+                        <select value={planValue} onChange={e => setPlanValue(e.target.value)}
+                          className="text-xs bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-white flex-1">
+                          {['starter', 'pro', 'business'].map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <select value={approvalMonths} onChange={e => setApprovalMonths(Number(e.target.value))}
+                          className="text-xs bg-[#161b22] border border-[#30363d] rounded-lg px-2 py-1 text-white">
+                          {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => <option key={m} value={m}>{m} mo</option>)}
+                        </select>
+                      </div>
+                      <p className="text-[10px] text-[#8b949e]">
+                        Expires: {(() => { const d = new Date(); d.setMonth(d.getMonth() + approvalMonths); return d.toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }); })()}
+                      </p>
+                      <div className="flex gap-1">
+                        <button onClick={() => grantPlan(u._id)} className="flex-1 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-lg transition-colors">Approve</button>
+                        <button onClick={() => setGrantingPlan(null)} className="flex-1 py-1 text-xs font-bold bg-[#21262d] text-[#8b949e] hover:text-white rounded-lg transition-colors">Cancel</button>
+                      </div>
                     </div>
                   ) : (
-                    <button onClick={() => setGrantingPlan(u._id)} title="Grant Plan"
+                    <button onClick={() => setGrantingPlan(u._id)} title="Approve Access"
                       className="p-1.5 text-[#8b949e] hover:text-[#58a6ff] transition-colors">
                       <Award size={13} />
                     </button>
