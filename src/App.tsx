@@ -163,7 +163,7 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState('');
   const [signUpName, setSignUpName] = useState('Hempstone Tinga');
   const [signUpRole, setSignUpRole] = useState<'business' | 'worker'>('business');
-  const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean; adminApproved?: boolean; approvalExpiresAt?: string } | null>(null);
   const [freeUsage, setFreeUsage] = useState({ esign: { used:0, limit:1, remaining:1 }, stamp: { used:0, limit:1, remaining:1 }, invoice: { used:0, limit:1, remaining:1 }, pdf: { used:0, limit:1, remaining:1 }, summarizer: { used:0, limit:1, remaining:1 }, assistant: { used:0, limit:1, remaining:1 }, scrape: { used:0, limit:1, remaining:1 }, isPaid: false });
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
   // ── Paywall state ─────────────────────────────────────────────────────────
@@ -173,8 +173,8 @@ const App: React.FC = () => {
   // Derive user access object for checkFeatureAccess
   const userAccess = {
     plan: user?.plan,
-    adminApproved: !!(user as any)?.adminApproved,
-    approvalExpiresAt: (user as any)?.approvalExpiresAt,
+    adminApproved: user?.adminApproved || false,
+    approvalExpiresAt: user?.approvalExpiresAt,
     trialUsed: localStorage.getItem('stampke_trial_used') === 'true',
   };
   const getStampAccess = () => checkFeatureAccess('stamp_design', userAccess).status;
@@ -331,7 +331,8 @@ const App: React.FC = () => {
       try {
         const u = JSON.parse(decodeURIComponent(googleAuth));
         localStorage.setItem('tomo_token', u.token);
-        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [] });
+        localStorage.setItem('tomo_user_plan', u.plan || 'trial');
+        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [], adminApproved: u.adminApproved || false, approvalExpiresAt: u.approvalExpiresAt });
         setIsLoggedIn(true);
         setShowLoginModal(false);
         if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
@@ -349,7 +350,8 @@ const App: React.FC = () => {
       try {
         const u = JSON.parse(decodeURIComponent(facebookAuth));
         localStorage.setItem('tomo_token', u.token);
-        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [] });
+        localStorage.setItem('tomo_user_plan', u.plan || 'trial');
+        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [], adminApproved: u.adminApproved || false, approvalExpiresAt: u.approvalExpiresAt });
         setIsLoggedIn(true);
         setShowLoginModal(false);
         if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
@@ -453,6 +455,7 @@ const App: React.FC = () => {
           if (loginData.success && loginData.result) {
             const u = loginData.result;
             localStorage.setItem('tomo_token', u.token);
+        localStorage.setItem('tomo_user_plan', u.plan || 'trial');
             setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan,
               trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
               adminPermissions: u.adminPermissions });
@@ -486,7 +489,8 @@ const App: React.FC = () => {
         if (data.success && data.result) {
           const u = data.result;
           localStorage.setItem('tomo_token', u.token);
-          setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions });
+        localStorage.setItem('tomo_user_plan', u.plan || 'trial');
+          setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions, adminApproved: u.adminApproved || false, approvalExpiresAt: u.approvalExpiresAt });
           setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
           
           // Fetch templates on login

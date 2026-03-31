@@ -31,11 +31,16 @@ const userSchema = new Schema({
   emailVerifyExpires: { type: Date },
 
   // ── Subscription ────────────────────────────────────────────────────────────
-  plan:            { type: String, enum: ['trial', 'starter', 'pro', 'business'], default: 'trial' },
+  plan:            { type: String, enum: ['trial', 'starter', 'pro', 'business', 'free'], default: 'trial' },
   trialStartedAt:  { type: Date },
   trialEndsAt:     { type: Date },
   planActivatedAt: { type: Date },
   planGrantedBy:   { type: mongoose.Schema.ObjectId, ref: 'User' },
+
+  // ── Super admin approval (duration-based access: 1–12 months) ─────────────
+  adminApproved:      { type: Boolean, default: false },
+  approvalExpiresAt:  { type: Date },
+  approvalMonths:     { type: Number, default: 1 },
 
   // ── Per-feature trial usage (1 free trial per feature) ────────────────────
   freeUsage: {

@@ -15,7 +15,26 @@ const me = async (req, res) => {
   const now  = new Date();
   const trialActive   = user.plan === 'trial' && user.trialEndsAt && now < user.trialEndsAt;
   const trialDaysLeft = trialActive ? Math.max(0, Math.ceil((user.trialEndsAt - now) / (1000*60*60*24))) : 0;
-  return res.status(200).json({ success: true, result: { ...user.toObject(), trialActive, trialDaysLeft }, message: 'Profile found.' });
+
+  // Check if admin approval is still valid
+  const adminApprovalActive = user.adminApproved && user.approvalExpiresAt && now < new Date(user.approvalExpiresAt);
+  const approvalDaysLeft = adminApprovalActive
+    ? Math.max(0, Math.ceil((new Date(user.approvalExpiresAt) - now) / (1000*60*60*24)))
+    : 0;
+
+  return res.status(200).json({
+    success: true,
+    result: {
+      ...user.toObject(),
+      trialActive,
+      trialDaysLeft,
+      adminApproved: user.adminApproved || false,
+      adminApprovalActive,
+      approvalDaysLeft,
+      approvalExpiresAt: user.approvalExpiresAt,
+    },
+    message: 'Profile found.',
+  });
 };
 
 // PATCH /api/user/profile
@@ -126,24 +145,89 @@ const createAdmin = async (req, res) => {
   return res.status(200).json({ success: true, result: newAdmin, message: `Admin ${name} created successfully.` });
 };
 
-// PATCH /api/user/grant-plan/:id — superadmin grants a plan to a business user
+// PATCH /api/user/grant-plan/:id — superadmin approves access for 1-12 months
 const grantPlan = async (req, res) => {
   if (req.user.role !== 'superadmin')
-    return res.status(403).json({ success: false, result: null, message: 'Only superadmin can grant plans.' });
-  const { plan } = req.body;
-  if (!['starter', 'pro', 'business', 'trial'].includes(plan))
+    return res.status(403).json({ success: false, result: null, message: 'Only superadmin can grant access.' });
+
+  const { plan, approvalMonths, approvalExpiresAt, adminApproved } = req.body;
+
+  if (!['starter', 'pro', 'business', 'trial', 'free'].includes(plan))
     return res.status(400).json({ success: false, result: null, message: 'Invalid plan.' });
+
+  // Calculate expiry: use provided date or compute from approvalMonths
+  let expiresAt = approvalExpiresAt ? new Date(approvalExpiresAt) : null;
+  if (!expiresAt && approvalMonths) {
+    expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + parseInt(approvalMonths, 10));
+  }
+
+  const updateData = {
+    plan,
+    planActivatedAt: new Date(),
+    planGrantedBy: req.user._id,
+    adminApproved: adminApproved !== false, // default true
+    approvalExpiresAt: expiresAt,
+    approvalMonths: approvalMonths || 1,
+  };
 
   const user = await User().findOneAndUpdate(
     { _id: req.params.id, removed: false },
-    { plan, planActivatedAt: new Date(), planGrantedBy: req.user._id },
+    updateData,
     { new: true }
   );
   if (!user) return res.status(404).json({ success: false, result: null, message: 'User not found.' });
 
-  sendEmail({ to: user.email, subject: `[Tomo] Your plan has been upgraded to ${plan.toUpperCase()}!`, html: `<p>Hi ${user.name}, you now have access to all ${plan} features on Tomo. <a href="${FRONTEND_URL}">Sign in to get started</a></p>`, from: 'Tomo <noreply@tomo.ke>' });
+  // Format expiry for email
+  const expiryStr = expiresAt
+    ? expiresAt.toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'indefinitely';
+  const months = approvalMonths || 1;
 
-  return res.status(200).json({ success: true, result: user, message: `Plan upgraded to ${plan}.` });
+  // Send branded approval email via Resend (falls back to legacy sendEmail)
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (RESEND_API_KEY) {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'StampKE <noreply@stampke.co.ke>',
+        to: [user.email],
+        subject: `✅ Your StampKE ${plan.charAt(0).toUpperCase() + plan.slice(1)} access has been approved`,
+        html: `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f8faff;font-family:'Segoe UI',Arial,sans-serif;">
+<div style="max-width:520px;margin:40px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+  <div style="background:linear-gradient(135deg,#1a73e8,#1557b0);padding:32px 40px;text-align:center;">
+    <h1 style="color:white;margin:0;font-size:22px;font-weight:700;">Access Approved 🎉</h1>
+    <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px;">StampKE Digital Stamp & eSign Platform</p>
+  </div>
+  <div style="padding:40px;">
+    <p style="color:#374151;font-size:16px;font-weight:600;">Hi ${user.name},</p>
+    <p style="color:#6b7280;font-size:14px;line-height:1.6;">Your <strong>StampKE ${plan.toUpperCase()} plan</strong> has been approved by your organization administrator for <strong>${months} month${months > 1 ? 's' : ''}</strong>.</p>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin:24px 0;">
+      <p style="margin:0;color:#166534;font-size:13px;"><strong>Access expires:</strong> ${expiryStr}</p>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${FRONTEND_URL}" style="display:inline-block;background:#1a73e8;color:white;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:600;">Sign in to StampKE →</a>
+    </div>
+    <p style="color:#9ca3af;font-size:12px;text-align:center;">© 2025 JijiTechy Innovations · Nairobi, Kenya · LSK Compliant</p>
+  </div>
+</div>
+</body></html>`,
+      }),
+    }).catch(err => console.warn('[grant-plan] Resend error (non-fatal):', err.message));
+  } else {
+    sendEmail({
+      to: user.email,
+      subject: `[StampKE] Your ${plan} access has been approved for ${months} month(s)`,
+      html: `<p>Hi ${user.name}, your StampKE ${plan} plan has been approved until ${expiryStr}. <a href="${FRONTEND_URL}">Sign in to get started</a></p>`,
+      from: 'StampKE <noreply@stampke.co.ke>',
+    });
+  }
+
+  return res.status(200).json({ success: true, result: user, message: `Access approved: ${plan} plan for ${months} month(s) until ${expiryStr}.` });
 };
 
 // PATCH /api/user/admin-permissions/:id — update sub-admin permissions
