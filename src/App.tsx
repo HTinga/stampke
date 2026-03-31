@@ -166,6 +166,18 @@ const App: React.FC = () => {
   const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean } | null>(null);
   const [freeUsage, setFreeUsage] = useState({ esign: { used:0, limit:1, remaining:1 }, stamp: { used:0, limit:1, remaining:1 }, invoice: { used:0, limit:1, remaining:1 }, pdf: { used:0, limit:1, remaining:1 }, summarizer: { used:0, limit:1, remaining:1 }, assistant: { used:0, limit:1, remaining:1 }, scrape: { used:0, limit:1, remaining:1 }, isPaid: false });
   const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
+  // ── Paywall state ─────────────────────────────────────────────────────────
+  const [paywallFeature, setPaywallFeature] = useState<FeatureKey | null>(null);
+  const showPaywall = (feature: FeatureKey) => setPaywallFeature(feature);
+  const hidePaywall = () => setPaywallFeature(null);
+  // Derive user access object for checkFeatureAccess
+  const userAccess = {
+    plan: user?.plan,
+    adminApproved: !!(user as any)?.adminApproved,
+    approvalExpiresAt: (user as any)?.approvalExpiresAt,
+    trialUsed: localStorage.getItem('stampke_trial_used') === 'true',
+  };
+  const getStampAccess = () => checkFeatureAccess('stamp_design', userAccess).status;
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [pendingStampFieldId, setPendingStampFieldId] = useState<string | null>(null);
   const [openedFromSignCenter, setOpenedFromSignCenter] = useState(false);
@@ -659,29 +671,31 @@ const App: React.FC = () => {
     return (usage[featureKey] || 0) < 1;
   };
 
-  // ── Locked feature placeholder ──────────────────────────────────────────────
-  const renderLocked = (message?: string) => (
-    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-5 px-4">
-      <div className="w-16 h-16 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-      <div className="max-w-sm">
-        <h3 className="text-lg font-bold text-white mb-2">
-          {message?.includes('trial') ? '🔒 Trial Used' : '⚡ Upgrade Required'}
-        </h3>
-        <p className="text-sm text-[#8b949e] mb-4 leading-relaxed">
-          {message || 'This feature requires a paid plan. Upgrade to unlock all StampKE tools.'}
-        </p>
-        <div className="flex flex-col gap-2">
-          <button onClick={() => goTo('settings', 'money-upgrade')}
-            className="px-6 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
-            View Plans & Upgrade via M-Pesa or Card
-          </button>
-          <p className="text-xs text-[#8b949e]">Plans from KES 1,000/month · Cancel anytime</p>
+  // ── Locked feature placeholder — triggers PaywallModal ─────────────────────
+  const renderLocked = (message?: string, feature: FeatureKey = 'esign') => {
+    // Auto-show paywall modal for better UX
+    setTimeout(() => showPaywall(feature), 50);
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center gap-5 px-4">
+        <div className="w-16 h-16 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div className="max-w-sm">
+          <h3 className="text-lg font-bold text-white mb-2">⚡ Upgrade Required</h3>
+          <p className="text-sm text-[#8b949e] mb-4 leading-relaxed">
+            {message || 'This feature requires a paid plan. Upgrade to unlock all StampKE tools.'}
+          </p>
+          <div className="flex flex-col gap-2">
+            <button onClick={() => showPaywall(feature)}
+              className="px-6 py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
+              View Plans & Upgrade
+            </button>
+            <p className="text-xs text-[#8b949e]">Plans from KES 1,000/month · Cancel anytime</p>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // ── Auth Modal ──────────────────────────────────────────────────────────────
   const handleGoogleSignIn = () => {
@@ -851,7 +865,13 @@ const App: React.FC = () => {
     return (
       <StampStudio 
         onClose={() => goTo('home')} 
+        accessStatus={getStampAccess()}
+        onPaywallTrigger={() => showPaywall('stamp_design')}
         onApply={(s) => {
+          // Mark trial as used when exporting/applying for the first time
+          if (getStampAccess() === 'trial_available') {
+            markTrialUsed();
+          }
           if (pendingStampFieldId) {
              // Handle apply logic for specific fields
           } else {
@@ -891,7 +911,7 @@ const App: React.FC = () => {
     // ── Scrapping Tool ─────────────────────────────────────────────────────────
     if (activeView === 'scrapping-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (activeView === 'scrapping-dashboard' || activeView === 'scrapping-new' || activeView === 'scrapping-results') {
-      if (!canAccess('scrapping-dashboard')) return renderLocked('Web Scrapping Tool — requires Business plan (KES 7,500/mo)');
+      if (!canAccess('scrapping-dashboard')) return renderLocked('Virtual Assistants requires a Business plan (KES 7,500/mo)', 'virtual_assistants');
       return <ScrappingTool initialView={activeView === 'scrapping-new' ? 'new' : activeView === 'scrapping-results' ? 'results' : 'dashboard'} />;
     }
 
@@ -900,24 +920,24 @@ const App: React.FC = () => {
     if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (['invoicing-invoices','invoicing-payments','invoicing-unpaid','invoicing-create',
          'money-invoices','money-payments','money-unpaid','money-create'].includes(activeView)) {
-      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments — requires Professional plan (KES 2,500/mo)');
+      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Professional plan (KES 2,500/mo)', 'invoicing');
       return <SmartInvoice />;
     }
 
     // ── eSign & Stamps ──────────────────────────────────────────────────────────
     if (activeView === 'sign-esign') {
-      if (!withinFreeLimit('esign')) return renderLocked('eSign — Your free trial has been used. Upgrade to a Starter plan (KES 1,000/mo) to continue signing documents.');
+      if (!withinFreeLimit('esign')) return renderLocked('Toho eSign requires a Starter plan (KES 1,000/mo)', 'esign');
       return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('sign-docs', 'sign-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
     }
     if (activeView === 'sign-stamps')    return renderView_stamps();
     if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} userStampCount={freeUsage.stamp.used} />;
-    if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Stamp Templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
-    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer'); return renderView_aiScan(); }
+    if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
+    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan', 'ai_digitizer'); return renderView_aiScan(); }
     if (activeView === 'sign-upgrade')  return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
 
     // ── Docs & PDF ───────────────────────────────────────────────────────────────
     if (activeView === 'documents-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor'); return <PDFTools />; }
+    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor requires a Professional plan (KES 2,500/mo)', 'pdf_editor'); return <PDFTools />; }
     if (activeView === 'documents-stamp-applier') {
       return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('sign-docs', 'sign-stamps'); }} userStampCount={freeUsage.stamp.used} />;
     }
@@ -930,8 +950,8 @@ const App: React.FC = () => {
         </div>
       );
     }
-    if (activeView === 'ai-summarizer') { if (!canAccess('ai-summarizer')) return renderLocked('AI Audio Summarizer — requires Professional plan (KES 2,500/mo)'); return <AISummarizer />; }
-    if (activeView === 'ai-translate') { if (!canAccess('ai-translate')) return renderLocked('AI PDF Translator — requires Professional plan (KES 2,500/mo)'); return <PDFTools />; }
+    if (activeView === 'ai-summarizer') { if (!canAccess('ai-summarizer')) return renderLocked('AI Transcriber requires a Professional plan (KES 2,500/mo)', 'ai_summarizer'); return <AISummarizer />; }
+    if (activeView === 'ai-translate') { if (!canAccess('ai-translate')) return renderLocked('AI PDF Translator requires a Professional plan', 'ai_summarizer'); return <PDFTools />; }
     if (activeView === 'documents-create') return <DocumentsHub />;
     if (activeView === 'ai-digitizer') {
       return (
@@ -963,7 +983,7 @@ const App: React.FC = () => {
     // ── Virtual Assistants ────────────────────────────────────────────────────────
     if (activeView === 'assistants-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (activeView === 'assistants-browse' || activeView === 'assistants-requests' || activeView === 'assistants-active' || activeView === 'assistants-history') {
-      if (!canAccess('assistants-browse')) return renderLocked('Virtual Assistants — requires Business plan (KES 7,500/mo)');
+      if (!canAccess('assistants-browse')) return renderLocked('Virtual Assistants requires a Business plan (KES 7,500/mo)', 'virtual_assistants');
       return <VirtualAssistants initialView={activeView === 'assistants-requests' ? 'requests' : activeView === 'assistants-active' ? 'active' : activeView === 'assistants-history' ? 'history' : 'browse'} onUpgrade={() => goTo('invoicing', 'invoicing-upgrade')} />;
     }
 
@@ -1506,6 +1526,24 @@ const App: React.FC = () => {
       </div>{/* end flex */}
       {/* Login Modal (in-app) */}
       <AnimatePresence>{showLoginModal && renderAuthModal()}</AnimatePresence>
+
+      {/* Paywall Modal */}
+      {paywallFeature && (
+        <PaywallModal
+          feature={paywallFeature}
+          status={checkFeatureAccess(paywallFeature, userAccess).status}
+          approvalExpiresAt={userAccess.approvalExpiresAt}
+          onClose={hidePaywall}
+          onPlanSelected={(planId) => {
+            hidePaywall();
+            goTo('settings', 'money-upgrade');
+          }}
+          onOneTimePay={() => {
+            hidePaywall();
+            goTo('settings', 'money-upgrade');
+          }}
+        />
+      )}
     </div>
   );
 };
