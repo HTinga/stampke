@@ -23,11 +23,19 @@ export interface UserAccess {
   plan?: PlanTier | string;
 }
 
+// AccessStatus kept for PaywallModal compatibility
+export type AccessStatus = 'granted' | 'trial_available' | 'trial_used' | 'locked' | 'expired';
+
 export interface AccessResult {
   canUse: boolean;
   reason: 'granted' | 'no_plan' | 'upgrade_required';
   requiredPlan?: PlanTier;
+  // status maps to AccessStatus for PaywallModal compatibility
+  status: AccessStatus;
 }
+
+// Stub — no trial exists, kept for import compatibility with App.tsx
+export function markTrialUsed(): void {}
 
 // Feature → minimum plan required
 const FEATURE_PLAN_MAP: Record<FeatureKey, PlanTier> = {
@@ -61,19 +69,20 @@ function meetsRequirement(userPlan: string | undefined, required: PlanTier): boo
 export function checkFeatureAccess(feature: FeatureKey, userAccess: UserAccess): AccessResult {
   // Superadmin — always granted, no payment needed
   if (userAccess.role === 'superadmin') {
-    return { canUse: true, reason: 'granted' };
+    return { canUse: true, reason: 'granted', status: 'granted' };
   }
 
   const required = FEATURE_PLAN_MAP[feature] || 'starter';
   const hasPlan  = meetsRequirement(userAccess.plan, required);
 
-  if (hasPlan) return { canUse: true, reason: 'granted' };
+  if (hasPlan) return { canUse: true, reason: 'granted', status: 'granted' };
 
   const hasAnyPlan = userAccess.plan && userAccess.plan !== 'none';
   return {
     canUse: false,
     reason: hasAnyPlan ? 'upgrade_required' : 'no_plan',
     requiredPlan: required,
+    status: 'locked',
   };
 }
 
