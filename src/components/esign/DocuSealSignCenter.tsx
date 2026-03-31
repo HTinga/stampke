@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   FileText, Upload, Plus, Send, CheckCircle2, Clock, Trash2, PenTool,
   Calendar, Type, X, Save, Eraser, MousePointer2, Stamp, Image as ImageIcon,
-  ChevronLeft, UserPlus, Settings, Search, Download, Eye, Shield, Hash,
+  ChevronLeft, UserPlus, Settings, Search, Download, Eye, Shield, Hash, Share2,
   ChevronRight, Check, Users, Layers, ZoomIn, ZoomOut, Move, GripHorizontal
 } from 'lucide-react';
 import { Envelope, SignField, FieldType, BulkDocument, StampConfig, SignerInfo, AuditEntry, StampTemplate } from '../../types';
@@ -21,6 +21,8 @@ interface Props {
   pendingStampFieldId?: string | null;
   onClearPendingField?: () => void;
   isActive?: boolean;
+  isPaid?: boolean;        // if false, show paywall overlay
+  onUpgrade?: () => void;  // called when user taps Upgrade
 }
 
 type View = 'dashboard' | 'builder' | 'signerView';
@@ -148,6 +150,26 @@ const TextInputPrompt: React.FC<{ type:string; onSave:(v:string)=>void; onCancel
 const Dashboard: React.FC<{ envelopes:Envelope[]; onSelect:(e:Envelope)=>void; onCreate:()=>void; onDelete:(id:string)=>void }> = ({ envelopes, onSelect, onCreate, onDelete }) => {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+
+  const downloadEnvelope = (e: React.MouseEvent, env: Envelope) => {
+    e.stopPropagation();
+    const doc = env.documents[0];
+    if (!doc?.dataUrl) return;
+    const a = document.createElement('a');
+    a.href = doc.dataUrl;
+    a.download = `${env.title}.pdf`;
+    a.click();
+  };
+
+  const shareEnvelope = (e: React.MouseEvent, env: Envelope) => {
+    e.stopPropagation();
+    const text = `Please sign: ${env.title} — ${window.location.origin}/?esign=${(env as any)._id || env.id}`;
+    if (navigator.share) {
+      navigator.share({ title: env.title, text, url: `${window.location.origin}/?esign=${(env as any)._id || env.id}` }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => alert('Link copied to clipboard!'));
+    }
+  };
   const filtered = envelopes.filter(e => (filter === 'all' || e.status === filter) && e.title.toLowerCase().includes(search.toLowerCase()));
   const stats = { total: envelopes.length, completed: envelopes.filter(e=>e.status==='completed').length, pending: envelopes.filter(e=>e.status==='sent').length, drafts: envelopes.filter(e=>e.status==='draft').length };
   return (
@@ -205,6 +227,8 @@ const Dashboard: React.FC<{ envelopes:Envelope[]; onSelect:(e:Envelope)=>void; o
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={e=>{e.stopPropagation();onSelect(env);}} className="p-1.5 hover:bg-[#21262d] rounded-lg transition-colors" title="Open"><Eye size={15} className="text-[#1f6feb]" /></button>
+                      <button onClick={e=>downloadEnvelope(e,env)} className="p-1.5 hover:bg-[#21262d] rounded-lg transition-colors" title="Download"><Download size={15} className="text-emerald-400" /></button>
+                      <button onClick={e=>shareEnvelope(e,env)} className="p-1.5 hover:bg-[#21262d] rounded-lg transition-colors" title="Share / Copy link"><Share2 size={15} className="text-yellow-400" /></button>
                       <button onClick={e=>{e.stopPropagation();onDelete(env.id);}} className="p-1.5 hover:bg-red-900/30 rounded-lg transition-colors" title="Delete"><Trash2 size={15} className="text-red-400" /></button>
                     </div>
                   </td>
@@ -219,7 +243,7 @@ const Dashboard: React.FC<{ envelopes:Envelope[]; onSelect:(e:Envelope)=>void; o
 };
 
 /* ─── BUILDER ────────────────────────────────────────────── */
-const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:(e:Envelope)=>void; onBack:()=>void; stampConfig:StampConfig}> = ({ envelope, onUpdate, onSend, onBack, stampConfig }) => {
+const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:(e:Envelope)=>Promise<Envelope>; onBack:()=>void; stampConfig:StampConfig}> = ({ envelope, onUpdate, onSend, onBack, stampConfig }) => {
   const [env, setEnv] = useState<Envelope>(envelope);
   const [step, setStep] = useState<'upload'|'signers'|'fields'|'review'>(envelope.documents.length>0?(envelope.signers.length>0?'fields':'signers'):'upload');
   const [newName, setNewName] = useState('');
@@ -418,36 +442,47 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
 
   const sendEnvelope = async () => {
     const audit: AuditEntry = { id: Math.random().toString(36).slice(2), timestamp: new Date().toISOString(), action: 'Document Sent', user: 'You', ip: '—', details: `Sent to ${env.signers.map(s=>s.email).join(', ')}` };
-    const updated = { ...env, status: 'sent' as const, auditLog: [...env.auditLog, audit], updatedAt: new Date().toISOString() };
-    
-    // Save to DB first
-    setEnv(updated);
-    onSend(updated);
+    const toSave = { ...env, status: 'sent' as const, auditLog: [...env.auditLog, audit], updatedAt: new Date().toISOString() };
 
-    // ── BI-DIRECTIONAL WIRING: Send Email Notifications ──
+    // ── Save to DB FIRST and get back the real MongoDB _id ──────────────────
+    let saved = toSave;
     try {
-      for (const signer of updated.signers) {
-        // Construct the unique link for this signer
-        const signLink = `${window.location.origin}/?esign=${updated._id || 'demo'}&signer=${signer.id}`;
-        
-        const token = localStorage.getItem('tomo_token');
-        await fetch('/api/notify/sign-request', {
+      saved = await onSend(toSave); // onSend now returns the persisted envelope
+      setEnv(saved);
+    } catch (err) {
+      console.error('[eSign] Failed to save envelope:', err);
+      setEnv(toSave);
+      saved = toSave;
+    }
+
+    // ── Now send emails with the real envelope id ────────────────────────────
+    const envelopeId = (saved as any)._id || saved.id || 'unknown';
+    const token = localStorage.getItem('tomo_token');
+    const origin = window.location.origin;
+    try {
+      for (const signer of saved.signers) {
+        if (!signer.email) continue;
+        // Unique link per signer using real envelope id
+        const signLink = `${origin}/?esign=${envelopeId}&signer=${signer.id}`;
+        const res = await fetch('/api/notify/sign-request', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
-            toEmail: signer.email,
-            toName: signer.name,
-            documentTitle: updated.title,
-            signerRole: signer.role || 'signer',
-            signLink
-          })
+            toEmail:       signer.email,
+            toName:        signer.name,
+            documentTitle: saved.title,
+            signerRole:    signer.role || 'signer',
+            signLink,
+          }),
         });
+        const data = await res.json().catch(() => ({}));
+        console.log('[eSign] Email to', signer.email, '→', data?.result?.sent ? 'sent ✅' : 'failed ❌', data?.result);
       }
     } catch (err) {
-      console.error('[eSign Wiring] Failed to send notifications:', err);
+      console.error('[eSign] Email notification error:', err);
     }
   };
 
@@ -956,7 +991,7 @@ const SignerView: React.FC<{envelope:Envelope; onComplete:(e:Envelope)=>void; on
 };
 
 /* ─── MAIN ───────────────────────────────────────────────── */
-export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFieldId,onClearPendingField,isActive}:Props) {
+export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFieldId,onClearPendingField,isActive,isPaid=true,onUpgrade}:Props) {
   const [view,setView]=useState<View>('dashboard');
   const [envelopes,setEnvelopes]=useState<Envelope[]>([]);
   const [active,setActive]=useState<Envelope|null>(null);
@@ -984,7 +1019,7 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
     }
   };
 
-  const save = async (env: Envelope) => {
+  const save = async (env: Envelope): Promise<Envelope> => {
     try {
       let savedEnv: Envelope;
       if (env.id && env.id.length > 20) { // Likely a MongoDB ObjectID
@@ -996,16 +1031,14 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
       }
       setEnvelopes(es => {
         const i = es.findIndex(e => e.id === savedEnv.id);
-        if (i >= 0) {
-          const c = [...es];
-          c[i] = savedEnv;
-          return c;
-        }
+        if (i >= 0) { const c = [...es]; c[i] = savedEnv; return c; }
         return [savedEnv, ...es];
       });
       setActive(savedEnv);
+      return savedEnv;
     } catch (err) {
-      console.error("Failed to save envelope:", err);
+      console.error('Failed to save envelope:', err);
+      return env;
     }
   };
 
@@ -1031,6 +1064,22 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
 
   return (
     <div className="flex flex-col bg-[#0d1117] relative">
+      {/* Paywall overlay — shown when user has no paid plan */}
+      {!isPaid && (
+        <div className="absolute inset-0 z-50 bg-[#0d1117]/95 backdrop-blur-sm flex flex-col items-center justify-center gap-6 text-center px-8">
+          <div className="w-16 h-16 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-white mb-2">eSign requires a paid plan</h3>
+            <p className="text-sm text-[#8b949e] max-w-sm leading-relaxed">Send documents for signature, collect legally-binding eSignatures, and manage your signing workflow. Starting from KES 650/month.</p>
+          </div>
+          <button onClick={onUpgrade} className="px-8 py-3.5 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-black transition-colors">
+            ⚡ Upgrade via M-Pesa or Card
+          </button>
+          <p className="text-xs text-[#8b949e]">Plans: KES 650 · KES 2,500 · KES 5,000 /month</p>
+        </div>
+      )}
       {/* Toho Sign header */}
       <nav className="h-14 bg-[#161b22] border-b border-[#30363d] px-6 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-6">
@@ -1046,7 +1095,7 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
       </nav>
       <main className="flex-1 flex flex-col">
         {view==='dashboard'&&<div className="flex-1 overflow-y-auto"><Dashboard envelopes={envelopes} onSelect={selectEnvelope} onCreate={createNew} onDelete={deleteEnvelope}/></div>}
-        {view==='builder'&&active&&<div className="flex-1 flex flex-col"><Builder envelope={active} onUpdate={save} onSend={async (e)=>{await save(e);setView('dashboard'); auditAPI.create('Document Sent', `Sent document: ${e.title}`);}} onBack={()=>setView('dashboard')} stampConfig={stampConfig}/></div>}
+        {view==='builder'&&active&&<div className="flex-1 flex flex-col"><Builder envelope={active} onUpdate={save} onSend={async (e)=>{ const saved = await save(e); setView('dashboard'); auditAPI.create('Document Sent', `Sent document: ${e.title}`); return saved as any; }} onBack={()=>setView('dashboard')} stampConfig={stampConfig}/></div>}
         {view==='signerView'&&active&&<div className="flex-1 flex flex-col"><SignerView envelope={active} onComplete={async (e)=>{await save(e);setView('dashboard'); auditAPI.create('Document Completed', `Signed document: ${e.title}`);}} onBack={()=>setView('dashboard')}/></div>}
       </main>
     </div>

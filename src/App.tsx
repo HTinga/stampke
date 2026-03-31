@@ -932,7 +932,15 @@ const App: React.FC = () => {
     // ── eSign & Stamps ──────────────────────────────────────────────────────────
     if (activeView === 'sign-esign') {
       if (!withinFreeLimit('esign')) return renderLocked('Toho eSign requires a Starter plan (KES 1,000/mo)', 'esign');
-      return <TohoSignCenter stampConfig={stampConfig} onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('sign-docs', 'sign-stamps'); }} pendingStampFieldId={pendingStampFieldId} onClearPendingField={() => setPendingStampFieldId(null)} isActive />;
+      return <TohoSignCenter
+        stampConfig={stampConfig}
+        onOpenStudio={(fieldId) => { setOpenedFromSignCenter(true); setPendingStampFieldId(fieldId || null); goTo('sign-docs', 'sign-stamps'); }}
+        pendingStampFieldId={pendingStampFieldId}
+        onClearPendingField={() => setPendingStampFieldId(null)}
+        isActive
+        isPaid={canAccess('sign-esign')}
+        onUpgrade={() => goTo('settings', 'money-upgrade')}
+      />;
     }
     if (activeView === 'sign-stamps')    return renderView_stamps();
     if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} userStampCount={freeUsage.stamp.used} />;
