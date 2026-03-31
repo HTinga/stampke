@@ -192,7 +192,7 @@ export default function AISummarizer() {
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-2 text-[10px] font-bold text-[#8b949e] uppercase tracking-widest">
                 <Bot size={14} className="text-violet-500" />
-                <span>Meetily Engine v0.3</span>
+                <span>StampKE Transcriber v1.0</span>
                 <span className="w-1 h-1 bg-[#30363d] rounded-full" />
                 <span className="text-emerald-400">Live Infrastructure</span>
               </div>

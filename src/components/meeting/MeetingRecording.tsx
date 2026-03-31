@@ -118,7 +118,7 @@ export default function MeetingRecording({ onComplete, onCancel }: Props) {
           Active Capture
         </div>
         <h2 className="text-4xl font-black text-white tracking-tight leading-tight">AI is parsing your <br/> conversation...</h2>
-        <p className="text-[#8b949e] text-sm max-w-sm mx-auto leading-relaxed">Meetily is processing your audio locally and extracting intelligence in real-time.</p>
+        <p className="text-[#8b949e] text-sm max-w-sm mx-auto leading-relaxed">StampKE AI is processing your audio locally and extracting intelligence in real-time.</p>
       </div>
 
       <div className="relative group">

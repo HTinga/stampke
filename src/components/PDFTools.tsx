@@ -2081,8 +2081,24 @@ export default function PDFTools() {
       {/* Stamp Studio Modal */}
       {showStampStudio && (
         <StampStudio 
-          onClose={() => setShowStampStudio(false)} 
+          onClose={() => setShowStampStudio(false)}
+          accessStatus={(() => {
+            const trialUsed = localStorage.getItem('stampke_trial_used') === 'true';
+            const plan = localStorage.getItem('tomo_user_plan') || '';
+            const paid = ['starter','pro','business'].includes(plan);
+            if (paid) return 'granted';
+            if (!trialUsed) return 'trial_available';
+            return 'trial_used';
+          })()}
+          onPaywallTrigger={() => {
+            setShowStampStudio(false);
+            // Surface paywall — component closes so user sees the locked UI
+          }}
           onApply={(svgData) => {
+            // Mark trial used on first apply from PDF editor
+            if (localStorage.getItem('stampke_trial_used') !== 'true') {
+              localStorage.setItem('stampke_trial_used', 'true');
+            }
             const newElement: EditElement = {
               id: Math.random().toString(36).substr(2, 9),
               type: 'image',

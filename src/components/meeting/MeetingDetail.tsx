@@ -83,7 +83,7 @@ export default function MeetingDetail({ meeting, onBack, onSave, onDelete }: Pro
               <span>•</span>
               <span className="flex items-center gap-1 text-violet-400"><Clock size={10} /> {meeting.duration}</span>
               <span>•</span>
-              <span className="flex items-center gap-1 text-emerald-500"><Zap size={10} /> AI Summary Complete</span>
+              <span className="flex items-center gap-1 text-emerald-500"><Zap size={10} /> AI Transcription Complete</span>
             </div>
           </div>
         </div>

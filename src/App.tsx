@@ -85,7 +85,7 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'sign-upgrade',   label: '⚡ Upgrade',          desc: 'Unlock all eSign features' },
   ],
   'ai-tools': [
-    { id: 'ai-summarizer',  label: '🎙 Summarizer',   desc: 'AI Audio & PDF Note-taker' },
+    { id: 'ai-summarizer',  label: '🎙 Transcriber',   desc: 'AI Audio & Document Transcriber' },
     { id: 'ai-digitizer',   label: '🤖 Stamp Digitizer',  desc: 'Vectorize rubber stamps' },
     { id: 'ai-translate' as SubView, label: '🌍 PDF Translator', desc: 'AI-powered document translation' },
   ],
