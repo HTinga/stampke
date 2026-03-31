@@ -1,137 +1,86 @@
 /**
- * useAccessControl — Central feature-gate for StampKE
+ * useAccessControl — StampKE feature gating
  *
- * Rules:
- * - Only 1 free trial, valid for Stamp Designer AND Stamp Applier only
- * - All other features are locked behind a paid plan OR super-admin approval
- * - Super admin can approve access for 1–12 months
- * - If not approved/paid → hard paywall, no use at all
- * - Stamp Designer: after trial, user can pay KES 650 for one-time download/apply
- *   OR subscribe
+ * Rules (as instructed):
+ * - NO trial, NO free tier for any feature
+ * - Only superadmin gets free access to everything
+ * - All business users must have a paid plan (starter/professional/enterprise)
+ * - Plans: KES 650 starter | KES 2,500 professional | KES 5,000 enterprise
  */
 
 import { useCallback } from 'react';
 
 export type FeatureKey =
-  | 'stamp_design'
-  | 'stamp_apply'
-  | 'esign'
-  | 'pdf_editor'
-  | 'ai_summarizer'
-  | 'ai_digitizer'
-  | 'qr_tracker'
-  | 'invoicing'
-  | 'documents'
-  | 'templates'
-  | 'virtual_assistants'
-  | 'social_hub';
+  | 'stamp_design' | 'stamp_apply' | 'esign'
+  | 'pdf_editor' | 'ai_summarizer' | 'ai_digitizer'
+  | 'invoicing' | 'documents' | 'templates'
+  | 'virtual_assistants' | 'recruit' | 'clients';
 
-// Features that get exactly 1 free trial (and nothing else)
-export const TRIAL_FEATURES: FeatureKey[] = ['stamp_design', 'stamp_apply'];
-
-// Features that are fully locked (no trial at all)
-export const LOCKED_FEATURES: FeatureKey[] = [
-  'esign',
-  'pdf_editor',
-  'ai_summarizer',
-  'ai_digitizer',
-  'qr_tracker',
-  'invoicing',
-  'documents',
-  'templates',
-  'virtual_assistants',
-  'social_hub',
-];
-
-export type AccessStatus =
-  | 'granted'          // paid or admin-approved
-  | 'trial_available'  // 1 free trial not yet used
-  | 'trial_used'       // trial exhausted, must pay
-  | 'locked'           // no trial at all, must pay
-  | 'expired';         // admin approval expired
-
-export interface AccessResult {
-  status: AccessStatus;
-  canUse: boolean;
-  trialRemaining: number;
-  approvalExpiresAt?: string;
-  daysLeft?: number;
-}
+export type PlanTier = 'none' | 'starter' | 'professional' | 'enterprise';
 
 export interface UserAccess {
-  plan?: string;               // 'trial' | 'starter' | 'pro' | 'business' | null
-  adminApproved?: boolean;
-  approvalExpiresAt?: string;  // ISO date string
-  trialUsed?: boolean;         // whether the single free trial was used
+  role?: string;
+  plan?: PlanTier | string;
 }
 
-function getStoredTrialUsed(): boolean {
-  try {
-    return localStorage.getItem('stampke_trial_used') === 'true';
-  } catch {
-    return false;
-  }
+export interface AccessResult {
+  canUse: boolean;
+  reason: 'granted' | 'no_plan' | 'upgrade_required';
+  requiredPlan?: PlanTier;
 }
 
-export function markTrialUsed(): void {
-  try {
-    localStorage.setItem('stampke_trial_used', 'true');
-  } catch {}
-}
+// Feature → minimum plan required
+const FEATURE_PLAN_MAP: Record<FeatureKey, PlanTier> = {
+  // Starter (KES 650)
+  esign:              'starter',
+  stamp_design:       'starter',
+  stamp_apply:        'starter',
+  invoicing:          'starter',
+  recruit:            'starter',
+  clients:            'starter',
+  // Professional (KES 2,500)
+  pdf_editor:         'professional',
+  ai_summarizer:      'professional',
+  ai_digitizer:       'professional',
+  documents:          'professional',
+  templates:          'professional',
+  // Enterprise (KES 5,000)
+  virtual_assistants: 'enterprise',
+};
 
-function isPaidPlan(plan?: string): boolean {
-  return plan === 'starter' || plan === 'pro' || plan === 'business';
-}
+const PLAN_RANK: Record<PlanTier, number> = {
+  none: 0, starter: 1, professional: 2, enterprise: 3,
+};
 
-function isApprovalActive(expiresAt?: string): boolean {
-  if (!expiresAt) return false;
-  return new Date(expiresAt) > new Date();
-}
-
-function daysUntilExpiry(expiresAt?: string): number {
-  if (!expiresAt) return 0;
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / 86400000));
+function meetsRequirement(userPlan: string | undefined, required: PlanTier): boolean {
+  const userRank = PLAN_RANK[(userPlan as PlanTier) || 'none'] ?? 0;
+  const reqRank  = PLAN_RANK[required] ?? 1;
+  return userRank >= reqRank;
 }
 
 export function checkFeatureAccess(feature: FeatureKey, userAccess: UserAccess): AccessResult {
-  const paid = isPaidPlan(userAccess.plan);
-  const adminActive = userAccess.adminApproved && isApprovalActive(userAccess.approvalExpiresAt);
-
-  // Fully paid or admin-approved → always granted
-  if (paid || adminActive) {
-    return {
-      status: 'granted',
-      canUse: true,
-      trialRemaining: 0,
-      approvalExpiresAt: userAccess.approvalExpiresAt,
-      daysLeft: daysUntilExpiry(userAccess.approvalExpiresAt),
-    };
+  // Superadmin — always granted, no payment needed
+  if (userAccess.role === 'superadmin') {
+    return { canUse: true, reason: 'granted' };
   }
 
-  // Check if admin approval was given but has expired
-  if (userAccess.adminApproved && !adminActive) {
-    return { status: 'expired', canUse: false, trialRemaining: 0, approvalExpiresAt: userAccess.approvalExpiresAt };
-  }
+  const required = FEATURE_PLAN_MAP[feature] || 'starter';
+  const hasPlan  = meetsRequirement(userAccess.plan, required);
 
-  // Trial-eligible features
-  if (TRIAL_FEATURES.includes(feature)) {
-    const trialUsed = getStoredTrialUsed();
-    if (!trialUsed) {
-      return { status: 'trial_available', canUse: true, trialRemaining: 1 };
-    }
-    return { status: 'trial_used', canUse: false, trialRemaining: 0 };
-  }
+  if (hasPlan) return { canUse: true, reason: 'granted' };
 
-  // Everything else: fully locked
-  return { status: 'locked', canUse: false, trialRemaining: 0 };
+  const hasAnyPlan = userAccess.plan && userAccess.plan !== 'none';
+  return {
+    canUse: false,
+    reason: hasAnyPlan ? 'upgrade_required' : 'no_plan',
+    requiredPlan: required,
+  };
 }
 
 export function useAccessControl(userAccess: UserAccess) {
   const check = useCallback(
     (feature: FeatureKey): AccessResult => checkFeatureAccess(feature, userAccess),
-    [userAccess.plan, userAccess.adminApproved, userAccess.approvalExpiresAt]
+    [userAccess.role, userAccess.plan]
   );
-
-  return { check, markTrialUsed };
+  return { check };
 }

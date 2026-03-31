@@ -27,18 +27,18 @@ const FEATURE_LABELS: Record<FeatureKey, string> = {
 
 const PLANS = [
   {
-    id: 'starter', name: 'Starter', price: 'KES 1,000', period: '/month',
+    id: 'starter', name: 'Starter', price: 'KES 650', period: '/month',
     color: 'from-blue-600 to-blue-800',
-    features: ['Stamp Designer (unlimited)', 'Apply Stamp to PDFs', 'Toho eSign', 'Template Library', 'AI Digitizer (3 scans)'],
+    features: ['eSign — sign documents', 'Stamp Designer & Applier', 'Smart Invoice', 'Find Workers', 'Add Clients'],
   },
   {
-    id: 'pro', name: 'Professional', price: 'KES 2,500', period: '/month',
+    id: 'professional', name: 'Professional', price: 'KES 2,500', period: '/month',
     color: 'from-purple-600 to-indigo-700',
     badge: 'Most Popular',
-    features: ['Everything in Starter', 'Smart Invoicing', 'PDF Editor', 'AI Transcriber', 'QR Tracker', 'Priority Support'],
+    features: ['Everything in Starter', 'PDF Editor', 'AI Scanner', 'Client CRM', 'Recruit & Track unlimited', 'Team Members'],
   },
   {
-    id: 'business', name: 'Business', price: 'KES 7,500', period: '/month',
+    id: 'enterprise', name: 'Enterprise', price: 'KES 5,000', period: '/month',
     color: 'from-amber-500 to-orange-600',
     features: ['Everything in Professional', 'Virtual Assistants', 'Admin Sub-accounts', 'API Access', 'White-label'],
   },
@@ -50,7 +50,7 @@ interface PaywallModalProps {
   approvalExpiresAt?: string;
   onClose: () => void;
   onPlanSelected?: (planId: string) => void;
-  onOneTimePay?: () => void;   // KES 650 one-time
+  onOneTimePay?: () => void;   // KES 650 monthly
 }
 
 export default function PaywallModal({ feature, status, approvalExpiresAt, onClose, onPlanSelected, onOneTimePay }: PaywallModalProps) {
@@ -102,7 +102,7 @@ export default function PaywallModal({ feature, status, approvalExpiresAt, onClo
         </div>
 
         <div className="p-6">
-          {/* Tab switcher for stamp features with one-time option */}
+          {/* Tab switcher for stamp features with monthly option */}
           {isStampFeature && (
             <div className="flex gap-2 mb-6 bg-[#0d1117] rounded-xl p-1">
               <button

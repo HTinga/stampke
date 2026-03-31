@@ -1,8 +1,6 @@
-// ── Payments: Flutterwave (cards) + M-Pesa (STK push) ────────────────────────
-// Flutterwave: Visa/Mastercard — works in Kenya + 30+ African countries
-//              3.8% per transaction — dashboard.flutterwave.com
-// M-Pesa:      Safaricom STK push via IntaSend — intasend.com
-// NO Stripe — not accessible from Kenya
+// ── Payments: IntaSend ONLY (M-Pesa STK + Card) ───────────────────────────────
+// IntaSend: intasend.com — Kenya M-Pesa and international cards
+// NO Flutterwave, NO Stripe — IntaSend only as instructed
 
 const apiUrl = () => (import.meta as any).env?.VITE_API_URL || '';
 const token  = () => localStorage.getItem('tomo_token') || '';
@@ -13,34 +11,86 @@ const authFetch = (path: string, opts: RequestInit = {}) =>
     ...opts,
   }).then(r => r.json());
 
-// ── Subscription plans ────────────────────────────────────────────────────────
-// No free tier — each feature gets 1 trial use, then paywall
+// ── Plans: 3 tiers, correct prices, NO trial, NO free tier ────────────────────
+// Only superadmin gets free access. All other users must pay.
 export const PLANS = {
   starter: {
-    id: 'starter', name: 'Starter', price: 1000, currency: 'KES', period: '/month',
-    features: ['eSign (unlimited)', 'Stamp Designer', 'Apply Stamp to PDF', 'Stamp Templates', 'AI Stamp Digitizer'],
-    flutterwavePriceKES: 1000,
-    mpesaPriceKES: 1000,
+    id: 'starter',
+    name: 'Starter',
+    price: 650,
+    currency: 'KES',
+    period: '/month',
+    description: 'For individuals and freelancers.',
+    popular: false,
+    mpesaPriceKES: 650,
+    features: [
+      'eSign — sign & collect signatures',
+      'Stamp Designer & Applier',
+      'Smart Invoice (unlimited)',
+      'Find Workers (browse)',
+      'Add Clients',
+      'Email support',
+    ],
   },
-  pro: {
-    id: 'pro', name: 'Professional', price: 2500, currency: 'KES', period: '/month',
-    features: ['Everything in Starter', 'Smart Invoice & Payments', 'PDF Editor & Annotations', 'AI Audio Summarizer', 'Document Templates', 'Priority support'],
-    flutterwavePriceKES: 2500,
+  professional: {
+    id: 'professional',
+    name: 'Professional',
+    price: 2500,
+    currency: 'KES',
+    period: '/month',
+    description: 'For growing businesses and teams.',
+    popular: true,
     mpesaPriceKES: 2500,
+    features: [
+      'Everything in Starter',
+      'PDF Editor & Presentations',
+      'AI Receipt/Invoice Scanner',
+      'Client CRM & Lead Tracking',
+      'Recruit & Track (unlimited)',
+      'WhatsApp Invoice Sharing',
+      'Email Reminders',
+      'Team Members (up to 5)',
+      'Priority support',
+    ],
   },
-  business: {
-    id: 'business', name: 'Business', price: 7500, currency: 'KES', period: '/month',
-    features: ['Everything in Professional', 'Virtual Assistants Platform', 'Web Scrapping Tool', 'Admin sub-accounts', 'White-label branding', 'Dedicated support'],
-    flutterwavePriceKES: 7500,
-    mpesaPriceKES: 7500,
+  enterprise: {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 5000,
+    currency: 'KES',
+    period: '/month',
+    description: 'For large organisations.',
+    popular: false,
+    mpesaPriceKES: 5000,
+    features: [
+      'Everything in Professional',
+      'Admin Panel access',
+      'Unlimited team members',
+      'White-label branding',
+      'Dedicated account manager',
+      'SLA & priority onboarding',
+      'Custom integrations',
+    ],
   },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
 
-// ── Card payment via Flutterwave ──────────────────────────────────────────────
-// Returns a Flutterwave hosted checkout URL — user pays, is redirected back
-export async function startCardPayment(planId: 'starter' | 'pro' | 'business', email?: string): Promise<void> {
+// ── M-Pesa STK push (via IntaSend) ───────────────────────────────────────────
+export async function startMpesaPayment(
+  planId: PlanId,
+  phone: string,
+): Promise<{ checkoutRequestId: string }> {
+  const data = await authFetch('/payments/mpesa/stk-push', {
+    method: 'POST',
+    body: JSON.stringify({ planId, phone }),
+  });
+  if (!data.success) throw new Error(data.message || 'M-Pesa payment failed.');
+  return { checkoutRequestId: data.result.checkoutRequestId };
+}
+
+// ── Card payment (via IntaSend) ───────────────────────────────────────────────
+export async function startCardPayment(planId: PlanId, email?: string): Promise<void> {
   const data = await authFetch('/payments/card/checkout', {
     method: 'POST',
     body: JSON.stringify({ planId, email }),
@@ -52,20 +102,7 @@ export async function startCardPayment(planId: 'starter' | 'pro' | 'business', e
   }
 }
 
-// ── M-Pesa STK push ───────────────────────────────────────────────────────────
-export async function startMpesaPayment(
-  planId: 'starter' | 'pro' | 'business',
-  phone: string,
-): Promise<{ checkoutRequestId: string }> {
-  const data = await authFetch('/payments/mpesa/stk-push', {
-    method: 'POST',
-    body: JSON.stringify({ planId, phone }),
-  });
-  if (!data.success) throw new Error(data.message || 'M-Pesa payment failed.');
-  return { checkoutRequestId: data.result.checkoutRequestId };
-}
-
-// ── Poll M-Pesa payment status ────────────────────────────────────────────────
+// ── Poll M-Pesa status ────────────────────────────────────────────────────────
 export async function checkMpesaStatus(
   checkoutRequestId: string,
 ): Promise<'pending' | 'paid' | 'failed'> {
@@ -73,8 +110,6 @@ export async function checkMpesaStatus(
   return data.result?.status || 'pending';
 }
 
-// ── Format price ──────────────────────────────────────────────────────────────
 export function formatPrice(amount: number, currency = 'KES'): string {
-  if (currency === 'KES') return `KES ${amount.toLocaleString('en-KE')}`;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+  return `${currency} ${amount.toLocaleString('en-KE')}`;
 }

@@ -234,6 +234,8 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
   const [pdfDoc, setPdfDoc] = useState<pdfjs.PDFDocumentProxy|null>(null);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [numPages, setNumPages] = useState(1);
   const pageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -294,7 +296,20 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
     } else if (env.documents[0]?.dataUrl && env.documents[0].type === 'application/pdf') {
        // Load existing PDF if not already loaded
        const ab = Uint8Array.from(atob(env.documents[0].dataUrl.split(',')[1]), c => c.charCodeAt(0)).buffer;
-       pdfjs.getDocument(ab).promise.then(setPdfDoc);
+       pdfjs.getDocument(ab).promise.then(async (pdf) => {
+         setPdfDoc(pdf);
+         setNumPages(pdf.numPages);
+         const thumbs: string[] = [];
+         for (let i = 1; i <= Math.min(pdf.numPages, 50); i++) {
+           const p = await pdf.getPage(i);
+           const vp = p.getViewport({ scale: 0.2 });
+           const tc = document.createElement('canvas');
+           tc.width = vp.width; tc.height = vp.height;
+           await p.render({ canvasContext: tc.getContext('2d')!, viewport: vp }).promise;
+           thumbs.push(tc.toDataURL());
+         }
+         setThumbnails(thumbs);
+       });
     }
   }, [pdfDoc, currentPage, zoom, env.documents]);
 
@@ -310,9 +325,21 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
           const pdf = await pdfjs.getDocument(ab).promise;
           setPdfDoc(pdf);
           doc.pages = pdf.numPages;
+          setNumPages(pdf.numPages);
           const firstPage = await renderPdfPage(pdf, 1, zoom);
           setPdfCanvas([firstPage]);
           doc.previewUrl = firstPage;
+          // Generate thumbnails
+          const thumbs: string[] = [];
+          for (let i = 1; i <= Math.min(pdf.numPages, 50); i++) {
+            const p = await pdf.getPage(i);
+            const vp = p.getViewport({ scale: 0.2 });
+            const tc = document.createElement('canvas');
+            tc.width = vp.width; tc.height = vp.height;
+            await p.render({ canvasContext: tc.getContext('2d')!, viewport: vp }).promise;
+            thumbs.push(tc.toDataURL());
+          }
+          setThumbnails(thumbs);
         } catch {
           setPdfCanvas([dataUrl]);
           doc.previewUrl = dataUrl;
@@ -506,6 +533,40 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
       {/* Fields */}
       {step==='fields'&&(
         <div className="flex-1 flex overflow-hidden" onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
+
+          {/* ── Page Thumbnails Sidebar ── */}
+          {thumbnails.length > 0 && (
+            <div className="w-20 md:w-28 flex-shrink-0 border-r border-[#30363d] bg-[#0d1117] flex flex-col overflow-y-auto">
+              <div className="p-2 border-b border-[#30363d] sticky top-0 bg-[#0d1117] z-10">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#8b949e] text-center">Pages</p>
+              </div>
+              <div className="flex flex-col gap-2 p-2">
+                {thumbnails.map((thumb, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentPage(idx + 1)}
+                    className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
+                      currentPage === idx + 1
+                        ? 'border-[#1f6feb] shadow-[0_0_12px_rgba(31,111,235,0.4)]'
+                        : 'border-[#30363d] hover:border-[#8b949e]'
+                    }`}
+                  >
+                    <img src={thumb} alt={`Page ${idx + 1}`} className="w-full aspect-[3/4] object-cover" />
+                    {/* Field count badge */}
+                    {env.fields.filter(f => f.page === idx + 1).length > 0 && (
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-[#1f6feb] rounded-full flex items-center justify-center">
+                        <span className="text-[8px] font-black text-white">{env.fields.filter(f => f.page === idx + 1).length}</span>
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 bg-black/70 text-[8px] text-white py-0.5 text-center font-bold">
+                      {idx + 1}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Field toolbar */}
           <div className="w-64 flex-shrink-0 bg-[#161b22] border-r border-[#30363d] p-6 space-y-6 overflow-y-auto">
             <div>
@@ -556,6 +617,14 @@ const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:
               </div>
             </div>
             <div className="space-y-2">
+              {/* Page navigation */}
+              {numPages > 1 && (
+                <div className="flex items-center gap-1 bg-[#21262d] rounded-xl p-1">
+                  <button onClick={()=>setCurrentPage(p=>Math.max(1,p-1))} disabled={currentPage<=1} className="p-1.5 text-[#8b949e] hover:text-white disabled:opacity-30"><ChevronLeft size={13}/></button>
+                  <span className="flex-1 text-center text-xs font-bold text-white">{currentPage} / {numPages}</span>
+                  <button onClick={()=>setCurrentPage(p=>Math.min(numPages,p+1))} disabled={currentPage>=numPages} className="p-1.5 text-[#8b949e] hover:text-white disabled:opacity-30"><ChevronRight size={13}/></button>
+                </div>
+              )}
               {/* Zoom */}
               <div className="flex items-center gap-1 bg-[#21262d] rounded-xl p-1">
                 <button onClick={()=>setZoom(z=>Math.max(0.5,z-0.25))} className="p-1.5 text-[#8b949e] hover:text-white"><ZoomOut size={13}/></button>
