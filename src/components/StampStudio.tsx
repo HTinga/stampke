@@ -103,12 +103,17 @@ const ColorDot = ({ color, active, onClick }: { color:string; active:boolean; on
 );
 
 /* ── StampStudio ────────────────────────────────── */
-interface Props { onClose:()=>void; onApply?:(s:string)=>void; }
+interface Props {
+  onClose: () => void;
+  onApply?: (s: string) => void;
+  accessStatus?: 'granted' | 'trial_available' | 'trial_used' | 'locked';
+  onPaywallTrigger?: () => void;
+}
 
 type RightTab = 'text' | 'shape' | 'border' | 'effects' | 'logo' | 'signature' | 'preview' | 'elements' | 'advanced';
 type LayerFilter = 'all' | 'text' | 'figure';
 
-const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
+const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'granted', onPaywallTrigger }) => {
   const { config, setConfig, undo, redo, history, redoStack, addCustomTemplate, saveTemplateRemote } = useStampStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [showSignPad, setShowSignPad] = useState(false);
@@ -139,6 +144,13 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
 
   const getSvgString = () => svgRef.current ? new XMLSerializer().serializeToString(svgRef.current) : '';
 
+
+  // Paywall guard — used before any export or apply action
+  const canAct = accessStatus === 'granted' || accessStatus === 'trial_available';
+  const withPaywallGuard = (fn: () => void) => {
+    if (!canAct) { onPaywallTrigger?.(); return; }
+    fn();
+  };
   const exportPNG = () => {
     const svg = getSvgString(); if (!svg) return;
     const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 600;
@@ -299,6 +311,20 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
       <div className="ss-container">
+
+        {/* ─── ACCESS BANNER ─── */}
+        {(accessStatus === 'trial_available') && (
+          <div style={{ background: '#1a73e8', color: 'white', padding: '6px 16px', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>⭐ You have 1 free trial — design and download/apply your stamp once at no cost.</span>
+            <button onClick={onPaywallTrigger} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', borderRadius: 20, padding: '2px 10px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Upgrade →</button>
+          </div>
+        )}
+        {(accessStatus === 'trial_used' || accessStatus === 'locked') && (
+          <div style={{ background: '#ea4335', color: 'white', padding: '6px 16px', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{accessStatus === 'trial_used' ? '🔒 Trial used — subscribe or pay KES 650 to download/apply.' : '🔒 Subscribe to unlock this feature.'}</span>
+            <button onClick={onPaywallTrigger} style={{ background: 'rgba(255,255,255,0.25)', border: 'none', color: 'white', borderRadius: 20, padding: '2px 10px', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Unlock Now →</button>
+          </div>
+        )}
 
         {/* ─── TOP HEADER BAR ─── */}
         <div className="ss-header">
@@ -1007,9 +1033,9 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
                   </div>
                   <label className="ss-field-label">Export Format</label>
                   <div className="ss-border-style-row">
-                    <button onClick={exportPNG} className="ss-border-btn active">PNG</button>
-                    <button onClick={exportSVG} className="ss-border-btn">SVG</button>
-                    <button onClick={exportPDF} className="ss-border-btn">PDF</button>
+                    <button onClick={() => withPaywallGuard(exportPNG)} className="ss-border-btn active">PNG</button>
+                    <button onClick={() => withPaywallGuard(exportSVG)} className="ss-border-btn">SVG</button>
+                    <button onClick={() => withPaywallGuard(exportPDF)} className="ss-border-btn">PDF</button>
                   </div>
                 </div>
               )}
@@ -1024,7 +1050,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
             <button className="ss-footer-icon-btn" onClick={() => setRightTab('effects')} title="Effects"><Sparkles size={16} /></button>
             <button className="ss-footer-icon-btn" onClick={() => upd({ rotation: 0 })} title="Reset Rotation"><RotateCcw size={16} /></button>
             <button className="ss-footer-icon-btn" onClick={() => setShowSettingsMenu(!showSettingsMenu)} title="Settings"><Settings size={16} /></button>
-            <button className="ss-footer-icon-btn" onClick={apply} title="Apply"><Check size={16} /></button>
+            <button className="ss-footer-icon-btn" onClick={() => withPaywallGuard(apply)} title="Apply"><Check size={16} /></button>
           </div>
           <div className="ss-footer-center">
             <span className="ss-plate-label">Plate size:</span>
@@ -1035,10 +1061,10 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply }) => {
           </div>
           <div className="ss-footer-right">
             <div className="ss-download-icons">
-                <button onClick={exportSVG} className="ss-format-btn" title="Download SVG">SVG</button>
-                <button onClick={exportPNG} className="ss-format-btn" title="Download PNG">PNG</button>
-                <button onClick={exportJPEG} className="ss-format-btn" title="Download JPEG">JPG</button>
-                <button onClick={exportPDF} className="ss-format-btn" title="Download PDF">PDF</button>
+                <button onClick={() => withPaywallGuard(exportSVG)} className="ss-format-btn" title="Download SVG">SVG</button>
+                <button onClick={() => withPaywallGuard(exportPNG)} className="ss-format-btn" title="Download PNG">PNG</button>
+                <button onClick={() => withPaywallGuard(exportJPEG)} className="ss-format-btn" title="Download JPEG">JPG</button>
+                <button onClick={() => withPaywallGuard(exportPDF)} className="ss-format-btn" title="Download PDF">PDF</button>
             </div>
           </div>
         </div>
