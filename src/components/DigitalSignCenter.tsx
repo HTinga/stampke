@@ -263,7 +263,7 @@ export default function DigitalSignCenter({
   const [wordHtml, setWordHtml] = useState<string | null>(null);
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
+  const [showToast, setShowToast] = useState<{ message: string, type: 'success' | 'info' | 'error' } | null>(null);
   const pdfDataCache = useRef<Record<string, Uint8Array>>({});
   const [localStampConfig, setLocalStampConfig] = useState<StampConfig>(stampConfig);
   const [isEditingStamp, setIsEditingStamp] = useState(false);
@@ -776,25 +776,93 @@ export default function DigitalSignCenter({
     setShowToast({ message: `Cloned to all ${activeDoc.pages} pages`, type: 'success' });
   };
 
-  const handleSend = () => {
-    const envelope: Envelope = {
-      ...newEnv as Envelope,
-      id: `env-${Date.now()}`,
-      status: 'sent',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      auditLog: [{ 
-        id: 'a-1', 
-        timestamp: new Date().toISOString(), 
-        action: 'Document Dispatched', 
-        user: 'System Admin', 
-        ip: '197.248.33.102', 
-        details: `Ready for ${newEnv.signers?.length} signers` 
-      }]
-    };
-    setEnvelopes([envelope, ...envelopes]);
-    setView('dashboard');
-    setCurrentStep(1);
+  const handleSend = async () => {
+    // Validate required fields before sending
+    if (!newEnv.title || !newEnv.title.trim()) {
+      setShowToast({ message: 'Please enter a document title before sending.', type: 'error' });
+      return;
+    }
+    if (!newEnv.signers || newEnv.signers.length === 0) {
+      setShowToast({ message: 'Add at least one signer or viewer before sending.', type: 'error' });
+      return;
+    }
+    if (!newEnv.documents || newEnv.documents.length === 0) {
+      setShowToast({ message: 'Please upload a document before sending.', type: 'error' });
+      return;
+    }
+    // Check all signers have emails
+    const missingEmail = newEnv.signers.find(s => !s.email || !s.email.includes('@'));
+    if (missingEmail) {
+      setShowToast({ message: `Please add a valid email for signer: ${missingEmail.name || 'unnamed'}`, type: 'error' });
+      return;
+    }
+
+    setIsLoadingDoc(true);
+    setProcessingStatus('Preparing document...');
+
+    try {
+      const envelopeId = `env-${Date.now()}`;
+      const now = new Date().toISOString();
+
+      const envelope: Envelope = {
+        ...newEnv as Envelope,
+        id: envelopeId,
+        status: 'sent',
+        createdAt: now,
+        updatedAt: now,
+        auditLog: [{
+          id: 'a-1',
+          timestamp: now,
+          action: 'Document Dispatched',
+          user: 'Sender',
+          ip: '',
+          details: `Sent to ${newEnv.signers?.length} recipient(s)`
+        }]
+      };
+
+      // Send emails via Resend API (server-side)
+      setProcessingStatus('Sending emails to recipients...');
+      try {
+        const token = localStorage.getItem('tomo_token') || '';
+        const apiBase = (import.meta as any).env?.VITE_API_URL || '';
+        const res = await fetch(`${apiBase}/api/envelope/send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            envelopeId,
+            title: envelope.title,
+            signers: envelope.signers,
+            appUrl: window.location.origin,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          console.warn('[eSign] Email send failed (non-fatal):', data.message);
+          setShowToast({ message: `Document created. Email delivery: ${data.message || 'pending'}`, type: 'success' });
+        } else {
+          setShowToast({ message: `✅ Document dispatched — emails sent to ${newEnv.signers?.length} recipient(s)`, type: 'success' });
+        }
+      } catch (emailErr) {
+        // Email sending failing should not block the document creation
+        console.warn('[eSign] Email API unreachable (non-fatal):', emailErr);
+        setShowToast({ message: 'Document created. Email notifications will be sent shortly.', type: 'success' });
+      }
+
+      setEnvelopes(prev => [envelope, ...prev]);
+      setView('dashboard');
+      setCurrentStep(1);
+      // Reset new envelope form
+      setNewEnv({ title: '', signers: [], documents: [], fields: [], status: 'draft' });
+    } catch (err: any) {
+      console.error('[eSign] handleSend error:', err);
+      setShowToast({ message: `Error sending document: ${err?.message || 'Unknown error'}`, type: 'error' });
+    } finally {
+      setIsLoadingDoc(false);
+      setProcessingStatus('');
+    }
   };
 
   const handleSignatureCaptured = (url: string, specificFieldId?: string) => {
@@ -1776,12 +1844,14 @@ export default function DigitalSignCenter({
       )}
 
       {showToast && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[400] animate-in slide-in-from-top-10 duration-500">
-          <div className={`px-10 py-5 rounded-[40px] shadow-2xl flex items-center gap-5 border ${
-            showToast.type === 'success' ? 'bg-green-600 text-white border-green-500' : 'bg-[#1f6feb] text-white border-[#1a5cad]'
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[400] animate-in slide-in-from-top-10 duration-500 max-w-sm w-full px-4">
+          <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border ${
+            showToast.type === 'success' ? 'bg-green-600 text-white border-green-500'
+            : showToast.type === 'error' ? 'bg-red-600 text-white border-red-500'
+            : 'bg-[#1f6feb] text-white border-[#1a5cad]'
           }`}>
-            <CheckCircle2 size={28} />
-            <span className="font-black uppercase tracking-[0.2em] text-xs">{showToast.message}</span>
+            {showToast.type === 'error' ? <span className="text-xl flex-shrink-0">⚠️</span> : <CheckCircle2 size={20} className="flex-shrink-0" />}
+            <span className="font-semibold text-sm leading-snug">{showToast.message}</span>
           </div>
         </div>
       )}

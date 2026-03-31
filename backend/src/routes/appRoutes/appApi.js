@@ -67,6 +67,7 @@ router.get (`/audit/list`,         catchErrors(auditController.list));
 // ── eSign Envelopes ──
 router.post  (`/envelope/create`,     catchErrors(envelopeController.create));
 router.get   (`/envelope/list`,       catchErrors(envelopeController.list));
+router.post  (`/envelope/send`,       catchErrors(envelopeController.send));
 router.post  (`/envelope/update/:id`, catchErrors(envelopeController.update));
 router.delete(`/envelope/delete/:id`, catchErrors(envelopeController.delete));
 

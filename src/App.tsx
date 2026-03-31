@@ -18,13 +18,11 @@ import TohoSignCenter from './components/esign/DocuSealSignCenter';
 import PDFTools from './components/PDFTools';
 import StampApplier from './components/StampApplier';
 import StampStudio from './components/StampStudio';
-
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
 import SmartInvoice from './components/SmartInvoice';
 import DocumentsHub from './components/DocumentsHub';
 import VirtualAssistants from './components/VirtualAssistants';
-import ScrappingTool from './components/ScrappingTool';
 import AISummarizer from './components/AISummarizer';
 import AdminPanel from './components/AdminPanel';
 import ActivityLog from './components/ActivityLog';
@@ -35,6 +33,7 @@ import JobsLandingPage from './components/JobsLandingPage';
 import TrialBanner from './components/TrialBanner';
 import SuperAdminPanel from './components/SuperAdminPanel';
 import PricingPage from './components/PricingPage';
+import PublicSignerPage from './components/PublicSignerPage';
 import { analyzeStampImage } from './services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './store';
@@ -789,6 +788,23 @@ const App: React.FC = () => {
       </motion.div>
     </div>
   );
+  // ─── PUBLIC SIGNER/VIEWER PAGES (no auth required) ─────────────────────────
+  const urlParams = new URLSearchParams(window.location.search);
+  const publicToken = urlParams.get('token');
+  const publicEnvelopeId = urlParams.get('envelope');
+  const isSignRoute = window.location.pathname === '/sign' || window.location.search.includes('sign=1');
+  const isViewRoute = window.location.pathname === '/view' || window.location.search.includes('view=1');
+
+  if (publicToken && publicEnvelopeId && (isSignRoute || isViewRoute)) {
+    return (
+      <PublicSignerPage
+        mode={isViewRoute ? 'view' : 'sign'}
+        token={publicToken}
+        envelopeId={publicEnvelopeId}
+      />
+    );
+  }
+
   // ─── WORKER APP — completely separate, no SaaS UI ──────────────────────────
   if (isLoggedIn && userRole === 'worker') {
     return (
