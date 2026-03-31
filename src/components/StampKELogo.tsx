@@ -3,40 +3,51 @@ import React from 'react';
 interface StampKELogoProps {
   size?: number;
   className?: string;
-  /** 'color' = multicolor rings (default), 'white' = all white, 'blue' = all #1f6feb */
   variant?: 'color' | 'white' | 'blue';
 }
 
-// Three concentric rings — like a real ink stamp viewed from above
-// Ring colors: blue (#4285F4), red (#EA4335), green (#34A853) — Google/Zoho palette
+/**
+ * StampKE Logo — a premium seal/stamp mark
+ * Inspired by DocuSign: clean, trustworthy, professional
+ * An octagonal stamp shape with a stylized "S" pen nib inside
+ */
 export default function StampKELogo({ size = 32, className = '', variant = 'color' }: StampKELogoProps) {
-  const c1 = variant === 'color' ? '#4285F4' : variant === 'white' ? 'white' : '#1f6feb';
-  const c2 = variant === 'color' ? '#EA4335' : variant === 'white' ? 'white' : '#1f6feb';
-  const c3 = variant === 'color' ? '#34A853' : variant === 'white' ? 'white' : '#1f6feb';
+  const primary = variant === 'color' ? '#1a73e8' : variant === 'white' ? '#ffffff' : '#1a73e8';
+  const accent  = variant === 'color' ? '#34a853' : variant === 'white' ? '#ffffff' : '#1a73e8';
+  const bg      = variant === 'color' ? '#e8f0fe' : variant === 'white' ? 'transparent' : '#dbeafe';
   const cx = size / 2;
+  const r = size * 0.44;
 
-  // Ring radii — proportional to size
-  const r1 = size * 0.46;   // outer ring
-  const r2 = size * 0.33;   // middle ring
-  const r3 = size * 0.18;   // inner ring (filled dot)
-  const stroke = size * 0.07;
+  // Octagon points
+  const oct = Array.from({ length: 8 }, (_, i) => {
+    const angle = (i * 45 - 22.5) * Math.PI / 180;
+    return `${cx + r * Math.cos(angle)},${cx + r * Math.sin(angle)}`;
+  }).join(' ');
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="StampKE logo"
-    >
-      {/* Outer ring */}
-      <circle cx={cx} cy={cx} r={r1} stroke={c1} strokeWidth={stroke} fill="none" />
-      {/* Middle ring */}
-      <circle cx={cx} cy={cx} r={r2} stroke={c2} strokeWidth={stroke} fill="none" />
-      {/* Inner filled circle */}
-      <circle cx={cx} cy={cx} r={r3} fill={c3} />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none"
+      xmlns="http://www.w3.org/2000/svg" className={className} aria-label="StampKE logo">
+      {/* Octagon background */}
+      <polygon points={oct} fill={bg} stroke={primary} strokeWidth={size * 0.045} />
+      {/* Inner smaller octagon ring */}
+      {(() => {
+        const r2 = r * 0.78;
+        const pts = Array.from({length:8},(_,i)=>{
+          const a = (i*45-22.5)*Math.PI/180;
+          return `${cx+r2*Math.cos(a)},${cx+r2*Math.sin(a)}`;
+        }).join(' ');
+        return <polygon points={pts} fill="none" stroke={primary} strokeWidth={size*0.018} opacity="0.4"/>;
+      })()}
+      {/* Stylized "S" / pen nib path */}
+      <path
+        d={`M${cx-size*0.14},${cx-size*0.06} C${cx-size*0.14},${cx-size*0.16} ${cx+size*0.14},${cx-size*0.16} ${cx+size*0.14},${cx-size*0.06} C${cx+size*0.14},${cx+size*0.04} ${cx-size*0.14},${cx+size*0.04} ${cx-size*0.14},${cx+size*0.14} C${cx-size*0.14},${cx+size*0.22} ${cx+size*0.14},${cx+size*0.22} ${cx+size*0.14},${cx+size*0.12}`}
+        stroke={primary}
+        strokeWidth={size * 0.075}
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Accent dot */}
+      <circle cx={cx} cy={cx + size * 0.17} r={size * 0.045} fill={accent} />
     </svg>
   );
 }

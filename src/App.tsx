@@ -68,9 +68,8 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'sign-docs',  label: 'eSign & Stamps',      icon: PenTool,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'documents',  label: 'Docs & PDF',          icon: FileText,   emoji: '📄' },
-  { id: 'ai-tools',   label: 'AI Tools',            icon: Bot,        emoji: '🤖' },
+  { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
   { id: 'assistants', label: 'Virtual Assistants',  icon: Briefcase,  emoji: '💼' },
-  { id: 'scrapping',  label: 'Scrapping Tool',      icon: Globe,      emoji: '🌐' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
 ];
 
@@ -683,76 +682,109 @@ const App: React.FC = () => {
   );
 
   // ── Auth Modal ──────────────────────────────────────────────────────────────
+  const handleGoogleSignIn = () => {
+    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) { setLoginError('Google Sign-In is not yet configured. Contact support at support@stampke.co.ke'); return; }
+    setLoginError('');
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: window.location.origin + '/api/auth/google/callback',
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'select_account',
+      state: JSON.stringify({ landingType, signUpRole }),
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  };
+
   const renderAuthModal = () => (
-    <div className="fixed inset-0 bg-[#0d1117]/90 backdrop-blur-3xl z-[600] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0, scale: 0.92, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92 }}
-        className="bg-[#161b22] w-full max-w-md rounded-3xl shadow-2xl border border-[#30363d] p-8 space-y-5">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-[#1f6feb] rounded-2xl flex items-center justify-center text-white mx-auto mb-4"><ShieldCheck size={24} /></div>
-          <h3 className="text-2xl font-black text-white mb-1">{isSignUp ? (landingType === 'jobs' ? 'Find Work on StampKE' : 'Join StampKE') : 'Welcome Back'}</h3>
-          <p className="text-[#8b949e] text-sm">{isSignUp ? (landingType === 'jobs' ? 'Create your free worker profile.' : '1 free trial per feature.') : 'Sign in to your account.'}</p>
-        </div>
-
-        {/* Role selector — sign up, main landing only */}
-        {isSignUp && landingType !== 'jobs' && (
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'business', label: '🏢 Business', desc: 'Tools & invoicing' },
-              { value: 'worker',   label: '👷 Find Errands', desc: 'Find work & gigs' },
-            ].map(opt => (
-              <button key={opt.value} type="button" onClick={() => setSignUpRole(opt.value as 'business' | 'worker')}
-                className={`p-3 rounded-xl border text-left transition-all ${signUpRole === opt.value ? 'border-[#1f6feb] bg-[#1f6feb]/10' : 'border-[#30363d] hover:border-[#58a6ff]'}`}>
-                <p className="text-sm font-bold text-white">{opt.label}</p>
-                <p className="text-[10px] text-[#8b949e]">{opt.desc}</p>
-              </button>
-            ))}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[600] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.93, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93 }}
+        className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden"
+      >
+        {/* Top gradient header */}
+        <div className="bg-gradient-to-br from-[#1a73e8] to-[#1557b0] px-8 pt-10 pb-8 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 70% 20%, white 1px, transparent 1px)',backgroundSize:'20px 20px'}} />
+          {/* StampKE logo */}
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10">
+            <svg viewBox="0 0 32 32" width="36" height="36" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="#1a73e8" strokeWidth="2.5"/>
+              <circle cx="16" cy="16" r="9" stroke="#ea4335" strokeWidth="2"/>
+              <circle cx="16" cy="16" r="4" fill="#34a853"/>
+            </svg>
           </div>
-        )}
-
-        {/* Email/Password Login */}
-        <form onSubmit={handleDemoLogin} className="space-y-3">
-          {isSignUp && (
-            <input type="text" placeholder="Full Name" value={signUpName} onChange={e => setSignUpName(e.target.value)} required className="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] rounded-xl text-white text-sm outline-none transition-colors" />
-          )}
-          <input type="email" placeholder="Email Address" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required className="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] rounded-xl text-white text-sm outline-none transition-colors" />
-          <input type="password" placeholder="Password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required className="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] focus:border-[#58a6ff] rounded-xl text-white text-sm outline-none transition-colors" />
-          <button type="submit" className="w-full flex items-center justify-center py-3 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-sm font-bold transition-colors">
-            {isSignUp ? 'Create Account' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="flex items-center gap-3 my-4">
-          <div className="h-[1px] bg-[#30363d] flex-1"></div>
-          <span className="text-[10px] font-bold text-[#8b949e]">OR USE GOOGLE</span>
-          <div className="h-[1px] bg-[#30363d] flex-1"></div>
+          <h3 className="text-xl font-bold text-white mb-1 relative z-10">
+            {isSignUp ? 'Create your account' : 'Welcome back'}
+          </h3>
+          <p className="text-blue-100 text-xs relative z-10">
+            {isSignUp ? 'Get 1 free trial on Stamp Designer & Applier' : 'Sign in to StampKE'}
+          </p>
         </div>
 
-        {/* Google Sign-In */}
-        <div>
-          <button type="button" onClick={() => {
-            const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-            if (!clientId) { setLoginError('Google Sign-In is not configured yet. Please contact support.'); return; }
-            setLoginError('');
-            const params = new URLSearchParams({
-              client_id: clientId, redirect_uri: window.location.origin + '/api/auth/google/callback',
-              response_type: 'code', scope: 'openid email profile', access_type: 'offline', prompt: 'select_account',
-              state: JSON.stringify({ landingType, signUpRole }),
-            });
-            window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-          }} className="w-full flex items-center justify-center gap-3 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-[#18181b] rounded-xl text-sm font-semibold transition-colors shadow-sm">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        <div className="px-8 py-6 space-y-4">
+          {/* Role selector for sign up */}
+          {isSignUp && landingType !== 'jobs' && (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'business', label: '🏢 Business', desc: 'Stamps & documents' },
+                { value: 'worker',   label: '👷 Find Errands', desc: 'Gigs & work' },
+              ].map(opt => (
+                <button key={opt.value} type="button" onClick={() => setSignUpRole(opt.value as 'business' | 'worker')}
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${signUpRole === opt.value ? 'border-[#1a73e8] bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                  <p className="text-xs font-bold text-gray-900">{opt.label}</p>
+                  <p className="text-[10px] text-gray-400">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Google Sign-In — primary and only method */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-gray-200 hover:border-[#1a73e8] hover:bg-blue-50 text-gray-700 rounded-2xl text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
             Continue with Google
           </button>
+
+          {loginError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2">
+              <span className="text-red-500 text-xs mt-0.5">⚠</span>
+              <p className="text-red-600 text-xs leading-relaxed">{loginError}</p>
+            </div>
+          )}
+
+          {/* Trust signals */}
+          <div className="flex flex-col gap-1.5">
+            {['🔒 Bank-grade encryption — your data is safe', '✅ LSK-compliant e-signatures', '🇰🇪 Built for Kenya — M-Pesa supported'].map(t => (
+              <p key={t} className="text-[11px] text-gray-400 font-medium">{t}</p>
+            ))}
+          </div>
+
+          <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+            By continuing, you agree to our{' '}
+            <a href="#" className="underline hover:text-gray-600">Terms of Service</a> and{' '}
+            <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.
+          </p>
         </div>
 
-        {loginError && <p className="text-red-400 text-xs text-center bg-red-500/10 py-2 px-3 rounded-lg">{loginError}</p>}
-
-        <p className="text-[10px] text-[#8b949e] text-center leading-relaxed">
-          By continuing, you agree to our Terms of Service. A welcome email is sent on signup — verify your account within <strong className="text-white">24 hours</strong>.
-        </p>
-
-        <div className="flex justify-end pt-1">
-          <button onClick={() => { setShowLoginModal(false); setLoginError(''); }} className="p-1 text-[#8b949e] hover:text-white transition-colors"><X size={16} /></button>
+        <div className="px-8 pb-6 flex items-center justify-between">
+          <button onClick={() => setIsSignUp(!isSignUp)} className="text-[#1a73e8] text-xs font-semibold hover:underline">
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
+          <button onClick={() => { setShowLoginModal(false); setLoginError(''); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <X size={16} className="text-gray-400" />
+          </button>
         </div>
       </motion.div>
     </div>

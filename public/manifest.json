@@ -1,0 +1,29 @@
+{
+  "name": "StampKE — Digital Stamp & eSign Platform",
+  "short_name": "StampKE",
+  "description": "Kenya's professional digital stamp and e-signature platform. Design stamps, sign documents, and manage business paperwork.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8faff",
+  "theme_color": "#1a73e8",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "lang": "en-KE",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231a73e8'/%3E%3Cpolygon points='96,12 140,34 168,72 168,120 140,158 96,180 52,158 24,120 24,72 52,34' fill='%23e8f0fe' stroke='white' stroke-width='5'/%3E%3Cpath d='M64,88 C64,68 128,68 128,88 C128,108 64,108 64,128 C64,148 128,148 128,128' stroke='%231a73e8' stroke-width='12' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='96' cy='138' r='7' fill='%2334a853'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%231a73e8'/%3E%3Cpolygon points='256,30 372,90 450,190 450,322 372,422 256,482 140,422 62,322 62,190 140,90' fill='%23e8f0fe' stroke='white' stroke-width='12'/%3E%3Cpath d='M170,230 C170,180 342,180 342,230 C342,280 170,280 170,330 C170,380 342,380 342,330' stroke='%231a73e8' stroke-width='30' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='256' cy='355' r='20' fill='%2334a853'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

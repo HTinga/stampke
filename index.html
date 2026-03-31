@@ -3,15 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>StampKE — Digital Authority Workspace</title>
-    <meta name="description" content="StampKE — Kenya's platform for digital stamps, e-signatures, invoicing, and business tools.">
-    <meta name="theme-color" content="#041628">
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/index.css">
-    <!-- Google Identity Services — loaded early for faster sign-in -->
+    <title>StampKE — Digital Stamp & eSign Platform</title>
+    <meta name="description" content="StampKE — Kenya's professional platform for digital stamps, legally binding e-signatures, PDF editing, and business document management. LSK compliant.">
+    <meta name="keywords" content="digital stamp Kenya, e-signature Kenya, LSK compliant, stamp designer, PDF editor, Nairobi">
+    <meta name="author" content="JijiTechy Innovations">
+    <meta name="theme-color" content="#1a73e8">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="StampKE — Digital Stamp & eSign Platform">
+    <meta property="og:description" content="Kenya's #1 platform for digital stamps and legally binding e-signatures.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://stampke.vercel.app">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StampKE">
+
+    <!-- Inline SVG favicon (octagonal stamp logo) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,1.5 24.5,5.5 30.5,13 30.5,19 24.5,26.5 16,30.5 7.5,26.5 1.5,19 1.5,13 7.5,5.5' fill='%23e8f0fe' stroke='%231a73e8' stroke-width='1.5'/%3E%3Cpath d='M10,14 C10,10 22,10 22,14 C22,18 10,18 10,22 C10,26 22,26 22,22' stroke='%231a73e8' stroke-width='2.5' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='16' cy='23' r='1.5' fill='%2334a853'/%3E%3C/svg%3E">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800;900&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <link rel="stylesheet" href="/src/index.css">
     <style>
-      body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f0f6ff; }
+      body { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; background-color: #f8faff; }
       .font-stamp { font-family: 'Crimson Pro', serif; }
     </style>
 </head>
