@@ -784,20 +784,6 @@ const App: React.FC = () => {
   // ─── WORKER APP — completely separate, no SaaS UI ──────────────────────────
   // ─── LANDING PAGE ROUTER ────────────────────────────────────────────────────
   if (activeView === 'landing') {
-    // Jobs landing for workers
-    if (landingType === 'jobs') {
-      return (
-        <>
-          <JobsLandingPage
-            onSignUp={() => { setIsSignUp(true); setShowLoginModal(true); }}
-            onSignIn={() => { setIsSignUp(false); setShowLoginModal(true); }}
-          />
-          <AnimatePresence>
-            {showLoginModal && renderAuthModal()}
-          </AnimatePresence>
-        </>
-      );
-    }
     return (
       <>
         <LandingPage onGetStarted={() => { if (isLoggedIn) goTo('home'); else { setIsSignUp(true); setShowLoginModal(true); } }} onSignIn={() => { setIsSignUp(false); setShowLoginModal(true); }} theme={theme} />
