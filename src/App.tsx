@@ -846,7 +846,7 @@ const App: React.FC = () => {
     // ── Scrapping Tool ─────────────────────────────────────────────────────────
     if (activeView === 'scrapping-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (activeView === 'scrapping-dashboard' || activeView === 'scrapping-new' || activeView === 'scrapping-results') {
-      if (!canAccess('scrapping-dashboard')) return renderLocked('Virtual Assistants requires a Business plan (KES 7,500/mo)', 'virtual_assistants');
+      if (!canAccess('scrapping-dashboard')) return renderLocked('Virtual Assistants requires a Starter plan (KES 1,500/mo)', 'virtual_assistants');
       return <ScrappingTool initialView={activeView === 'scrapping-new' ? 'new' : activeView === 'scrapping-results' ? 'results' : 'dashboard'} />;
     }
 
@@ -855,7 +855,7 @@ const App: React.FC = () => {
     if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (['invoicing-invoices','invoicing-payments','invoicing-unpaid','invoicing-create',
          'money-invoices','money-payments','money-unpaid','money-create'].includes(activeView)) {
-      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Professional plan (KES 2,500/mo)', 'invoicing');
+      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Professional plan (KES 3,000/mo)', 'invoicing');
       return <SmartInvoice />;
     }
 
@@ -874,13 +874,13 @@ const App: React.FC = () => {
     }
     if (activeView === 'sign-stamps')    return renderView_stamps();
     if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} userStampCount={freeUsage.stamp.used} />;
-    if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
-    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan', 'ai_digitizer'); return renderView_aiScan(); }
+    if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan (KES 1,000/mo)', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
+    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan (KES 3,000/mo)', 'ai_digitizer'); return renderView_aiScan(); }
     if (activeView === 'sign-upgrade')  return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
 
     // ── Docs & PDF ───────────────────────────────────────────────────────────────
     if (activeView === 'documents-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor requires a Professional plan (KES 2,500/mo)', 'pdf_editor'); return <PDFTools />; }
+    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor requires a Professional plan (KES 3,000/mo)', 'pdf_editor'); return <PDFTools />; }
     if (activeView === 'documents-stamp-applier') {
       return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('sign-docs', 'sign-stamps'); }} userStampCount={freeUsage.stamp.used} />;
     }

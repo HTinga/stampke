@@ -47,7 +47,7 @@ const FEATURES = [
 const PLANS = [
   {
     name: 'Starter',
-    price: 'KES 650',
+    price: 'KES 1,500',
     period: '/month',
     color: '#4285F4',
     highlight: false,
@@ -62,14 +62,14 @@ const PLANS = [
   },
   {
     name: 'Professional',
-    price: 'KES 2,500',
+    price: 'KES 3,000',
     period: '/month',
     color: '#34A853',
     highlight: true,
     badge: 'Most Popular',
     features: [
       'Everything in Starter',
-      'PDF Editor & AI Tools',
+      'PDF Editor & Transcriber',
       'AI Receipt Scanner',
       'Client CRM & Leads',
       'Team members (up to 5)',
@@ -406,7 +406,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             </svg>
             Sign up with Google
           </button>
-          <p className="text-xs text-[#8b949e] mt-4">Plans from KES 650/month · M-Pesa or card · No setup fee</p>
+          <p className="text-xs text-[#8b949e] mt-4">Plans from KES 1,500/month · M-Pesa or card · No setup fee</p>
         </div>
       </section>
 
@@ -435,9 +435,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             <div>
               <p className="font-bold text-white mb-3 uppercase tracking-widest text-[10px]">Pricing</p>
               <ul className="space-y-2 text-[#8b949e]">
-                <li>Starter — KES 650/mo</li>
-                <li>Professional — KES 2,500/mo</li>
-                <li>Enterprise — KES 5,000/mo</li>
+                <li>Starter — KES 1,500/mo</li>
+                <li>Professional — KES 3,000/mo</li>
+                <li>Enterprise — KES 10,000/yr</li>
               </ul>
             </div>
             <div>

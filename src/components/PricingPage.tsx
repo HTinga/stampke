@@ -113,7 +113,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
 
       <p className="text-center text-xs text-[#8b949e]">
         Payments processed by <strong className="text-white">IntaSend</strong> · Safaricom M-Pesa &amp; Visa/Mastercard accepted ·
-        Questions? <a href="mailto:support@stampke.co.ke" className="text-[#58a6ff] hover:underline">support@stampke.co.ke</a>
+        Questions? <a href="mailto:support@stampke.com" className="text-[#58a6ff] hover:underline">support@stampke.com</a>
       </p>
 
       {/* M-Pesa modal */}
