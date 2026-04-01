@@ -72,7 +72,6 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'documents',  label: 'Docs & PDF',          icon: FileText,   emoji: '📄' },
   { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
-  { id: 'assistants', label: 'Virtual Assistants',  icon: Briefcase,  emoji: '💼' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
 ];
 
@@ -102,19 +101,6 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files', locked: true },
     { id: 'documents-templates',      label: '📂 Templates',        desc: 'Saved document templates', locked: true },
     { id: 'documents-upgrade',        label: '⚡ Upgrade',          desc: 'Unlock all document tools' },
-  ],
-  assistants: [
-    { id: 'assistants-browse',   label: '🔍 Browse Services',  desc: 'Find physical & legal errands' },
-    { id: 'assistants-requests', label: '📋 My Requests',      desc: 'Requests you\'ve made' },
-    { id: 'assistants-active',   label: '⚡ Active Tasks',     desc: 'In-progress work', locked: true },
-    { id: 'assistants-history',  label: '✅ History',           desc: 'Completed tasks', locked: true },
-    { id: 'assistants-upgrade',  label: '⚡ Upgrade',          desc: 'Unlock Virtual Assistants' },
-  ],
-  scrapping: [
-    { id: 'scrapping-dashboard', label: '📊 Dashboard',       desc: 'Scraping results overview' },
-    { id: 'scrapping-new',       label: '🌐 New Scrape',      desc: 'Start a new web scrape' },
-    { id: 'scrapping-results',   label: '📁 Past Results',    desc: 'Previous scraping data', locked: true },
-    { id: 'scrapping-upgrade',   label: '⚡ Upgrade',         desc: 'Unlock Scrapping Tool' },
   ],
   settings: [
     { id: 'settings-profile',  label: 'My Profile',       desc: 'Account details' },
@@ -737,14 +723,14 @@ const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="px-8 py-6 space-y-4">
+        <div className="px-8 py-10 space-y-6">
           {/* Google Sign-In — primary and only method */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-gray-200 hover:border-[#1a73e8] hover:bg-blue-50 text-gray-700 rounded-2xl text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+            className="w-full flex items-center justify-center gap-3 py-4 bg-white border-2 border-gray-200 hover:border-[#1a73e8] hover:bg-blue-50 text-gray-700 rounded-2xl text-base font-bold transition-all shadow-sm hover:shadow-lg transform hover:-translate-y-0.5"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20">
+            <svg viewBox="0 0 24 24" width="22" height="22">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -760,14 +746,7 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* Trust signals */}
-          <div className="flex flex-col gap-1.5">
-            {['🔒 Bank-grade encryption — your data is safe', '✅ LSK-compliant e-signatures', '🇰🇪 Built for Kenya — M-Pesa supported'].map(t => (
-              <p key={t} className="text-[11px] text-gray-400 font-medium">{t}</p>
-            ))}
-          </div>
-
-          <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+          <p className="text-[10px] text-gray-400 text-center leading-relaxed px-4">
             By continuing, you agree to our{' '}
             <a href="#" className="underline hover:text-gray-600">Terms of Service</a> and{' '}
             <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.

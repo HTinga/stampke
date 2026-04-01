@@ -67,17 +67,22 @@ const SignaturePad = ({ onSave, onCancel }: { onSave:(u:string)=>void; onCancel:
 };
 
 /* ── Compact Slider ─────────────────────────────── */
-const CompactSlider = ({ label, value, min, max, step = 1, unit = '', onChange }: { label:string; value:number; min:number; max:number; step?:number; unit?:string; onChange:(v:number)=>void }) => (
+const CompactSlider = ({ label, value, min, max, step = 1, unit = '', onChange, onCommit }: { label:string; value:number; min:number; max:number; step?:number; unit?:string; onChange:(v:number)=>void; onCommit?:()=>void }) => (
   <div className="ss-slider-row">
-    <label className="ss-slider-label">{label} [ {value}{unit} ]</label>
+    <div className="flex justify-between items-center mb-1">
+      <label className="ss-slider-label">{label}</label>
+      <span className="text-[10px] font-mono text-[#58a6ff] bg-[#1f6feb]/10 px-1.5 py-0.5 rounded">{value}{unit}</span>
+    </div>
     <div className="ss-slider-track-wrap">
-      <button className="ss-slider-btn" onClick={() => onChange(Math.max(min, value - step))}>
+      <button className="ss-slider-btn" onClick={() => { onChange(Math.max(min, value - step)); onCommit?.(); }}>
         <ChevronLeft size={12} />
       </button>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value))}
+        onMouseUp={() => onCommit?.()}
+        onTouchEnd={() => onCommit?.()}
         className="ss-slider-input" />
-      <button className="ss-slider-btn" onClick={() => onChange(Math.min(max, value + step))}>
+      <button className="ss-slider-btn" onClick={() => { onChange(Math.min(max, value + step)); onCommit?.(); }}>
         <ChevronRight size={12} />
       </button>
     </div>
@@ -114,7 +119,11 @@ type RightTab = 'text' | 'shape' | 'border' | 'effects' | 'logo' | 'signature' |
 type LayerFilter = 'all' | 'text' | 'figure';
 
 const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'granted', onPaywallTrigger }) => {
-  const { config, setConfig, undo, redo, history, redoStack, addCustomTemplate, saveTemplateRemote } = useStampStore();
+  const { 
+    config, setConfig, undo, redo, history, redoStack, 
+    fetchTemplates, saveTemplateRemote, logAudit, resetConfig, recordHistory 
+  } = useStampStore();
+  const upd = (u: Partial<StampConfig>, skipHist = false) => setConfig(u, skipHist);
   const svgRef = useRef<SVGSVGElement>(null);
   const [showSignPad, setShowSignPad] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -139,8 +148,6 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
     const s = sec % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
-
-  const upd = (u: Partial<StampConfig>) => setConfig(u);
 
   const getSvgString = () => svgRef.current ? new XMLSerializer().serializeToString(svgRef.current) : '';
 
@@ -280,6 +287,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
   const toolIcons = React.useMemo(() => [
     { icon: <RotateCcw size={18} />, label: 'Undo', action: undo, disabled: history.length === 0 },
     { icon: <RotateCw size={18} />, label: 'Redo', action: redo, disabled: redoStack.length === 0 },
+    { icon: <Eraser size={18} />, label: 'Reset Canvas', action: () => { if(confirm('Reset all changes?')) resetConfig(); } },
     { icon: isSaving ? <span className="animate-spin text-[10px]">⏳</span> : <Save size={18} />, 
       label: 'Save to Library', 
       action: () => {
@@ -289,7 +297,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
       disabled: isSaving
     },
     { icon: <Copy size={18} />, label: 'Save as New Template', action: () => setShowSaveModal(true) },
-  ], [undo, redo, history.length, redoStack.length, config, templateName, isSaving]);
+  ], [undo, redo, history.length, redoStack.length, config, templateName, isSaving, resetConfig]);
 
   const handleRemoteSave = async (name: string, type: 'completed' | 'sample' = 'sample') => {
     setIsSaving(true);
@@ -914,8 +922,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                       innerTopColor: c.value, 
                       innerBottomColor: c.value, 
                       centerColor: c.value, 
-                      centerSubColor: c.value, 
-                      statusColor: c.value 
+                      centerSubColor: c.value
                     })} />)}
                   </div>
                   <div style={{ marginTop: '12px' }}>
@@ -948,6 +955,15 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                       </button>
                     ))}
                   </div>
+                  <label className="ss-field-label">Quick Actions</label>
+                  <div className="ss-sig-buttons mb-4">
+                    <button onClick={() => upd({ centerSubText: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase(), showDateLine: true })} 
+                      className="ss-sig-btn"><Calendar size={12} /> Add Date</button>
+                    <button onClick={() => withPaywallGuard(() => { window.location.hash = '#/sign-docs/sign-scan'; })} 
+                      className="ss-sig-btn"><Zap size={12} /> Digitize Stamp</button>
+                  </div>
+
+                  <div className="ss-divider my-4" />
 
                   <label className="ss-field-label">Custom Elements</label>
                   <div className="ss-sig-buttons">

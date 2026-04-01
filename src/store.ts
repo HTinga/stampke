@@ -371,7 +371,9 @@ interface StampState {
   customTemplates: { id: string; name: string; config: StampConfig }[];
   history: StampConfig[];
   redoStack: StampConfig[];
-  setConfig: (updates: Partial<StampConfig> | ((prev: StampConfig) => Partial<StampConfig>)) => void;
+  setConfig: (updates: Partial<StampConfig> | ((prev: StampConfig) => Partial<StampConfig>), skipHistory?: boolean) => void;
+  recordHistory: () => void;
+  resetConfig: () => void;
   undo: () => void;
   redo: () => void;
   addCustomTemplate: (name: string, config: StampConfig) => void;
@@ -389,14 +391,32 @@ export const useStampStore = create<StampState>()(
       customTemplates: [],
       history: [],
       redoStack: [],
-      setConfig: (updates) => {
+      setConfig: (updates, skipHistory = false) => {
         const state = get();
-        const nextConfig = typeof updates === 'function' ? updates(state.config) : updates;
-        const newConfig = { ...state.config, ...nextConfig };
+        const nextConfigUpdates = typeof updates === 'function' ? updates(state.config) : updates;
+        const newConfig = { ...state.config, ...nextConfigUpdates };
         
-        // Don't record history if only superficial things changed (optional optimization)
+        if (skipHistory) {
+          set({ config: newConfig });
+        } else {
+          set({
+            config: newConfig,
+            history: [...state.history, state.config].slice(-50),
+            redoStack: []
+          });
+        }
+      },
+      recordHistory: () => {
+        const state = get();
         set({
-          config: newConfig,
+          history: [...state.history, state.config].slice(-50),
+          redoStack: []
+        });
+      },
+      resetConfig: () => {
+        const state = get();
+        set({
+          config: DEFAULT_CONFIG,
           history: [...state.history, state.config].slice(-50),
           redoStack: []
         });

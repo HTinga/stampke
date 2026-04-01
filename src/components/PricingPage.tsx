@@ -44,12 +44,12 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
     } catch (e: any) { setError(e.message); setLoading(null); }
   };
 
-  const planList = [PLANS.starter, PLANS.pro, PLANS.business];
-  const isPaid   = currentPlan === 'starter' || currentPlan === 'pro' || currentPlan === 'business';
+  const planList = [PLANS.starter, PLANS.professional, PLANS.enterprise];
+  const isPaid   = currentPlan === 'starter' || currentPlan === 'professional' || currentPlan === 'enterprise';
 
   const planIcon = (id: string) => {
-    if (id === 'business') return <Crown size={15} className="text-purple-400" />;
-    if (id === 'pro') return <Zap size={15} className="text-[#58a6ff]" />;
+    if (id === 'enterprise') return <Crown size={15} className="text-purple-400" />;
+    if (id === 'professional') return <Zap size={15} className="text-[#58a6ff]" />;
     return <Star size={15} className="text-emerald-400" />;
   };
 
@@ -68,7 +68,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
       <div className="grid md:grid-cols-3 gap-5 mb-6">
         {planList.map(plan => {
           const isCurrent = currentPlan === plan.id;
-          const isPop     = plan.id === 'pro';
+          const isPop     = plan.id === 'professional';
           return (
             <div key={plan.id} className={`relative flex flex-col bg-[#161b22] border rounded-2xl p-6 ${isPop ? 'border-[#1f6feb] ring-1 ring-[#1f6feb]/20' : 'border-[#30363d]'}`}>
               {isPop && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#1f6feb] rounded-full text-[10px] font-black text-white uppercase tracking-wider">Most Popular</div>}
@@ -113,7 +113,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
 
       <p className="text-center text-xs text-[#8b949e]">
         Payments processed by <strong className="text-white">IntaSend</strong> · Safaricom M-Pesa &amp; Visa/Mastercard accepted ·
-        Questions? <a href="mailto:hempstonetinga@gmail.com" className="text-[#58a6ff] hover:underline">hempstonetinga@gmail.com</a>
+        Questions? <a href="mailto:support@stampke.co.ke" className="text-[#58a6ff] hover:underline">support@stampke.co.ke</a>
       </p>
 
       {/* M-Pesa modal */}

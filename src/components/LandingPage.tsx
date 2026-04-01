@@ -18,7 +18,7 @@ const FEATURES = [
     title: 'eSign & Stamps',
     desc: 'Design professional digital stamps and collect legally-binding e-signatures. Multi-party signing with email delivery, audit trails, and real-time status tracking.',
     color: '#4285F4',
-    plans: 'Starter+',
+    plans: 'All Plans',
   },
   {
     icon: FileText,
@@ -37,9 +37,9 @@ const FEATURES = [
   {
     icon: Bot,
     title: 'Virtual Assistants',
-    desc: 'Access trained virtual workers for tasks like transcription, data entry, document review, and business process automation.',
+    desc: 'Access trained virtual assistants for tasks like document review, business process automation, and data organization—now on all tiers.',
     color: '#EA4335',
-    plans: 'Enterprise',
+    plans: 'All Plans',
   },
 ];
 
@@ -55,8 +55,8 @@ const PLANS = [
       'eSign — unlimited signatures',
       'Stamp Designer & Applier',
       'Smart Invoice & Receipts',
-      'Find & shortlist workers',
-      'Add clients',
+      'Virtual Assistants',
+      'Add clients & contacts',
       'Email support',
     ],
   },
@@ -69,29 +69,27 @@ const PLANS = [
     badge: 'Most Popular',
     features: [
       'Everything in Starter',
-      'PDF Editor & AI Scanner',
-      'AI Transcriber',
-      'Client CRM & Lead Tracking',
-      'Recruit, shortlist & hire',
+      'PDF Editor & AI Tools',
+      'AI Receipt Scanner',
+      'Client CRM & Leads',
       'Team members (up to 5)',
-      'WhatsApp invoice sharing',
+      'WhatsApp sharing',
       'Priority support',
     ],
   },
   {
     name: 'Enterprise',
-    price: 'KES 5,000',
-    period: '/month',
+    price: 'KES 10,000',
+    period: '/year',
     color: '#EA4335',
     highlight: false,
     features: [
       'Everything in Professional',
-      'Virtual Assistants',
-      'Offline / installable app',
-      'Admin panel & sub-accounts',
+      'Offline Installation (5 gadgets)',
+      'AI Transcriber',
+      'Virtual Assistants (Priority)',
       'Unlimited team members',
       'White-label branding',
-      'API access',
       'Dedicated account manager',
     ],
   },
@@ -420,10 +418,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               <StampKELogo size={28} />
               <span className="font-black text-white">StampKE</span>
             </div>
-            <p className="text-xs text-[#8b949e] leading-relaxed">
+            <p className="text-xs text-[#c9d1d9] leading-relaxed">
               Kenya's digital business platform for stamps, eSign, invoicing, and document management.
             </p>
-            <p className="text-xs text-[#8b949e] mt-3">© {new Date().getFullYear()} JijiTechy Innovations · Nairobi, Kenya</p>
+            <p className="text-xs text-[#8b949e] mt-3">© {new Date().getFullYear()} StampKE · Nairobi, Kenya</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-xs">
             <div>
