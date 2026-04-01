@@ -121,7 +121,6 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'settings-business', label: 'Business Info',    desc: 'Company & billing details' },
     { id: 'money-upgrade',     label: '⚡ Plans & Billing',desc: 'Upgrade your plan' },
     { id: 'admin-panel',       label: '🛡 Admin Panel',   desc: 'Platform management' },
-    { id: 'worker-portal',     label: '👷 Worker Portal', desc: 'Find Errands profile' },
   ],
 };
 
@@ -163,10 +162,8 @@ const App: React.FC = () => {
   const [loginPassword, setLoginPassword] = useState('@Outlier12');
   const [loginError, setLoginError] = useState('');
   const [signUpName, setSignUpName] = useState('Hempstone Tinga');
-  const [signUpRole, setSignUpRole] = useState<'business' | 'worker'>('business');
   const [user, setUser] = useState<{ name: string; email: string; role?: string; plan?: string; trialActive?: boolean; trialDaysLeft?: number; adminPermissions?: string[]; emailVerified?: boolean; adminApproved?: boolean; approvalExpiresAt?: string } | null>(null);
   const [freeUsage, setFreeUsage] = useState({ esign: { used:0, limit:1, remaining:1 }, stamp: { used:0, limit:1, remaining:1 }, invoice: { used:0, limit:1, remaining:1 }, pdf: { used:0, limit:1, remaining:1 }, summarizer: { used:0, limit:1, remaining:1 }, assistant: { used:0, limit:1, remaining:1 }, scrape: { used:0, limit:1, remaining:1 }, isPaid: false });
-  const [landingType, setLandingType] = useState<'main' | 'jobs'>('main');
   // ── Paywall state ─────────────────────────────────────────────────────────
   const [paywallFeature, setPaywallFeature] = useState<FeatureKey | null>(null);
   const showPaywall = (feature: FeatureKey) => setPaywallFeature(feature);
@@ -337,7 +334,6 @@ const App: React.FC = () => {
         setIsLoggedIn(true);
         setShowLoginModal(false);
         if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-        else if (u.role === 'worker') goTo('settings', 'worker-portal');
         else goTo('home');
       } catch (e) {
         setLoginError('Google sign-in failed. Please try email login.');
@@ -356,7 +352,6 @@ const App: React.FC = () => {
         setIsLoggedIn(true);
         setShowLoginModal(false);
         if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-        else if (u.role === 'worker') goTo('settings', 'worker-portal');
         else goTo('home');
       } catch (e) {
         setLoginError('Facebook sign-in failed. Please try email login.');
@@ -440,7 +435,7 @@ const App: React.FC = () => {
     if (isSignUp) {
       if (!signUpName.trim()) { setLoginError('Please enter your full name.'); return; }
       try {
-        const role = landingType === 'jobs' ? 'worker' : signUpRole;
+        const role = 'business';
         const res = await fetch(`${apiUrl}/api/register`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: signUpName, email: loginEmail, password: loginPassword, role }),
@@ -461,10 +456,7 @@ const App: React.FC = () => {
               trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft,
               adminPermissions: u.adminPermissions });
             setIsLoggedIn(true); setShowLoginModal(false); setLoginError('');
-            // Business signup → directly to Find Workers; workers → their portal
-            if (u.role === 'worker') goTo('home');
-            else if (signUpRole === 'business') goTo('home');
-            else goTo('home');
+            goTo('home');
             return;
           }
           // Fallback if auto-login fails
@@ -498,7 +490,6 @@ const App: React.FC = () => {
           useStampStore.getState().fetchTemplates();
 
           if (u.role === 'superadmin' || u.role === 'admin') goTo('home');
-          else if (u.role === 'worker') goTo('home');
           else goTo('home');
           return;
         }
@@ -633,7 +624,7 @@ const App: React.FC = () => {
     }
 
     // Worker — very limited
-    if (userRole === 'worker') return ['worker-portal','assistants-browse'].includes(feature);
+    if (userRole === 'worker') return false; // workers sign up via employer platform only
 
     // Business users — check plan (3-tier: starter, pro, business)
     const plan = user?.plan;
@@ -714,7 +705,7 @@ const App: React.FC = () => {
       scope: 'openid email profile',
       access_type: 'offline',
       prompt: 'select_account',
-      state: JSON.stringify({ landingType, signUpRole }),
+      state: JSON.stringify({ landingType: 'main', signUpRole: 'business' }),
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   };
@@ -742,27 +733,11 @@ const App: React.FC = () => {
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </h3>
           <p className="text-blue-100 text-xs relative z-10">
-            {isSignUp ? 'Get 1 free trial on Stamp Designer & Applier' : 'Sign in to StampKE'}
+            {isSignUp ? 'Stamps, eSign & Invoicing for Kenya' : 'Sign in to StampKE'}
           </p>
         </div>
 
         <div className="px-8 py-6 space-y-4">
-          {/* Role selector for sign up */}
-          {isSignUp && landingType !== 'jobs' && (
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { value: 'business', label: '🏢 Business', desc: 'Stamps & documents' },
-                { value: 'worker',   label: '👷 Find Errands', desc: 'Gigs & work' },
-              ].map(opt => (
-                <button key={opt.value} type="button" onClick={() => setSignUpRole(opt.value as 'business' | 'worker')}
-                  className={`p-3 rounded-xl border-2 text-left transition-all ${signUpRole === opt.value ? 'border-[#1a73e8] bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}>
-                  <p className="text-xs font-bold text-gray-900">{opt.label}</p>
-                  <p className="text-[10px] text-gray-400">{opt.desc}</p>
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Google Sign-In — primary and only method */}
           <button
             type="button"
@@ -828,16 +803,6 @@ const App: React.FC = () => {
   }
 
   // ─── WORKER APP — completely separate, no SaaS UI ──────────────────────────
-  if (isLoggedIn && userRole === 'worker') {
-    return (
-      <WorkerApp
-        user={user}
-        token={localStorage.getItem('tomo_token')}
-        onLogout={handleLogout}
-      />
-    );
-  }
-
   // ─── LANDING PAGE ROUTER ────────────────────────────────────────────────────
   if (activeView === 'landing') {
     // Jobs landing for workers
