@@ -70,6 +70,8 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'home',       label: 'Home',                icon: Home,       emoji: '🏠' },
   { id: 'sign-docs',  label: 'eSign & Stamps',      icon: PenTool,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
+  { id: 'assistants', label: 'Assistants',         icon: Bot,        emoji: '🤖' },
+  { id: 'scrapping',  label: 'Scraper',            icon: Globe,      emoji: '🌐' },
   { id: 'documents',  label: 'Docs & PDF',          icon: FileText,   emoji: '📄' },
   { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
@@ -101,6 +103,19 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files', locked: true },
     { id: 'documents-templates',      label: '📂 Templates',        desc: 'Saved document templates', locked: true },
     { id: 'documents-upgrade',        label: '⚡ Upgrade',          desc: 'Unlock all document tools' },
+  ],
+  assistants: [
+    { id: 'assistants-browse',   label: '🔍 Browse',        desc: 'Find virtual assistants' },
+    { id: 'assistants-requests', label: '📑 My Requests',    desc: 'Your errand requests' },
+    { id: 'assistants-active',   label: '🏃 Active',         desc: 'Ongoing tasks' },
+    { id: 'assistants-history',  label: '✅ History',        desc: 'Completed errands' },
+    { id: 'assistants-upgrade',  label: '⚡ Upgrade',        desc: 'Unlock premium assistants' },
+  ],
+  scrapping: [
+    { id: 'scrapping-dashboard', label: '📊 Dashboard',      desc: 'Scraper status' },
+    { id: 'scrapping-new',       label: '➕ New Scrape',     desc: 'Start new extraction' },
+    { id: 'scrapping-results',   label: '📂 Results',        desc: 'Extracted data' },
+    { id: 'scrapping-upgrade',   label: '⚡ Upgrade',        desc: 'Unlimited scraping' },
   ],
   settings: [
     { id: 'settings-profile',  label: 'My Profile',       desc: 'Account details' },
