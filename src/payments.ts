@@ -26,9 +26,8 @@ export const PLANS = {
     features: [
       'eSign — unlimited signatures',
       'Stamp Designer & Applier',
-      'Virtual Assistants',
       'Smart Invoice (unlimited)',
-      'Add Clients',
+      'Virtual Assistants',
       'Email support',
     ],
   },
@@ -44,11 +43,6 @@ export const PLANS = {
     features: [
       'Everything in Starter',
       'PDF Editor & Transcriber',
-      'AI Receipt/Invoice Scanner',
-      'Client CRM & Lead Tracking',
-      'WhatsApp Invoice Sharing',
-      'Email Reminders',
-      'Team Members (up to 5)',
       'Priority support',
     ],
   },
@@ -63,13 +57,10 @@ export const PLANS = {
     mpesaPriceKES: 10000,
     features: [
       'Everything in Professional',
-      'Offline Installation (Up to 5 gadgets)',
-      'AI Transcriber',
+      'Download App (Desktop & Mobile)',
+      'API Package (eSign, Stamp, Invoice, Transcriber)',
       'Virtual Assistants (Priority)',
-      'Unlimited team members',
-      'White-label branding',
       'Dedicated account manager',
-      'SLA & priority onboarding',
     ],
   },
 } as const;

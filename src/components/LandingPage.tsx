@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StampKELogo from './StampKELogo';
 import {
-  PenTool, FileCheck, FileText, Mic, Bot, Shield,
+  PenTool, FileCheck, FileText, Bot, Shield,
   ArrowRight, Check, ChevronDown, X, Menu,
-  Lock, Globe, Zap, Download, Wifi
+  Lock, Globe, Zap, Download, Smartphone, Monitor, Share2
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -54,9 +54,8 @@ const PLANS = [
     features: [
       'eSign — unlimited signatures',
       'Stamp Designer & Applier',
-      'Smart Invoice & Receipts',
+      'Smart Invoice (unlimited)',
       'Virtual Assistants',
-      'Add clients & contacts',
       'Email support',
     ],
   },
@@ -70,10 +69,7 @@ const PLANS = [
     features: [
       'Everything in Starter',
       'PDF Editor & Transcriber',
-      'AI Receipt Scanner',
-      'Client CRM & Leads',
-      'Team members (up to 5)',
-      'WhatsApp sharing',
+      'Virtual Assistant',
       'Priority support',
     ],
   },
@@ -85,11 +81,8 @@ const PLANS = [
     highlight: false,
     features: [
       'Everything in Professional',
-      'Offline Installation (5 gadgets)',
-      'AI Transcriber',
+      'API Package (eSign, Stamp, Invoice, Transcriber)',
       'Virtual Assistants (Priority)',
-      'Unlimited team members',
-      'White-label branding',
       'Dedicated account manager',
     ],
   },
@@ -122,6 +115,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showPolicy, setShowPolicy] = useState<'privacy' | 'terms' | null>(null);
+  const [showIOSGuide, setShowIOSGuide] = useState<'desktop' | 'mobile' | null>(null);
+  const [installed, setInstalled] = useState(false);
+  const deferredPrompt = useRef<any>(null);
+
+  useEffect(() => {
+    // Already installed as standalone PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setInstalled(true);
+      return;
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
+
+  const handleInstall = async (source: 'desktop' | 'mobile') => {
+    if (isIOS) { setShowIOSGuide(source); return; }
+    if (deferredPrompt.current) {
+      deferredPrompt.current.prompt();
+      const { outcome } = await deferredPrompt.current.userChoice;
+      if (outcome === 'accepted') setInstalled(true);
+      deferredPrompt.current = null;
+    } else {
+      // Fallback: show iOS-style instructions for browsers without prompt support
+      setShowIOSGuide(source);
+    }
+  };
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -197,7 +223,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           </p>
 
           {/* Google sign-in CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <button onClick={onGetStarted}
               className="flex items-center gap-3 bg-white text-gray-800 px-7 py-3.5 rounded-xl font-bold text-base hover:bg-gray-100 transition-all shadow-lg shadow-black/20">
               <svg viewBox="0 0 24 24" width="20" height="20">
@@ -212,6 +238,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               className="flex items-center gap-2 border border-[#30363d] text-[#8b949e] hover:text-white hover:border-[#8b949e] px-7 py-3.5 rounded-xl font-semibold text-base transition-all">
               View pricing
             </button>
+          </div>
+
+          {/* Download / Install buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10">
+            {installed ? (
+              <div className="flex items-center gap-2 bg-[#161b22] border border-[#34A853]/40 text-[#34A853] px-6 py-3 rounded-xl text-sm font-bold">
+                <Check size={15} /> StampKE installed
+              </div>
+            ) : (
+              <>
+                {/* Desktop install */}
+                <button
+                  id="install-desktop-btn"
+                  onClick={() => handleInstall('desktop')}
+                  className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
+                >
+                  <span className="w-8 h-8 bg-[#1f6feb]/15 rounded-lg flex items-center justify-center group-hover:bg-[#1f6feb]/25 transition-colors">
+                    <Monitor size={16} className="text-[#58a6ff]" />
+                  </span>
+                  <span className="text-left">
+                    <span className="block text-[10px] text-[#8b949e] font-medium">Install on</span>
+                    <span className="block text-sm font-bold">Desktop (PWA)</span>
+                  </span>
+                  <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#58a6ff] transition-colors" />
+                </button>
+                {/* Mobile install */}
+                <button
+                  id="install-mobile-btn"
+                  onClick={() => handleInstall('mobile')}
+                  className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#34A853]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
+                >
+                  <span className="w-8 h-8 bg-[#34A853]/15 rounded-lg flex items-center justify-center group-hover:bg-[#34A853]/25 transition-colors">
+                    <Smartphone size={16} className="text-[#34A853]" />
+                  </span>
+                  <span className="text-left">
+                    <span className="block text-[10px] text-[#8b949e] font-medium">Install on</span>
+                    <span className="block text-sm font-bold">Mobile / Phone</span>
+                  </span>
+                  <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#34A853] transition-colors" />
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-sm text-[#8b949e]">
@@ -350,12 +418,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
           {/* Enterprise note */}
           <div className="mt-8 bg-[#161b22] border border-[#30363d] rounded-2xl p-5 flex items-start gap-4">
             <div className="w-9 h-9 bg-[#EA4335]/15 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Wifi size={17} className="text-[#EA4335]" />
+              <Globe size={17} className="text-[#EA4335]" />
             </div>
             <div>
-              <p className="font-bold text-white text-sm mb-1">Enterprise includes offline installation</p>
+              <p className="font-bold text-white text-sm mb-1">Enterprise unlocks full API access</p>
               <p className="text-xs text-[#8b949e] leading-relaxed">
-                Install StampKE on desktop or mobile as a PWA for offline access. Ideal for field teams, legal offices, and organisations with limited connectivity.
+                Integrate StampKE's eSign, Stamp, Invoice, and Transcriber directly into your own apps via our developer API. Ideal for businesses building custom workflows.
               </p>
             </div>
           </div>
@@ -422,6 +490,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               Kenya's digital business platform for stamps, eSign, invoicing, and document management.
             </p>
             <p className="text-xs text-[#8b949e] mt-3">© {new Date().getFullYear()} StampKE · Nairobi, Kenya</p>
+
+            {/* Get the app */}
+            <div className="mt-5">
+              <p className="text-[10px] font-bold text-white uppercase tracking-widest mb-2.5">Get the App</p>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="https://play.google.com/store/apps/details?id=ke.stampke.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  id="footer-playstore-link"
+                  className="flex items-center gap-2.5 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#34A853]/50 rounded-xl px-3 py-2 transition-all group"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path d="M3.18 1.76C2.45 2.17 2 2.95 2 3.86v16.28c0 .91.45 1.69 1.18 2.1l.1.06 9.12-9.12v-.22L3.28 1.7l-.1.06z" fill="#EA4335"/>
+                    <path d="M15.46 15.61l-3.06-3.06v-.22l3.06-3.06.07.04 3.63 2.06c1.04.59 1.04 1.55 0 2.14l-3.63 2.06-.07.04z" fill="#FBBC04"/>
+                    <path d="M15.53 15.57L12.4 12.44 3.18 21.66c.34.36.88.4 1.49.07l10.86-6.16z" fill="#34A853"/>
+                    <path d="M15.53 8.43L4.67 2.27C4.06 1.93 3.52 1.98 3.18 2.34l9.22 9.22 3.13-3.13z" fill="#4285F4"/>
+                  </svg>
+                  <span>
+                    <span className="block text-[9px] text-[#8b949e]">Get it on</span>
+                    <span className="block text-xs font-bold text-white">Google Play</span>
+                  </span>
+                </a>
+                <a
+                  href="https://apps.apple.com/ke/app/stampke/id000000000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  id="footer-appstore-link"
+                  className="flex items-center gap-2.5 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff]/50 rounded-xl px-3 py-2 transition-all group"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="text-white">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                  </svg>
+                  <span>
+                    <span className="block text-[9px] text-[#8b949e]">Download on the</span>
+                    <span className="block text-xs font-bold text-white">App Store</span>
+                  </span>
+                </a>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-xs">
             <div>
@@ -480,6 +588,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                   <p>Subscriptions are non-refundable after activation.</p>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* iOS / no-prompt install guide overlay */}
+      {showIOSGuide && (
+        <div className="fixed inset-0 z-[900] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-[#1a73e8] to-[#1557b0] px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                  <StampKELogo size={24} />
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm">Install StampKE</p>
+                  <p className="text-blue-100 text-xs">Add to {showIOSGuide === 'desktop' ? 'your computer' : 'your phone'}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowIOSGuide(null)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+                <X size={16} className="text-white" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-sm font-semibold text-white mb-4">
+                {showIOSGuide === 'mobile' ? 'Add to Home Screen (iOS)' : 'Install as Desktop App'}
+              </p>
+              {(() => {
+                const steps = showIOSGuide === 'mobile'
+                  ? [{ icon: '⬆️', text: 'Tap the Share button at the bottom of your browser' },
+                     { icon: '➕', text: 'Scroll down and tap "Add to Home Screen"' },
+                     { icon: '✅', text: 'Tap "Add" — StampKE appears as an app icon' }]
+                  : [{ icon: '🌐', text: 'Open StampKE in Chrome or Edge on your computer' },
+                     { icon: '📥', text: 'Click the install icon in the browser address bar' },
+                     { icon: '✅', text: 'Click "Install" — StampKE launches like a native app' }];
+                return steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 bg-[#0d1117] rounded-xl px-4 py-3">
+                    <span className="text-xl flex-shrink-0">{step.icon}</span>
+                    <p className="text-sm text-[#c9d1d9] leading-relaxed">{step.text}</p>
+                  </div>
+                ));
+              })()}
+              <p className="text-xs text-[#8b949e] text-center pt-1">
+                Once installed, StampKE works offline and opens instantly.
+              </p>
             </div>
           </div>
         </div>

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   User, Building2, Mail, Phone, Globe, Save, Camera,
   Shield, Bell, Moon, Sun, LogOut, Check,
-  Eye, EyeOff, Upload, Plus, Trash2, Key, Users, Copy
+  Eye, EyeOff, Upload, Plus, Trash2, Key, Users, Copy,
+  CreditCard, Calendar, Activity, AlertTriangle
 } from 'lucide-react';
 import { useAppStats } from '../appStatsStore';
 
@@ -30,12 +31,32 @@ export default function SettingsPanel({ view, user, theme, onThemeToggle, onLogo
   const [teamMembers, setTeamMembers] = useState<any[]>(() => {
     try { return JSON.parse(localStorage.getItem('tomo_team')||'[]'); } catch { return []; }
   });
+  const [profileTab, setProfileTab] = useState<'account' | 'billing'>('account');
+  const [payments, setPayments]     = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
   const [showAddTeam, setShowAddTeam] = useState(false);
   const [newMember, setNewMember] = useState({ name:'', email:'', role:'viewer', department:'accounts' });
   const [saved, setSaved] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [inviteSent, setInviteSent] = useState(false);
+
+  // Billing tab: fetch when tab becomes active
+  useEffect(() => {
+    if (profileTab !== 'billing') return;
+    setBillingLoading(true);
+    const tk = localStorage.getItem('tomo_token');
+    const headers: any = { Authorization: `Bearer ${tk}` };
+    Promise.all([
+      fetch(`${API}/api/payment/my-payments`, { headers }).then(r => r.json()).catch(() => ({ success: false })),
+      fetch(`${API}/api/notification/mine`,   { headers }).then(r => r.json()).catch(() => ({ success: false })),
+    ]).then(([p, n]) => {
+      if (p.success) setPayments(p.result || []);
+      if (n.success) setNotifications(n.result || []);
+      setBillingLoading(false);
+    });
+  }, [profileTab]);
 
   const DEPARTMENTS = ['Accounts','Finance','HR','Marketing','Legal','Operations','IT','Sales','Management','Other'];
   const TEAM_ROLES  = [{ id:'admin', label:'Admin', desc:'Full access to all features' },{ id:'accounts', label:'Accounts', desc:'Invoicing & payments only' },{ id:'viewer', label:'Viewer', desc:'Read-only access' }];
@@ -98,10 +119,22 @@ export default function SettingsPanel({ view, user, theme, onThemeToggle, onLogo
     <div className="max-w-2xl mx-auto space-y-6 pb-12">
       <div>
         <h1 className="text-xl font-bold text-white">Your Profile</h1>
-        <p className="text-sm text-[#8b949e]">Manage your account details and preferences</p>
+        <p className="text-sm text-[#8b949e]">Manage your account details and subscription</p>
       </div>
 
-      {/* Account card */}
+      {/* Profile / Billing tabs */}
+      <div className="flex gap-1 bg-[#161b22] border border-[#30363d] rounded-xl p-1">
+        {[{ id: 'account', label: 'Account', icon: User }, { id: 'billing', label: 'Billing & Status', icon: CreditCard }].map(t => (
+          <button key={t.id} onClick={() => setProfileTab(t.id as any)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+              profileTab === t.id ? 'bg-[#21262d] text-white' : 'text-[#8b949e] hover:text-white'
+            }`}>
+            <t.icon size={13} /> {t.label}
+          </button>
+        ))}
+      </div>
+      {/* Account tab */}
+      {profileTab === 'account' && (<>
       <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 space-y-5">
         <div className="flex items-start gap-4">
           <div className="relative flex-shrink-0">
@@ -188,6 +221,101 @@ export default function SettingsPanel({ view, user, theme, onThemeToggle, onLogo
           <LogOut size={15} /> Sign Out
         </button>
       </div>
+      </>
+      )}
+
+      {/* ── Billing & Status Tab ─── */}
+      {profileTab === 'billing' && (
+        <div className="space-y-5">
+
+          {/* Current plan card */}
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Current Plan</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#1f6feb]/15 rounded-xl flex items-center justify-center">
+                <Shield size={18} className="text-[#58a6ff]" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white capitalize">{user?.plan || 'No active plan'}</p>
+                <p className="text-xs text-[#8b949e]">{user?.role || 'business'} account</p>
+              </div>
+              {user?.plan && (
+                <span className={`ml-auto text-[10px] font-bold px-2.5 py-1 rounded-full border capitalize ${
+                  user.plan === 'pro' || user.plan === 'professional' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  user.plan === 'enterprise' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
+                  user.plan === 'terminated' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                  'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                }`}>{user.plan}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Notifications from admin */}
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Account Notifications</p>
+            {billingLoading ? (
+              <div className="text-center py-6 text-[#8b949e] text-sm">Loading...</div>
+            ) : notifications.length === 0 ? (
+              <div className="text-center py-6">
+                <Bell size={24} className="mx-auto mb-2 text-[#30363d]" />
+                <p className="text-sm text-[#8b949e]">No notifications yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {notifications.map((n: any, i: number) => (
+                  <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border ${
+                    n.message?.includes('terminated') ? 'bg-red-500/5 border-red-500/20' :
+                    n.message?.includes('activated') || n.message?.includes('updated') ? 'bg-emerald-500/5 border-emerald-500/20' :
+                    'bg-[#0d1117] border-[#30363d]'
+                  }`}>
+                    <Activity size={14} className="text-[#58a6ff] flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-[#c9d1d9] leading-relaxed">{n.message}</p>
+                      <p className="text-[10px] text-[#8b949e] mt-1">{n.createdAt ? new Date(n.createdAt).toLocaleString('en-KE') : ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Payment history */}
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#8b949e] mb-3">Payment History</p>
+            {billingLoading ? (
+              <div className="text-center py-6 text-[#8b949e] text-sm">Loading...</div>
+            ) : payments.length === 0 ? (
+              <div className="text-center py-6">
+                <CreditCard size={24} className="mx-auto mb-2 text-[#30363d]" />
+                <p className="text-sm text-[#8b949e]">No payment records found</p>
+                <p className="text-xs text-[#8b949e] mt-1">Payments will appear here once processed</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#21262d]">
+                {payments.map((p: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3 py-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      p.status === 'completed' ? 'bg-emerald-500/15' : 'bg-yellow-500/15'
+                    }`}>
+                      <CreditCard size={14} className={p.status === 'completed' ? 'text-emerald-400' : 'text-yellow-400'} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-white capitalize">{p.plan || p.description || 'Subscription'}</p>
+                      <p className="text-xs text-[#8b949e]">{p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }) : ''}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-white">KES {(p.amount || 0).toLocaleString()}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        p.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>{p.status || 'pending'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 

@@ -169,6 +169,21 @@ const App: React.FC = () => {
   const [selectedStampElement, setSelectedStampElement] = useState<string>('frame');
   const appStats = useAppStats();
   const svgRef = useRef<SVGSVGElement>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
+  };
 
   // Derived values
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -844,18 +859,18 @@ const App: React.FC = () => {
     }
 
     // ── Scrapping Tool ─────────────────────────────────────────────────────────
-    if (activeView === 'scrapping-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'scrapping-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
     if (activeView === 'scrapping-dashboard' || activeView === 'scrapping-new' || activeView === 'scrapping-results') {
       if (!canAccess('scrapping-dashboard')) return renderLocked('Virtual Assistants requires a Starter plan (KES 1,500/mo)', 'virtual_assistants');
       return <ScrappingTool initialView={activeView === 'scrapping-new' ? 'new' : activeView === 'scrapping-results' ? 'results' : 'dashboard'} />;
     }
 
     // ── Smart Invoice ────────────────────────────────────────────────────────────
-    if (activeView === 'invoicing-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+    if (activeView === 'invoicing-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
+    if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
     if (['invoicing-invoices','invoicing-payments','invoicing-unpaid','invoicing-create',
          'money-invoices','money-payments','money-unpaid','money-create'].includes(activeView)) {
-      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Professional plan (KES 3,000/mo)', 'invoicing');
+      if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Starter plan (KES 1,500/mo)', 'invoicing');
       return <SmartInvoice />;
     }
 
@@ -880,18 +895,12 @@ const App: React.FC = () => {
 
     // ── Docs & PDF ───────────────────────────────────────────────────────────────
     if (activeView === 'documents-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
-    if (activeView === 'documents-pdf') { if (!canAccess('documents-pdf')) return renderLocked('PDF Editor requires a Professional plan (KES 3,000/mo)', 'pdf_editor'); return <PDFTools />; }
+    if (activeView === 'documents-pdf' || activeView === 'documents-templates' || activeView === 'documents-stamps' || activeView === 'documents-esign') {
+      if (!canAccess('documents-pdf')) return renderLocked('PDF Editor & Transcriber requires a Professional plan (KES 3,000/mo)', 'documents');
+      return <ComingSoon title="Document Forge" desc="Advanced document generation and PDF editing suite coming soon." emoji="📄" />;
+    }
     if (activeView === 'documents-stamp-applier') {
       return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('sign-docs', 'sign-stamps'); }} userStampCount={freeUsage.stamp.used} />;
-    }
-    if (activeView === 'documents-templates') {
-      return (
-        <div className="max-w-5xl mx-auto py-6">
-          <h2 className="text-2xl font-bold text-white mb-1">Your Templates</h2>
-          <p className="text-[#8b949e] text-sm mb-8">Saved stamp templates — ready to use.</p>
-          <TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs', 'sign-stamps')} />
-        </div>
-      );
     }
     if (activeView === 'ai-summarizer') { if (!canAccess('ai-summarizer')) return renderLocked('AI Transcriber requires a Professional plan (KES 2,500/mo)', 'ai_summarizer'); return <AISummarizer />; }
     if (activeView === 'ai-translate') { if (!canAccess('ai-translate')) return renderLocked('AI PDF Translator requires a Professional plan', 'ai_summarizer'); return <PDFTools />; }
