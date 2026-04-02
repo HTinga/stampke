@@ -29,7 +29,7 @@ import {
   X,
   Share2,
   MessageSquare,
-  PenTool,
+  Pen,
   Table,
   Image as ImageIcon
 } from 'lucide-react';
@@ -1131,7 +1131,7 @@ export default function DocumentGenerator() {
                   {/* Action Overlay */}
                   <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
                     <button onClick={sendToSignCenter} className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-[10px] flex items-center gap-2 shadow-xl">
-                      <PenTool size={12} /> Sign & Stamp
+                      <Pen size={12} /> Sign & Stamp
                     </button>
                     <button onClick={() => handleShare('whatsapp')} className="bg-emerald-500 text-white p-2 rounded-xl shadow-xl">
                       <MessageSquare size={14} />

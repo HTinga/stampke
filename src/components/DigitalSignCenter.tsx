@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileText, Upload, Plus, Send, ShieldCheck, Clock, CheckCircle2, 
-  Trash2, PenTool, Calendar, Type, History, X, Save, Zap, 
+  Trash2, Pen, Calendar, Type, History, X, Save, Zap, 
   Eraser, MousePointer2, Loader2, Stamp, Image as ImageIcon, 
   ChevronRight, UserPlus, GripHorizontal, Maximize2, FileCode,
   FileDown, Share2, Mail, Edit3, Check, Layers
@@ -939,7 +939,7 @@ export default function DigitalSignCenter({
           {[
             { icon: ShieldCheck, title: 'KICA Compliant', desc: 'Fully adheres to Section 83G of the Kenya Information and Communications Act.' },
             { icon: Zap, title: 'Instant Execution', desc: 'Deploy complex multi-signer workflows in seconds, not hours.' },
-            { icon: PenTool, title: 'Vector Precision', desc: 'High-fidelity SVG impressions that remain sharp at any scale.' }
+            { icon: Pen, title: 'Vector Precision', desc: 'High-fidelity SVG impressions that remain sharp at any scale.' }
           ].map((feature, i) => (
             <div key={i} className="p-10 bg-[#161b22] dark:bg-[#161b22] rounded-[48px] border border-[#21262d] dark:border-[#30363d] text-left space-y-4 hover:shadow-2xl transition-all hover:-translate-y-2">
               <div className="w-14 h-14 bg-[#21262d] dark:bg-[#21262d] text-[#58a6ff] rounded-2xl flex items-center justify-center">
@@ -1023,7 +1023,7 @@ export default function DigitalSignCenter({
                       <label className="text-[10px] font-black text-[#8b949e] uppercase tracking-widest px-2">Document Tags</label>
                       <div className="grid grid-cols-2 gap-3">
                          {[
-                           { type: 'signature', label: 'Sign', icon: <PenTool size={20}/>, color: 'text-[#58a6ff]', bg: 'bg-[#21262d] dark:bg-[#21262d]' },
+                           { type: 'signature', label: 'Sign', icon: <Pen size={20}/>, color: 'text-[#58a6ff]', bg: 'bg-[#21262d] dark:bg-[#21262d]' },
                            { type: 'stamp', label: 'Stamp', icon: <Stamp size={20}/>, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
                            { type: 'date', label: 'Date', icon: <Calendar size={20}/>, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20' },
                            { type: 'text', label: 'Text', icon: <Type size={20}/>, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' }
@@ -1185,7 +1185,7 @@ export default function DigitalSignCenter({
                                    </div>
                                  )}
                                  <div className={`p-3 rounded-xl mb-2 ${field.signerId === selectedSignerId ? 'bg-[#1f6feb] text-white shadow-lg' : 'bg-[#30363d] text-[#8b949e]'}`}>
-                                   {field.type === 'signature' && <PenTool size={20} />}
+                                   {field.type === 'signature' && <Pen size={20} />}
                                    {field.type === 'stamp' && <Stamp size={20} />}
                                    {field.type === 'date' && <Calendar size={20} />}
                                    {field.type === 'text' && <Type size={20} />}
@@ -1426,7 +1426,7 @@ export default function DigitalSignCenter({
                            )
                          ) : (
                            <div className="bg-[#1f6feb]/95 text-white px-8 py-6 rounded-[32px] border-2 border-[#30363d] border-dashed shadow-2xl flex flex-col items-center gap-3 hover:bg-[#30363d] transition-all animate-pulse">
-                              <div className="bg-[#161b22]/20 p-3 rounded-2xl"><PenTool size={24} /></div>
+                              <div className="bg-[#161b22]/20 p-3 rounded-2xl"><Pen size={24} /></div>
                               <span className="text-xs font-black uppercase tracking-widest text-white/90">Touch to {field.type}</span>
                            </div>
                          )}

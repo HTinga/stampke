@@ -87,7 +87,7 @@ export const useAppStats = create<AppStatsState>((set, get) => ({
   recentActivity: saved?.recentActivity ?? [],
 
   recordStampCreated: (desc = 'New stamp designed') => set((state) => {
-    const activity = createActivity('stamp_created', desc, 'PenTool', 'text-[#134589] bg-[#eaf2fc] dark:bg-blue-900/20');
+    const activity = createActivity('stamp_created', desc, 'Pen', 'text-[#134589] bg-[#eaf2fc] dark:bg-blue-900/20');
     const newState = {
       stampsCreated: state.stampsCreated + 1,
       recentActivity: [activity, ...state.recentActivity].slice(0, 20),

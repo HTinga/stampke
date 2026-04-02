@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   FileText, 
-  PenTool,
-  PenTool as Pen,
+  Pen,
   Search, 
   Layout, 
   Undo2, 
@@ -38,7 +37,9 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
-  Check
+  Check,
+  Sparkles,
+  Copy
 } from 'lucide-react';
 import { analyzeStampImage, analyzeDocumentText } from '@/services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';

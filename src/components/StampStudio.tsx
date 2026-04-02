@@ -5,7 +5,7 @@ import './StampStudio.css';
 import { StampConfig, StampShape, BorderStyle, CustomElement } from '../types';
 import { COLORS, FONTS } from '../constants';
 import {
-  X, Download, ChevronLeft, ChevronRight, PenTool, Type, Palette,
+  X, Download, ChevronLeft, ChevronRight, Pen, Type, Palette,
   Sparkles, Eye, RotateCcw, RotateCw, Save, Circle, Plus, FileText, Calendar,
   Check, Eraser, Settings, Layers, Star, Grid3X3, Trash2, Zap,
   Bold, Italic, Underline, ChevronDown, Layout, Sliders, Move, Copy, Clock,
@@ -448,7 +448,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                 { id: 'border' as RightTab, icon: <Grid3X3 size={13} />, label: 'Border' },
                 { id: 'effects' as RightTab, icon: <Sparkles size={13} />, label: 'Effects' },
                 { id: 'logo' as RightTab, icon: <ImageIcon size={13} />, label: 'Logo' },
-                { id: 'signature' as RightTab, icon: <PenTool size={13} />, label: 'Sign' },
+                { id: 'signature' as RightTab, icon: <Pen size={13} />, label: 'Sign' },
                 { id: 'elements' as RightTab, icon: <Plus size={13} />, label: 'Elements' },
                 { id: 'advanced' as RightTab, icon: <Sliders size={13} />, label: 'More' },
               ]).map(t => (
@@ -782,7 +782,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                       {config.showEmbeddedSignature && (
                         <div className="ss-sig-buttons">
                           <button onClick={() => setShowSignPad(true)} className="ss-sig-btn">
-                            <PenTool size={12} /> Draw
+                            <Pen size={12} /> Draw
                           </button>
                           <label className="ss-sig-btn">
                             <ImageIcon size={12} /> Upload
@@ -1121,7 +1121,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                 onClick={() => setTemplateType('sample')}
                 className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${templateType === 'sample' ? 'bg-[#1f6feb]/20 border-[#1f6feb] text-white shadow-[0_0_15px_rgba(31,111,235,0.2)]' : 'bg-[#0d1117] border-[#30363d] text-[#8b949e] hover:border-[#1f6feb]'}`}
               >
-                <PenTool size={18} />
+                <Pen size={18} />
                 <div className="text-center">
                   <p className="text-[10px] font-black uppercase">Sample</p>
                   <p className="text-[9px] opacity-60">Design base</p>

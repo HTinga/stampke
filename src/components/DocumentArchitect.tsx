@@ -3,7 +3,7 @@ import {
   Type, 
   Table as TableIcon, 
   Image as ImageIcon, 
-  PenTool, 
+  Pen, 
   ShieldCheck, 
   Plus, 
   Trash2, 
@@ -364,7 +364,7 @@ export default function DocumentArchitect() {
           }} />
           <SidebarItem icon={<TableIcon size={20} />} label="Table" onClick={() => addBlock('table')} />
           <SidebarItem icon={<ImageIcon size={20} />} label="Image" onClick={() => addBlock('image')} />
-          <SidebarItem icon={<PenTool size={20} />} label="Sign" onClick={() => addBlock('signature')} />
+          <SidebarItem icon={<Pen size={20} />} label="Sign" onClick={() => addBlock('signature')} />
           <SidebarItem icon={<ShieldCheck size={20} />} label="Stamp" onClick={() => addBlock('stamp')} />
         </div>
 

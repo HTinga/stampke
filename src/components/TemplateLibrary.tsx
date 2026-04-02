@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StampTemplate } from '../types';
-import { PenTool, Plus, Trash2, Calendar, Layout, ArrowRight } from 'lucide-react';
+import { Pen, Plus, Trash2, Calendar, Layout, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmationDialog } from './dialogs/ConfirmationDialog';
 
@@ -27,7 +27,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         className="flex flex-col items-center justify-center py-20 text-center"
       >
         <div className="w-24 h-24 bg-gradient-to-br from-[#1f6feb]/20 to-[#58a6ff]/10 border border-[#1f6feb]/30 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(31,111,235,0.15)]">
-          <PenTool size={40} className="text-[#58a6ff]" />
+          <Pen size={40} className="text-[#58a6ff]" />
         </div>
         <h3 className="text-2xl font-black text-white mb-3">No saved templates yet</h3>
         <p className="text-[#8b949e] text-sm max-w-sm mb-10 leading-relaxed">

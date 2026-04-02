@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect } from 'react';
 import StampKELogo from './StampKELogo';
-import { CheckCircle2, Eye, PenTool, Shield, Clock, AlertTriangle, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Eye, Pen, Shield, Clock, AlertTriangle, Loader2, X } from 'lucide-react';
 
 interface PublicSignerPageProps {
   mode: 'sign' | 'view';
@@ -127,7 +127,7 @@ export default function PublicSignerPage({ mode, token, envelopeId }: PublicSign
           {/* Top bar */}
           <div className={`px-8 py-5 flex items-center gap-4 ${mode === 'view' ? 'bg-gradient-to-r from-blue-600 to-blue-800' : 'bg-gradient-to-r from-[#1a73e8] to-[#1557b0]'}`}>
             <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              {mode === 'view' ? <Eye size={22} className="text-white" /> : <PenTool size={22} className="text-white" />}
+              {mode === 'view' ? <Eye size={22} className="text-white" /> : <Pen size={22} className="text-white" />}
             </div>
             <div>
               <h1 className="text-white font-bold text-lg">{mode === 'view' ? 'Document Viewer' : 'Signature Required'}</h1>
@@ -188,7 +188,7 @@ export default function PublicSignerPage({ mode, token, envelopeId }: PublicSign
                     onClick={() => setSignaturePad(true)}
                     className="w-full bg-[#1a73e8] hover:bg-[#1557b0] text-white py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all shadow-sm hover:shadow-md"
                   >
-                    <PenTool size={20} /> Click to Sign Document
+                    <Pen size={20} /> Click to Sign Document
                   </button>
                 ) : (
                   <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 space-y-4">

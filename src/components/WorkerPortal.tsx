@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
-  User, PenTool, Briefcase, Star, MapPin, Phone, Mail, Globe,
+  User, Pen, Briefcase, Star, MapPin, Phone, Mail, Globe,
   Upload, X, Check, ChevronRight, Clock, AlertCircle, CheckCircle2,
   Award, Zap, Image as ImageIcon, ExternalLink, Edit3, Save,
   Eye, EyeOff, Search, Filter, Send

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
-import { Upload, Download, Trash2, CheckCircle2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move, MousePointer, RotateCcw, PenTool, X, Layers } from 'lucide-react';
+import { Upload, Download, Trash2, CheckCircle2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move, MousePointer, RotateCcw, Pen, X, Layers } from 'lucide-react';
 import SVGPreview from './SVGPreview';
 import { useStampStore } from '../store';
 import { renderStampToPng } from '../utils/stampRenderer';
@@ -279,7 +279,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudi
       }
 
       const bytes = await doc.save();
-      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const blob = new Blob([bytes.buffer], { type: 'application/pdf' });
       const a = Object.assign(document.createElement('a'), {
         href: URL.createObjectURL(blob),
         download: `stamped_${pdfFile.name}`,
@@ -452,7 +452,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudi
                   onClick={onGoToStudio}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#1f6feb] hover:bg-[#388bfd] text-white rounded-xl text-xs font-bold transition-colors"
                 >
-                  <PenTool size={13} /> Edit in Studio
+                  <Pen size={13} /> Edit in Studio
                 </button>
                 <button onClick={applyToAllPages} disabled={placedStamps.length === 0}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#161b22] border border-[#30363d] hover:border-[#1f6feb] text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50">
@@ -671,7 +671,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudi
             <div className="flex-1 overflow-y-auto p-6">
               {customTemplates.length === 0 ? (
                 <div className="text-center py-20">
-                  <PenTool size={40} className="mx-auto text-[#30363d] mb-4" />
+                  <Pen size={40} className="mx-auto text-[#30363d] mb-4" />
                   <p className="text-[#8b949e]">No saved templates found.</p>
                   <button onClick={() => { setShowGallery(false); if (onGoToStudio) onGoToStudio(); }} 
                     className="mt-4 text-[#58a6ff] font-bold text-sm hover:underline">
@@ -687,7 +687,7 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudi
                          {(t as any).svgPreview ? (
                             <img src={(t as any).svgPreview} alt={t.name} className="w-full h-full object-contain" />
                          ) : (
-                            <PenTool size={24} className="text-[#30363d] group-hover:text-[#1f6feb]" />
+                            <Pen size={24} className="text-[#30363d] group-hover:text-[#1f6feb]" />
                          )}
                       </div>
                       <span className="text-xs font-bold text-white truncate w-full">{t.name}</span>

@@ -1,8 +1,14 @@
+import React, { useState, useEffect } from 'react';
 import { useWorkStore } from '../workStore';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { useAppStats, AppActivity } from '../appStatsStore';
+import { 
+  Loader2, RefreshCw, Pen, FileText, Download, 
+  CheckCircle2, Camera, QrCode, Layers, Bell, 
+  Clock, Trash2, Activity, TrendingUp 
+} from 'lucide-react';
 
 const TYPE_META: Record<string, { icon: React.ComponentType<any>; color: string; label: string }> = {
-  stamp_created:   { icon: PenTool,       color: 'bg-blue-500',    label: 'Stamp Created'    },
+  stamp_created:   { icon: Pen,       color: 'bg-blue-500',    label: 'Stamp Created'    },
   stamp_applied:   { icon: FileText,      color: 'bg-indigo-500',  label: 'Stamp Applied'    },
   stamp_downloaded:{ icon: Download,      color: 'bg-cyan-500',    label: 'Stamp Downloaded' },
   document_signed: { icon: CheckCircle2,  color: 'bg-emerald-500', label: 'Document Signed'  },
@@ -129,7 +135,7 @@ export default function ActivityLog({ view }: { view: 'activity-all' | 'activity
       {/* Stat pills */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Stamps', value: stats.stampsCreated, icon: PenTool, color: 'text-blue-400' },
+          { label: 'Stamps', value: stats.stampsCreated, icon: Pen, color: 'text-blue-400' },
           { label: 'Signed', value: stats.documentsSigned, icon: CheckCircle2, color: 'text-emerald-400' },
           { label: 'Scans', value: stats.aiScans, icon: Camera, color: 'text-pink-400' },
           { label: 'QR Codes', value: stats.qrCodesGenerated, icon: QrCode, color: 'text-purple-400' },

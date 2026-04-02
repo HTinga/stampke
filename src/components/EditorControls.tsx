@@ -2,7 +2,7 @@
 import React from 'react';
 import { StampConfig, StampShape, BorderStyle, CustomElement } from '../types';
 import { COLORS, FONTS } from '../constants';
-import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, PenTool, Star, Eraser, Save, X, Download, FileText, Image, Zap, ChevronRight, ChevronLeft, ChevronDown, Minus, Check, Maximize, Palette, Move, RotateCcw, History } from 'lucide-react';
+import { Sliders, Type, Calendar, Layout, Plus, Trash2, Image as ImageIcon, MousePointer, Eye, EyeOff, Pen, Star, Eraser, Save, X, Download, FileText, Image, Zap, ChevronRight, ChevronLeft, ChevronDown, Minus, Check, Maximize, Palette, Move, RotateCcw, History } from 'lucide-react';
 
 const SignaturePad: React.FC<{ onSave: (url: string) => void, onCancel: () => void }> = ({ onSave, onCancel }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -748,7 +748,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
 
       {isRight && <section className="bg-[#0d1117] dark:bg-[#21262d]/50 p-4 rounded-2xl border border-[#21262d] dark:border-[#30363d]">
         <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-           <PenTool size={14} /> Status Text (Overlay)
+           <Pen size={14} /> Status Text (Overlay)
         </h3>
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -1525,7 +1525,7 @@ const EditorControls: React.FC<EditorControlsProps> = ({ config, onChange, onBul
                     onClick={() => setShowSignPad(true)}
                     className="flex-1 bg-[#161b22] dark:bg-[#21262d] border border-[#aaccf2] dark:border-blue-800 text-[#58a6ff] dark:text-blue-400 py-2 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-[#21262d] dark:hover:bg-blue-900/30 transition-all"
                   >
-                    <PenTool size={12} /> Draw
+                    <Pen size={12} /> Draw
                   </button>
                   <div className="flex-1 relative">
                     <button className="w-full bg-[#161b22] dark:bg-[#21262d] border border-[#aaccf2] dark:border-blue-800 text-[#58a6ff] dark:text-blue-400 py-2 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-[#21262d] dark:hover:bg-blue-900/30 transition-all">

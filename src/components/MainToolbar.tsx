@@ -3,7 +3,7 @@ import {
   RotateCw, RotateCcw, Trash2, Plus, Image as ImageIcon, FileUp, Undo2, Redo2,
   FileText, X, ChevronLeft, ChevronRight, Type, Eraser, Layers, Scissors, Check,
   PanelLeft, Columns, File, Maximize, MoveHorizontal, ZoomIn, ZoomOut, Search,
-  Save, FileCode, RefreshCw, Stamp, PenTool as Pen, CheckSquare, Circle,
+  Save, FileCode, RefreshCw, Stamp, Pen, CheckSquare, Circle,
   ChevronDown, ChevronUp, Eye, EyeOff, Highlighter, Underline, AlignLeft,
   AlignCenter, AlignRight, Bold, Italic, Table, BarChart2, Link, Bookmark,
   Lock, Unlock, Shield, Printer, Share2, Copy, Clipboard, Hash, SlidersHorizontal,

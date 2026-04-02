@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DollarSign, Users, FileText, Briefcase, Bell, ArrowUpRight,
   TrendingUp, Clock, CheckCircle2, AlertCircle, Plus, ChevronRight,
-  PenTool, FileCheck, Send, Stamp, Package, Bot, Globe, Receipt
+  Pen, FileCheck, Send, Stamp, Package, Bot, Globe, Receipt,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAppStats } from '../appStatsStore';
 import IntelligentTip from './IntelligentTip';
-import { Sparkles } from 'lucide-react';
 
 type NavTab = string;
 interface DashboardProps {
@@ -51,7 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
       label: 'Stamps Created',
       value: stats.stampsCreated,
       sub: stats.stampsCreated === 0 ? 'Design your first stamp' : `${stats.stampsDownloaded} downloaded`,
-      icon: PenTool,
+      icon: Pen,
       color: 'text-blue-400',
       bg: 'bg-blue-500/10 border-blue-500/20',
       tab: 'stamp-studio',

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Home, Users, DollarSign, FileText, Briefcase, BarChart2, Settings,
   Plus, X, Menu, ChevronRight, ChevronDown, ChevronLeft, Search, Bell, LogOut, User,
-  PenTool, CheckCircle2, Camera, Wrench, QrCode, Share2, Type, Star, Layout,
+  Pen, CheckCircle2, Camera, Wrench, QrCode, Share2, Type, Star, Layout,
   ArrowRight, ShieldCheck, Receipt, FileType, FileIcon, Layers, BookOpen,
   Image as ImageIcon, Save, Sparkles, Sun, Moon, Twitter, Linkedin, Github,
   LayoutDashboard, Bot, Globe, Mic, Download, Eye
@@ -67,7 +67,7 @@ type LegacyTab = 'stamp-studio' | 'esign' | 'dashboard' | 'pdf-forge' | 'convert
 // Admin nav item injected below based on role
 const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any>; emoji: string }[] = [
   { id: 'home',       label: 'Home',                icon: Home,       emoji: '🏠' },
-  { id: 'sign-docs',  label: 'eSign & Stamps',      icon: PenTool,    emoji: '✍️' },
+  { id: 'sign-docs',  label: 'eSign & Stamps',      icon: Pen,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'assistants', label: 'Assistants',         icon: Bot,        emoji: '🤖' },
   { id: 'documents',  label: 'PDF Editor',          icon: FileText,   emoji: '📄' },

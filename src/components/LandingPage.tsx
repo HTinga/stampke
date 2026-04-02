@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import StampKELogo from './StampKELogo';
 import {
-  PenTool, FileCheck, FileText, Bot, Shield,
+  Pen, FileCheck, FileText, Bot, Shield,
   ArrowRight, Check, ChevronDown, X, Menu,
   Lock, Globe, Zap, Download, Smartphone, Monitor, Share2
 } from 'lucide-react';
@@ -14,7 +14,7 @@ interface LandingPageProps {
 /* ── 4 real features only ─────────────────────────────────── */
 const FEATURES = [
   {
-    icon: PenTool,
+    icon: Pen,
     title: 'eSign & Stamps',
     desc: 'Design professional digital stamps and collect legally-binding e-signatures. Multi-party signing with email delivery, audit trails, and real-time status tracking.',
     color: '#4285F4',

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  FileText, Upload, Plus, Send, CheckCircle2, Clock, Trash2, PenTool,
+  FileText, Upload, Plus, Send, CheckCircle2, Clock, Trash2, Pen,
   Calendar, Type, X, Save, Eraser, MousePointer2, Stamp, Image as ImageIcon,
   ChevronLeft, UserPlus, Settings, Search, Download, Eye, Shield, Hash, Share2,
   ChevronRight, Check, Users, Layers, ZoomIn, ZoomOut, Move, GripHorizontal
@@ -28,7 +28,7 @@ interface Props {
 type View = 'dashboard' | 'builder' | 'signerView';
 
 const FIELD_TYPES: { type: FieldType; label: string; icon: React.ReactNode; color: string }[] = [
-  { type: 'signature', label: 'Signature', icon: <PenTool size={14} />,      color: '#1f6feb' },
+  { type: 'signature', label: 'Signature', icon: <Pen size={14} />,      color: '#1f6feb' },
   { type: 'stamp',     label: 'Stamp',     icon: <Stamp size={14} />,        color: '#7c3aed' },
   { type: 'date',      label: 'Date',      icon: <Calendar size={14} />,     color: '#059669' },
   { type: 'text',      label: 'Text',      icon: <Type size={14} />,         color: '#d97706' },
