@@ -102,10 +102,6 @@ const FAQS = [
     a: 'Yes. We use Google Sign-In exclusively for security and simplicity. No password is needed — just your Google account.',
   },
   {
-    q: 'What is the offline / installable app?',
-    a: 'Enterprise customers can install StampKE as a Progressive Web App (PWA) on desktop and mobile for offline access. This is ideal for field teams in areas with limited connectivity.',
-  },
-  {
     q: 'Can my team use the same account?',
     a: 'Professional plans support up to 5 team members. Enterprise supports unlimited members with role-based access control.',
   },
@@ -115,7 +111,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showPolicy, setShowPolicy] = useState<'privacy' | 'terms' | null>(null);
-  const [showIOSGuide, setShowIOSGuide] = useState<'desktop' | 'mobile' | null>(null);
   const [installed, setInstalled] = useState(false);
   const deferredPrompt = useRef<any>(null);
 
@@ -136,16 +131,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
 
-  const handleInstall = async (source: 'desktop' | 'mobile') => {
-    if (isIOS) { setShowIOSGuide(source); return; }
+  const handleInstall = async () => {
     if (deferredPrompt.current) {
       deferredPrompt.current.prompt();
       const { outcome } = await deferredPrompt.current.userChoice;
       if (outcome === 'accepted') setInstalled(true);
       deferredPrompt.current = null;
-    } else {
-      // Fallback: show iOS-style instructions for browsers without prompt support
-      setShowIOSGuide(source);
     }
   };
 
@@ -251,30 +242,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 {/* Desktop install */}
                 <button
                   id="install-desktop-btn"
-                  onClick={() => handleInstall('desktop')}
+                  onClick={() => handleInstall()}
                   className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
                 >
                   <span className="w-8 h-8 bg-[#1f6feb]/15 rounded-lg flex items-center justify-center group-hover:bg-[#1f6feb]/25 transition-colors">
                     <Monitor size={16} className="text-[#58a6ff]" />
                   </span>
                   <span className="text-left">
-                    <span className="block text-[10px] text-[#8b949e] font-medium">Install on</span>
-                    <span className="block text-sm font-bold">Desktop (PWA)</span>
+                    <span className="block text-[10px] text-[#8b949e] font-medium">Download</span>
+                    <span className="block text-sm font-bold">Desktop App</span>
                   </span>
                   <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#58a6ff] transition-colors" />
                 </button>
                 {/* Mobile install */}
                 <button
                   id="install-mobile-btn"
-                  onClick={() => handleInstall('mobile')}
+                  onClick={() => handleInstall()}
                   className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#34A853]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
                 >
                   <span className="w-8 h-8 bg-[#34A853]/15 rounded-lg flex items-center justify-center group-hover:bg-[#34A853]/25 transition-colors">
                     <Smartphone size={16} className="text-[#34A853]" />
                   </span>
                   <span className="text-left">
-                    <span className="block text-[10px] text-[#8b949e] font-medium">Install on</span>
-                    <span className="block text-sm font-bold">Mobile / Phone</span>
+                    <span className="block text-[10px] text-[#8b949e] font-medium">Download</span>
+                    <span className="block text-sm font-bold">Mobile App</span>
                   </span>
                   <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#34A853] transition-colors" />
                 </button>
@@ -588,50 +579,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                   <p>Subscriptions are non-refundable after activation.</p>
                 </>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-      {/* iOS / no-prompt install guide overlay */}
-      {showIOSGuide && (
-        <div className="fixed inset-0 z-[900] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-[#1a73e8] to-[#1557b0] px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                  <StampKELogo size={24} />
-                </div>
-                <div>
-                  <p className="text-white font-bold text-sm">Install StampKE</p>
-                  <p className="text-blue-100 text-xs">Add to {showIOSGuide === 'desktop' ? 'your computer' : 'your phone'}</p>
-                </div>
-              </div>
-              <button onClick={() => setShowIOSGuide(null)} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
-                <X size={16} className="text-white" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3">
-              <p className="text-sm font-semibold text-white mb-4">
-                {showIOSGuide === 'mobile' ? 'Add to Home Screen (iOS)' : 'Install as Desktop App'}
-              </p>
-              {(() => {
-                const steps = showIOSGuide === 'mobile'
-                  ? [{ icon: '⬆️', text: 'Tap the Share button at the bottom of your browser' },
-                     { icon: '➕', text: 'Scroll down and tap "Add to Home Screen"' },
-                     { icon: '✅', text: 'Tap "Add" — StampKE appears as an app icon' }]
-                  : [{ icon: '🌐', text: 'Open StampKE in Chrome or Edge on your computer' },
-                     { icon: '📥', text: 'Click the install icon in the browser address bar' },
-                     { icon: '✅', text: 'Click "Install" — StampKE launches like a native app' }];
-                return steps.map((step, i) => (
-                  <div key={i} className="flex items-start gap-3 bg-[#0d1117] rounded-xl px-4 py-3">
-                    <span className="text-xl flex-shrink-0">{step.icon}</span>
-                    <p className="text-sm text-[#c9d1d9] leading-relaxed">{step.text}</p>
-                  </div>
-                ));
-              })()}
-              <p className="text-xs text-[#8b949e] text-center pt-1">
-                Once installed, StampKE works offline and opens instantly.
-              </p>
             </div>
           </div>
         </div>
