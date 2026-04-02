@@ -7,7 +7,6 @@ const cors          = require('cors');
 const compression   = require('compression');
 const cookieParser  = require('cookie-parser');
 const helmet        = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
 const hpp           = require('hpp');
 const rateLimit     = require('express-rate-limit');
 
@@ -40,19 +39,19 @@ app.use(cors({
 }));
 
 // ── Security ──────────────────────────────────────────────────────────────────
+// Note: mongoSanitize removed as we are now using Supabase/PostgreSQL
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
-app.use(mongoSanitize({ replaceWith: '_' }));
 app.use(hpp());
 
 // ── IntaSend webhook — raw body must come BEFORE express.json ─────────────────
 const paymentGateway = require('./controllers/appControllers/paymentGatewayController');
-const { catchErrors } = require('./handlers/errorHandlers');
 app.post('/api/payments/callback', paymentGateway.mpesaCallback);
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(cookieParser());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+compression;
 app.use(compression());
 
 // ── Request logging ───────────────────────────────────────────────────────────

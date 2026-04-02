@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const AuditLog = require('../../models/appModels/AuditLog');
+const supabase = require('@/config/supabase');
 
 exports.createLog = async (req, res) => {
   try {
@@ -9,18 +8,22 @@ exports.createLog = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const log = new AuditLog({
-      userId: req.user._id,
-      action,
-      details,
-      ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    });
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .insert([{
+        user_id: req.user.id,
+        action,
+        details,
+        ip: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      }])
+      .select()
+      .single();
 
-    await log.save();
+    if (error) throw error;
     
     return res.status(201).json({ 
       success: true, 
-      result: log,
+      result: data,
       message: 'Audit log created' 
     });
   } catch (err) {
@@ -34,11 +37,16 @@ exports.list = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
     
-    const logs = await AuditLog.find({ 
-      userId: req.user._id 
-    }).sort({ timestamp: -1 }).limit(100);
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('timestamp', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
     
-    return res.status(200).json({ success: true, result: logs });
+    return res.status(200).json({ success: true, result: data });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

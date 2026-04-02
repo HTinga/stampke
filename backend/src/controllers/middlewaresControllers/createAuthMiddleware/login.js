@@ -1,12 +1,8 @@
 const Joi      = require('joi');
-const mongoose = require('mongoose');
+const supabase = require('@/config/supabase');
 const { authUser } = require('./authUser');
 
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
-
 const login = async (req, res, { userModel }) => {
-  const UserPasswordModel = mongoose.model(userModel + 'Password');
-  const UserModel         = mongoose.model(userModel);
   const { email, password } = req.body;
 
   const { error } = Joi.object({
@@ -17,13 +13,16 @@ const login = async (req, res, { userModel }) => {
   if (error)
     return res.status(409).json({ success: false, result: null, message: 'Invalid/Missing credentials.' });
 
-  const user    = await UserModel.findOne({ email: email.toLowerCase(), removed: false });
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email.toLowerCase())
+    .eq('removed', false)
+    .single();
 
-  if (!user)
+  if (userError || !user)
     return res.status(404).json({ success: false, result: null, message: 'No account with this email has been registered.' });
 
-  // Accounts are enabled on signup — no admin approval needed
-  // emailVerified is tracked but doesn't block login (banner shown in app instead)
   if (!user.enabled)
     return res.status(409).json({
       success: false, result: null,
@@ -31,19 +30,36 @@ const login = async (req, res, { userModel }) => {
       code: 'DISABLED',
     });
 
-  const databasePassword = await UserPasswordModel.findOne({ user: user._id, removed: false });
-  if (!databasePassword)
+  const { data: databasePassword, error: passwordError } = await supabase
+    .from('user_passwords')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (passwordError || !databasePassword)
     return res.status(404).json({ success: false, result: null, message: 'No password set — please use Google Sign-In.' });
 
   // Start trial on first business login
-  if (user.role === 'business' && !user.trialStartedAt) {
+  if (user.role === 'business' && !user.trial_started_at) {
     const now = new Date();
-    user.trialStartedAt = now;
-    user.trialEndsAt    = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    await user.save();
+    const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        trial_started_at: now,
+        trial_ends_at: trialEndsAt
+      })
+      .eq('id', user.id);
+    
+    if (!updateError) {
+      user.trial_started_at = now;
+      user.trial_ends_at = trialEndsAt;
+    }
   }
 
-  return authUser(req, res, { user, databasePassword, password, UserPasswordModel });
+  return authUser(req, res, { user, databasePassword, password });
 };
 
 module.exports = login;
+

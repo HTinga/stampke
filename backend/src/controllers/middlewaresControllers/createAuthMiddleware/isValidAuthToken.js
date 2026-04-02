@@ -1,10 +1,10 @@
 const jwt      = require('jsonwebtoken');
-const mongoose = require('mongoose');
+const supabase = require('@/config/supabase');
 
 const isValidAuthToken = async (req, res, next, { userModel }) => {
   try {
-    const UserPassword = mongoose.model(userModel + 'Password');
-    const User         = mongoose.model(userModel);
+    // Helper to map model name to table name
+    const table = userModel === 'User' ? 'users' : userModel.toLowerCase() + 's';
 
     // Issue #2: prefer httpOnly cookie, fall back to Authorization header
     const cookieToken = req.cookies && req.cookies['tomo_session'];
@@ -23,17 +23,28 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
         success: false, result: null, message: 'Token verification failed, authorization denied.', jwtExpired: true,
       });
 
-    const [user, userPassword] = await Promise.all([
-      User.findOne({ _id: verified.id, removed: false }),
-      UserPassword.findOne({ user: verified.id, removed: false }),
-    ]);
+    // Verify user exists in Supabase
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', verified.id)
+      .eq('removed', false)
+      .single();
 
-    if (!user)
+    if (userError || !user)
       return res.status(401).json({
         success: false, result: null, message: "User doesn't exist, authorization denied.", jwtExpired: true,
       });
 
-    if (!userPassword || !userPassword.loggedSessions.includes(token))
+    // Check sessions in user_passwords table
+    const { data: passwordData, error: passwordError } = await supabase
+      .from('user_passwords')
+      .select('logged_sessions')
+      .eq('user_id', verified.id)
+      .single();
+
+    const sessions = passwordData?.logged_sessions || [];
+    if (passwordError || !sessions.includes(token))
       return res.status(401).json({
         success: false, result: null, message: 'Session expired, please login again.', jwtExpired: true,
       });
@@ -46,14 +57,16 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
     // Auto-assign superadmin role to owner email if not already set
     const OWNER = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
     if (user.email.toLowerCase() === OWNER.toLowerCase() && user.role !== 'superadmin') {
-      user.role = 'superadmin';
-      await user.save();
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ role: 'superadmin' })
+        .eq('id', user.id);
+      
+      if (!updateError) user.role = 'superadmin';
     }
 
-    // Attach user to request (model-name-aware like idurar)
-    const key     = userModel.toLowerCase();
-    req[key]      = user;
-    req.user      = user;          // always available as req.user
+    // Attach user to request
+    req.user      = user;
     req.authToken = token;
     next();
   } catch (error) {
@@ -64,3 +77,4 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
 };
 
 module.exports = isValidAuthToken;
+

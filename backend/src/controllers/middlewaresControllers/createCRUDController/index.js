@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const { modelsFiles } = require('@/models/utils');
+const supabase = require('@/config/supabase');
 
 const create        = require('./create');
 const read          = require('./read');
@@ -11,22 +10,36 @@ const summary       = require('./summary');
 const listAll       = require('./listAll');
 const paginatedList = require('./paginatedList');
 
+// Helper to map model names to Supabase tables (pluralized, lowercase)
+const modelToTable = (modelName) => {
+  const mapping = {
+    'User':          'users',
+    'Client':        'clients',
+    'Invoice':       'invoices',
+    'Envelope':      'envelopes',
+    'Payment':       'payments',
+    'Job':           'jobs',
+    'WorkerProfile': 'worker_profiles',
+    'Setting':       'settings',
+  };
+  return mapping[modelName] || modelName.toLowerCase() + 's';
+};
+
 const createCRUDController = (modelName) => {
-  if (!modelsFiles.includes(modelName)) {
-    throw new Error(`Model ${modelName} does not exist`);
-  }
-  const Model = mongoose.model(modelName);
+  const table = modelToTable(modelName);
+
   return {
-    create:      (req, res) => create(Model, req, res),
-    read:        (req, res) => read(Model, req, res),
-    update:      (req, res) => update(Model, req, res),
-    delete:      (req, res) => remove(Model, req, res),
-    list:        (req, res) => paginatedList(Model, req, res),
-    listAll:     (req, res) => listAll(Model, req, res),
-    search:      (req, res) => search(Model, req, res),
-    filter:      (req, res) => filter(Model, req, res),
-    summary:     (req, res) => summary(Model, req, res),
+    create:      (req, res) => create(table, req, res),
+    read:        (req, res) => read(table, req, res),
+    update:      (req, res) => update(table, req, res),
+    delete:      (req, res) => remove(table, req, res),
+    list:        (req, res) => paginatedList(table, req, res),
+    listAll:     (req, res) => listAll(table, req, res),
+    search:      (req, res) => search(table, req, res),
+    filter:      (req, res) => filter(table, req, res),
+    summary:     (req, res) => summary(table, req, res),
   };
 };
 
 module.exports = createCRUDController;
+

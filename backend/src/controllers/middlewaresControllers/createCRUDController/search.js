@@ -1,24 +1,42 @@
-const search = async (Model, req, res) => {
+const supabase = require('@/config/supabase');
+
+const search = async (table, req, res) => {
   const { q = '', fields = '', page = 1, items = 10 } = req.query;
   const limit = parseInt(items);
   const skip  = (parseInt(page) - 1) * limit;
 
   const fieldsArray = fields ? fields.split(',') : [];
-  const filter =
-    fieldsArray.length > 0
-      ? { removed: false, $or: fieldsArray.map((f) => ({ [f]: { $regex: q, $options: 'i' } })) }
-      : { removed: false };
+  let query = supabase
+    .from(table)
+    .select('*', { count: 'exact' })
+    .eq('removed', false);
 
-  const [result, count] = await Promise.all([
-    Model.find(filter).skip(skip).limit(limit).exec(),
-    Model.countDocuments(filter),
-  ]);
+  if (fieldsArray.length > 0 && q) {
+    const orCondition = fieldsArray.map(f => `${f}.ilike.%${q}%`).join(',');
+    query = query.or(orCondition);
+  }
+
+  const { data, count, error } = await query.range(skip, skip + limit - 1);
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: [],
+      message: 'Search failed: ' + error.message,
+    });
+  }
 
   return res.status(200).json({
     success: true,
-    result,
-    pagination: { page: parseInt(page), pages: Math.ceil(count / limit), count },
+    result: data,
+    pagination: {
+      page: parseInt(page),
+      pages: Math.ceil((count || 0) / limit),
+      count: count || 0,
+    },
     message: 'Search results',
   });
 };
+
 module.exports = search;
+

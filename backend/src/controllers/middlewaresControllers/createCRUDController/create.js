@@ -1,10 +1,29 @@
-const create = async (Model, req, res) => {
+const supabase = require('@/config/supabase');
+
+const create = async (table, req, res) => {
   req.body.removed = false;
-  const result = await new Model({ ...req.body }).save();
+  // If the request includes a user, ensure it matches the Supabase UUID format if necessary
+  // For now, we assume the req.body is already formatted correctly for the table columns
+  const { data, error } = await supabase
+    .from(table)
+    .insert([{ ...req.body }])
+    .select()
+    .single();
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: 'Creation failed: ' + error.message,
+    });
+  }
+
   return res.status(200).json({
     success: true,
-    result,
-    message: 'Successfully created document',
+    result: data,
+    message: 'Successfully created record',
   });
 };
+
 module.exports = create;
+

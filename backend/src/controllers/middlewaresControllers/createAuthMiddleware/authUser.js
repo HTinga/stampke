@@ -1,6 +1,7 @@
 // #2 — Token stored in httpOnly cookie (not localStorage) to prevent XSS theft
-const bcrypt = require('bcryptjs');
-const jwt    = require('jsonwebtoken');
+const bcrypt   = require('bcryptjs');
+const jwt      = require('jsonwebtoken');
+const supabase = require('@/config/supabase');
 
 const COOKIE_NAME    = 'tomo_session';
 const COOKIE_OPTIONS = {
@@ -11,19 +12,22 @@ const COOKIE_OPTIONS = {
   path:     '/',
 };
 
-const authUser = async (req, res, { user, databasePassword, password, UserPasswordModel }) => {
+const authUser = async (req, res, { user, databasePassword, password }) => {
   const isMatch = await bcrypt.compare(databasePassword.salt + password, databasePassword.password);
   if (!isMatch)
     return res.status(403).json({ success: false, result: null, message: 'Invalid credentials.' });
 
   const expiresIn = req.body.remember ? '365d' : '7d';
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn });
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn });
 
-  await UserPasswordModel.findOneAndUpdate(
-    { user: user._id },
-    { $push: { loggedSessions: token } },
-    { new: true }
-  ).exec();
+  // Update logged sessions in Supabase
+  const currentSessions = databasePassword.logged_sessions || [];
+  const updatedSessions = [...currentSessions, token];
+
+  await supabase
+    .from('user_passwords')
+    .update({ logged_sessions: updatedSessions })
+    .eq('user_id', user.id);
 
   // Set httpOnly cookie (#2)
   res.cookie(COOKIE_NAME, token, {
@@ -32,18 +36,18 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
   });
 
   const now           = new Date();
-  const trialActive   = user.plan === 'trial' && user.trialEndsAt && now < user.trialEndsAt;
+  const trialActive   = user.plan === 'trial' && user.trial_ends_at && now < new Date(user.trial_ends_at);
   const trialDaysLeft = trialActive
-    ? Math.max(0, Math.ceil((user.trialEndsAt - now) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((new Date(user.trial_ends_at) - now) / (1000 * 60 * 60 * 24)))
     : 0;
 
   return res.status(200).json({
     success: true,
     result: {
-      _id: user._id, name: user.name, surname: user.surname,
+      id: user.id, name: user.name, surname: user.surname,
       role: user.role, email: user.email, photo: user.photo,
       plan: user.plan, trialActive, trialDaysLeft,
-      adminPermissions: user.adminPermissions || [],
+      adminPermissions: user.admin_permissions || [],
       // token also returned in body for Vercel serverless compatibility
       // (cookies work in browsers; body token used by API clients)
       token,
@@ -53,3 +57,4 @@ const authUser = async (req, res, { user, databasePassword, password, UserPasswo
 };
 
 module.exports = { authUser, COOKIE_NAME, COOKIE_OPTIONS };
+

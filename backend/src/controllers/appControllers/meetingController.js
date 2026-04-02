@@ -1,4 +1,4 @@
-const Meeting = require('../../models/appModels/Meeting');
+const supabase = require('@/config/supabase');
 
 exports.createMeeting = async (req, res) => {
   try {
@@ -8,21 +8,26 @@ exports.createMeeting = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const meeting = new Meeting({
-      title: title || 'Untitled Meeting',
-      duration,
-      transcript,
-      summary,
-      keyPoints,
-      actionItems,
-      user: req.user._id,
-    });
+    const { data, error } = await supabase
+      .from('meeting_summaries')
+      .insert([{
+        title: title || 'Untitled Meeting',
+        duration,
+        transcript,
+        summary,
+        key_points: keyPoints || [],
+        action_items: actionItems || [],
+        user_id: req.user.id,
+        removed: false
+      }])
+      .select()
+      .single();
 
-    await meeting.save();
+    if (error) throw error;
     
     return res.status(201).json({ 
       success: true, 
-      result: meeting,
+      result: data,
       message: 'Meeting summary saved successfully' 
     });
   } catch (err) {
@@ -36,12 +41,16 @@ exports.getMeetings = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const meetings = await Meeting.find({ 
-      user: req.user._id, 
-      removed: false 
-    }).sort({ date: -1 });
+    const { data, error } = await supabase
+      .from('meeting_summaries')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .eq('removed', false)
+      .order('created_at', { ascending: false });
 
-    return res.status(200).json({ success: true, result: meetings });
+    if (error) throw error;
+
+    return res.status(200).json({ success: true, result: data });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -53,17 +62,19 @@ exports.getMeeting = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const meeting = await Meeting.findOne({ 
-      _id: req.params.id, 
-      user: req.user._id, 
-      removed: false 
-    });
+    const { data, error } = await supabase
+      .from('meeting_summaries')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .eq('removed', false)
+      .single();
 
-    if (!meeting) {
+    if (error || !data) {
       return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
-    return res.status(200).json({ success: true, result: meeting });
+    return res.status(200).json({ success: true, result: data });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -77,17 +88,19 @@ exports.updateMeeting = async (req, res) => {
 
     const { title, notes } = req.body;
 
-    const meeting = await Meeting.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      { title, notes },
-      { new: true }
-    );
+    const { data, error } = await supabase
+      .from('meeting_summaries')
+      .update({ title, notes, updated_at: new Date() })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single();
 
-    if (!meeting) {
+    if (error || !data) {
       return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
-    return res.status(200).json({ success: true, result: meeting, message: 'Meeting updated' });
+    return res.status(200).json({ success: true, result: data, message: 'Meeting updated' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -99,13 +112,15 @@ exports.deleteMeeting = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const meeting = await Meeting.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      { removed: true },
-      { new: true }
-    );
+    const { data, error } = await supabase
+      .from('meeting_summaries')
+      .update({ removed: true, updated_at: new Date() })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single();
 
-    if (!meeting) {
+    if (error || !data) {
       return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 

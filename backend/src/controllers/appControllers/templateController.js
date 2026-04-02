@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const Template = require('../../models/appModels/Template');
+const supabase = require('@/config/supabase');
 
 exports.createTemplate = async (req, res) => {
   try {
@@ -9,20 +8,25 @@ exports.createTemplate = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized: User not found' });
     }
 
-    const template = new Template({
-      name: name || 'Untitled Stamp',
-      config,
-      svgPreview,
-      category: category || 'Custom',
-      templateType: templateType || 'sample',
-      userId: req.user._id,
-    });
+    const { data, error } = await supabase
+      .from('templates')
+      .insert([{
+        name: name || 'Untitled Stamp',
+        config,
+        svg_preview: svgPreview,
+        category: category || 'Custom',
+        template_type: templateType || 'sample',
+        user_id: req.user.id,
+        removed: false
+      }])
+      .select()
+      .single();
 
-    await template.save();
+    if (error) throw error;
     
     return res.status(201).json({ 
       success: true, 
-      result: template,
+      result: data,
       message: 'Template saved successfully' 
     });
   } catch (err) {
@@ -36,12 +40,16 @@ exports.getTemplates = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
     
-    const templates = await Template.find({ 
-      userId: req.user._id,
-      removed: false 
-    }).sort({ createdAt: -1 });
+    const { data, error } = await supabase
+      .from('templates')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .eq('removed', false)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
     
-    return res.status(200).json({ success: true, result: templates });
+    return res.status(200).json({ success: true, result: data });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -53,13 +61,15 @@ exports.deleteTemplate = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const template = await Template.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      { removed: true },
-      { new: true }
-    );
+    const { data, error } = await supabase
+      .from('templates')
+      .update({ removed: true })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single();
 
-    if (!template) {
+    if (error || !data) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
