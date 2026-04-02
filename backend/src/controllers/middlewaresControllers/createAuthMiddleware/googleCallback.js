@@ -201,7 +201,8 @@ const googleCallback = async (req, res) => {
 
   } catch (err) {
     logger.error(`[Google OAuth callback] Exception: ${err.message}`);
-    return res.redirect(`${FRONTEND_URL}?auth_error=${encodeURIComponent('Google sign-in failed. Please try again or use email login.')}`);
+    const debugMsg = encodeURIComponent(`Google sign-in failed: ${err.message}`);
+    return res.redirect(`${FRONTEND_URL}?auth_error=${debugMsg}`);
   }
 };
 
