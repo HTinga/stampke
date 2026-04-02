@@ -1,12 +1,12 @@
 'use strict';
-const sendEmail  = require('@/utils/sendEmail');
-const bcrypt     = require('bcryptjs');
-const Joi        = require('joi');
-const mongoose   = require('mongoose');
-const shortid    = require('shortid');
-const crypto     = require('crypto');
+const sendEmail = require('@/utils/sendEmail');
+const bcrypt = require('bcryptjs');
+const Joi = require('joi');
+const supabase = require('@/config/supabase');
+const shortid = require('shortid');
+const crypto = require('crypto');
 
-const OWNER_EMAIL  = process.env.OWNER_EMAIL  || 'hempstonetinga@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
 
 // ── Welcome + verify email (Lovable-inspired style) ─────────────────────────
@@ -180,77 +180,100 @@ const buildWelcomeEmail = (name, verifyUrl) => `<!DOCTYPE html>
 </html>`;
 
 const register = async (req, res, { userModel }) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
-  const User         = mongoose.model(userModel);
-
   const { error, value } = Joi.object({
-    name:     Joi.string().min(2).max(80).required(),
-    email:    Joi.string().email().required(),
+    name: Joi.string().min(2).max(80).required(),
+    email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    role:     Joi.string().valid('business', 'worker').default('business'),
-    company:  Joi.string().max(120).allow('').optional(),
-    phone:    Joi.string().allow('').optional(),
+    role: Joi.string().valid('business', 'worker').default('business'),
+    company: Joi.string().max(120).allow('').optional(),
+    phone: Joi.string().allow('').optional(),
   }).validate(req.body);
 
   if (error)
     return res.status(400).json({ success: false, result: null, message: error.details[0].message });
 
-  if (value.email.toLowerCase() === OWNER_EMAIL.toLowerCase())
+  const emailLower = value.email.toLowerCase();
+
+  if (emailLower === OWNER_EMAIL.toLowerCase())
     return res.status(403).json({ success: false, result: null, message: 'This account cannot be registered.' });
 
-  const existing = await User.findOne({ email: value.email.toLowerCase(), removed: false });
+  const { data: existing, error: existError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email', emailLower)
+    .eq('removed', false)
+    .maybeSingle();
+
   if (existing)
     return res.status(409).json({ success: false, result: null, message: 'An account with this email already exists.' });
 
-  const emailVerifyToken   = crypto.randomBytes(32).toString('hex');
-  const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h — auto-delete after this
-  const now                = new Date();
+  const emailVerifyToken = crypto.randomBytes(32).toString('hex');
+  const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+  const now = new Date();
 
-  const user = await new User({
-    name:    value.name,
-    email:   value.email.toLowerCase(),
-    company: value.company || '',
-    phone:   value.phone   || '',
-    role:    value.role,
-    enabled:          true,
-    emailVerified:    false,
-    emailVerifyToken,
-    emailVerifyExpires,
-    plan:           value.role === 'business' ? 'trial' : 'free',
-    trialStartedAt: value.role === 'business' ? now : undefined,
-    trialEndsAt:    value.role === 'business' ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) : undefined,
-    removed: false,
-  }).save();
+  // Create User in Supabase
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .insert([{
+      name: value.name,
+      email: emailLower,
+      company: value.company || '',
+      phone: value.phone || '',
+      role: value.role,
+      enabled: true,
+      email_verified: false,
+      email_verify_token: emailVerifyToken,
+      email_verify_expires: emailVerifyExpires.toISOString(),
+      plan: value.role === 'business' ? 'trial' : 'free',
+      trial_started_at: value.role === 'business' ? now.toISOString() : null,
+      trial_ends_at: value.role === 'business' ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
+      removed: false,
+    }])
+    .select()
+    .single();
+
+  if (userError) return res.status(400).json({ success: false, message: userError.message });
 
   const salt = shortid.generate();
-  await new UserPassword({
-    user:     user._id,
-    password: bcrypt.hashSync(salt + value.password),
-    salt,
-    removed:  false,
-  }).save();
+  const passwordHash = bcrypt.hashSync(salt + value.password);
 
-  const verifyUrl = `${FRONTEND_URL}/api/verify-email?token=${emailVerifyToken}&id=${user._id}`;
+  const { error: passError } = await supabase
+    .from('user_passwords')
+    .insert([{
+      user_id: user.id,
+      password_hash: passwordHash,
+      salt: salt,
+    }]);
 
-  // ── AWAIT the email — must complete before res is sent on Vercel ─────────
-  await sendEmail({
-    to:      value.email,
-    from:    'Hempstone Tinga @ StampKE <noreply@tomo.ke>',
-    subject: 'Welcome to StampKE — please verify your email',
-    html:    buildWelcomeEmail(value.name, verifyUrl).replace('${to}', value.email),
-  });
+  if (passError) {
+    // Cleanup user if password creation fails
+    await supabase.from('users').delete().eq('id', user.id);
+    return res.status(500).json({ success: false, message: passError.message });
+  }
 
-  // Notify owner (fire-and-forget is OK here — non-critical)
-  sendEmail({
-    to:      OWNER_EMAIL,
-    from:    'StampKE Alerts <noreply@tomo.ke>',
-    subject: `[StampKE] New signup — ${value.name} (${value.role})`,
-    html:    `<p><b>${value.name}</b> (${value.email.toLowerCase()}) signed up as <b>${value.role}</b>.</p>`,
-  });
+  const verifyUrl = `${FRONTEND_URL}/api/verify-email?token=${emailVerifyToken}&id=${user.id}`;
+
+  try {
+    await sendEmail({
+      to: value.email,
+      from: 'Hempstone Tinga @ StampKE <noreply@tomo.ke>',
+      subject: 'Welcome to StampKE — please verify your email',
+      html: buildWelcomeEmail(value.name, verifyUrl).replace('${to}', value.email),
+    });
+
+    sendEmail({
+      to: OWNER_EMAIL,
+      from: 'StampKE Alerts <noreply@tomo.ke>',
+      subject: `[StampKE] New signup — ${value.name} (${value.role})`,
+      html: `<p><b>${value.name}</b> (${emailLower}) signed up as <b>${value.role}</b>.</p>`,
+    });
+  } catch (err) {
+    console.error('[Email] registration error:', err.message);
+  }
 
   return res.status(201).json({
     success: true,
-    result:  { _id: user._id, email: user.email, role: user.role, name: user.name },
+    result: { id: user.id, email: user.email, role: user.role, name: user.name },
     message: 'Account created! Check your email for a welcome message — verify within 24 hours.',
   });
 };

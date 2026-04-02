@@ -1,9 +1,9 @@
-const express    = require('express');
-const router     = express.Router();
-const mongoose   = require('mongoose');
+const express = require('express');
+const router = express.Router();
+const supabase = require('@/config/supabase');
 const { catchErrors } = require('@/handlers/errorHandlers');
-const userAuth        = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
-const googleCallback   = require('@/controllers/middlewaresControllers/createAuthMiddleware/googleCallback');
+const userAuth = require('@/controllers/middlewaresControllers/createAuthMiddleware')('User');
+const googleCallback = require('@/controllers/middlewaresControllers/createAuthMiddleware/googleCallback');
 const facebookCallback = require('@/controllers/middlewaresControllers/createAuthMiddleware/facebookCallback');
 
 // Public auth routes
@@ -15,23 +15,34 @@ router.post('/resetpassword',  catchErrors(userAuth.resetPassword));
 
 // Email verification — GET /api/verify-email?token=...&id=...
 router.get('/verify-email', catchErrors(async (req, res) => {
-  const User = mongoose.model('User');
   const { token, id } = req.query;
   if (!token || !id)
     return res.status(400).json({ success: false, result: null, message: 'Invalid verification link.' });
 
-  const user = await User.findOne({ _id: id, emailVerifyToken: token, removed: false });
-  if (!user)
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', id)
+    .eq('email_verify_token', token)
+    .eq('removed', false)
+    .single();
+
+  if (error || !user)
     return res.status(400).json({ success: false, result: null, message: 'Verification link is invalid or has expired.' });
 
-  if (new Date() > user.emailVerifyExpires)
+  if (user.email_verify_expires && new Date() > new Date(user.email_verify_expires))
     return res.status(400).json({ success: false, result: null, message: 'Verification link has expired. Please register again.' });
 
-  user.emailVerified    = true;
-  user.enabled          = true;
-  user.emailVerifyToken = undefined;
-  user.emailVerifyExpires = undefined;
-  await user.save();
+  await supabase
+    .from('users')
+    .update({
+      email_verified: true,
+      enabled: true,
+      email_verify_token: null,
+      email_verify_expires: null,
+      updated_at: new Date()
+    })
+    .eq('id', id);
 
   const FRONTEND = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
   return res.redirect(`${FRONTEND}?verified=1`);
@@ -39,69 +50,105 @@ router.get('/verify-email', catchErrors(async (req, res) => {
 
 // Resend verification email
 router.post('/resend-verification', catchErrors(async (req, res) => {
-  const User   = mongoose.model('User');
   const crypto = require('crypto');
   const { Resend } = require('resend');
   const { email } = req.body;
   if (!email) return res.status(400).json({ success: false, result: null, message: 'Email required.' });
 
-  const user = await User.findOne({ email: email.toLowerCase(), removed: false });
-  if (!user || user.emailVerified)
+  const emailLower = email.toLowerCase();
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', emailLower)
+    .eq('removed', false)
+    .maybeSingle();
+
+  if (!user || user.email_verified)
     return res.status(200).json({ success: true, result: null, message: 'If that email exists and is unverified, a new link has been sent.' });
 
-  const emailVerifyToken   = crypto.randomBytes(32).toString('hex');
+  const emailVerifyToken = crypto.randomBytes(32).toString('hex');
   const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  user.emailVerifyToken    = emailVerifyToken;
-  user.emailVerifyExpires  = emailVerifyExpires;
-  await user.save();
 
-  const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${emailVerifyToken}&id=${user._id}`;
+  await supabase
+    .from('users')
+    .update({
+      email_verify_token: emailVerifyToken,
+      email_verify_expires: emailVerifyExpires.toISOString(),
+      updated_at: new Date()
+    })
+    .eq('id', user.id);
+
+  const verifyUrl = `${process.env.FRONTEND_URL || 'https://stampke.vercel.app'}/api/verify-email?token=${emailVerifyToken}&id=${user.id}`;
+  
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: 'Tomo <noreply@tomo.ke>', to: email,
-      subject: 'Verify your Tomo email address',
+      from: 'StampKE <noreply@stampke.co.ke>', 
+      to: emailLower,
+      subject: 'Verify your StampKE email address',
       html: `<p>Hi ${user.name},</p><p><a href="${verifyUrl}">Click here to verify your email</a>. Expires in 24 hours.</p>`,
     });
-  } catch (e) { console.error('[Email] resend verify error:', e.message); }
+  } catch (e) { 
+    console.error('[Email] resend verify error:', e.message); 
+  }
 
   return res.status(200).json({ success: true, result: null, message: 'Verification email resent.' });
 }));
 
-// Google OAuth redirect callback — GET /api/auth/google/callback?code=...
-// Note: this is on /auth not /api because it's a browser redirect
-router.get('/auth/google/callback',   catchErrors(googleCallback));
-// Facebook OAuth redirect callback — GET /api/auth/facebook/callback?code=...
+// Google OAuth redirect callback
+router.get('/auth/google/callback', catchErrors(googleCallback));
+// Facebook OAuth redirect callback
 router.get('/auth/facebook/callback', catchErrors(facebookCallback));
 
-
-// POST /api/setup — seeds superadmin account on live DB
-// Call once: POST https://your-app.vercel.app/api/setup
-// Body: { "secret": "stampke-setup-2024" }
-// GET version — trigger from browser: /api/setup?secret=stampke-setup-2024
+// POST /api/setup — seeds superadmin account on Supabase
 router.get('/setup', catchErrors(async (req, res) => {
   const secret = req.query.secret;
   if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
     return res.status(403).json({ success: false, result: null, message: 'Invalid setup secret.' });
 
-  const User         = mongoose.model('User');
-  const UserPassword = mongoose.model('UserPassword');
-  const bcrypt       = require('bcryptjs');
-  const shortid      = require('shortid');
-  const OWNER_EMAIL    = process.env.OWNER_EMAIL    || 'hempstonetinga@gmail.com';
+  const bcrypt = require('bcryptjs');
+  const shortid = require('shortid');
+  const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com').toLowerCase();
   const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '@Outlier12';
 
-  let owner = await User.findOne({ email: OWNER_EMAIL.toLowerCase() });
+  const { data: owner, error: searchError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', OWNER_EMAIL)
+    .maybeSingle();
+
   const salt = shortid.generate();
   const hashed = bcrypt.hashSync(salt + OWNER_PASSWORD);
+
   if (!owner) {
-    owner = await new User({ name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(), role: 'superadmin', enabled: true, emailVerified: true, plan: 'business', removed: false }).save();
-    await new UserPassword({ user: owner._id, password: hashed, salt, removed: false }).save();
+    const { data: newOwner, error: createError } = await supabase
+      .from('users')
+      .insert([{
+        name: 'Hempstone Tinga',
+        email: OWNER_EMAIL,
+        role: 'superadmin',
+        enabled: true,
+        email_verified: true,
+        plan: 'business',
+        removed: false
+      }])
+      .select()
+      .single();
+    
+    if (createError) throw createError;
+    await supabase.from('user_passwords').insert([{ user_id: newOwner.id, password_hash: hashed, salt }]);
   } else {
-    owner.role = 'superadmin'; owner.enabled = true; owner.emailVerified = true; owner.plan = 'business';
-    await owner.save();
-    await UserPassword.findOneAndUpdate({ user: owner._id }, { password: hashed, salt }, { upsert: true });
+    await supabase
+      .from('users')
+      .update({ role: 'superadmin', enabled: true, email_verified: true, plan: 'business', updated_at: new Date() })
+      .eq('id', owner.id);
+    
+    await supabase
+      .from('user_passwords')
+      .update({ password_hash: hashed, salt })
+      .eq('user_id', owner.id);
   }
+  
   return res.status(200).json({ success: true, result: { email: OWNER_EMAIL, role: 'superadmin' }, message: 'Superadmin ready. Login: ' + OWNER_EMAIL + ' / ' + OWNER_PASSWORD });
 }));
 
@@ -110,108 +157,83 @@ router.post('/setup', catchErrors(async (req, res) => {
   if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
     return res.status(403).json({ success: false, result: null, message: 'Invalid setup secret.' });
 
-  const User         = mongoose.model('User');
-  const UserPassword = mongoose.model('UserPassword');
-  const bcrypt       = require('bcryptjs');
-  const shortid      = require('shortid');
-
-  const OWNER_EMAIL    = process.env.OWNER_EMAIL    || 'hempstonetinga@gmail.com';
+  const bcrypt = require('bcryptjs');
+  const shortid = require('shortid');
+  const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com').toLowerCase();
   const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '@Outlier12';
 
-  let owner = await User.findOne({ email: OWNER_EMAIL.toLowerCase() });
-  const salt   = shortid.generate();
+  const { data: owner } = await supabase.from('users').select('*').eq('email', OWNER_EMAIL).maybeSingle();
+  const salt = shortid.generate();
   const hashed = bcrypt.hashSync(salt + OWNER_PASSWORD);
 
   if (!owner) {
-    owner = await new User({
-      name: 'Hempstone Tinga', email: OWNER_EMAIL.toLowerCase(),
-      role: 'superadmin', enabled: true, emailVerified: true,
-      plan: 'business', removed: false,
-    }).save();
-    await new UserPassword({ user: owner._id, password: hashed, salt, removed: false }).save();
+    const { data: newOwner } = await supabase
+      .from('users')
+      .insert([{
+        name: 'Hempstone Tinga', email: OWNER_EMAIL,
+        role: 'superadmin', enabled: true, email_verified: true,
+        plan: 'business', removed: false,
+      }])
+      .select()
+      .single();
+    await supabase.from('user_passwords').insert([{ user_id: newOwner.id, password_hash: hashed, salt, removed: false }]);
   } else {
-    owner.role = 'superadmin'; owner.enabled = true;
-    owner.emailVerified = true; owner.plan = 'business';
-    await owner.save();
-    await UserPassword.findOneAndUpdate({ user: owner._id }, { password: hashed, salt }, { upsert: true });
+    await supabase.from('users').update({ role: 'superadmin', enabled: true, email_verified: true, plan: 'business', updated_at: new Date() }).eq('id', owner.id);
+    await supabase.from('user_passwords').update({ password_hash: hashed, salt }).eq('user_id', owner.id);
   }
 
-  return res.status(200).json({
-    success: true,
-    result:  { email: OWNER_EMAIL, role: 'superadmin' },
-    message: 'Superadmin account ready. Login with OWNER_EMAIL / OWNER_PASSWORD.',
-  });
+  return res.status(200).json({ success: true, result: { email: OWNER_EMAIL, role: 'superadmin' }, message: 'Superadmin account ready.' });
 }));
 
 
-// GET /api/seed-jobs — creates real demo jobs in the database  
-// Call once: /api/seed-jobs?secret=stampke-setup-2024
+// GET /api/seed-jobs
 router.get('/seed-jobs', catchErrors(async (req, res) => {
   const { secret } = req.query;
   if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
     return res.status(403).json({ success: false, result: null, message: 'Invalid secret.' });
 
-  const Job  = mongoose.model('Job');
-  const User = mongoose.model('User');
+  const ownerEmail = (process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com').toLowerCase();
+  const { data: admin } = await supabase.from('users').select('id').eq('email', ownerEmail).single();
+  if (!admin) return res.status(400).json({ success: false, message: 'Run /api/setup first.' });
   
-  // Use superadmin as poster
-  const admin = await User.findOne({ email: (process.env.OWNER_EMAIL||'hempstonetinga@gmail.com').toLowerCase() });
-  if (!admin) return res.status(400).json({ success: false, result: null, message: 'Run /api/setup first.' });
-  
-  const existing = await Job.countDocuments({ removed: false });
-  if (existing >= 6) return res.status(200).json({ success: true, result: null, message: `${existing} jobs already exist.` });
-
   const JOBS = [
-    { title: 'Plumber — Emergency Repairs', category: 'Plumbing', type: 'quick-gig', location: 'Westlands, Nairobi', pay: 'KES 2,500/day', description: 'Urgent plumbing repairs needed. Experience with residential and commercial plumbing.', skills: ['Plumbing','Pipe fitting','Drainage'], urgent: true },
-    { title: 'Graphic Designer — Brand Identity', category: 'Graphic Design', type: 'contract', location: 'Remote', pay: 'KES 60,000/month', description: 'We need a skilled graphic designer for a 3-month brand identity project. Proficiency in Adobe Suite required.', skills: ['Illustrator','Photoshop','Figma','Branding'], urgent: false },
-    { title: 'Security Officer — Night Shift', category: 'Security', type: 'permanent', location: 'CBD, Nairobi', pay: 'KES 25,000/month', description: 'Night security officer for a commercial building in CBD. G4S training preferred.', skills: ['Security','First Aid','CCTV Monitoring'], urgent: false },
-    { title: 'Executive Driver', category: 'Driving', type: 'temporary', location: 'Kilimani, Nairobi', pay: 'KES 35,000/month', description: 'Professional executive driver needed. Must have a clean driving record and valid PSV license.', skills: ['Driving','PSV License','Professionalism'], urgent: true },
-    { title: 'Data Entry Clerk', category: 'Admin / Office', type: 'temporary', location: 'Upperhill, Nairobi', pay: 'KES 18,000/month', description: 'Data entry for a fintech startup. Fast typing and Excel proficiency required.', skills: ['Excel','Data Entry','Attention to Detail'], urgent: false },
-    { title: 'Event Waitstaff — Corporate Dinner', category: 'Event Staff', type: 'quick-gig', location: 'Gigiri, Nairobi', pay: 'KES 1,500/event', description: 'Professional waitstaff needed for a corporate dinner event this weekend.', skills: ['Hospitality','Customer Service','Smart Appearance'], urgent: true },
-    { title: 'House Cleaner — Weekly', category: 'Cleaning', type: 'temporary', location: 'Karen, Nairobi', pay: 'KES 800/day', description: 'Professional house cleaner for weekly cleaning of a 4-bedroom home.', skills: ['Cleaning','Organizing','Attention to Detail'], urgent: false },
-    { title: 'IT Support Technician', category: 'IT Support', type: 'permanent', location: 'Westlands, Nairobi', pay: 'KES 45,000/month', description: 'IT support for a 50-person office. Windows, networking, and printer support required.', skills: ['Windows','Networking','Troubleshooting','Hardware'], urgent: false },
+    { title: 'Plumber — Emergency Repairs', category: 'Plumbing', type: 'quick-gig', location: 'Westlands, Nairobi', pay: 'KES 2,500/day', description: 'Urgent plumbing repairs needed.', skills: ['Plumbing'], urgent: true },
+    { title: 'Executive Driver', category: 'Driving', type: 'temporary', location: 'Kilimani, Nairobi', pay: 'KES 35,000/month', description: 'Professional executive driver needed.', skills: ['Driving'], urgent: true },
   ];
 
-  const created = await mongoose.model('Job').insertMany(
-    JOBS.map(j => ({ ...j, postedBy: admin._id, status: 'open', removed: false }))
-  );
+  const { data: created, error } = await supabase
+    .from('jobs')
+    .insert(JOBS.map(j => ({ ...j, posted_by: admin.id, status: 'open', removed: false })))
+    .select();
 
+  if (error) return res.status(400).json({ success: false, message: error.message });
   return res.status(200).json({ success: true, result: created, message: `${created.length} real jobs seeded.` });
 }));
 
-// ── Cron: auto-delete unverified accounts after 24h ──────────────────────────
-// Called by Vercel Cron every hour: GET /api/cron/cleanup-unverified
-// Protected by CRON_SECRET header set in Vercel environment variables
+// Cron: cleanup unverified accounts
 router.get('/cron/cleanup-unverified', catchErrors(async (req, res) => {
   const secret = req.headers['authorization']?.replace('Bearer ', '');
   if (secret !== (process.env.CRON_SECRET || 'stampke-cron-2024')) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const User         = mongoose.model('User');
-  const UserPassword = mongoose.model('UserPassword');
+  const cutoff = new Date();
+  const { data: expired, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('email_verified', false)
+    .lt('email_verify_expires', cutoff.toISOString())
+    .eq('removed', false);
 
-  const cutoff = new Date(); // remove users whose emailVerifyExpires < now
-
-  // Find unverified users whose verification window has expired
-  const expired = await User.find({
-    emailVerified:    false,
-    emailVerifyExpires: { $lt: cutoff },
-    removed: false,
-  });
+  if (error) return res.status(500).json({ success: false, message: error.message });
 
   let removed = 0;
   for (const user of expired) {
-    // Hard-delete: mark removed and wipe tokens
-    await User.updateOne({ _id: user._id }, {
-      $set:   { removed: true, enabled: false },
-      $unset: { emailVerifyToken: '', emailVerifyExpires: '' },
-    });
-    await UserPassword.deleteOne({ user: user._id });
+    await supabase.from('users').update({ removed: true, enabled: false, updated_at: new Date() }).eq('id', user.id);
+    await supabase.from('user_passwords').delete().eq('user_id', user.id);
     removed++;
   }
 
-  console.log(`[Cron] cleanup-unverified: removed ${removed} expired unverified accounts`);
   return res.status(200).json({ success: true, removed, message: `Removed ${removed} unverified accounts.` });
 }));
 

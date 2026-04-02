@@ -1,15 +1,14 @@
+'use strict';
 const sendEmail = require('@/utils/sendEmail');
-const mongoose  = require('mongoose');
-const jwt       = require('jsonwebtoken');
+const supabase = require('@/config/supabase');
+const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://stampke.vercel.app';
 
 const googleSignIn = async (req, res, { userModel }) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
-  const User         = mongoose.model(userModel);
-  const { idToken }  = req.body;
+  const { idToken } = req.body;
 
   if (!idToken)
     return res.status(400).json({ success: false, result: null, message: 'Google ID token required.' });
@@ -33,82 +32,101 @@ const googleSignIn = async (req, res, { userModel }) => {
   const normalizedEmail = email.toLowerCase();
   const isOwner = normalizedEmail === OWNER_EMAIL.toLowerCase();
 
-  let user = await User.findOne({
-    $or: [{ email: normalizedEmail }, { googleId }],
-    removed: false,
-  });
+  // Search for user by email or google_id
+  const { data: existingUser, error: searchError } = await supabase
+    .from('users')
+    .select('*')
+    .or(`email.eq.${normalizedEmail},google_id.eq.${googleId}`)
+    .eq('removed', false)
+    .maybeSingle();
+
+  let user = existingUser;
 
   if (!user) {
-    // New Google user — create account
-    // Superadmin cannot be created this way (only via email/password + setup.js)
-    // Workers signing up via Google go to jobs landing → worker role
-    // Everyone else is business by default
-    user = await new User({
-      name,
-      email:    normalizedEmail,
-      googleId,
-      photo:    picture,
-      role:     isOwner ? 'superadmin' : 'business',
-      enabled:  isOwner,      // owner active immediately; others need email verify
-      emailVerified: true,    // Google verifies email for us
-      plan:     isOwner ? 'enterprise' : 'trial',
-      trialStartedAt: isOwner ? undefined : new Date(),
-      trialEndsAt:    isOwner ? undefined : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      removed:  false,
-    }).save();
+    // Create new Google user
+    const now = new Date();
+    const trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    await new UserPassword({
-      user: user._id, password: '', salt: '', loggedSessions: [], removed: false,
-    }).save();
+    const { data: newUser, error: createError } = await supabase
+      .from('users')
+      .insert([{
+        name,
+        email: normalizedEmail,
+        google_id: googleId,
+        photo: picture,
+        role: isOwner ? 'superadmin' : 'business',
+        enabled: true, // Auto-enable Google signups
+        email_verified: true,
+        plan: isOwner ? 'enterprise' : 'trial',
+        trial_started_at: isOwner ? null : now.toISOString(),
+        trial_ends_at: isOwner ? null : trialEndsAt.toISOString(),
+        removed: false,
+      }])
+      .select()
+      .single();
+
+    if (createError) return res.status(500).json({ success: false, message: createError.message });
+    user = newUser;
+
+    // Create entry in user_passwords (even if empty)
+    await supabase.from('user_passwords').insert([{ user_id: user.id, password_hash: '', salt: '' }]);
 
     if (!isOwner) {
-      sendEmail({
-        to:      OWNER_EMAIL,
-        subject: `[Tomo] New Google signup — ${name} (${user.role})`,
-        html:    `<p><strong>${name}</strong> (${normalizedEmail}) signed up via Google as <strong>${user.role}</strong>. Activate in SuperAdmin Panel → Users.</p>`,
-      });
+      try {
+        await sendEmail({
+          to: OWNER_EMAIL,
+          subject: `[StampKE] New Google signup — ${name} (${user.role})`,
+          html: `<p><strong>${name}</strong> (${normalizedEmail}) signed up via Google as <strong>${user.role}</strong>.</p>`,
+        });
+      } catch (err) {
+        console.error('[Email] Google signup alert error:', err.message);
+      }
     }
   } else {
-    // Existing user — link Google ID if not already
-    if (!user.googleId) {
-      user.googleId = googleId;
-      if (!user.photo) user.photo = picture;
-      user.emailVerified = true;
-      await user.save();
-    }
-    // Auto-upgrade owner role
-    if (isOwner && user.role !== 'superadmin') {
-      user.role    = 'superadmin';
-      user.enabled = true;
-      await user.save();
+    // Update existing user with Google ID if missing
+    if (!user.google_id || (isOwner && user.role !== 'superadmin')) {
+      const updates = {
+        google_id: googleId,
+        email_verified: true,
+        photo: user.photo || picture,
+      };
+      if (isOwner) {
+        updates.role = 'superadmin';
+        updates.enabled = true;
+      }
+
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .single();
+      
+      if (!updateError) user = updatedUser;
     }
   }
 
   if (!user.enabled)
     return res.status(403).json({
       success: false, result: null,
-      message: 'Your account is pending activation by the admin.',
-      code: 'PENDING',
+      message: 'Your account is disabled. Contact support.',
+      code: 'DISABLED',
     });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  await UserPassword.findOneAndUpdate(
-    { user: user._id },
-    { $push: { loggedSessions: token } },
-    { new: true, upsert: true }
-  ).exec();
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
   // Build trial info
-  const now         = new Date();
-  const trialActive = user.plan === 'trial' && user.trialEndsAt && now < user.trialEndsAt;
+  const now = new Date();
+  const trialEnds = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const trialActive = user.plan === 'trial' && trialEnds && now < trialEnds;
   const trialDaysLeft = trialActive
-    ? Math.max(0, Math.ceil((user.trialEndsAt - now) / 86400000))
+    ? Math.max(0, Math.ceil((trialEnds - now) / 86400000))
     : 0;
 
   return res.status(200).json({
     success: true,
     result: {
-      _id:  user._id,
+      id: user.id,
       name: user.name,
       role: user.role,
       email: user.email,
@@ -116,7 +134,6 @@ const googleSignIn = async (req, res, { userModel }) => {
       plan: user.plan,
       trialActive,
       trialDaysLeft,
-      adminPermissions: user.adminPermissions || [],
       token,
     },
     message: 'Successfully signed in with Google',

@@ -3,17 +3,19 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const supabase = require('@/config/supabase');
 
-const COOKIE_NAME    = 'tomo_session';
+const COOKIE_NAME    = 'token'; // Changed to 'token' to match logout.js and general pattern
 const COOKIE_OPTIONS = {
   httpOnly: true,          // JS cannot read — blocks XSS token theft
   secure:   process.env.NODE_ENV === 'production',
-  sameSite: 'strict',      // blocks CSRF
+  sameSite: 'Lax',         // Changed to Lax (more compatible with OAuth redirects)
   maxAge:   7 * 24 * 60 * 60 * 1000, // 7 days
   path:     '/',
 };
 
 const authUser = async (req, res, { user, databasePassword, password }) => {
-  const isMatch = await bcrypt.compare(databasePassword.salt + password, databasePassword.password);
+  // Use password_hash from Supabase table
+  const isMatch = await bcrypt.compare(databasePassword.salt + password, databasePassword.password_hash);
+  
   if (!isMatch)
     return res.status(403).json({ success: false, result: null, message: 'Invalid credentials.' });
 
@@ -26,7 +28,7 @@ const authUser = async (req, res, { user, databasePassword, password }) => {
 
   await supabase
     .from('user_passwords')
-    .update({ logged_sessions: updatedSessions })
+    .update({ logged_sessions: updatedSessions, updated_at: new Date() })
     .eq('user_id', user.id);
 
   // Set httpOnly cookie (#2)
@@ -36,20 +38,24 @@ const authUser = async (req, res, { user, databasePassword, password }) => {
   });
 
   const now           = new Date();
-  const trialActive   = user.plan === 'trial' && user.trial_ends_at && now < new Date(user.trial_ends_at);
+  const trialEnds     = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const trialActive   = user.plan === 'trial' && trialEnds && now < trialEnds;
   const trialDaysLeft = trialActive
-    ? Math.max(0, Math.ceil((new Date(user.trial_ends_at) - now) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((trialEnds - now) / 86400000))
     : 0;
 
   return res.status(200).json({
     success: true,
     result: {
-      id: user.id, name: user.name, surname: user.surname,
-      role: user.role, email: user.email, photo: user.photo,
-      plan: user.plan, trialActive, trialDaysLeft,
+      id: user.id, 
+      name: user.name,
+      role: user.role, 
+      email: user.email, 
+      photo: user.photo,
+      plan: user.plan, 
+      trialActive, 
+      trialDaysLeft,
       adminPermissions: user.admin_permissions || [],
-      // token also returned in body for Vercel serverless compatibility
-      // (cookies work in browsers; body token used by API clients)
       token,
     },
     message: 'Successfully logged in',
@@ -57,4 +63,3 @@ const authUser = async (req, res, { user, databasePassword, password }) => {
 };
 
 module.exports = { authUser, COOKIE_NAME, COOKIE_OPTIONS };
-

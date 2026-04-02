@@ -1,26 +1,24 @@
-const mongoose = require('mongoose');
+'use strict';
+const supabase = require('@/config/supabase');
 
 const logout = async (req, res, { userModel }) => {
-  const UserPassword = mongoose.model(userModel + 'Password');
-  const token = req.authToken;
+  // If we want to track blacklisted tokens or session removals, we'd do it here.
+  // For now, since we aren't strict on session revocation in the other refactored routes,
+  // we just clear the client-side cookie.
 
-  if (token) {
-    await UserPassword.findOneAndUpdate(
-      { user: req.user._id },
-      { $pull: { loggedSessions: token } },
-      { new: true }
-    ).exec();
-  } else {
-    await UserPassword.findOneAndUpdate(
-      { user: req.user._id },
-      { loggedSessions: [] },
-      { new: true }
-    ).exec();
-  }
+  // Clear httpOnly cookie
+  res.clearCookie('token', { 
+    httpOnly: true, 
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax'
+  });
 
-  // Clear httpOnly cookie (issue #2)
-  res.clearCookie('tomo_session', { httpOnly: true, path: '/' });
-  return res.status(200).json({ success: true, result: {}, message: 'Successfully logged out' });
+  return res.status(200).json({ 
+    success: true, 
+    result: {}, 
+    message: 'Successfully logged out' 
+  });
 };
 
 module.exports = logout;
