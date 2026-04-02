@@ -143,7 +143,6 @@ const googleCallback = async (req, res) => {
       .from('users')
       .select('*')
       .or(`email.eq.${normalizedEmail},google_id.eq.${googleId}`)
-      .eq('removed', false)
       .maybeSingle();
 
     if (userError) {
@@ -165,7 +164,7 @@ const googleCallback = async (req, res) => {
           enabled: true,
           email_verified: true,
           removed: false,
-          plan: isOwner ? 'enterprise' : 'starter',
+          plan: isOwner ? 'business' : 'starter',
           trial_started_at: isOwner ? null : now.toISOString(),
           trial_ends_at: isOwner ? null : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         }])
@@ -191,11 +190,19 @@ const googleCallback = async (req, res) => {
       } catch (err) { logger.warn(`[Email] welcome error: ${err.message}`); }
     } else {
       const updates = {};
-      if (!finalUser.google_id) updates.google_id = googleId;
-      if (!finalUser.email_verified) updates.email_verified = true;
-      if (isOwner && finalUser.role !== 'superadmin') {
-        updates.role = 'superadmin';
-        updates.enabled = true;
+      if (isOwner) {
+        if (finalUser.role !== 'superadmin') updates.role = 'superadmin';
+        if (!finalUser.enabled) updates.enabled = true;
+        if (finalUser.removed) updates.removed = false;
+        if (finalUser.plan !== 'business') updates.plan = 'business';
+        if (!finalUser.email_verified) updates.email_verified = true;
+      } else {
+        if (!finalUser.google_id) updates.google_id = googleId;
+        if (!finalUser.email_verified) updates.email_verified = true;
+        if (finalUser.removed) {
+          updates.removed = false;
+          updates.enabled = true;
+        }
       }
 
       if (Object.keys(updates).length > 0) {
@@ -239,7 +246,7 @@ const googleCallback = async (req, res) => {
 
   } catch (err) {
     logger.error(`[Google OAuth callback] Exception: ${err.message}`);
-    const errorMsg = encodeURIComponent('Google sign-in failed. Please try again or use email login.');
+    const errorMsg = encodeURIComponent(`Google sign-in failed: ${err.message}. Please try again or use email login.`);
     return res.redirect(`${FRONTEND_URL}?auth_error=${errorMsg}`);
   }
 };

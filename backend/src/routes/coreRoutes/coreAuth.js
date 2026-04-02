@@ -186,6 +186,47 @@ router.post('/setup', catchErrors(async (req, res) => {
 }));
 
 
+// GET /api/fix-owner — repair owner account in case it's soft-deleted or broken
+router.get('/fix-owner', catchErrors(async (req, res) => {
+  const secret = req.query.secret;
+  if (secret !== (process.env.SETUP_SECRET || 'stampke-setup-2024'))
+    return res.status(403).json({ success: false, result: null, message: 'Invalid secret.' });
+
+  const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com').toLowerCase();
+  
+  const { data: user, error: searchError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', OWNER_EMAIL)
+    .maybeSingle();
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'Owner account not found. Run /api/setup first.' });
+  }
+
+  const { data: updatedUser, error: updateError } = await supabase
+    .from('users')
+    .update({ 
+      role: 'superadmin', 
+      enabled: true, 
+      removed: false, 
+      plan: 'business', 
+      email_verified: true, 
+      updated_at: new Date() 
+    })
+    .eq('id', user.id)
+    .select()
+    .single();
+
+  if (updateError) throw updateError;
+
+  return res.status(200).json({ 
+    success: true, 
+    result: { email: updatedUser.email, role: updatedUser.role, removed: updatedUser.removed, enabled: updatedUser.enabled }, 
+    message: 'Owner account repaired successfully.' 
+  });
+}));
+
 // GET /api/seed-jobs
 router.get('/seed-jobs', catchErrors(async (req, res) => {
   const { secret } = req.query;
