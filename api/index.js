@@ -10,6 +10,10 @@ const BACKEND_SRC     = path.join(__dirname, '../backend/src');
 process.env.NODE_PATH = BACKEND_MODULES;
 require('module').Module._initPaths();
 
+// ── Step 0: Load environment variables ────────────────────────────────────────
+require('dotenv').config({ path: path.join(__dirname, '../backend/.env') });
+require('dotenv').config({ path: path.join(__dirname, '../backend/.env.local') });
+
 // ── Step 2: Set up @/ alias ───────────────────────────────────────────────────
 const moduleAlias = require('module-alias');
 moduleAlias.addAlias('@', BACKEND_SRC);
