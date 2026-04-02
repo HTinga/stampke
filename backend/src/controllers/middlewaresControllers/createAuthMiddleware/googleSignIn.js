@@ -36,7 +36,7 @@ const googleSignIn = async (req, res, { userModel }) => {
   const { data: existingUser, error: searchError } = await supabase
     .from('users')
     .select('*')
-    .or(`email.eq.${normalizedEmail},google_id.eq.${googleId}`)
+    .or(`email.eq."${normalizedEmail}",google_id.eq."${googleId}"`)
     .eq('removed', false)
     .maybeSingle();
 

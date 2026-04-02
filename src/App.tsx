@@ -382,7 +382,10 @@ const App: React.FC = () => {
     // If user deliberately logged out in this tab, don't restore
     if (sessionStorage.getItem('logged_out') === '1') return;
     const token = localStorage.getItem('tomo_token');
-    if (!token) return;
+    if (!token) {
+      setActiveView('landing');
+      return;
+    }
     const apiUrl = (import.meta as any).env?.VITE_API_URL || '';
     fetch(`${apiUrl}/api/user/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
@@ -414,9 +417,15 @@ const App: React.FC = () => {
           });
         } else {
           localStorage.removeItem('tomo_token');
+          setIsLoggedIn(false);
+          setActiveView('landing');
         }
       })
-      .catch(() => localStorage.removeItem('tomo_token'));
+      .catch(() => {
+        localStorage.removeItem('tomo_token');
+        setIsLoggedIn(false);
+        setActiveView('landing');
+      });
   }, []);
 
   useEffect(() => {
