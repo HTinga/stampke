@@ -1,13 +1,7 @@
-import React, { useState } from 'react';
-import {
-  Activity, Bell, PenTool, FileText, CheckCircle2, Download,
-  Camera, QrCode, Layers, Star, Filter, Clock, Trash2, RefreshCw,
-  TrendingUp, Package
-} from 'lucide-react';
-import { useAppStats, AppActivity } from '../appStatsStore';
 import { useWorkStore } from '../workStore';
+import { Loader2, RefreshCw } from 'lucide-react';
 
-const TYPE_META: Record<AppActivity['type'], { icon: React.ComponentType<any>; color: string; label: string }> = {
+const TYPE_META: Record<string, { icon: React.ComponentType<any>; color: string; label: string }> = {
   stamp_created:   { icon: PenTool,       color: 'bg-blue-500',    label: 'Stamp Created'    },
   stamp_applied:   { icon: FileText,      color: 'bg-indigo-500',  label: 'Stamp Applied'    },
   stamp_downloaded:{ icon: Download,      color: 'bg-cyan-500',    label: 'Stamp Downloaded' },
@@ -29,9 +23,31 @@ const timeAgo = (iso: string) => {
 export default function ActivityLog({ view }: { view: 'activity-all' | 'activity-notifications' }) {
   const stats = useAppStats();
   const { jobs } = useWorkStore();
-  const [filterType, setFilterType] = useState<AppActivity['type'] | ''>('');
+  const [filterType, setFilterType] = useState<string>('');
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = stats.recentActivity.filter(a => !filterType || a.type === filterType);
+  const fetchActivities = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('tomo_token');
+      const res = await fetch('/api/audit/list', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setActivities(data.result);
+    } catch (err) {
+      console.error('[ActivityLog] Fetch failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const filtered = activities.filter(a => !filterType || a.action.toLowerCase().includes(filterType.toLowerCase()));
 
   // Compose notifications from real data
   const notifications = [
@@ -149,25 +165,28 @@ export default function ActivityLog({ view }: { view: 'activity-all' | 'activity
       )}
 
       {/* Timeline */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={30} className="animate-spin text-[#1f6feb]" />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20 bg-[#161b22] border border-[#30363d] rounded-2xl">
           <Activity size={40} className="text-[#30363d] mx-auto mb-4" />
-          <h3 className="font-bold text-white mb-2">No activity yet</h3>
-          <p className="text-sm text-[#8b949e]">Every action you take — stamps created, documents signed, AI scans — will be logged here.</p>
+          <h3 className="font-bold text-white mb-2">No activity found</h3>
+          <p className="text-sm text-[#8b949e]">Try clearing your filters or take some actions in the app.</p>
         </div>
       ) : (
         <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden">
           {filtered.map((activity, i) => {
-            const meta = TYPE_META[activity.type] || { icon: Activity, color: 'bg-[#1f6feb]', label: 'Action' };
-            const Icon = meta.icon;
+            const Icon = TrendingUp;
             return (
               <div key={activity.id} className={`flex items-center gap-4 px-5 py-3.5 hover:bg-[#21262d]/50 transition-colors ${i < filtered.length - 1 ? 'border-b border-[#21262d]' : ''}`}>
-                <div className={`w-8 h-8 ${meta.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                  <Icon size={13} className="text-white" />
+                <div className={`w-8 h-8 bg-[#1f6feb]/20 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <Icon size={13} className="text-[#1f6feb]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{activity.description}</p>
-                  <p className="text-[10px] text-[#8b949e] mt-0.5">{meta.label}</p>
+                  <p className="text-sm text-white truncate">{activity.action}</p>
+                  <p className="text-[10px] text-[#8b949e] mt-0.5">{activity.details ? (typeof activity.details === 'string' ? activity.details : JSON.stringify(activity.details)) : 'Audit log'}</p>
                 </div>
                 <span className="text-[10px] text-[#8b949e] flex-shrink-0 flex items-center gap-1">
                   <Clock size={9} /> {timeAgo(activity.timestamp)}

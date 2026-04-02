@@ -36,7 +36,7 @@ const googleSignIn = async (req, res, { userModel }) => {
   const { data: existingUser, error: searchError } = await supabase
     .from('users')
     .select('*')
-    .or(`email.eq."${normalizedEmail}",google_id.eq."${googleId}"`)
+    .or(`email.eq.${normalizedEmail},google_id.eq.${googleId}`)
     .eq('removed', false)
     .maybeSingle();
 
@@ -53,11 +53,10 @@ const googleSignIn = async (req, res, { userModel }) => {
         name,
         email: normalizedEmail,
         google_id: googleId,
-        photo: picture,
         role: isOwner ? 'superadmin' : 'business',
         enabled: true, // Auto-enable Google signups
         email_verified: true,
-        plan: isOwner ? 'enterprise' : 'trial',
+        plan: isOwner ? 'enterprise' : 'starter',
         trial_started_at: isOwner ? null : now.toISOString(),
         trial_ends_at: isOwner ? null : trialEndsAt.toISOString(),
         removed: false,
@@ -84,11 +83,9 @@ const googleSignIn = async (req, res, { userModel }) => {
     }
   } else {
     // Update existing user with Google ID if missing
-    if (!user.google_id || (isOwner && user.role !== 'superadmin')) {
       const updates = {
         google_id: googleId,
         email_verified: true,
-        photo: user.photo || picture,
       };
       if (isOwner) {
         updates.role = 'superadmin';
@@ -105,6 +102,8 @@ const googleSignIn = async (req, res, { userModel }) => {
       if (!updateError) user = updatedUser;
     }
   }
+
+  const isNew = !existingUser;
 
   if (!user.enabled)
     return res.status(403).json({
@@ -130,11 +129,10 @@ const googleSignIn = async (req, res, { userModel }) => {
       name: user.name,
       role: user.role,
       email: user.email,
-      photo: user.photo,
-      plan: user.plan,
       trialActive,
       trialDaysLeft,
       token,
+      isNew,
     },
     message: 'Successfully signed in with Google',
   });

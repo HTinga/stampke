@@ -84,7 +84,6 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'sign-stamps',    label: '🖋 Stamp Designer',   desc: 'Design digital stamps' },
     { id: 'sign-applier',   label: '📄 Apply Stamp',      desc: 'Stamp a PDF document' },
     { id: 'sign-templates', label: '📂 Templates',        desc: 'Stamp & document templates', locked: true },
-    { id: 'sign-upgrade',   label: '⚡ Upgrade',          desc: 'Unlock all eSign features' },
   ],
   'ai-tools': [
     { id: 'ai-summarizer',  label: '🎙 Transcriber',   desc: 'AI Audio & Document Transcriber' },
@@ -96,31 +95,26 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'invoicing-create',   label: '➕ New Invoice',    desc: 'Create & send invoice' },
     { id: 'invoicing-payments', label: '💳 Payments',       desc: 'Payment history', locked: true },
     { id: 'invoicing-unpaid',   label: '⏳ Unpaid',         desc: 'Outstanding balances', locked: true },
-    { id: 'invoicing-upgrade',  label: '⚡ Upgrade',        desc: 'Unlock full invoicing suite' },
   ],
   documents: [
     { id: 'documents-create',         label: '📝 New Document',     desc: 'Contract, letter, form', locked: true },
     { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files', locked: true },
     { id: 'documents-templates',      label: '📂 Templates',        desc: 'Saved document templates', locked: true },
-    { id: 'documents-upgrade',        label: '⚡ Upgrade',          desc: 'Unlock all document tools' },
   ],
   assistants: [
     { id: 'assistants-browse',   label: '🔍 Browse',        desc: 'Find virtual assistants' },
     { id: 'assistants-requests', label: '📑 My Requests',    desc: 'Your errand requests' },
     { id: 'assistants-active',   label: '🏃 Active',         desc: 'Ongoing tasks' },
     { id: 'assistants-history',  label: '✅ History',        desc: 'Completed errands' },
-    { id: 'assistants-upgrade',  label: '⚡ Upgrade',        desc: 'Unlock premium assistants' },
   ],
   scrapping: [
     { id: 'scrapping-dashboard', label: '📊 Dashboard',      desc: 'Scraper status' },
     { id: 'scrapping-new',       label: '➕ New Scrape',     desc: 'Start new extraction' },
     { id: 'scrapping-results',   label: '📂 Results',        desc: 'Extracted data' },
-    { id: 'scrapping-upgrade',   label: '⚡ Upgrade',        desc: 'Unlimited scraping' },
   ],
   settings: [
     { id: 'settings-profile',  label: 'My Profile',       desc: 'Account details' },
     { id: 'settings-business', label: 'Business Info',    desc: 'Company & billing details' },
-    { id: 'money-upgrade',     label: '⚡ Plans & Billing',desc: 'Upgrade your plan' },
     { id: 'admin-panel',       label: '🛡 Admin Panel',   desc: 'Platform management' },
   ],
 };
@@ -346,9 +340,22 @@ const App: React.FC = () => {
         const u = JSON.parse(decodeURIComponent(googleAuth));
         localStorage.setItem('tomo_token', u.token);
         localStorage.setItem('tomo_user_plan', u.plan || 'trial');
-        setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [], adminApproved: u.adminApproved || false, approvalExpiresAt: u.approvalExpiresAt });
+        setUser({ 
+          name: u.name, email: u.email, role: u.role, plan: u.plan, 
+          trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, 
+          adminPermissions: u.adminPermissions || [], 
+          adminApproved: u.adminApproved || false, 
+          approvalExpiresAt: u.approvalExpiresAt 
+        });
         setIsLoggedIn(true);
         setShowLoginModal(false);
+
+        if (u.isNew) {
+           setTimeout(() => {
+             alert('Welcome to StampKE! 🚀 Your account is verified and your Starter Trial is active.\n\nEnjoy unlimited VA access and 1 free Sign/Stamp during your 7-day trial.');
+           }, 500);
+        }
+
         if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
         else goTo('home');
       } catch (e) {

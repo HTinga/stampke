@@ -9,8 +9,9 @@ import {
   Sparkles, Eye, RotateCcw, RotateCw, Save, Circle, Plus, FileText, Calendar,
   Check, Eraser, Settings, Layers, Star, Grid3X3, Trash2, Zap,
   Bold, Italic, Underline, ChevronDown, Layout, Sliders, Move, Copy, Clock,
-  Image as ImageIcon, FileJson, FilePlus, CheckCircle2,
+  Image as ImageIcon, FileJson, FilePlus, CheckCircle2, Lightbulb
 } from 'lucide-react';
+import IntelligentTip from './IntelligentTip';
 
 /* ── Signature Pad ──────────────────────────────── */
 const SignaturePad = ({ onSave, onCancel }: { onSave:(u:string)=>void; onCancel:()=>void }) => {
@@ -458,6 +459,17 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                   <span>{t.label}</span>
                 </button>
               ))}
+            </div>
+            
+            <div className="px-3 pt-3">
+              <IntelligentTip 
+                tipKey="stamp_studio_serial"
+                title="Serial Numbers"
+                message="Use [SN] in any text field to add sequential numbering (e.g. 001, 002) when applying to multiple pages."
+                icon={Lightbulb}
+                color="#58a6ff"
+                delay={2000}
+              />
             </div>
 
             <div className="ss-right-content">

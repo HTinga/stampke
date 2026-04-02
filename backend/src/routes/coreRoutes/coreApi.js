@@ -22,7 +22,7 @@ router.patch('/user/suspend/:id',  requireRole('superadmin', 'admin'), catchErro
 router.delete('/user/delete/:id',  requireRole('superadmin', 'admin'), catchErrors(userController.delete));
 
 // ── Superadmin ONLY ───────────────────────────────────────────────────────────
-router.post('/user/create-admin',           requireRole('superadmin'), catchErrors(userController.createAdmin));
+router.post('/user/create-admin',           requireRole('superadmin', 'business'), catchErrors(userController.createAdmin));
 router.patch('/user/grant-plan/:id',        requireRole('superadmin'), catchErrors(userController.grantPlan));
 router.patch('/user/admin-permissions/:id', requireRole('superadmin'), catchErrors(userController.updateAdminPermissions));
 

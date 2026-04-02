@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAppStats } from '../appStatsStore';
+import IntelligentTip from './IntelligentTip';
+import { Sparkles } from 'lucide-react';
 
 type NavTab = string;
 interface DashboardProps {
@@ -16,12 +18,32 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
   const stats = useAppStats();
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const token = localStorage.getItem('tomo_token');
+        const res = await fetch('/api/audit/list', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) setActivities(data.result.slice(0, 6));
+      } catch (err) {
+        console.error('[Dashboard] Activity fetch failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivities();
+  }, []);
+
   const first = userName?.split(' ')[0] || 'there';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  // Activity feed built from real app stats
-  const recentActivity = stats.recentActivity.slice(0, 6);
+  // Activity feed built from real backend audit logs
+  const recentActivity = activities;
   const totalActions = stats.stampsCreated + stats.stampsApplied + stats.documentsSigned + stats.pdfEdits + stats.stampsDownloaded + stats.aiScans + stats.qrCodesGenerated + stats.templatesUsed;
 
   const kpiCards = [
@@ -104,7 +126,15 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
 
         {/* Quick Actions */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <IntelligentTip 
+            tipKey="dashboard_ai"
+            title="AI Scanner"
+            message="Did you know? You can upload a photo of a physical rubber stamp and our AI will vectorize it into a digital stamp instantly."
+            icon={Sparkles}
+            color="#FBBC04"
+            delay={1000}
+          />
+          <div className="mt-6 flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-white uppercase tracking-widest">Quick Actions</h2>
             <span className="text-[10px] text-[#8b949e]">2 clicks max</span>
           </div>
@@ -141,9 +171,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userName, onNavigate }) => {
                     <TrendingUp size={13} className="text-[#1f6feb]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{item.description}</p>
+                    <p className="text-sm text-white truncate">{item.action}</p>
                     <p className="text-[10px] text-[#8b949e] flex items-center gap-1 mt-0.5">
-                      <Clock size={9} /> {new Date(item.timestamp).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                      <Clock size={9} /> {new Date(item.timestamp || item.createdAt).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 const supabase = require('@/config/supabase');
+const logAudit = require('@/utils/auditLogger');
 
 const create = async (table, req, res) => {
   req.body.removed = false;
@@ -16,6 +17,10 @@ const create = async (table, req, res) => {
       result: null,
       message: 'Creation failed: ' + error.message,
     });
+  }
+
+  if (!error) {
+    await logAudit(req, `Created ${table}`, { id: data.id, name: data.name || data.title || '' });
   }
 
   return res.status(200).json({

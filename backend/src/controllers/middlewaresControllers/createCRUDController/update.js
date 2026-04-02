@@ -1,4 +1,5 @@
 const supabase = require('@/config/supabase');
+const logAudit = require('@/utils/auditLogger');
 
 const update = async (table, req, res) => {
   const { data, error } = await supabase
@@ -15,6 +16,10 @@ const update = async (table, req, res) => {
       result: null,
       message: 'Record not found or update failed: ' + (error ? error.message : ''),
     });
+  }
+
+  if (!error && data) {
+    await logAudit(req, `Updated ${table}`, { id: data.id, name: data.name || data.title || '' });
   }
 
   return res.status(200).json({

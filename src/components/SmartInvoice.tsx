@@ -6,9 +6,10 @@ import {
   ArrowDownToLine, Loader2, AlertCircle, CheckCircle2, Receipt, Layers,
   SlidersHorizontal, Package, FileImage, FilePlus, Wallet, PieChart,
   Archive, ChevronRight, MoreVertical, Sparkles, Settings, Home, Save,
-  Send, Share2, Copy, Printer, ArrowLeft, Building2, Star, Hash,
+  Send, Share2, Copy, Printer, ArrowLeft, Building2, Star, Hash, Lightbulb
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import IntelligentTip from './IntelligentTip';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface InvoiceItem { name: string; qty?: number; price?: number; total?: number; }
@@ -434,6 +435,14 @@ export default function SmartInvoice() {
         {/* ════ DASHBOARD ════ */}
         {view === 'dashboard' && (
           <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:16 }}>
+            <IntelligentTip 
+              tipKey="invoice_whatsapp"
+              title="Quick Share"
+              message="You can send invoices directly to your clients' WhatsApp. Just click the Share button after saving an invoice."
+              icon={Lightbulb}
+              color="#34d399"
+              delay={1500}
+            />
             {/* Stats row */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:10 }}>
               {[

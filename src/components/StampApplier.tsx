@@ -541,8 +541,17 @@ const StampApplier: React.FC<StampApplierProps> = ({ config, svgRef, onGoToStudi
             </div>
 
             {/* Tips */}
-            <div className="p-3 border-t border-[#30363d]">
-              <div className="bg-[#161b22] rounded-xl p-3 border border-[#30363d]">
+            <div className="p-3 border-t border-[#30363d] pb-20">
+              <div className="bg-[#161b22] rounded-xl p-3 border border-[#30363d] relative group">
+                <button 
+                  onClick={(e) => {
+                    const el = e.currentTarget.parentElement;
+                    if (el) el.style.display = 'none';
+                  }}
+                  className="absolute top-2 right-2 p-1 text-[#8b949e] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={14} />
+                </button>
                 <div className="flex items-center gap-1.5 text-[#58a6ff] mb-1.5">
                   <CheckCircle2 size={13} />
                   <span className="text-[10px] font-bold uppercase tracking-wider">Tip</span>

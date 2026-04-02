@@ -21,29 +21,67 @@ const buildWelcomeEmail = (name, frontendUrl) => `<!DOCTYPE html>
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#18181b">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.05)">
         <tr>
-          <td align="center" style="padding:0 0 32px">
-            <div style="display:inline-block;background:#18181b;border-radius:14px;padding:14px 28px">
-              <span style="color:#ffffff;font-size:24px;font-weight:900;letter-spacing:-0.5px">StampKE</span>
-            </div>
+          <td align="center" style="padding:40px 0 32px;background:#18181b">
+            <span style="color:#ffffff;font-size:28px;font-weight:900;letter-spacing:-0.5px">StampKE</span>
           </td>
         </tr>
         <tr>
-          <td style="background:#ffffff;border-radius:20px;padding:48px;box-shadow:0 1px 3px rgba(0,0,0,0.08)">
-            <h1 style="font-size:28px;font-weight:900;color:#18181b;margin:0 0 12px">Welcome to StampKE, ${name}!</h1>
-            <p style="font-size:16px;color:#52525b;line-height:1.7;margin:0 0 28px">
-              Your account is ready. Start using StampKE to digitally sign and stamp your documents with authority.
+          <td style="padding:48px">
+            <h1 style="font-size:24px;font-weight:900;color:#18181b;margin:0 0 16px">Welcome to StampKE, ${name}!</h1>
+            <p style="font-size:16px;color:#52525b;line-height:1.7;margin:0 0 32px">
+              Your account is successfully verified. You've been granted a <strong>7-day Starter Trial</strong> to explore the full power of our platform.
             </p>
+
+            <div style="background:#f8fafc;border-radius:16px;padding:24px;margin-bottom:32px">
+              <h3 style="font-size:14px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:0 0 20px">What's included in your trial:</h3>
+              
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="32" style="vertical-align:top;padding-bottom:16px"><span style="font-size:20px">🤖</span></td>
+                  <td style="padding-bottom:16px;padding-left:12px">
+                    <strong style="display:block;font-size:15px;color:#1e293b">AI Virtual Assistant (VA)</strong>
+                    <span style="font-size:13px;color:#64748b">Unlimited access to our document-aware AI for questions and processing.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="32" style="vertical-align:top;padding-bottom:16px"><span style="font-size:20px">🖋️</span></td>
+                  <td style="padding-bottom:16px;padding-left:12px">
+                    <strong style="display:block;font-size:15px;color:#1e293b">Sign Center</strong>
+                    <span style="font-size:13px;color:#64748b">1 free legally-binding signature to get you started.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="32" style="vertical-align:top;padding-bottom:16px"><span style="font-size:20px">⭕</span></td>
+                  <td style="padding-bottom:16px;padding-left:12px">
+                    <strong style="display:block;font-size:15px;color:#1e293b">Stamp Studio</strong>
+                    <span style="font-size:13px;color:#64748b">Design and apply 1 custom digital rubber stamp with auth.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="32" style="vertical-align:top"><span style="font-size:20px">🧾</span></td>
+                  <td style="padding-left:12px">
+                    <strong style="display:block;font-size:15px;color:#1e293b">Smart Invoicing</strong>
+                    <span style="font-size:13px;color:#64748b">AI-powered invoice extraction and tracking (requires Pro).</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
             <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 36px">
               <tr>
-                <td>
-                  <a href="${frontendUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;padding:15px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
-                    🚀 Get Started &rarr;
+                <td align="center">
+                  <a href="${frontendUrl}" style="display:inline-block;background:#1a73e8;color:#ffffff;padding:16px 40px;border-radius:12px;text-decoration:none;font-weight:700;font-size:16px;box-shadow:0 4px 12px rgba(26,115,232,0.3)">
+                    Verify & Launch Dashboard &rarr;
                   </a>
                 </td>
               </tr>
             </table>
+
+            <p style="font-size:13px;color:#94a3b8;text-align:center;margin:0">
+              Need help? Reply to this email or visit our support center.
+            </p>
           </td>
         </tr>
       </table>
@@ -104,7 +142,7 @@ const googleCallback = async (req, res) => {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
-      .or(`email.eq."${normalizedEmail}",google_id.eq."${googleId}"`)
+      .or(`email.eq.${normalizedEmail},google_id.eq.${googleId}`)
       .eq('removed', false)
       .maybeSingle();
 
@@ -123,12 +161,11 @@ const googleCallback = async (req, res) => {
           name,
           email: normalizedEmail,
           google_id: googleId,
-          photo: picture || null,
           role: isOwner ? 'superadmin' : intendedRole,
           enabled: true,
           email_verified: true,
           removed: false,
-          plan: isOwner ? 'enterprise' : 'trial',
+          plan: isOwner ? 'enterprise' : 'starter',
           trial_started_at: isOwner ? null : now.toISOString(),
           trial_ends_at: isOwner ? null : new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         }])
@@ -136,10 +173,11 @@ const googleCallback = async (req, res) => {
         .single();
       
       if (createError) {
-        logger.error(`[Google OAuth] User Create Error: ${createError.message}`);
+        logger.error(`[Google OAuth] User Create Error: ${createError.message} (Email: ${normalizedEmail})`);
         throw createError;
       }
       finalUser = newUser;
+      finalUser.is_new = true;
 
       await supabase.from('user_passwords').insert([{ user_id: finalUser.id, password_hash: '', salt: '' }]);
 
@@ -155,7 +193,6 @@ const googleCallback = async (req, res) => {
       const updates = {};
       if (!finalUser.google_id) updates.google_id = googleId;
       if (!finalUser.email_verified) updates.email_verified = true;
-      if (picture && !finalUser.photo) updates.photo = picture;
       if (isOwner && finalUser.role !== 'superadmin') {
         updates.role = 'superadmin';
         updates.enabled = true;
@@ -195,6 +232,7 @@ const googleCallback = async (req, res) => {
       plan: finalUser.plan,
       trialActive,
       trialDaysLeft,
+      isNew: !!finalUser.is_new,
     }));
 
     return res.redirect(`${FRONTEND_URL}?google_auth=${userData}`);

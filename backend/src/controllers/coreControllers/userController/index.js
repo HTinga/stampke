@@ -196,33 +196,46 @@ const remove = async (req, res) => {
 
 // POST /api/user/create-admin
 const createAdmin = async (req, res) => {
-  if (req.user.role !== 'superadmin')
-    return res.status(403).json({ success: false, result: null, message: 'Only superadmin can create admins.' });
+  const { name, email, password, role = 'admin', adminPermissions = [] } = req.body;
+  const isSuperAdmin = req.user.role === 'superadmin';
+  const isEnterprise = req.user.plan === 'enterprise' || req.user.plan === 'business'; // 'business' in our code maps to the Enterprise level subscription
 
-  const { name, email, password, adminPermissions = [] } = req.body;
+  if (!isSuperAdmin && !isEnterprise) {
+    return res.status(403).json({ success: false, message: 'Only Enterprise level accounts can create sub-users.' });
+  }
+
   if (!name || !email || !password)
-    return res.status(400).json({ success: false, result: null, message: 'name, email and password are required.' });
+    return res.status(400).json({ success: false, message: 'name, email and password are required.' });
+
+  // ── Enforce 5-user limit for Enterprise ─────────────────────────────────────
+  if (!isSuperAdmin) {
+    const { count, error: countError } = await supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by', req.user.id)
+      .eq('removed', false);
+
+    if (countError) throw countError;
+    if (count >= 5) {
+      return res.status(403).json({ success: false, message: 'You have reached your limit of 5 sub-users. Upgrade to a Custom plan for more.' });
+    }
+  }
 
   const emailLower = email.toLowerCase();
-  const { data: existing } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', emailLower)
-    .eq('removed', false)
-    .maybeSingle();
+  const { data: existing } = await supabase.from('users').select('id').eq('email', emailLower).eq('removed', false).maybeSingle();
+  if (existing) return res.status(409).json({ success: false, message: 'Email already registered.' });
 
-  if (existing) return res.status(409).json({ success: false, result: null, message: 'Email already registered.' });
-
-  const { data: newAdmin, error: createError } = await supabase
+  const { data: newUser, error: createError } = await supabase
     .from('users')
     .insert([{
       name,
       email: emailLower,
-      role: 'admin',
+      role: isSuperAdmin ? (role || 'admin') : 'admin',
       enabled: true,
       email_verified: true,
       admin_permissions: adminPermissions,
       plan: 'business',
+      created_by: req.user.id,
       removed: false,
     }])
     .select()
@@ -232,9 +245,9 @@ const createAdmin = async (req, res) => {
 
   const salt = shortid.generate();
   const passwordHash = bcrypt.hashSync(salt + password);
-  await supabase.from('user_passwords').insert([{ user_id: newAdmin.id, password_hash: passwordHash, salt }]);
+  await supabase.from('user_passwords').insert([{ user_id: newUser.id, password_hash: passwordHash, salt }]);
 
-  return res.status(200).json({ success: true, result: newAdmin, message: `Admin ${name} created successfully.` });
+  return res.status(200).json({ success: true, result: newUser, message: `User ${name} created successfully.` });
 };
 
 // PATCH /api/user/grant-plan/:id
@@ -316,7 +329,6 @@ const updateAdminPermissions = async (req, res) => {
 // POST /api/user/usage
 const trackUsage = async (req, res) => {
   const { feature } = req.body;
-  const LIMITS = { esign: 1, stamp: 1, invoice: 1, pdf: 1, summarizer: 1, assistant: 1, scrape: 1 };
   
   const { data: user, error } = await supabase
     .from('users')
@@ -328,15 +340,33 @@ const trackUsage = async (req, res) => {
 
   const now = new Date();
   const trialEnds = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
-  const isPaid = ['starter','pro','business'].includes(user.plan) || (user.plan === 'trial' && trialEnds && now < trialEnds);
+  const isTrial = user.plan === 'trial' || (user.plan === 'starter' && trialEnds && now < trialEnds);
+  const isPaidPermanently = ['pro','business'].includes(user.plan) || (user.plan === 'starter' && (!trialEnds || now >= trialEnds));
   
-  if (isPaid) return res.status(200).json({ success: true, result: { allowed: true, remaining: 999 }, message: 'Premium user.' });
+  // Enterprise/Pro get unlimited access
+  if (isPaidPermanently) return res.status(200).json({ success: true, result: { allowed: true, remaining: 999 }, message: 'Premium user.' });
+
+  const LIMITS = { 
+    esign: 1, 
+    stamp: 1, 
+    invoice: 0, 
+    pdf: 0, 
+    summarizer: 0, 
+    assistant: 999, // VA is always open
+    scrape: 0 
+  };
 
   const freeUsage = user.free_usage || {};
   const current = freeUsage[feature] || 0;
-  const limit = LIMITS[feature] || 1;
+  const limit = LIMITS[feature] !== undefined ? LIMITS[feature] : 0;
 
-  if (current >= limit) return res.status(200).json({ success: true, result: { allowed: false, remaining: 0, limit }, message: `Free ${feature} limit reached. Please upgrade.` });
+  if (current >= limit) {
+    return res.status(200).json({ 
+      success: true, 
+      result: { allowed: false, remaining: 0, limit }, 
+      message: limit === 1 ? `Free ${feature} limit (1 use) reached. Please upgrade.` : `The ${feature} feature is locked for trial users.`
+    });
+  }
 
   const updatedUsage = { ...freeUsage, [feature]: current + 1 };
   await supabase.from('users').update({ free_usage: updatedUsage }).eq('id', user.id);
@@ -356,15 +386,26 @@ const getUsage = async (req, res) => {
 
   const now = new Date();
   const trialEnds = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
-  const isPaid = ['starter','pro','business'].includes(user.plan) || (user.plan === 'trial' && trialEnds && now < trialEnds);
+  const isTrial = user.plan === 'trial' || (user.plan === 'starter' && trialEnds && now < trialEnds);
+  const isPaidPermanently = ['pro','business'].includes(user.plan) || (user.plan === 'starter' && (!trialEnds || now >= trialEnds));
   
   const usage = user.free_usage || {};
   const features = ['esign', 'stamp', 'invoice', 'pdf', 'summarizer', 'assistant', 'scrape'];
-  const result = { isPaid };
+  const result = { isPaid: isPaidPermanently, isTrial };
+
+  const LIMITS = { 
+    esign: 1, 
+    stamp: 1, 
+    invoice: 0, 
+    pdf: 0, 
+    summarizer: 0, 
+    assistant: 999, 
+    scrape: 0 
+  };
 
   features.forEach(f => {
     const used = usage[f] || 0;
-    const limit = 1;
+    const limit = isPaidPermanently ? 999 : (LIMITS[f] !== undefined ? LIMITS[f] : 0);
     result[f] = { used, limit, remaining: Math.max(0, limit - used) };
   });
 

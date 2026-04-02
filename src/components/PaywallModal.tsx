@@ -27,20 +27,20 @@ const FEATURE_LABELS: Record<FeatureKey, string> = {
 
 const PLANS = [
   {
-    id: 'starter', name: 'Starter', price: 'KES 650', period: '/month',
+    id: 'starter', name: 'Starter', price: 'KES 1,500', period: '/month',
     color: 'from-blue-600 to-blue-800',
-    features: ['eSign — sign documents', 'Stamp Designer & Applier', 'Smart Invoice', 'Find Workers', 'Add Clients'],
+    features: ['eSign — unlimited signatures', 'Stamp Designer & Applier', 'Smart Invoice (unlimited)', 'Virtual Assistants', 'Email support'],
   },
   {
-    id: 'professional', name: 'Professional', price: 'KES 2,500', period: '/month',
+    id: 'professional', name: 'Professional', price: 'KES 3,000', period: '/month',
     color: 'from-purple-600 to-indigo-700',
     badge: 'Most Popular',
-    features: ['Everything in Starter', 'PDF Editor', 'AI Scanner', 'Client CRM', 'Recruit & Track unlimited', 'Team Members'],
+    features: ['Everything in Starter', 'PDF Editor & Transcriber', 'Virtual Assistant (Priority)', 'Priority support'],
   },
   {
-    id: 'enterprise', name: 'Enterprise', price: 'KES 5,000', period: '/month',
+    id: 'enterprise', name: 'Enterprise', price: 'KES 10,000', period: '/month',
     color: 'from-amber-500 to-orange-600',
-    features: ['Everything in Professional', 'Virtual Assistants', 'Admin Sub-accounts', 'API Access', 'White-label'],
+    features: ['Everything in Professional', 'API Package (eSign, Stamp, etc.)', 'Virtual Assistants (Priority)', 'Dedicated account manager'],
   },
 ];
 
@@ -102,59 +102,6 @@ export default function PaywallModal({ feature, status, approvalExpiresAt, onClo
         </div>
 
         <div className="p-6">
-          {/* Tab switcher for stamp features with monthly option */}
-          {isStampFeature && (
-            <div className="flex gap-2 mb-6 bg-[#0d1117] rounded-xl p-1">
-              <button
-                onClick={() => setTab('subscribe')}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${tab === 'subscribe' ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white'}`}
-              >
-                Subscribe
-              </button>
-              <button
-                onClick={() => setTab('onetime')}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${tab === 'onetime' ? 'bg-[#1f6feb] text-white' : 'text-[#8b949e] hover:text-white'}`}
-              >
-                One-time Download (KES 650)
-              </button>
-            </div>
-          )}
-
-          {/* One-time pay option */}
-          {tab === 'onetime' && isStampFeature ? (
-            <div className="space-y-4">
-              <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-6 text-center">
-                <Download size={40} className="text-[#58a6ff] mx-auto mb-3" />
-                <h3 className="text-2xl font-black text-white mb-1">KES 650</h3>
-                <p className="text-sm text-[#8b949e] mb-4">One-time payment — download or apply your stamp once, no subscription needed.</p>
-                <ul className="text-left space-y-2 mb-6 text-sm">
-                  {['Download your designed stamp (SVG + PNG)', 'Apply stamp to 1 PDF document', 'No recurring charges', 'Instant access'].map(f => (
-                    <li key={f} className="flex items-center gap-2 text-[#e6edf3]">
-                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => onOneTimePay?.()}
-                    className="flex-1 bg-[#1f6feb] hover:bg-[#388bfd] text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
-                  >
-                    <Smartphone size={16} /> Pay via M-Pesa
-                  </button>
-                  <button
-                    onClick={() => onOneTimePay?.()}
-                    className="flex-1 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
-                  >
-                    <CreditCard size={16} /> Pay by Card
-                  </button>
-                </div>
-              </div>
-              <p className="text-center text-xs text-[#8b949e]">
-                Want unlimited use?{' '}
-                <button onClick={() => setTab('subscribe')} className="text-[#58a6ff] underline">See subscription plans →</button>
-              </p>
-            </div>
-          ) : (
             /* Subscription plans */
             <div className="space-y-4">
               <p className="text-sm text-[#8b949e] font-semibold text-center mb-2">Choose a plan to unlock all features</p>
