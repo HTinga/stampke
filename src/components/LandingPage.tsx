@@ -76,7 +76,7 @@ const PLANS = [
   {
     name: 'Enterprise',
     price: 'KES 10,000',
-    period: '/year',
+    period: '/month',
     color: '#EA4335',
     highlight: false,
     features: [
@@ -545,7 +545,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               <ul className="space-y-2 text-[#8b949e]">
                 <li>Starter — KES 1,500/mo</li>
                 <li>Professional — KES 3,000/mo</li>
-                <li>Enterprise — KES 10,000/yr</li>
+                <li>Enterprise — KES 10,000/mo</li>
               </ul>
             </div>
             <div>

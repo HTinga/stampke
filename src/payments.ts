@@ -51,7 +51,7 @@ export const PLANS = {
     name: 'Enterprise',
     price: 10000,
     currency: 'KES',
-    period: '/year',
+    period: '/month',
     description: 'For large organisations & offline use.',
     popular: false,
     mpesaPriceKES: 10000,
