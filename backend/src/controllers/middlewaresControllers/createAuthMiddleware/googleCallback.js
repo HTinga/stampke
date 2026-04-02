@@ -101,7 +101,6 @@ const googleCallback = async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const isOwner = normalizedEmail === OWNER_EMAIL;
 
-    // FIX: Braced OR syntax and error handling
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -124,7 +123,7 @@ const googleCallback = async (req, res) => {
           name,
           email: normalizedEmail,
           google_id: googleId,
-          photo: picture,
+          photo: picture || null,
           role: isOwner ? 'superadmin' : intendedRole,
           enabled: true,
           email_verified: true,
@@ -142,10 +141,8 @@ const googleCallback = async (req, res) => {
       }
       finalUser = newUser;
 
-      // Initialize password entry
       await supabase.from('user_passwords').insert([{ user_id: finalUser.id, password_hash: '', salt: '' }]);
 
-      // Send welcome
       try {
         await sendEmail({
           to: normalizedEmail,
@@ -155,7 +152,6 @@ const googleCallback = async (req, res) => {
         });
       } catch (err) { logger.warn(`[Email] welcome error: ${err.message}`); }
     } else {
-      // Sync Google profile
       const updates = {};
       if (!finalUser.google_id) updates.google_id = googleId;
       if (!finalUser.email_verified) updates.email_verified = true;
@@ -182,7 +178,6 @@ const googleCallback = async (req, res) => {
 
     const token = jwt.sign({ id: finalUser.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Update session
     const { data: passData } = await supabase.from('user_passwords').select('logged_sessions').eq('user_id', finalUser.id).single();
     const sessions = passData?.logged_sessions || [];
     await supabase.from('user_passwords').update({ logged_sessions: [...sessions, token] }).eq('user_id', finalUser.id);
@@ -190,19 +185,24 @@ const googleCallback = async (req, res) => {
     const trialEnds = finalUser.trial_ends_at ? new Date(finalUser.trial_ends_at) : null;
     const now = new Date();
     const trialActive = finalUser.plan === 'trial' && trialEnds && now < trialEnds;
-    const trialDaysLeft = trialActive ? Math.ceil((trialEnds - now) / 86400000) : 0;
+    const trialDaysLeft = trialActive ? Math.max(0, Math.ceil((trialEnds - now) / (1000 * 60 * 60 * 24))) : 0;
 
     const userData = encodeURIComponent(JSON.stringify({
-      token, name: finalUser.name, email: finalUser.email, role: finalUser.role,
-      plan: finalUser.plan, trialActive, trialDaysLeft,
+      token,
+      name: finalUser.name,
+      email: finalUser.email,
+      role: finalUser.role,
+      plan: finalUser.plan,
+      trialActive,
+      trialDaysLeft,
     }));
 
     return res.redirect(`${FRONTEND_URL}?google_auth=${userData}`);
 
   } catch (err) {
     logger.error(`[Google OAuth callback] Exception: ${err.message}`);
-    const debugMsg = encodeURIComponent(`Google sign-in failed: ${err.message}`);
-    return res.redirect(`${FRONTEND_URL}?auth_error=${debugMsg}`);
+    const errorMsg = encodeURIComponent('Google sign-in failed. Please try again or use email login.');
+    return res.redirect(`${FRONTEND_URL}?auth_error=${errorMsg}`);
   }
 };
 

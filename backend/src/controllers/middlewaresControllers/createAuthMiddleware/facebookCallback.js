@@ -73,10 +73,10 @@ const facebookCallback = async (req, res) => {
     const isOwner = normalizedEmail === OWNER_EMAIL;
 
     // Supabase User Interaction
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: searchError } = await supabase
       .from('users')
       .select('*')
-      .or(`email.eq.${normalizedEmail},facebook_id.eq.${facebookId}`)
+      .or(`email.eq."${normalizedEmail}",facebook_id.eq."${facebookId}"`)
       .eq('removed', false)
       .maybeSingle();
 
