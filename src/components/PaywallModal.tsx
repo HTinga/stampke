@@ -17,12 +17,10 @@ const FEATURE_LABELS: Record<FeatureKey, string> = {
   pdf_editor:         'PDF Editor',
   ai_summarizer:      'AI Transcriber',
   ai_digitizer:       'AI Stamp Digitizer',
-  qr_tracker:         'QR Tracker',
   invoicing:          'Smart Invoice',
   documents:          'Documents Hub',
   templates:          'Template Library',
   virtual_assistants: 'Virtual Assistants',
-  social_hub:         'Social Hub',
 };
 
 const PLANS = [
@@ -55,7 +53,7 @@ interface PaywallModalProps {
 
 export default function PaywallModal({ feature, status, approvalExpiresAt, onClose, onPlanSelected, onOneTimePay }: PaywallModalProps) {
   const [tab, setTab] = useState<'subscribe' | 'onetime'>('subscribe');
-  const featureName = FEATURE_LABELS[feature] || feature;
+  const featureName = FEATURE_LABELS[feature as FeatureKey] || feature;
   const isStampFeature = feature === 'stamp_design' || feature === 'stamp_apply';
 
   const headerBg = status === 'expired'
@@ -91,7 +89,7 @@ export default function PaywallModal({ feature, status, approvalExpiresAt, onClo
                 {status === 'expired'
                   ? `Your admin-approved access to ${featureName} has expired.`
                   : status === 'trial_used'
-                  ? `You've used your 1 free trial for ${featureName}. Choose how to continue.`
+                  ? `You've used your 5 free trials for ${featureName}. Choose how to continue.`
                   : `Upgrade your plan to unlock ${featureName} and all premium features.`}
               </p>
             </div>
@@ -102,7 +100,6 @@ export default function PaywallModal({ feature, status, approvalExpiresAt, onClo
         </div>
 
         <div className="p-6">
-            /* Subscription plans */
             <div className="space-y-4">
               <p className="text-sm text-[#8b949e] font-semibold text-center mb-2">Choose a plan to unlock all features</p>
               <div className="grid gap-4 md:grid-cols-3">
@@ -148,7 +145,6 @@ export default function PaywallModal({ feature, status, approvalExpiresAt, onClo
                 </p>
               </div>
             </div>
-          )}
         </div>
       </div>
     </div>

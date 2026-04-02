@@ -43,19 +43,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './store';
 import { useAppStats } from './appStatsStore';
 // ─── Navigation Model (business-owner language) ──────────────────────────────
-type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'ai-tools' | 'assistants' | 'scrapping' | 'settings';
+type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'ai-tools' | 'assistants' | 'settings';
 type SubView =
   | 'dashboard'
-  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create' | 'money-upgrade'
-  | 'invoicing-invoices' | 'invoicing-payments' | 'invoicing-unpaid' | 'invoicing-create' | 'invoicing-upgrade'
-  | 'sign-esign' | 'sign-stamps' | 'sign-applier' | 'sign-templates' | 'sign-ai-scan' | 'sign-upgrade'
-  | 'assistants-browse' | 'assistants-requests' | 'assistants-active' | 'assistants-history' | 'assistants-upgrade'
-  | 'scrapping-dashboard' | 'scrapping-new' | 'scrapping-results' | 'scrapping-upgrade'
+  | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
+  | 'invoicing-invoices' | 'invoicing-payments' | 'invoicing-unpaid' | 'invoicing-create'
+  | 'sign-esign' | 'sign-stamps' | 'sign-applier' | 'sign-templates' | 'sign-ai-scan'
+  | 'assistants-browse' | 'assistants-requests' | 'assistants-active' | 'assistants-history'
   | 'documents-create' | 'documents-templates' | 'documents-esign' | 'documents-stamps' | 'documents-pdf' | 'documents-stamp-applier' 
   | 'ai-summarizer' | 'ai-digitizer' | 'ai-translate'
   | 'work-find' | 'work-my-workers' | 'work-active' | 'work-completed' | 'work-tracking'
   | 'activity-all' | 'activity-notifications'
-  | 'settings-profile' | 'settings-business'
+  | 'settings-profile' | 'settings-business' | 'pricing'
   | 'admin-panel' | 'worker-portal'
   | 'landing';
 
@@ -71,8 +70,7 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'sign-docs',  label: 'eSign & Stamps',      icon: PenTool,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'assistants', label: 'Assistants',         icon: Bot,        emoji: '🤖' },
-  { id: 'scrapping',  label: 'Scraper',            icon: Globe,      emoji: '🌐' },
-  { id: 'documents',  label: 'Docs & PDF',          icon: FileText,   emoji: '📄' },
+  { id: 'documents',  label: 'PDF Editor',          icon: FileText,   emoji: '📄' },
   { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
 ];
@@ -107,11 +105,6 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'assistants-active',   label: '🏃 Active',         desc: 'Ongoing tasks' },
     { id: 'assistants-history',  label: '✅ History',        desc: 'Completed errands' },
   ],
-  scrapping: [
-    { id: 'scrapping-dashboard', label: '📊 Dashboard',      desc: 'Scraper status' },
-    { id: 'scrapping-new',       label: '➕ New Scrape',     desc: 'Start new extraction' },
-    { id: 'scrapping-results',   label: '📂 Results',        desc: 'Extracted data' },
-  ],
   settings: [
     { id: 'settings-profile',  label: 'My Profile',       desc: 'Account details' },
     { id: 'settings-business', label: 'Business Info',    desc: 'Company & billing details' },
@@ -125,7 +118,6 @@ const CREATE_ACTIONS = [
   { label: 'Design Stamp',     sub: 'sign-stamps' as SubView,        section: 'sign-docs' as MainSection,   emoji: '🖋️' },
   { label: 'Create Invoice',   sub: 'invoicing-create' as SubView,   section: 'invoicing' as MainSection,   emoji: '🧾' },
   { label: 'Request Assistant', sub: 'assistants-browse' as SubView, section: 'assistants' as MainSection,  emoji: '🤖' },
-  { label: 'Web Scrape',       sub: 'scrapping-new' as SubView,      section: 'scrapping' as MainSection,   emoji: '🌐' },
 ];
 
 // ─── Placeholder view for unbuilt sections ────────────────────────────────────
@@ -203,7 +195,8 @@ const App: React.FC = () => {
     if (!isLoggedIn) return;
     try {
       const token = localStorage.getItem('tomo_token');
-      const res = await fetch('/api/notification/list', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${apiUrl}/api/notification/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -222,7 +215,8 @@ const App: React.FC = () => {
   const markNotificationRead = async (id: string) => {
     try {
       const token = localStorage.getItem('tomo_token');
-      await fetch(`/api/notification/read/${id}`, { 
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      await fetch(`${apiUrl}/api/notification/read/${id}`, { 
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -567,18 +561,21 @@ const App: React.FC = () => {
     u[key] = (u[key] || 0) + 1;
     localStorage.setItem(`usage_${user.email}`, JSON.stringify(u));
   };
-  const FREE_LIMITS: Record<string, number> = { esign: 1, stamp: 1, invoice: 1, pdf: 1, summarizer: 1, assistant: 1, scrape: 1 };
+  const FREE_LIMITS: Record<string, number> = { esign: 5, stamp: 5, invoice: 5, pdf: 5, summarizer: 5, assistant: 5, scrape: 5 };
   const hasPaidPlan = user?.plan === 'starter' || user?.plan === 'pro' || user?.plan === 'business';
   const withinFreeLimit = (key: string) => {
     if (userRole === 'superadmin' || hasPaidPlan) return true;
+    // VA is unlimited
+    if (key === 'assistant') return true;
     const usage = getUserUsage();
-    const limit = FREE_LIMITS[key] || 1;
+    const limit = FREE_LIMITS[key] || 5;
     return (usage[key] || 0) < limit;
   };
   const usageLeft = (key: string) => {
     if (userRole === 'superadmin' || hasPaidPlan) return 999;
+    if (key === 'assistant') return 999;
     const usage = getUserUsage();
-    const limit = FREE_LIMITS[key] || 1;
+    const limit = FREE_LIMITS[key] || 5;
     return Math.max(0, limit - (usage[key] || 0));
   };
 
@@ -890,15 +887,10 @@ const App: React.FC = () => {
     }
 
     // ── Scrapping Tool ─────────────────────────────────────────────────────────
-    if (activeView === 'scrapping-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
-    if (activeView === 'scrapping-dashboard' || activeView === 'scrapping-new' || activeView === 'scrapping-results') {
-      if (!canAccess('scrapping-dashboard')) return renderLocked('Virtual Assistants requires a Starter plan (KES 1,500/mo)', 'virtual_assistants');
-      return <ScrappingTool initialView={activeView === 'scrapping-new' ? 'new' : activeView === 'scrapping-results' ? 'results' : 'dashboard'} />;
-    }
+    // ── Pricing Page ──
+    if (activeView === 'pricing') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
 
     // ── Smart Invoice ────────────────────────────────────────────────────────────
-    if (activeView === 'invoicing-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
-    if (activeView === 'money-upgrade')     return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} onClose={() => goTo('home')} />;
     if (['invoicing-invoices','invoicing-payments','invoicing-unpaid','invoicing-create',
          'money-invoices','money-payments','money-unpaid','money-create'].includes(activeView)) {
       if (!canAccess('invoicing-invoices')) return renderLocked('Smart Invoice & Payments requires a Starter plan (KES 1,500/mo)', 'invoicing');
@@ -915,17 +907,14 @@ const App: React.FC = () => {
         onClearPendingField={() => setPendingStampFieldId(null)}
         isActive
         isPaid={canAccess('sign-esign')}
-        onUpgrade={() => goTo('settings', 'money-upgrade')}
+        onUpgrade={() => goTo('settings', 'pricing')}
       />;
     }
     if (activeView === 'sign-stamps')    return renderView_stamps();
     if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} userStampCount={freeUsage.stamp.used} />;
     if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan (KES 1,000/mo)', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
     if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan (KES 3,000/mo)', 'ai_digitizer'); return renderView_aiScan(); }
-    if (activeView === 'sign-upgrade')  return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
 
-    // ── Docs & PDF ───────────────────────────────────────────────────────────────
-    if (activeView === 'documents-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
     if (activeView === 'documents-pdf' || activeView === 'documents-templates' || activeView === 'documents-stamps' || activeView === 'documents-esign') {
       if (!canAccess('documents-pdf')) return renderLocked('PDF Editor & Transcriber requires a Professional plan (KES 3,000/mo)', 'documents');
       return <ComingSoon title="Document Forge" desc="Advanced document generation and PDF editing suite coming soon." emoji="📄" />;
@@ -964,10 +953,10 @@ const App: React.FC = () => {
     if (activeView === 'documents-stamps') return renderView_stamps();
 
     // ── Virtual Assistants ────────────────────────────────────────────────────────
-    if (activeView === 'assistants-upgrade') return <PricingPage userEmail={user?.email} currentPlan={user?.plan || 'trial'} />;
+
     if (activeView === 'assistants-browse' || activeView === 'assistants-requests' || activeView === 'assistants-active' || activeView === 'assistants-history') {
       if (!canAccess('assistants-browse')) return renderLocked('Virtual Assistants requires a Business plan (KES 7,500/mo)', 'virtual_assistants');
-      return <VirtualAssistants initialView={activeView === 'assistants-requests' ? 'requests' : activeView === 'assistants-active' ? 'active' : activeView === 'assistants-history' ? 'history' : 'browse'} onUpgrade={() => goTo('invoicing', 'invoicing-upgrade')} />;
+      return <VirtualAssistants initialView={activeView === 'assistants-requests' ? 'requests' : activeView === 'assistants-active' ? 'active' : activeView === 'assistants-history' ? 'history' : 'browse'} onUpgrade={() => goTo('home', 'pricing')} />;
     }
 
     // ACTIVITY
@@ -1157,10 +1146,7 @@ const App: React.FC = () => {
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
                     <User size={15} /> My Profile
                   </button>
-                  <button onClick={() => { goTo('invoicing', 'invoicing-upgrade'); setIsSidebarOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-[#8b949e] hover:bg-[#21262d] hover:text-white transition-colors">
-                    <Receipt size={15} /> Billing & Plans
-                  </button>
+
                   <button onClick={() => { handleLogout(); setIsSidebarOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                     <LogOut size={15} /> Sign Out
@@ -1413,10 +1399,7 @@ const App: React.FC = () => {
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
                             <Settings size={15} className="text-[#8b949e]" /> Business Settings
                           </button>
-                          <button onClick={() => { goTo('invoicing', 'invoicing-upgrade'); setShowUserMenu(false); }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
-                            <Receipt size={15} className="text-emerald-400" /> Billing & Plans
-                          </button>
+
                           {(userRole === 'superadmin' || userRole === 'admin') && (
                             <button onClick={() => { goTo('settings', 'admin-panel'); setShowUserMenu(false); }}
                               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#e6edf3] hover:bg-[#21262d] transition-colors">
@@ -1519,11 +1502,11 @@ const App: React.FC = () => {
           onClose={hidePaywall}
           onPlanSelected={(planId) => {
             hidePaywall();
-            goTo('settings', 'money-upgrade');
+            goTo('settings', 'pricing');
           }}
           onOneTimePay={() => {
             hidePaywall();
-            goTo('settings', 'money-upgrade');
+            goTo('settings', 'pricing');
           }}
         />
       )}

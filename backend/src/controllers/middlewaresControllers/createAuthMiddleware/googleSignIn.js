@@ -56,7 +56,7 @@ const googleSignIn = async (req, res, { userModel }) => {
         role: isOwner ? 'superadmin' : 'business',
         enabled: true, // Auto-enable Google signups
         email_verified: true,
-        plan: isOwner ? 'enterprise' : 'starter',
+        plan: isOwner ? 'enterprise' : 'trial',
         trial_started_at: isOwner ? null : now.toISOString(),
         trial_ends_at: isOwner ? null : trialEndsAt.toISOString(),
         removed: false,
@@ -72,10 +72,44 @@ const googleSignIn = async (req, res, { userModel }) => {
 
     if (!isOwner) {
       try {
+        // 1. Alert owner
         await sendEmail({
           to: OWNER_EMAIL,
           subject: `[StampKE] New Google signup — ${name} (${user.role})`,
           html: `<p><strong>${name}</strong> (${normalizedEmail}) signed up via Google as <strong>${user.role}</strong>.</p>`,
+        });
+
+        // 2. Welcome user
+        await sendEmail({
+          to: normalizedEmail,
+          subject: `Welcome to StampKE, ${name}! 🚀`,
+          html: `
+            <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; padding: 32px;">
+              <h2 style="color: #1a73e8; margin-top: 0;">Welcome to StampKE! ✍️</h2>
+              <p>Hi ${name},</p>
+              <p>Thank you for joining StampKE, Kenya's #1 Digital Stamp & eSign platform. Your account is verified and your <strong>Starter Trial</strong> is now active.</p>
+              
+              <div style="background: #f8faff; border-radius: 8px; padding: 20px; margin: 24px 0;">
+                <h3 style="margin-top: 0; font-size: 16px;">What's included in your trial:</h3>
+                <ul style="margin-bottom: 0;">
+                  <li><strong>Unlimited</strong> AI Virtual Assistant access</li>
+                  <li><strong>5 Free Trials</strong> for eSign & Stamp Design</li>
+                  <li><strong>5 Free Trials</strong> for Smart Invoicing</li>
+                </ul>
+              </div>
+
+              <p>Start exploring your dashboard to design your first digital stamp or request an errand from our AI assistants.</p>
+              
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${FRONTEND_URL}" style="background: #1a73e8; color: white; text-decoration: none; padding: 12px 28px; border-radius: 50px; font-weight: bold;">Go to Dashboard</a>
+              </div>
+              
+              <p style="font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 16px;">
+                Questions? Reply to this email or visit our help center.<br/>
+                &copy; ${new Date().getFullYear()} StampKE · Nairobi, Kenya
+              </p>
+            </div>
+          `
         });
       } catch (err) {
         console.error('[Email] Google signup alert error:', err.message);
@@ -101,7 +135,6 @@ const googleSignIn = async (req, res, { userModel }) => {
       
       if (!updateError) user = updatedUser;
     }
-  }
 
   const isNew = !existingUser;
 

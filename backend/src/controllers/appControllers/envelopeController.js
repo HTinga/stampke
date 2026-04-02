@@ -1,4 +1,5 @@
 const supabase = require('@/config/supabase');
+const sendEmail = require('@/utils/sendEmail');
 
 exports.create = async (req, res) => {
   try {
@@ -190,24 +191,16 @@ exports.send = async (req, res) => {
 </body>
 </html>`;
 
-      const { data: emailData, error: emailError } = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      try {
+        await sendEmail({
           from: 'StampKE <noreply@stampke.co.ke>',
-          to: [signer.email],
+          to: signer.email,
           subject,
           html,
-        }),
-      }).then(r => r.json());
-
-      if (emailError) {
+        });
+        results.push({ email: signer.email, status: 'sent' });
+      } catch (err) {
         results.push({ email: signer.email, status: 'failed' });
-      } else {
-        results.push({ email: signer.email, id: emailData.id, status: 'sent' });
       }
     }
 

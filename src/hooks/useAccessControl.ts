@@ -1,11 +1,11 @@
 /**
  * useAccessControl — StampKE feature gating
- *
- * Rules (as instructed):
- * - NO trial, NO free tier for any feature
- * - Only superadmin gets free access to everything
- * - All business users must have a paid plan (starter/professional/enterprise)
- * - Plans: KES 650 starter | KES 2,500 professional | KES 5,000 enterprise
+ * 
+ * Rules:
+ * - Trial users get 5 free uses per feature (persisted in localStorage for anonymity/speed)
+ * - VA (Virtual Assistants) is UNLIMITED.
+ * - Superadmin gets free access to everything
+ * - Pricing: KES 1,500 Starter | KES 3,000 Professional | KES 10,000 Enterprise
  */
 
 import { useCallback } from 'react';
@@ -16,71 +16,91 @@ export type FeatureKey =
   | 'invoicing' | 'documents' | 'templates'
   | 'virtual_assistants' | 'recruit' | 'clients';
 
-export type PlanTier = 'none' | 'starter' | 'professional' | 'enterprise';
+export type PlanTier = 'none' | 'trial' | 'starter' | 'professional' | 'enterprise';
 
 export interface UserAccess {
   role?: string;
   plan?: PlanTier | string;
+  email?: string;
 }
 
-// AccessStatus kept for PaywallModal compatibility
 export type AccessStatus = 'granted' | 'trial_available' | 'trial_used' | 'locked' | 'expired';
 
 export interface AccessResult {
   canUse: boolean;
-  reason: 'granted' | 'no_plan' | 'upgrade_required';
+  reason: 'granted' | 'trial' | 'no_plan' | 'upgrade_required';
   requiredPlan?: PlanTier;
-  // status maps to AccessStatus for PaywallModal compatibility
   status: AccessStatus;
+  usageLeft?: number;
 }
-
-// Stub — no trial exists, kept for import compatibility with App.tsx
-export function markTrialUsed(): void {}
 
 // Feature → minimum plan required
 const FEATURE_PLAN_MAP: Record<FeatureKey, PlanTier> = {
-  // Starter (KES 650)
   esign:              'starter',
   stamp_design:       'starter',
   stamp_apply:        'starter',
   invoicing:          'starter',
   recruit:            'starter',
   clients:            'starter',
-  // Professional (KES 2,500)
   pdf_editor:         'professional',
   ai_summarizer:      'professional',
   ai_digitizer:       'professional',
   documents:          'professional',
   templates:          'professional',
-  // Enterprise (KES 5,000)
   virtual_assistants: 'enterprise',
 };
 
 const PLAN_RANK: Record<PlanTier, number> = {
-  none: 0, starter: 1, professional: 2, enterprise: 3,
+  none: 0, trial: 0, starter: 1, professional: 2, enterprise: 3,
 };
 
-function meetsRequirement(userPlan: string | undefined, required: PlanTier): boolean {
-  const userRank = PLAN_RANK[(userPlan as PlanTier) || 'none'] ?? 0;
-  const reqRank  = PLAN_RANK[required] ?? 1;
-  return userRank >= reqRank;
+const TRIAL_LIMITS: Record<string, number> = {
+  esign: 5, stamp_design: 5, stamp_apply: 5, invoicing: 5,
+  pdf_editor: 5, ai_summarizer: 5, ai_digitizer: 5,
+  virtual_assistants: 999, // Unlimited
+};
+
+function getLocalUsage(email?: string): Record<string, number> {
+  const key = email ? `usage_${email}` : 'usage_guest';
+  try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; }
+}
+
+export function markTrialUsed(feature: string, email?: string): void {
+  const usage = getLocalUsage(email);
+  usage[feature] = (usage[feature] || 0) + 1;
+  const key = email ? `usage_${email}` : 'usage_guest';
+  localStorage.setItem(key, JSON.stringify(usage));
 }
 
 export function checkFeatureAccess(feature: FeatureKey, userAccess: UserAccess): AccessResult {
-  // Superadmin — always granted, no payment needed
-  if (userAccess.role === 'superadmin') {
-    return { canUse: true, reason: 'granted', status: 'granted' };
+  if (userAccess.role === 'superadmin') return { canUse: true, reason: 'granted', status: 'granted' };
+
+  // VA is always unlimited anyway, but let's check plan for others
+  const required = FEATURE_PLAN_MAP[feature] || 'starter';
+  const userRank = PLAN_RANK[(userAccess.plan as PlanTier) || 'none'] ?? 0;
+  const reqRank  = PLAN_RANK[required] ?? 1;
+
+  if (userRank >= reqRank) return { canUse: true, reason: 'granted', status: 'granted' };
+
+  // If not on a paid plan, check trial
+  if (feature === 'virtual_assistants') return { canUse: true, reason: 'trial', status: 'granted' };
+
+  const usage = getLocalUsage(userAccess.email);
+  const used = usage[feature] || 0;
+  const limit = TRIAL_LIMITS[feature] || 5;
+
+  if (used < limit) {
+    return { 
+      canUse: true, 
+      reason: 'trial', 
+      status: 'trial_available',
+      usageLeft: limit - used 
+    };
   }
 
-  const required = FEATURE_PLAN_MAP[feature] || 'starter';
-  const hasPlan  = meetsRequirement(userAccess.plan, required);
-
-  if (hasPlan) return { canUse: true, reason: 'granted', status: 'granted' };
-
-  const hasAnyPlan = userAccess.plan && userAccess.plan !== 'none';
   return {
     canUse: false,
-    reason: hasAnyPlan ? 'upgrade_required' : 'no_plan',
+    reason: userAccess.plan && userAccess.plan !== 'none' ? 'upgrade_required' : 'no_plan',
     requiredPlan: required,
     status: 'locked',
   };
@@ -89,7 +109,7 @@ export function checkFeatureAccess(feature: FeatureKey, userAccess: UserAccess):
 export function useAccessControl(userAccess: UserAccess) {
   const check = useCallback(
     (feature: FeatureKey): AccessResult => checkFeatureAccess(feature, userAccess),
-    [userAccess.role, userAccess.plan]
+    [userAccess.role, userAccess.plan, userAccess.email]
   );
   return { check };
 }

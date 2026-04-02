@@ -1,14 +1,9 @@
 'use strict';
 // notifyController.js — Resend-powered email notifications for sign requests
-const { Resend } = require('resend');
+const sendEmail = require('@/utils/sendEmail');
 
 const FROM    = 'StampKE Sign <noreply@tomo.ke>';
 const SUPPORT = 'hempstonetinga@gmail.com';
-
-function getResend() {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_placeholder') return null;
-  return new Resend(process.env.RESEND_API_KEY);
-}
 
 // POST /api/notify/sign-request
 // Body: { toEmail, toName, documentTitle, signerRole, signLink }
@@ -16,12 +11,6 @@ exports.signRequest = async (req, res) => {
   const { toEmail, toName, documentTitle, signerRole, signLink } = req.body;
   if (!toEmail || !documentTitle)
     return res.status(400).json({ success: false, message: 'toEmail and documentTitle are required' });
-
-  const resend = getResend();
-  if (!resend) {
-    console.warn('[notify] RESEND_API_KEY not set — skipping sign request email to', toEmail);
-    return res.json({ success: true, result: { sent: false, reason: 'Email not configured' } });
-  }
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -74,20 +63,14 @@ exports.signRequest = async (req, res) => {
 </html>`;
 
   try {
-    const { data, error } = await resend.emails.send({
+    await sendEmail({
       from:    FROM,
       to:      toEmail,
       subject: signerRole === 'viewer' ? `Review Requested: "${documentTitle}"` : `Action Required: Please sign "${documentTitle}"`,
       html,
     });
-    if (error) {
-      console.error('[notify] sign-request send failed:', JSON.stringify(error));
-      return res.json({ success: true, result: { sent: false, error: JSON.stringify(error) } });
-    }
-    console.log('[notify] sign-request sent to', toEmail, 'id:', data?.id);
-    return res.json({ success: true, result: { sent: true, to: toEmail, id: data?.id } });
+    return res.json({ success: true, result: { sent: true, to: toEmail } });
   } catch (err) {
-    console.error('[notify] sign-request exception:', err.message);
     return res.json({ success: true, result: { sent: false, error: err.message } });
   }
 };
@@ -98,9 +81,6 @@ exports.completed = async (req, res) => {
   const { toEmail, toName, documentTitle, downloadLink } = req.body;
   if (!toEmail || !documentTitle)
     return res.status(400).json({ success: false, message: 'toEmail and documentTitle required' });
-
-  const resend = getResend();
-  if (!resend) return res.json({ success: true, result: { sent: false, reason: 'Email not configured' } });
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"/></head>
@@ -138,13 +118,12 @@ exports.completed = async (req, res) => {
 </body></html>`;
 
   try {
-    const { data, error } = await resend.emails.send({
+    await sendEmail({
       from: FROM, to: toEmail,
       subject: `✅ Signed: "${documentTitle}" — All parties have signed`,
       html,
     });
-    if (error) return res.json({ success: true, result: { sent: false, error: JSON.stringify(error) } });
-    return res.json({ success: true, result: { sent: true, id: data?.id } });
+    return res.json({ success: true, result: { sent: true } });
   } catch (err) {
     return res.json({ success: true, result: { sent: false, error: err.message } });
   }

@@ -24,7 +24,6 @@ interface User {
 const PLAN_COLORS: Record<string, string> = {
   trial:        'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   starter:      'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  pro:          'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   professional: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   enterprise:   'bg-purple-500/20 text-purple-400 border-purple-500/30',
   terminated:   'bg-red-500/20 text-red-400 border-red-500/30',
@@ -306,7 +305,7 @@ export default function SuperAdminPanel() {
                     <div>
                       <p className="text-[10px] font-bold text-[#8b949e] uppercase tracking-widest mb-2">Set Plan</p>
                       <div className="flex flex-wrap gap-2">
-                        {['trial','starter','pro','enterprise'].map(p => (
+                        {['trial','starter','professional','enterprise'].map(p => (
                           <button key={p} onClick={() => setActionPlan(prev => ({ ...prev, [u._id]: p }))}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all border ${
                               plan === p

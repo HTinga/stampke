@@ -101,9 +101,9 @@ const buildWelcomeEmail = (name, verifyUrl) => `<!DOCTYPE html>
                   <span style="font-size:13px;color:#0c4a6e;line-height:1.6">Explore every feature free for 7 days. After your trial, choose a plan that fits your business:</span>
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px">
                     ${[
-                      ['Free','KES 0/mo','3 envelopes · Basic stamps'],
-                      ['Pro','KES 2,500/mo','Unlimited signing · AI features · Priority support'],
-                      ['Enterprise','Custom','Team accounts · API access · Custom branding'],
+                      ['Starter','KES 1,500/mo','Unlimited signing · Stamp Designer · Smart Invoices'],
+                      ['Professional','KES 3,000/mo','Everything in Starter · PDF Editor · Priority support'],
+                      ['Enterprise','KES 10,000/mo','Full Organization access · API package · Dedicated Manager'],
                     ].map(([plan, price, features]) => `
                     <tr>
                       <td style="padding:4px 0">

@@ -62,7 +62,7 @@ export default function PricingPage({ userEmail = '', userName = '', currentPlan
           <span className="text-xs font-semibold text-[#58a6ff]">Pay via M-Pesa or Card · Secured by IntaSend</span>
         </div>
         <h2 className="text-3xl font-black text-white mb-2">Simple, honest pricing</h2>
-        <p className="text-[#8b949e]">Each feature includes <strong className="text-white">1 free trial</strong>. Upgrade to unlock unlimited access.</p>
+        <p className="text-[#8b949e]">Each feature includes <strong className="text-white">5 free trials</strong>. Upgrade to unlock unlimited access.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-5 mb-6">
