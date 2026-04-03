@@ -44,26 +44,17 @@ const isValidAuthToken = async (req, res, next, { userModel }) => {
       .single();
 
     const sessions = passwordData?.logged_sessions || [];
-    if (passwordError || !sessions.includes(token))
+    if (passwordError || !sessions.includes(token)) {
+      console.warn(`[isValidAuthToken] Session token not found in logged_sessions for user ${verified.id}`);
       return res.status(401).json({
         success: false, result: null, message: 'Session expired, please login again.', jwtExpired: true,
       });
+    }
 
     if (!user.enabled)
       return res.status(403).json({
         success: false, result: null, message: 'Your account is pending activation by the admin.',
       });
-
-    // Auto-assign superadmin role to owner email if not already set
-    const OWNER = process.env.OWNER_EMAIL || 'hempstonetinga@gmail.com';
-    if (user.email.toLowerCase() === OWNER.toLowerCase() && user.role !== 'superadmin') {
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ role: 'superadmin' })
-        .eq('id', user.id);
-      
-      if (!updateError) user.role = 'superadmin';
-    }
 
     // Attach user to request
     req.user      = user;

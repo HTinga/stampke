@@ -3,7 +3,7 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const supabase = require('@/config/supabase');
 
-const COOKIE_NAME    = 'token'; // Changed to 'token' to match logout.js and general pattern
+const COOKIE_NAME    = 'tomo_session'; // Changed from 'token' to 'tomo_session' for consistency
 const COOKIE_OPTIONS = {
   httpOnly: true,          // JS cannot read — blocks XSS token theft
   secure:   process.env.NODE_ENV === 'production',

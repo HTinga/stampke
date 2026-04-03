@@ -222,9 +222,20 @@ const googleCallback = async (req, res) => {
 
     const token = jwt.sign({ id: finalUser.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+    // Update logged sessions in Supabase
     const { data: passData } = await supabase.from('user_passwords').select('logged_sessions').eq('user_id', finalUser.id).single();
     const sessions = passData?.logged_sessions || [];
-    await supabase.from('user_passwords').update({ logged_sessions: [...sessions, token] }).eq('user_id', finalUser.id);
+    const updatedSessions = [...sessions, token];
+    await supabase.from('user_passwords').update({ logged_sessions: updatedSessions }).eq('user_id', finalUser.id);
+
+    // Set httpOnly cookie (#2)
+    res.cookie('tomo_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
 
     const trialEnds = finalUser.trial_ends_at ? new Date(finalUser.trial_ends_at) : null;
     const now = new Date();

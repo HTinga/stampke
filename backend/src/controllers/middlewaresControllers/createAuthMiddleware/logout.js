@@ -7,7 +7,7 @@ const logout = async (req, res, { userModel }) => {
   // we just clear the client-side cookie.
 
   // Clear httpOnly cookie
-  res.clearCookie('token', { 
+  res.clearCookie('tomo_session', { 
     httpOnly: true, 
     path: '/',
     secure: process.env.NODE_ENV === 'production',
