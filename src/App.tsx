@@ -35,7 +35,6 @@ import SuperAdminPanel from './components/SuperAdminPanel';
 import PricingPage from './components/PricingPage';
 import PublicSignerPage from './components/PublicSignerPage';
 import PaywallModal from './components/PaywallModal';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { checkFeatureAccess, markTrialUsed } from './hooks/useAccessControl';
 import type { FeatureKey } from './hooks/useAccessControl';
 import { analyzeStampImage } from './services/geminiService';
@@ -69,7 +68,7 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'home',       label: 'Home',                icon: Home,       emoji: '🏠' },
   { id: 'sign-docs',  label: 'eSign & Stamps',      icon: Pen,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
-  { id: 'assistants', label: 'Assistants',         icon: Bot,        emoji: '🤖' },
+  { id: 'assistants', label: 'Virtual Assistants',  icon: Bot,        emoji: '🤖' },
   { id: 'documents',  label: 'PDF Editor',          icon: FileText,   emoji: '📄' },
   { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
@@ -117,7 +116,7 @@ const CREATE_ACTIONS = [
   { label: 'Sign Document',    sub: 'sign-esign' as SubView,         section: 'sign-docs' as MainSection,   emoji: '✍️' },
   { label: 'Design Stamp',     sub: 'sign-stamps' as SubView,        section: 'sign-docs' as MainSection,   emoji: '🖋️' },
   { label: 'Create Invoice',   sub: 'invoicing-create' as SubView,   section: 'invoicing' as MainSection,   emoji: '🧾' },
-  { label: 'Request Assistant', sub: 'assistants-browse' as SubView, section: 'assistants' as MainSection,  emoji: '🤖' },
+  { label: 'Virtual Assistant', sub: 'assistants-browse' as SubView, section: 'assistants' as MainSection,  emoji: '🤖' },
 ];
 
 // ─── Placeholder view for unbuilt sections ────────────────────────────────────
@@ -170,21 +169,6 @@ const App: React.FC = () => {
   const [selectedStampElement, setSelectedStampElement] = useState<string>('frame');
   const appStats = useAppStats();
   const svgRef = useRef<SVGSVGElement>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    });
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setDeferredPrompt(null);
-  };
 
   // Derived values
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -350,8 +334,8 @@ const App: React.FC = () => {
            }, 500);
         }
 
-        if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-        else goTo('home');
+        // Always go to home (dashboard) after Google login
+        goTo('home');
       } catch (e) {
         setLoginError('Google sign-in failed. Please try email login.');
         setShowLoginModal(true);
@@ -368,8 +352,8 @@ const App: React.FC = () => {
         setUser({ name: u.name, email: u.email, role: u.role, plan: u.plan, trialActive: u.trialActive, trialDaysLeft: u.trialDaysLeft, adminPermissions: u.adminPermissions || [], adminApproved: u.adminApproved || false, approvalExpiresAt: u.approvalExpiresAt });
         setIsLoggedIn(true);
         setShowLoginModal(false);
-        if (u.role === 'superadmin' || u.role === 'admin') goTo('settings', 'admin-panel');
-        else goTo('home');
+        // Always go to home after Facebook login
+        goTo('home');
       } catch (e) {
         setLoginError('Facebook sign-in failed. Please try email login.');
         setShowLoginModal(true);
@@ -515,8 +499,8 @@ const App: React.FC = () => {
           // Fetch templates on login
           useStampStore.getState().fetchTemplates();
 
-          if (u.role === 'superadmin' || u.role === 'admin') goTo('home');
-          else goTo('home');
+          // After login, favor Home/Dashboard
+          goTo('home');
           return;
         }
         if (data.code === 'EMAIL_NOT_VERIFIED') {
@@ -550,7 +534,7 @@ const App: React.FC = () => {
   };
 
 
-  // ── Trial usage tracking: 1 free trial per feature (per user, persisted) ──
+  // ── Trial usage tracking: 5 free uses per feature (per user, persisted) ──
   const getUserUsage = () => {
     if (!user?.email) return {};
     try { return JSON.parse(localStorage.getItem(`usage_${user.email}`) || '{}'); } catch { return {}; }
@@ -561,7 +545,7 @@ const App: React.FC = () => {
     u[key] = (u[key] || 0) + 1;
     localStorage.setItem(`usage_${user.email}`, JSON.stringify(u));
   };
-  const FREE_LIMITS: Record<string, number> = { esign: 5, stamp: 5, invoice: 5, pdf: 5, summarizer: 5, assistant: 5, scrape: 5 };
+  const FREE_LIMITS: Record<string, number> = { esign: 5, stamp: 5, invoice: 5, pdf: 5, summarizer: 5, assistant: 999, scrape: 5 };
   const hasPaidPlan = user?.plan === 'starter' || user?.plan === 'pro' || user?.plan === 'business';
   const withinFreeLimit = (key: string) => {
     if (userRole === 'superadmin' || hasPaidPlan) return true;

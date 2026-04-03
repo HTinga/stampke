@@ -14,7 +14,8 @@ export type FeatureKey =
   | 'stamp_design' | 'stamp_apply' | 'esign'
   | 'pdf_editor' | 'ai_summarizer' | 'ai_digitizer'
   | 'invoicing' | 'documents' | 'templates'
-  | 'virtual_assistants' | 'recruit' | 'clients';
+  | 'virtual_assistants' | 'recruit' | 'clients'
+  | 'smart_invoice' | 'pdf_forge' | 'transcribe' | 'translate' | 'scrape';
 
 export type PlanTier = 'none' | 'trial' | 'starter' | 'professional' | 'enterprise';
 
@@ -48,6 +49,11 @@ const FEATURE_PLAN_MAP: Record<FeatureKey, PlanTier> = {
   documents:          'professional',
   templates:          'professional',
   virtual_assistants: 'enterprise',
+  smart_invoice:      'starter',
+  pdf_forge:          'professional',
+  transcribe:         'professional',
+  translate:          'professional',
+  scrape:             'enterprise',
 };
 
 const PLAN_RANK: Record<PlanTier, number> = {
@@ -57,6 +63,8 @@ const PLAN_RANK: Record<PlanTier, number> = {
 const TRIAL_LIMITS: Record<string, number> = {
   esign: 5, stamp_design: 5, stamp_apply: 5, invoicing: 5,
   pdf_editor: 5, ai_summarizer: 5, ai_digitizer: 5,
+  smart_invoice: 5, pdf_forge: 5, transcribe: 5, translate: 5,
+  scrape: 5,
   virtual_assistants: 999, // Unlimited
 };
 
