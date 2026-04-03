@@ -1,12 +1,15 @@
-const { createClient } = require('@supabase/supabase-js');
+const { getClient } = require('@/utils/supabase');
 
-const supabaseUrl = (process.env.SUPABASE_URL || '').trim();
-const supabaseKey = (process.env.SUPABASE_SERVICE_KEY || '').trim();
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌  Supabase URL or Key missing in .env');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+/**
+ * Proxy object to the Supabase client.
+ * This allows us to keep the existing `const supabase = require('@/config/supabase')` syntax
+ * while ensuring that the client is only initialized when first used,
+ * and with proper environment variable validation.
+ */
+const supabase = new Proxy({}, {
+  get: (target, prop) => {
+    return getClient()[prop];
+  }
+});
 
 module.exports = supabase;

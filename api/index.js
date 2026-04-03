@@ -11,8 +11,17 @@ process.env.NODE_PATH = BACKEND_MODULES;
 require('module').Module._initPaths();
 
 // ── Step 0: Load environment variables ────────────────────────────────────────
-require('dotenv').config({ path: path.join(__dirname, '../backend/.env') });
-require('dotenv').config({ path: path.join(__dirname, '../backend/.env.local') });
+const dotenv = require('dotenv');
+const envPath = path.join(__dirname, '../backend/.env');
+const envLocalPath = path.join(__dirname, '../backend/.env.local');
+
+const result1 = dotenv.config({ path: envPath });
+const result2 = dotenv.config({ path: envLocalPath });
+
+if (result1.error) console.warn('[Vercel Entry] Could not load .env from:', envPath);
+else console.log('[Vercel Entry] Successfully loaded .env');
+
+if (!result2.error) console.log('[Vercel Entry] Successfully loaded .env.local');
 
 // ── Step 2: Set up @/ alias ───────────────────────────────────────────────────
 const moduleAlias = require('module-alias');
@@ -25,6 +34,11 @@ moduleAlias.addAlias('@', BACKEND_SRC);
 let appInstance;
 function getApp() {
   if (!appInstance) {
+    const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+    const missing = required.filter(k => !process.env[k]);
+    if (missing.length > 0) {
+      throw new Error(`Missing required Supabase environment variables: ${missing.join(', ')}. Please check your Vercel project settings or .env file.`);
+    }
     appInstance = require('../backend/src/app');
   }
   return appInstance;
@@ -36,7 +50,7 @@ module.exports = async (req, res) => {
     const app = getApp();
     return app(req, res);
   } catch (err) {
-    console.error('[Serverless Error]', err.message, err.stack);
+    console.error('[Serverless Error]', err.message);
     if (!res.headersSent) {
       res.status(500).json({
         success: false,

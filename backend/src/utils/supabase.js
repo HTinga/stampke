@@ -1,35 +1,38 @@
 'use strict';
-// ── Supabase Backend Client ───────────────────────────────────────────────────
-// Uses the service role key (secret) — NEVER expose this in frontend
-// Supabase URL: https://rqsndxictgatmqjfnaye.supabase.co
-// Docs: https://supabase.com/docs/reference/javascript
+require('dotenv').config();
 
 const { createClient } = require('@supabase/supabase-js');
-
-const SUPABASE_URL         = process.env.SUPABASE_URL         || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
 let _client = null;
 
 const getClient = () => {
   if (_client) return _client;
+
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    console.warn('[Supabase] Missing SUPABASE_URL or SUPABASE_SERVICE_KEY — Supabase features disabled');
-    return null;
+    const msg = '[Supabase] Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in .env';
+    console.error(`❌ ${msg}`);
+    throw new Error(msg);
   }
-  _client = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return _client;
+
+  try {
+    _client = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    return _client;
+  } catch (error) {
+    console.error('❌ Supabase initialization error:', error.message);
+    throw error;
+  }
 };
 
 // ── Query helpers (mirrors MongoDB patterns our controllers use) ──────────────
 const db = {
   // Generic query
   from: (table) => {
-    const client = getClient();
-    if (!client) throw new Error('Supabase not configured');
-    return client.from(table);
+    return getClient().from(table);
   },
 
   // Insert and return row
