@@ -9,9 +9,10 @@ import {
   Sparkles, Eye, RotateCcw, RotateCw, Save, Circle, Plus, FileText, Calendar,
   Check, Eraser, Settings, Layers, Star, Grid3X3, Trash2, Zap,
   Bold, Italic, Underline, ChevronDown, Layout, Sliders, Move, Copy, Clock,
-  Image as ImageIcon, FileJson, FilePlus, CheckCircle2, Lightbulb
+  Image as ImageIcon, FileJson, FilePlus, CheckCircle2, Lightbulb, Camera
 } from 'lucide-react';
 import IntelligentTip from './IntelligentTip';
+import { analyzeStampImage } from '../services/geminiService';
 
 /* ── Signature Pad ──────────────────────────────── */
 const SignaturePad = ({ onSave, onCancel }: { onSave:(u:string)=>void; onCancel:()=>void }) => {
@@ -138,6 +139,7 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
   const [selectedLayer, setSelectedLayer] = useState<string>('primary');
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [timerInSeconds, setTimerInSeconds] = useState(0);
+  const [isDigitizing, setIsDigitizing] = useState(false);
 
   React.useEffect(() => {
     const itv = setInterval(() => setTimerInSeconds(s => s + 1), 1000);
@@ -226,6 +228,36 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
 
   const removeCustomElement = (id: string) => {
     upd({ customElements: config.customElements.filter(el => el.id !== id) });
+  };
+
+  const handleDigitize = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    setIsDigitizing(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = (reader.result as string).split(',')[1];
+        const result = await analyzeStampImage(base64);
+        if (result.success) {
+           upd({
+             shape: result.shape as StampShape,
+             primaryText: result.primaryText,
+             secondaryText: result.secondaryText,
+             centerText: result.centerText,
+             borderColor: result.color || config.borderColor,
+             primaryColor: result.color || config.primaryColor,
+           });
+           alert('Stamp digitized successfully! 🎨');
+        } else {
+           alert('Digitization failed: ' + result.message);
+        }
+      } catch (err) {
+        alert('Digitalization error. Please try again.');
+      } finally {
+        setIsDigitizing(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const updateApplyWithDate = (newDate?: string) => {
@@ -971,8 +1003,16 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                   <div className="ss-sig-buttons mb-4">
                     <button onClick={() => upd({ centerSubText: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase(), showDateLine: true })} 
                       className="ss-sig-btn"><Calendar size={12} /> Add Date</button>
-                    <button onClick={() => withPaywallGuard(() => { window.location.hash = '#/sign-docs/sign-scan'; })} 
-                      className="ss-sig-btn"><Zap size={12} /> Digitize Stamp</button>
+                    {!isDigitizing ? (
+                      <label className="ss-sig-btn cursor-pointer">
+                        <Camera size={12} /> Digitize Stamp
+                        <input type="file" accept="image/*" className="sr-only" onChange={handleDigitize} />
+                      </label>
+                    ) : (
+                      <button className="ss-sig-btn opacity-50 cursor-not-allowed">
+                        <span className="animate-spin text-[10px]">🌀</span> Digitizing...
+                      </button>
+                    )}
                   </div>
 
                   <div className="ss-divider my-4" />

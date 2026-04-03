@@ -42,7 +42,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './store';
 import { useAppStats } from './appStatsStore';
 // ─── Navigation Model (business-owner language) ──────────────────────────────
-type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'ai-tools' | 'assistants' | 'settings';
+type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'ai-summarizer' | 'assistants' | 'settings';
 type SubView =
   | 'dashboard'
   | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
@@ -70,7 +70,7 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'assistants', label: 'Virtual Assistants',  icon: Bot,        emoji: '🤖' },
   { id: 'documents',  label: 'PDF Editor',          icon: FileText,   emoji: '📄' },
-  { id: 'ai-tools',   label: 'Transcriber',         icon: Mic,        emoji: '🎙️' },
+  { id: 'ai-summarizer', label: 'Transcriber',      icon: Mic,        emoji: '🎙️' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
 ];
 
@@ -82,9 +82,8 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'sign-applier',   label: '📄 Apply Stamp',      desc: 'Stamp a PDF document' },
     { id: 'sign-templates', label: '📂 Templates',        desc: 'Stamp & document templates', locked: true },
   ],
-  'ai-tools': [
+  'ai-summarizer': [
     { id: 'ai-summarizer',  label: '🎙 Transcriber',   desc: 'AI Audio & Document Transcriber' },
-    { id: 'ai-digitizer',   label: '🤖 Stamp Digitizer',  desc: 'Vectorize rubber stamps' },
     { id: 'ai-translate' as SubView, label: '🌍 PDF Translator', desc: 'AI-powered document translation' },
   ],
   invoicing: [
@@ -94,9 +93,7 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'invoicing-unpaid',   label: '⏳ Unpaid',         desc: 'Outstanding balances', locked: true },
   ],
   documents: [
-    { id: 'documents-create',         label: '📝 New Document',     desc: 'Contract, letter, form', locked: true },
-    { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files', locked: true },
-    { id: 'documents-templates',      label: '📂 Templates',        desc: 'Saved document templates', locked: true },
+    { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files' },
   ],
   assistants: [
     { id: 'assistants-browse',   label: '🔍 Browse',        desc: 'Find virtual assistants' },
@@ -230,9 +227,16 @@ const App: React.FC = () => {
 
   const goTo = (section: MainSection, view?: SubView) => {
     setActiveSection(section);
-    if (view) setActiveView(view);
+    if (view) {
+      setActiveView(view);
+      localStorage.setItem('tomo_activeView', view);
+    }
     else if (section === 'home') setActiveView('dashboard');
-    else if (SUB_MENUS[section].length > 0) setActiveView(SUB_MENUS[section][0].id);
+    else if (section === 'documents') setActiveView('documents-pdf');
+    else if (section === 'ai-summarizer') setActiveView('ai-summarizer');
+    else if (SUB_MENUS[section] && SUB_MENUS[section].length > 0) setActiveView(SUB_MENUS[section][0].id);
+    else setActiveView(section as any);
+  };
     
     // Auto-minimize sidebar for features (any non-home section)
     setIsSidebarMinimized(section !== 'home');
@@ -594,33 +598,7 @@ const App: React.FC = () => {
     appStats.recordStampDownloaded();
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    goTo('ai-tools', 'ai-digitizer');
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const dataUrl = reader.result as string;
-      const analysis = await analyzeStampImage(dataUrl);
-      if (analysis) {
-        const newCfg: StampConfig = { 
-          ...DEFAULT_CONFIG, 
-          shape: analysis.shape === 'OVAL' ? StampShape.OVAL : analysis.shape === 'ROUND' ? StampShape.ROUND : StampShape.RECTANGLE, 
-          primaryText: analysis.primaryText || 'New Scanned Stamp', 
-          secondaryText: analysis.secondaryText || '', 
-          centerText: analysis.centerText || '', 
-          borderColor: analysis.color || DEFAULT_CONFIG.borderColor 
-        };
-        setStampConfig(newCfg);
-        appStats.recordAiScan();
-        
-        // Auto-save as template
-        useStampStore.getState().saveTemplateRemote(newCfg, `Scanned ${analysis.primaryText || 'Stamp'}`);
-        
-        goTo('sign-docs', 'sign-stamps');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
+  // Legacy file upload removed - digitizer moved to StampStudio
 
   // ── Role-based feature gate ─────────────────────────────────────────────────
   const canAccess = (feature: string): boolean => {
@@ -844,25 +822,6 @@ const App: React.FC = () => {
     );
   };
 
-  const renderView_aiScan = () => (
-    <div className="max-w-3xl mx-auto py-10 text-center">
-      <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-6"><Camera size={32} className="text-white"/></div>
-      <h2 className="text-3xl font-black text-white mb-3">AI Stamp Digitizer</h2>
-      <p className="text-[#8b949e] mb-10">Photograph your old rubber stamp — AI recreates it as a perfect digital vector in seconds.</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
-          <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10"/>
-          <ImageIcon size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors"/>
-          <p className="font-bold text-white mb-1">Upload Photo</p><p className="text-xs text-[#8b949e]">Select from device</p>
-        </label>
-        <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
-          <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10"/>
-          <Camera size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors"/>
-          <p className="font-bold text-white mb-1">Live Camera</p><p className="text-xs text-[#8b949e]">Take a photo now</p>
-        </label>
-      </div>
-    </div>
-  );
 
   const renderView = () => {
     // HOME
@@ -899,39 +858,12 @@ const App: React.FC = () => {
     if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan (KES 1,000/mo)', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
     if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan (KES 3,000/mo)', 'ai_digitizer'); return renderView_aiScan(); }
 
-    if (activeView === 'documents-pdf' || activeView === 'documents-templates' || activeView === 'documents-stamps' || activeView === 'documents-esign') {
-      if (!canAccess('documents-pdf')) return renderLocked('PDF Editor & Transcriber requires a Professional plan (KES 3,000/mo)', 'documents');
-      return <ComingSoon title="Document Forge" desc="Advanced document generation and PDF editing suite coming soon." emoji="📄" />;
+    if (activeView === 'documents-pdf' || activeView === 'ai-summarizer') {
+      if (!canAccess('ai-summarizer')) return renderLocked('AI Transcriber requires a Professional plan (KES 2,500/mo)', 'ai_summarizer');
+      return <AISummarizer />;
     }
-    if (activeView === 'documents-stamp-applier') {
-      return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => { setOpenedFromPDFEditor(true); goTo('sign-docs', 'sign-stamps'); }} userStampCount={freeUsage.stamp.used} />;
-    }
-    if (activeView === 'ai-summarizer') { if (!canAccess('ai-summarizer')) return renderLocked('AI Transcriber requires a Professional plan (KES 2,500/mo)', 'ai_summarizer'); return <AISummarizer />; }
     if (activeView === 'ai-translate') { if (!canAccess('ai-translate')) return renderLocked('AI PDF Translator requires a Professional plan', 'ai_summarizer'); return <PDFTools />; }
     if (activeView === 'documents-create') return <DocumentsHub />;
-    if (activeView === 'ai-digitizer') {
-      return (
-        <div className="max-w-3xl mx-auto py-10 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-6"><Camera size={32} className="text-white" /></div>
-          <h2 className="text-3xl font-black text-white mb-3">AI Stamp Digitizer</h2>
-          <p className="text-[#8b949e] mb-10">Photograph your old rubber stamp — AI recreates it as a perfect digital vector in seconds.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
-              <input type="file" accept="image/*" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-              <ImageIcon size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors" />
-              <p className="font-bold text-white mb-1">Upload Photo</p>
-              <p className="text-xs text-[#8b949e]">Select from device</p>
-            </label>
-            <label className="group relative rounded-2xl border-2 border-dashed border-[#30363d] hover:border-[#1f6feb] p-10 text-center cursor-pointer transition-all bg-[#161b22] hover:bg-[#21262d]">
-              <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-              <Camera size={36} className="mx-auto mb-3 text-[#8b949e] group-hover:text-[#1f6feb] transition-colors" />
-              <p className="font-bold text-white mb-1">Live Camera</p>
-              <p className="text-xs text-[#8b949e]">Take a photo now</p>
-            </label>
-          </div>
-        </div>
-      );
-    }
 
     // STAMP STUDIO (documents-stamps) — reuses the same 3-column layout
     if (activeView === 'documents-stamps') return renderView_stamps();
@@ -1494,9 +1426,6 @@ const App: React.FC = () => {
           }}
         />
       )}
-
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
     </div>
   );
 };
