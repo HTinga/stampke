@@ -229,7 +229,6 @@ const App: React.FC = () => {
     else if (section === 'documents') setActiveView('documents-pdf');
     else if (SUB_MENUS[section] && SUB_MENUS[section].length > 0) setActiveView(SUB_MENUS[section][0].id);
     else setActiveView(section as any);
-  };
     
     // Auto-minimize sidebar for features (any non-home section)
     setIsSidebarMinimized(section !== 'home');
