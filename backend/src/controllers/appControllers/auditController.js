@@ -41,7 +41,7 @@ exports.list = async (req, res) => {
       .from('audit_logs')
       .select('*')
       .eq('user_id', req.user.id)
-      .order('timestamp', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) throw error;

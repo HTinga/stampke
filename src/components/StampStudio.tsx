@@ -121,7 +121,7 @@ interface Props {
 type RightTab = 'text' | 'shape' | 'border' | 'effects' | 'logo' | 'signature' | 'preview' | 'elements' | 'advanced';
 type LayerFilter = 'all' | 'text' | 'figure';
 
-const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'granted', onPaywallTrigger }) => {
+const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'granted', onPaywallTrigger, autoDigitize }) => {
   const { 
     config, setConfig, undo, redo, history, redoStack, 
     fetchTemplates, saveTemplateRemote, logAudit, resetConfig, recordHistory 
