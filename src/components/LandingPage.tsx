@@ -111,34 +111,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showPolicy, setShowPolicy] = useState<'privacy' | 'terms' | null>(null);
-  const [installed, setInstalled] = useState(false);
-  const deferredPrompt = useRef<any>(null);
-
-  useEffect(() => {
-    // Already installed as standalone PWA
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setInstalled(true);
-      return;
-    }
-    const handler = (e: Event) => {
-      e.preventDefault();
-      deferredPrompt.current = e;
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setInstalled(true));
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
-
-  const handleInstall = async () => {
-    if (deferredPrompt.current) {
-      deferredPrompt.current.prompt();
-      const { outcome } = await deferredPrompt.current.userChoice;
-      if (outcome === 'accepted') setInstalled(true);
-      deferredPrompt.current = null;
-    }
-  };
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -213,7 +185,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             One platform for digital stamps, e-signatures, KRA-compliant invoicing, and document management. Built for Kenyan businesses.
           </p>
 
-          {/* Google sign-in CTA */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <button onClick={onGetStarted}
               className="flex items-center gap-3 bg-white text-gray-800 px-7 py-3.5 rounded-xl font-bold text-base hover:bg-gray-100 transition-all shadow-lg shadow-black/20">
@@ -225,52 +196,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               </svg>
               Continue with Google
             </button>
-            <button onClick={() => scrollTo('pricing')}
-              className="flex items-center gap-2 border border-[#30363d] text-[#8b949e] hover:text-white hover:border-[#8b949e] px-7 py-3.5 rounded-xl font-semibold text-base transition-all">
-              View pricing
-            </button>
-          </div>
-
-          {/* Download / Install buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10">
-            {installed ? (
-              <div className="flex items-center gap-2 bg-[#161b22] border border-[#34A853]/40 text-[#34A853] px-6 py-3 rounded-xl text-sm font-bold">
-                <Check size={15} /> StampKE installed
-              </div>
-            ) : (
-              <>
-                {/* Desktop install */}
-                <button
-                  id="install-desktop-btn"
-                  onClick={() => handleInstall()}
-                  className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
-                >
-                  <span className="w-8 h-8 bg-[#1f6feb]/15 rounded-lg flex items-center justify-center group-hover:bg-[#1f6feb]/25 transition-colors">
-                    <Monitor size={16} className="text-[#58a6ff]" />
-                  </span>
-                  <span className="text-left">
-                    <span className="block text-[10px] text-[#8b949e] font-medium">Download</span>
-                    <span className="block text-sm font-bold">Desktop App</span>
-                  </span>
-                  <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#58a6ff] transition-colors" />
-                </button>
-                {/* Mobile install */}
-                <button
-                  id="install-mobile-btn"
-                  onClick={() => handleInstall()}
-                  className="flex items-center gap-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#34A853]/50 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all group shadow-md"
-                >
-                  <span className="w-8 h-8 bg-[#34A853]/15 rounded-lg flex items-center justify-center group-hover:bg-[#34A853]/25 transition-colors">
-                    <Smartphone size={16} className="text-[#34A853]" />
-                  </span>
-                  <span className="text-left">
-                    <span className="block text-[10px] text-[#8b949e] font-medium">Download</span>
-                    <span className="block text-sm font-bold">Mobile App</span>
-                  </span>
-                  <Download size={14} className="text-[#8b949e] ml-1 group-hover:text-[#34A853] transition-colors" />
-                </button>
-              </>
-            )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-sm text-[#8b949e]">
@@ -482,45 +407,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
             </p>
             <p className="text-xs text-[#8b949e] mt-3">© {new Date().getFullYear()} StampKE · Nairobi, Kenya</p>
 
-            {/* Get the app */}
-            <div className="mt-5">
-              <p className="text-[10px] font-bold text-white uppercase tracking-widest mb-2.5">Get the App</p>
-              <div className="flex flex-col gap-2">
-                <a
-                  href="https://play.google.com/store/apps/details?id=ke.stampke.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  id="footer-playstore-link"
-                  className="flex items-center gap-2.5 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#34A853]/50 rounded-xl px-3 py-2 transition-all group"
-                >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                    <path d="M3.18 1.76C2.45 2.17 2 2.95 2 3.86v16.28c0 .91.45 1.69 1.18 2.1l.1.06 9.12-9.12v-.22L3.28 1.7l-.1.06z" fill="#EA4335"/>
-                    <path d="M15.46 15.61l-3.06-3.06v-.22l3.06-3.06.07.04 3.63 2.06c1.04.59 1.04 1.55 0 2.14l-3.63 2.06-.07.04z" fill="#FBBC04"/>
-                    <path d="M15.53 15.57L12.4 12.44 3.18 21.66c.34.36.88.4 1.49.07l10.86-6.16z" fill="#34A853"/>
-                    <path d="M15.53 8.43L4.67 2.27C4.06 1.93 3.52 1.98 3.18 2.34l9.22 9.22 3.13-3.13z" fill="#4285F4"/>
-                  </svg>
-                  <span>
-                    <span className="block text-[9px] text-[#8b949e]">Get it on</span>
-                    <span className="block text-xs font-bold text-white">Google Play</span>
-                  </span>
-                </a>
-                <a
-                  href="https://apps.apple.com/ke/app/stampke/id000000000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  id="footer-appstore-link"
-                  className="flex items-center gap-2.5 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff]/50 rounded-xl px-3 py-2 transition-all group"
-                >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" className="text-white">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                  </svg>
-                  <span>
-                    <span className="block text-[9px] text-[#8b949e]">Download on the</span>
-                    <span className="block text-xs font-bold text-white">App Store</span>
-                  </span>
-                </a>
-              </div>
-            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 text-xs">
             <div>

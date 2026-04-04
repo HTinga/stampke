@@ -42,7 +42,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useStampStore } from './store';
 import { useAppStats } from './appStatsStore';
 // ─── Navigation Model (business-owner language) ──────────────────────────────
-type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'ai-summarizer' | 'assistants' | 'settings';
+type MainSection = 'home' | 'sign-docs' | 'invoicing' | 'documents' | 'assistants' | 'settings';
 type SubView =
   | 'dashboard'
   | 'money-invoices' | 'money-payments' | 'money-unpaid' | 'money-create'
@@ -69,8 +69,7 @@ const NAV_ITEMS: { id: MainSection; label: string; icon: React.ComponentType<any
   { id: 'sign-docs',  label: 'eSign & Stamps',      icon: Pen,    emoji: '✍️' },
   { id: 'invoicing',  label: 'Smart Invoice',       icon: Receipt,    emoji: '💰' },
   { id: 'assistants', label: 'Virtual Assistants',  icon: Bot,        emoji: '🤖' },
-  { id: 'documents',  label: 'PDF Editor',          icon: FileText,   emoji: '📄' },
-  { id: 'ai-summarizer', label: 'Transcriber',      icon: Mic,        emoji: '🎙️' },
+  { id: 'documents',  label: 'Document Studio',     icon: FileText,   emoji: '📄' },
   { id: 'settings',   label: 'Settings',            icon: Settings,   emoji: '⚙️' },
 ];
 
@@ -82,18 +81,11 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
     { id: 'sign-applier',   label: '📄 Apply Stamp',      desc: 'Stamp a PDF document' },
     { id: 'sign-templates', label: '📂 Templates',        desc: 'Stamp & document templates', locked: true },
   ],
-  'ai-summarizer': [
-    { id: 'ai-summarizer',  label: '🎙 Transcriber',   desc: 'AI Audio & Document Transcriber' },
-    { id: 'ai-translate' as SubView, label: '🌍 PDF Translator', desc: 'AI-powered document translation' },
-  ],
-  invoicing: [
-    { id: 'invoicing-invoices', label: '🧾 Invoices',       desc: 'All invoices' },
-    { id: 'invoicing-create',   label: '➕ New Invoice',    desc: 'Create & send invoice' },
-    { id: 'invoicing-payments', label: '💳 Payments',       desc: 'Payment history', locked: true },
-    { id: 'invoicing-unpaid',   label: '⏳ Unpaid',         desc: 'Outstanding balances', locked: true },
-  ],
   documents: [
     { id: 'documents-pdf',            label: '📑 PDF Editor',       desc: 'Edit & fill PDF files' },
+    { id: 'ai-summarizer',            label: '🎙 Transcriber',   desc: 'AI Audio & Document Transcriber' },
+    { id: 'ai-translate' as SubView,  label: '🌍 PDF Translator', desc: 'AI-powered document translation' },
+    { id: 'ai-digitizer' as SubView,  label: '📸 Stamp Digitizer', desc: 'Convert photo to digital stamp' },
   ],
   assistants: [
     { id: 'assistants-browse',   label: '🔍 Browse',        desc: 'Find virtual assistants' },
@@ -112,6 +104,8 @@ const SUB_MENUS: Record<MainSection, { id: SubView; label: string; desc?: string
 const CREATE_ACTIONS = [
   { label: 'Sign Document',    sub: 'sign-esign' as SubView,         section: 'sign-docs' as MainSection,   emoji: '✍️' },
   { label: 'Design Stamp',     sub: 'sign-stamps' as SubView,        section: 'sign-docs' as MainSection,   emoji: '🖋️' },
+  { label: 'Edit PDF',         sub: 'documents-pdf' as SubView,      section: 'documents' as MainSection,   emoji: '📑' },
+  { label: 'Transcribe Audio', sub: 'ai-summarizer' as SubView,      section: 'documents' as MainSection,   emoji: '🎙️' },
   { label: 'Create Invoice',   sub: 'invoicing-create' as SubView,   section: 'invoicing' as MainSection,   emoji: '🧾' },
   { label: 'Virtual Assistant', sub: 'assistants-browse' as SubView, section: 'assistants' as MainSection,  emoji: '🤖' },
 ];
@@ -213,7 +207,7 @@ const App: React.FC = () => {
       'stamp-studio': { section: 'sign-docs', view: 'sign-stamps' },
       'esign':        { section: 'sign-docs', view: 'sign-esign' },
       'apply-stamp':  { section: 'sign-docs', view: 'sign-applier' },
-      'convert':      { section: 'ai-tools',  view: 'ai-digitizer' },
+      'convert':      { section: 'documents', view: 'ai-digitizer' },
       'pdf-forge':    { section: 'documents', view: 'documents-pdf' },
       'templates':    { section: 'sign-docs', view: 'sign-templates' },
       'smart-invoice':{ section: 'invoicing', view: 'invoicing-invoices' },
@@ -233,7 +227,6 @@ const App: React.FC = () => {
     }
     else if (section === 'home') setActiveView('dashboard');
     else if (section === 'documents') setActiveView('documents-pdf');
-    else if (section === 'ai-summarizer') setActiveView('ai-summarizer');
     else if (SUB_MENUS[section] && SUB_MENUS[section].length > 0) setActiveView(SUB_MENUS[section][0].id);
     else setActiveView(section as any);
   };
@@ -801,12 +794,13 @@ const App: React.FC = () => {
 
   // ─── MAIN APP SHELL ───────────────────────────────────────────────────────
 
-  const renderView_stamps = () => {
+  const renderView_stamps = (autoDigitize = false) => {
     return (
       <StampStudio 
         onClose={() => goTo('home')} 
         accessStatus={getStampAccess()}
         onPaywallTrigger={() => showPaywall('stamp_design')}
+        autoDigitize={autoDigitize}
         onApply={(s) => {
           // Mark trial as used when exporting/applying for the first time
           if (getStampAccess() === 'trial_available') {
@@ -856,7 +850,10 @@ const App: React.FC = () => {
     if (activeView === 'sign-stamps')    return renderView_stamps();
     if (activeView === 'sign-applier')   return <StampApplier config={stampConfig} svgRef={svgRef} onGoToStudio={() => goTo('sign-docs','sign-stamps')} userStampCount={freeUsage.stamp.used} />;
     if (activeView === 'sign-templates') { if (!canAccess('sign-templates')) return renderLocked('Template Library requires a Starter plan (KES 1,000/mo)', 'templates'); return <div className="max-w-5xl mx-auto py-6"><h2 className="text-2xl font-bold text-white mb-8">Your Templates</h2><TemplateLibrary onSelect={handleTemplateSelect} onRemove={removeCustomTemplate} customTemplates={customTemplates} onCreateNew={() => goTo('sign-docs','sign-stamps')} /></div>; }
-    if (activeView === 'sign-ai-scan')  { if (!canAccess('sign-ai-scan')) return renderLocked('AI Stamp Digitizer requires a Professional plan (KES 3,000/mo)', 'ai_digitizer'); return renderView_aiScan(); }
+    if (activeView === 'sign-ai-scan' || activeView === 'ai-digitizer')  { 
+      if (!canAccess('ai-digitizer')) return renderLocked('AI Stamp Digitizer requires a Professional plan (KES 3,000/mo)', 'ai_digitizer'); 
+      return renderView_stamps(true); 
+    }
 
     if (activeView === 'documents-pdf' || activeView === 'ai-summarizer') {
       if (!canAccess('ai-summarizer')) return renderLocked('AI Transcriber requires a Professional plan (KES 2,500/mo)', 'ai_summarizer');

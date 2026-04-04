@@ -115,6 +115,7 @@ interface Props {
   onApply?: (s: string) => void;
   accessStatus?: 'granted' | 'trial_available' | 'trial_used' | 'locked';
   onPaywallTrigger?: () => void;
+  autoDigitize?: boolean;
 }
 
 type RightTab = 'text' | 'shape' | 'border' | 'effects' | 'logo' | 'signature' | 'preview' | 'elements' | 'advanced';
@@ -140,6 +141,13 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [timerInSeconds, setTimerInSeconds] = useState(0);
   const [isDigitizing, setIsDigitizing] = useState(false);
+  const digitizerInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (autoDigitize && digitizerInputRef.current) {
+      digitizerInputRef.current.click();
+    }
+  }, [autoDigitize]);
 
   React.useEffect(() => {
     const itv = setInterval(() => setTimerInSeconds(s => s + 1), 1000);
@@ -1004,9 +1012,9 @@ const StampStudio: React.FC<Props> = ({ onClose, onApply, accessStatus = 'grante
                     <button onClick={() => upd({ centerSubText: new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase(), showDateLine: true })} 
                       className="ss-sig-btn"><Calendar size={12} /> Add Date</button>
                     {!isDigitizing ? (
-                      <label className="ss-sig-btn cursor-pointer">
+                      <label className="ss-sig-btn cursor-pointer bg-blue-600/20 border-blue-500/50 hover:bg-blue-600/30 text-white font-bold animate-pulse shadow-[0_0_15px_rgba(31,111,235,0.3)]">
                         <Camera size={12} /> Digitize Stamp
-                        <input type="file" accept="image/*" className="sr-only" onChange={handleDigitize} />
+                        <input ref={digitizerInputRef} type="file" accept="image/*" className="sr-only" onChange={handleDigitize} />
                       </label>
                     ) : (
                       <button className="ss-sig-btn opacity-50 cursor-not-allowed">

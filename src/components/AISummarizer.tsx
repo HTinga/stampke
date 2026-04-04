@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import MeetingDashboard from './meeting/MeetingDashboard';
 import MeetingRecording from './meeting/MeetingRecording';
 import MeetingDetail from './meeting/MeetingDetail';
-import MeetilySidebar from './meeting/MeetilySidebar';
 
 interface Meeting {
   _id: string;
@@ -177,36 +176,9 @@ export default function AISummarizer() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0d1117] overflow-hidden">
-      {/* Sidebar Navigation */}
-      <MeetilySidebar 
-        activeView={view} 
-        onViewChange={(v) => { setView(v); setSelectedMeeting(null); }} 
-        onNewMeeting={() => setView('recording')}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#0d1117]">
-        {/* Top Header Bar */}
-        <header className="h-14 border-b border-[#30363d] flex items-center justify-between px-8 bg-[#0d1117] relative z-10 shrink-0">
-          <div className="flex items-center gap-3">
-             <div className="flex items-center gap-2 text-[10px] font-bold text-[#8b949e] uppercase tracking-widest">
-                <Bot size={14} className="text-violet-500" />
-                <span>StampKE Transcriber v1.0</span>
-                <span className="w-1 h-1 bg-[#30363d] rounded-full" />
-                <span className="text-emerald-400">Live Infrastructure</span>
-              </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-             <button className="p-2 hover:bg-[#161b22] rounded-xl text-[#8b949e] hover:text-white transition-all"><HelpCircle size={18} /></button>
-             <div className="h-8 w-px bg-[#30363d]" />
-             <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-[10px] font-black text-white">AD</div>
-          </div>
-        </header>
-
-        {/* Scrollable View Area */}
-        <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+    <div className="h-full flex flex-col overflow-hidden bg-[#0d1117]">
+      {/* Scrollable View Area */}
+      <main className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
           <AnimatePresence mode="wait">
             {processing && (
               <motion.div 
@@ -267,7 +239,6 @@ export default function AISummarizer() {
             )}
           </AnimatePresence>
         </main>
-      </div>
     </div>
   );
 }
