@@ -245,7 +245,9 @@ const Dashboard: React.FC<{ envelopes:Envelope[]; onSelect:(e:Envelope)=>void; o
 /* ─── BUILDER ────────────────────────────────────────────── */
 const Builder: React.FC<{envelope:Envelope; onUpdate:(e:Envelope)=>void; onSend:(e:Envelope)=>Promise<Envelope>; onBack:()=>void; stampConfig:StampConfig}> = ({ envelope, onUpdate, onSend, onBack, stampConfig }) => {
   const [env, setEnv] = useState<Envelope>(envelope);
-  const [step, setStep] = useState<'upload'|'signers'|'fields'|'review'>(envelope.documents.length>0?(envelope.signers.length>0?'fields':'signers'):'upload');
+  const [step, setStep] = useState<'upload'|'signers'|'fields'|'review'>(
+    (envelope.documents?.length || 0) > 0 ? ((envelope.signers?.length || 0) > 0 ? 'fields' : 'signers') : 'upload'
+  );
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<'signer'|'approver'|'viewer'>('signer');
@@ -1009,7 +1011,14 @@ export default function TohoSignCenter({stampConfig,onOpenStudio,pendingStampFie
       const res = await envelopeAPI.list();
       if (res.success) {
         // Map _id from backend to id for frontend compatibility
-        const mapped = res.data.result.map((e: any) => ({ ...e, id: e._id }));
+        const mapped = res.data.result.map((e: any) => ({ 
+          ...e, 
+          id: e._id, 
+          documents: e.documents || [], 
+          signers: e.signers || [], 
+          fields: e.fields || [],
+          auditLog: e.auditLog || []
+        }));
         setEnvelopes(mapped);
       }
     } catch (err) {
